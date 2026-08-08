@@ -1,17 +1,23 @@
 # Aicadia
 
-Aicadia is a persistent, shared fictional world kept by a dumb-but-strict chronicle
-server; all intelligence comes from players' own AI agents connecting over MCP and
-spending their owners' tokens. Keep this file compact — always-on build rules only.
-The product concept lives in `docs/concept/` (a concept log: exploration, not
-specification, still being discovered).
+Aicadia is an MMO-like shared-world discovery and settlement game. Human users
+connect their own AI agents over MCP to inspect and extend one persistent shared
+world. The game server is dumb and strict; all inference spends the user's own
+tokens. Keep this file compact — always-on build rules only. The current build
+contract lives in `docs/game/`. `docs/concept/` is exploration history: it may inform
+discussion but never governs current implementation.
 
 ## Terry
 
-`Terry` is the user's short handle for the full Aicadia build standard — the same
-handle the user uses in the Scout project. When the user says "Terry", apply
-everything under Build Heuristics below. Treat it as the default for all substantial
-work even when the name isn't repeated.
+`Terry` is Aicadia's proportional game-and-build gate for concept decisions, domain
+model, executable behaviour, code, tests, docs and operations. Apply the Build
+Heuristics below to substantial work even when the handle is not repeated. Ask four
+questions: does this belong in the current game and build contract; do actor, action,
+state, ownership and nomenclature agree; is this the smallest safe build needed now;
+and does the evidence prove exactly the claim being made? Terry does not require
+speculative completeness or perfection. Development may remain deliberately
+incomplete when its current boundary, evidence claim and next concrete risk are
+explicit; `docs/game/` remains the current truth.
 
 ## Build Heuristics
 
@@ -22,11 +28,27 @@ designs both work, choose the one with fewer concepts, tables, states, branches 
 moving parts. Add complexity only after a concrete current scenario shows why the
 smaller design fails; predicted future scale alone is not enough.
 
-### Singular Names, Always
+### The MVP Is The Filter
 
-Every technical name is singular: tables, models, files, folders, endpoints, MCP
-tools, jobs, events. `scene`, `entity`, `claim`, `place_edge`, `rule` — never
-`scenes`, never `entities`. No exceptions.
+The current executable MVP contains exactly one `World`, durable `User` records and
+shared `Entity` records. Its complete use-case surface is `get_world`, `create_user`,
+`get_user`, `list_entity`, `get_entity` and `create_entity`. Every task must directly
+decide, implement or verify that surface. The five player-facing capabilities omit
+`create_user` and ship through both HTTP and MCP. Authentication, OAuth and every
+other game capability remain deferred.
+
+### Singular Domain Names
+
+Aicadia-owned domain names are singular: tables, models, endpoints, MCP tools and
+jobs use `user` and `entity`, never `users` or `entities`. Keep required ecosystem
+conventions such as Rust's `tests/` directory instead of fighting the toolchain.
+
+### Conventional Operation Names
+
+Use standard CRUD verbs and the shortest unambiguous name. Bare `create`, `get`,
+`list`, `update` and `delete` are allowed only inside a resource-specific interface;
+otherwise qualify the resource, as in `create_entity`. Never add `update` or `delete`
+before current behavior requires it.
 
 ### Flat Over Clever
 
@@ -43,99 +65,58 @@ Do not use a slogan, metaphor or broad principle as if it were a decision. If an
 abstract phrase is useful, immediately translate it into specific allowed and rejected
 examples that a future builder can implement and test.
 
-### Literal Technical Vocabulary
+### Game And Server Vocabulary
 
-Schema, API, status and job names use conventional operational English that states
-exactly what the system stores or does. Never use metaphorical world or presentation
-words such as `pencil`, `ink`, `stone` or `whisper` as technical identifiers. Define
-the transition for every stored status. Product wording, if any, is a later
-presentation-layer decision.
+Treat Aicadia as a game under development, never as a literary platform. Every term
+in code, schema, API, architecture and current concept direction uses conventional
+game-development and server English and states the actor, action, state or stored
+data it represents. The current implementation vocabulary is `world`, `user` and
+`entity`. Existing exploration history may retain old wording. Product copy may be
+layered on later and never shapes the core model.
 
 ### Boring Infrastructure
 
-Postgres. One core API; MCP as a thin adapter on top; a web app reading the same
-API. No microservices, no graph database, no queues-of-queues. Choose the
-conventional option until the world itself proves a need.
+Postgres. One `World` interface owns game behaviour; HTTP and MCP are thin adapters
+over that same interface. Authentication, OAuth and a web app are deferred. No
+microservices, no graph database, no queues-of-queues. Choose the conventional
+option until the world itself proves a need.
 
-### The Scene Log Is The Truth
+### Agent Capability Parity
 
-Append-only. An accepted scene is one immutable source package: prose, the submitting
-agent's structured claims and provenance. The server validates and places that
-package without interpreting the prose again. Everything current (entity, claim,
-map, dossier, catch-up) is a projection that can be rebuilt by replaying the log.
-Never mutate history.
+Every player-facing capability ships in the same change through the `World`
+interface, HTTP API and MCP, with one semantic input, output and error contract, a
+complete Agent-facing tool description and a capability-parity test. The published
+catalog must be complete, actions are validated deterministically by `World`, and a
+capability is never UI-only. Provisioning, administration and operational controls
+are never Agent tools.
 
-### No Universal Truth Status
+### Deferred Means Absent
 
-Package acceptance, claim provenance and current-state selection are separate.
-There is no universal claim evidence status. Every accepted claim is immediately
-queryable; a current projection may use it only when that projection's deterministic
-contract permits it. Each contract defines its key, authority, effective time and
-replacement behavior, and every projected row retains its source claim id. Later
-citations, observations, contradictions and replacements append new provenance; they
-never promote or mutate the original claim.
-
-### Realtime, Per Event
-
-Process every scene and gesture on arrival: accept the agent-authored claims → update
-projections → route ripples. Idempotent per event. No global batch moments and no
-scheduled world ceremonies — the world moves before your eyes, and shipped
-institutions are forbidden by concept principle 8.
-
-### Statements, Not Modules
-
-Fixed structural types only: `scene`, `entity`, `claim`, `place`, `character`,
-`rule` (plus `account`, which lives outside the world). Every emergent kind is an
-ordinary entity defined and related by claims, never a fixed schema value. Never add
-a domain table (`job`, `house`, `economy`) — extend the claim vocabulary instead.
-`subtype-of(A, B)` strictly means every A is also a B; multiple direct parent kinds
-are allowed. Classification queries may traverse direct `subtype-of` claims but
-never append the resulting indirect paths as claims; derived results retain depth
-and every source claim id. Newly accepted classifications are immediately queryable.
-Every returned edge and calculated path retains its source claim ids and provenance;
-traversal never upgrades the source claims or turns a calculated path into source
-truth.
-
-### Everything Must Be Expressible
-
-If something true in the world can't be stored as entity + claim, the model is
-wrong: extend the core, never reject the fiction. Test sentence: "she lives in a
-timber house with a reed roof and works as a ferryman" must fit without a schema
-change.
-
-### Rules Are Data
-
-The leefregels live in the `rule` table, versioned, append-only. Every mechanical
-validator declares the rule slug it enforces; every rejection cites its rule. Kind
-definitions are descriptive and queryable and never become validators implicitly.
+`claim`, `world_event`, `character`, `rule`, event sourcing and every related status
+or projection are undecided and outside the current MVP. Do not add their tables,
+types, fields, interfaces or abstractions until `docs/game/` explicitly introduces
+required current behavior.
 
 ### Dumb And Strict Server
 
 No LLM calls server-side. Validation is deterministic. Intelligence lives in the
-connected agents; the server is the chronicle-keeper.
+connected agents; the server is the authoritative world-state processor.
 
 ### No Unconscious Token Burn
 
 Nothing server-side may ever trigger a user's agent or spend on a user's behalf.
-A turn is a session the human starts.
-
-### One Public Commit
-
-Everything before canon is a private, reversible workshop between a person and their
-agent. Every canon scene requires one explicit human confirmation of the complete
-public source package. An agent may propose, draft and revise without confirmation;
-it may never silently spend the scene by publishing.
+Each explicit call stands alone. There is no durable domain session; any future
+connection, authentication or protocol state stays outside the World.
 
 ### English Everywhere
 
-Code, schema, API and canon are English. Agents translate for their own users; the
-server never localizes.
+Code, schema, API and stored world content are English. Agents translate for their
+own users; the server never localizes.
 
 ### No Score Anywhere
 
 No counters, ranks, levels, points, or currencies in schema or API. If a feature
-seems to need one, the feature is wrong
-(see `docs/concept/05-influence-and-retention.md`, anti-patterns).
+seems to need one, the feature is wrong.
 
 ### Earn Your Spot
 
@@ -144,18 +125,17 @@ later" code, no dead paths, no placeholder services. Remove what isn't current.
 
 ### Documents Earn Their Place
 
-Running concept development lands in `docs/concept/log/log.md` — one running log,
-one line per development, grouped by date: what was added, chosen, discussed, where
-we stand. A separate document is created or amended only when it pins something down
-with standing value. Never scatter a session's thinking across many document edits —
-log first, pin sparingly.
+Current executable behavior and implementation decisions live in `docs/game/`.
+Update those documents with every accepted behavior change. `docs/concept/` remains
+exploration and history and cannot override `docs/game/` or this file. Amend this
+file only for compact, always-on repository instructions.
 
 ### Research Leaves A Trail
 
 Research is never left only in a conversation. Save it under `docs/research/` with
 its question, findings, sources and implications for Aicadia. Research informs a
-choice but does not make one: confirmed concept direction still lands in the concept
-log and, when it has standing value, the relevant concept document.
+choice but does not make one: accepted current behavior and implementation decisions
+land in `docs/game/`.
 
 ### Five-Year Backcast (`5jaar`)
 
@@ -168,7 +148,6 @@ story to smuggle in an unchosen concept or speculative infrastructure.
 
 ## Reference Docs
 
-- Concept log index: `docs/concept/README.md`
-- Server shape (identity, briefing, ontology, storage): `docs/concept/08-server-shape.md`
-- World rules (leefregels): `docs/concept/01-world-rules.md`
-- Influence, retention and anti-patterns: `docs/concept/05-influence-and-retention.md`
+- Current build contract: `docs/game/`
+- Exploration history: `docs/concept/`
+- Research: `docs/research/`

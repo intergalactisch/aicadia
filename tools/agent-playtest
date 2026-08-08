@@ -1,0 +1,776 @@
+#!/usr/bin/env bash
+set -u
+set -o pipefail
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+readonly CREATE_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/create.json"
+readonly OBSERVE_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/observe.json"
+readonly CAPABILITIES='["get_world","get_user","list_entity","get_entity","create_entity"]'
+readonly CODEX_VERSION='codex-cli 0.147.0'
+readonly CODEX_MODEL='gpt-5.6-sol'
+readonly CODEX_REASONING_EFFORT='high'
+readonly CODE_MODE_DIRECT_ONLY_NAMESPACES='["mcp__aicadia"]'
+readonly DEFAULT_AGENT_TIMEOUT_SECONDS=600
+readonly DISABLED_CODEX_FEATURES=(
+    apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access
+    computer_use goals hooks image_generation in_app_browser multi_agent multi_agent_v2 plugins
+    remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install skill_search
+    tool_call_mcp_elicitation tool_suggest unified_exec view_image workspace_dependencies
+)
+
+BASE_URL=''
+MCP_URL=''
+RUN_DIR=''
+MANIFEST=''
+DATABASE_NAME=''
+CLEANUP_REQUIRED=0
+CLEANUP_DONE=0
+SERVER_PID=''
+AGENT_PID=''
+AGENT_WATCHDOG_PID=''
+ISOLATED_A=''
+ISOLATED_B=''
+
+fail() {
+    printf 'agent-playtest: %s\n' "$*" >&2
+    return 1
+}
+
+resolve_codex_bin() {
+    if [[ -n "${CODEX_BIN:-}" ]]; then
+        command -v "$CODEX_BIN" 2>/dev/null || return 1
+    else
+        command -v codex 2>/dev/null || return 1
+    fi
+}
+
+database_helper() {
+    (cd "$REPO_DIR" && cargo run --quiet --bin aicadia-playtest-database -- "$@")
+}
+
+curl_json() {
+    curl --disable --fail --silent --show-error --connect-timeout 2 --max-time 10 "$@"
+}
+
+validate_codex() {
+    local codex_bin="$1" version login models features feature exec_help
+
+    version="$("$codex_bin" --version)" || fail 'could not read the Codex CLI version.' || return
+    [[ "$version" == "$CODEX_VERSION" ]] || fail "Codex CLI must be exactly $CODEX_VERSION; found $version." || return
+
+    login="$("$codex_bin" login status 2>&1)" || fail 'Codex authentication is unavailable.' || return
+    [[ "$login" == Logged\ in\ using\ * ]] || fail 'Codex must be logged in before the paid run is confirmed.' || return
+
+    models="$("$codex_bin" debug models)" || fail 'Codex model catalog is unavailable.' || return
+    jq -e --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" '
+        [.models[] | select(.slug == $model)] as $model_entry
+        | ($model_entry | length) == 1
+        and any($model_entry[0].supported_reasoning_levels[]; .effort == $effort)
+    ' <<<"$models" >/dev/null || fail "$CODEX_MODEL with $CODEX_REASONING_EFFORT reasoning is not available." || return
+
+    features="$("$codex_bin" features list)" || fail 'Codex feature catalog is unavailable.' || return
+    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
+        awk -v expected="$feature" '$1 == expected && $2 != "removed" { found = 1 } END { exit !found }' <<<"$features" \
+            || fail "Codex $CODEX_VERSION no longer exposes required feature control: $feature" || return
+    done
+
+    exec_help="$("$codex_bin" exec --help)" || fail 'Codex exec help is unavailable.' || return
+    for feature in --ephemeral --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json --output-schema --output-last-message; do
+        grep -F -- "$feature" <<<"$exec_help" >/dev/null \
+            || fail "Codex $CODEX_VERSION no longer exposes required exec flag: $feature" || return
+    done
+    validate_codex_role_config "$codex_bin" '["create_entity"]' || return
+    validate_codex_role_config "$codex_bin" '["get_user","list_entity","get_entity"]' || return
+}
+
+validate_codex_role_config() {
+    local codex_bin="$1" enabled_tools="$2" feature features parse_home parsed status
+    local -a command
+
+    parse_home="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-codex-parse-XXXXXXXX")" || return 1
+    command=(
+        "$codex_bin"
+        --enable code_mode_host
+        --config 'suppress_unstable_features_warning=true'
+        --config 'features.code_mode.enabled=true'
+        --config "features.code_mode.direct_only_tool_namespaces=$CODE_MODE_DIRECT_ONLY_NAMESPACES"
+        --config 'web_search="disabled"'
+        --config 'tools.web_search=false'
+        --config 'agents.enabled=false'
+        --config "model_reasoning_effort=\"$CODEX_REASONING_EFFORT\""
+        --config 'mcp_servers.aicadia.url="http://127.0.0.1:9/mcp"'
+        --config 'mcp_servers.aicadia.enabled=true'
+        --config 'mcp_servers.aicadia.required=true'
+        --config "mcp_servers.aicadia.enabled_tools=$enabled_tools"
+        --config 'mcp_servers.aicadia.default_tools_approval_mode="approve"'
+        --config 'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'
+    )
+    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
+        command+=(--disable "$feature")
+    done
+    parsed="$(CODEX_HOME="$parse_home" "${command[@]}" mcp get aicadia --json)"
+    status=$?
+    features="$(CODEX_HOME="$parse_home" "${command[@]}" features list)" || status=$?
+    rm -rf "$parse_home"
+    [[ $status -eq 0 ]] || fail 'Codex rejected the pinned Agent configuration.' || return
+    for feature in code_mode code_mode_host; do
+        awk -v expected="$feature" '$1 == expected && $NF == "true" { found = 1 } END { exit !found }' <<<"$features" \
+            || fail "Codex parsed required execution plumbing as disabled: $feature" || return
+    done
+    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
+        awk -v expected="$feature" '$1 == expected && $NF == "false" { found = 1 } END { exit !found }' <<<"$features" \
+            || fail "Codex parsed a forbidden native feature as enabled: $feature" || return
+    done
+    jq -e --argjson expected "$enabled_tools" '
+        .name == "aicadia" and .enabled == true
+        and .transport.type == "streamable_http"
+        and .transport.url == "http://127.0.0.1:9/mcp"
+        and .transport.env_http_headers == {"Aicadia-User-Id": "AICADIA_USER_ID"}
+        and .enabled_tools == $expected
+        and .disabled_tools == null
+    ' <<<"$parsed" >/dev/null || fail 'Codex parsed an unexpected MCP role configuration.' || return
+}
+
+validate_output_schema() {
+    local schema_file="$1" expected_status="$2" expected_fields="$3"
+    jq -e --arg status "$expected_status" --argjson fields "$expected_fields" '
+        . as $schema
+        | (keys | sort) == (["$schema", "type", "additionalProperties", "properties", "required"] | sort)
+        and .["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+        and .type == "object"
+        and .additionalProperties == false
+        and (.properties | type == "object")
+        and (.properties | keys | sort) == ($fields | sort)
+        and (.required | type == "array")
+        and (.required | length) == ($fields | length)
+        and (.required | unique | length) == (.required | length)
+        and (.required | sort) == ($fields | sort)
+        and all($fields[]; . as $field |
+            if $field == "status" then
+                $schema.properties[$field] == {type: "string", const: $status}
+            else
+                $schema.properties[$field] == {type: "string"}
+            end)
+    ' "$schema_file" >/dev/null
+}
+
+preflight() {
+    local codex_bin prerequisite
+
+    [[ -n "${DATABASE_URL:-}" ]] || fail 'DATABASE_URL must name a PostgreSQL administration database; preflight does not mutate it.' || return
+    for prerequisite in cargo curl jq perl; do
+        command -v "$prerequisite" >/dev/null 2>&1 || fail "missing prerequisite: $prerequisite" || return
+    done
+    codex_bin="$(resolve_codex_bin)" || fail 'Codex CLI not found; set CODEX_BIN or install codex.' || return
+    [[ -x "$codex_bin" ]] || fail "Codex binary is not executable: $codex_bin" || return
+    [[ -f "$REPO_DIR/Cargo.toml" && -f "$REPO_DIR/src/bin/aicadia-provision-user.rs" && -f "$REPO_DIR/src/bin/aicadia-playtest-database.rs" ]] \
+        || fail 'Agent playtest operator binaries are missing.' || return
+    validate_output_schema "$CREATE_SCHEMA" created \
+        '["status","marker","entity_id","name","description"]' \
+        || fail 'create output schema violates the strict playtest schema contract.' || return
+    validate_output_schema "$OBSERVE_SCHEMA" observed \
+        '["status","marker","observer_user_id","entity_id","name","description"]' \
+        || fail 'observe output schema violates the strict playtest schema contract.' || return
+
+    (cd "$REPO_DIR" && cargo build --quiet --bin aicadia --bin aicadia-provision-user --bin aicadia-playtest-database) \
+        || fail 'required Aicadia operator binaries do not build.' || return
+    validate_codex "$codex_bin" || return
+    database_helper probe >/dev/null || fail 'DATABASE_URL is unavailable or its role cannot create disposable databases.' || return
+
+    printf 'Preflight passed: operator binaries, PostgreSQL create/drop access, schemas, Codex %s, %s with %s reasoning, authentication, parsed role tool filters, direct-only Aicadia routing with the local Code Mode host, and fail-closed feature controls are ready. No server, User, Entity, or Agent was started; no token-spending command was invoked.\n' \
+        "$CODEX_VERSION" "$CODEX_MODEL" "$CODEX_REASONING_EFFORT"
+}
+
+manifest_set() {
+    local filter="$1" temporary
+    shift
+    [[ -n "$MANIFEST" && -f "$MANIFEST" ]] || return 0
+    temporary="$(mktemp "$RUN_DIR/manifest-XXXXXXXX")" || return 1
+    if ! jq "$@" "$filter" "$MANIFEST" >"$temporary"; then
+        rm -f "$temporary"
+        return 1
+    fi
+    chmod 600 "$temporary"
+    mv "$temporary" "$MANIFEST"
+}
+
+prepare_artifacts() {
+    local run_root run_id started_at marker entity_name entity_description recovery
+
+    umask 077
+    run_root="${AICADIA_PLAYTEST_OUTPUT_ROOT:-$REPO_DIR/.aicadia-playtest}"
+    if [[ -e "$run_root" ]]; then
+        [[ -d "$run_root" && ! -L "$run_root" ]] || fail 'artifact root must be a real directory, not a symbolic link.' || return
+    else
+        mkdir -p "$run_root" || fail 'could not create artifact root.' || return
+    fi
+    RUN_DIR="$(mktemp -d "$run_root/run-XXXXXXXX")" || fail 'could not create a secure run directory.' || return
+    chmod 700 "$RUN_DIR"
+    MANIFEST="$RUN_DIR/manifest.json"
+    run_id="$(basename "$RUN_DIR")"
+    started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    DATABASE_NAME="aicadia_playtest_$(date -u +%Y%m%d_%H%M%S)_$$_$RANDOM"
+    marker="aicadia-playtest-$(date -u +%Y%m%dT%H%M%SZ)-$$-$RANDOM"
+    entity_name="Disposable Playtest Entity $marker"
+    entity_description="Technical cross-User MCP fixture in a disposable World: $marker"
+    recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME"
+
+    jq -n \
+        --arg run_id "$run_id" --arg started_at "$started_at" --arg database "$DATABASE_NAME" \
+        --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" --arg recovery "$recovery" \
+        --argjson timeout "$(agent_timeout_seconds)" '
+        {
+            run_id: $run_id,
+            started_at: $started_at,
+            model: $model,
+            reasoning_effort: $effort,
+            agent_timeout_seconds: $timeout,
+            deployment: {database: $database, server_address: null, status: "not_created"},
+            provisioning: {user_a: "pending", user_b: "pending"},
+            agents: {a: "pending", b: "pending"},
+            validation: "pending",
+            run_status: "preparing",
+            cleanup: {intent: "drop_if_exists", status: "not_required_yet", recovery: $recovery}
+        }
+    ' >"$MANIFEST" || fail 'could not write the initial run manifest.' || return
+    chmod 600 "$MANIFEST"
+    printf '%s\n' "$marker" >"$RUN_DIR/marker.txt" || fail 'could not write marker artifact.' || return
+    write_prompts "$RUN_DIR" "$marker" "$entity_name" "$entity_description" \
+        || fail 'could not write Agent prompts.' || return
+    ISOLATED_A="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-agent-a-XXXXXXXX")" \
+        || fail 'could not create Agent A isolated working directory.' || return
+    ISOLATED_B="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-agent-b-XXXXXXXX")" || {
+        rmdir "$ISOLATED_A" 2>/dev/null || true
+        ISOLATED_A=''
+        fail 'could not create Agent B isolated working directory.'
+        return 1
+    }
+    chmod 700 "$ISOLATED_A" "$ISOLATED_B"
+}
+
+agent_timeout_seconds() {
+    local value="${AICADIA_AGENT_TIMEOUT_SECONDS:-$DEFAULT_AGENT_TIMEOUT_SECONDS}"
+    if [[ "${AICADIA_PLAYTEST_TEST_MODE:-}" == 'fake' && "${CODEX_BIN##*/}" == 'codex-fake' ]]; then
+        value="${AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS:-$value}"
+        [[ "$value" =~ ^[0-9]+$ && "$value" -ge 1 && "$value" -le 5 ]] \
+            || fail 'fake playtest timeout must be an integer from 1 through 5.' || return
+        printf '%s\n' "$value"
+        return
+    fi
+    [[ "$value" =~ ^[0-9]+$ && "$value" -ge 30 && "$value" -le 1800 ]] \
+        || fail 'AICADIA_AGENT_TIMEOUT_SECONDS must be an integer from 30 through 1800.' || return
+    printf '%s\n' "$value"
+}
+
+write_prompts() {
+    local run_dir="$1" marker="$2" entity_name="$3" entity_description="$4"
+    printf '%s\n' "$(cat <<PROMPT
+You are Agent A in a bounded Aicadia MCP cross-User playtest against a disposable World. Use exactly one direct Aicadia MCP call: create_entity. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent.
+
+Create exactly one Entity with create_entity using exactly these arguments:
+- name: $entity_name
+- description: $entity_description
+
+The unique marker is $marker. Do not create another Entity. Return only the structured JSON required by the output schema. Set status to created and marker to the exact marker, then copy entity_id, name, and description from the successful MCP result. If the MCP call fails, do not fabricate a result.
+PROMPT
+)" >"$run_dir/agent-a.prompt.txt" || return
+    printf '%s\n' "$(cat <<PROMPT
+You are Agent B in a bounded Aicadia MCP cross-User playtest against a disposable World. Use only direct Aicadia MCP calls: get_user, list_entity, and get_entity. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent. Never create an Entity.
+
+The unique marker is $marker.
+
+First call get_user and copy its id as observer_user_id. Then call list_entity once; the newly introduced fixture must be in that first page. Use get_entity with the found id to read the exact Entity. Return only the structured JSON required by the output schema. Set status to observed and marker to the exact marker; copy observer_user_id, entity_id, name, and description only from successful MCP results. If any required MCP call fails or the Entity cannot be observed, do not fabricate a result.
+PROMPT
+)" >"$run_dir/agent-b.prompt.txt" || return
+}
+
+start_deployment() {
+    local address attempt ready
+
+    CLEANUP_REQUIRED=1
+    manifest_set '.deployment.status = "create_attempted" | .cleanup.status = "required"' \
+        || fail 'could not record cleanup ownership before database creation.' || return
+    database_helper create "$DATABASE_NAME" >"$RUN_DIR/database-create.log" 2>&1 \
+        || fail "database creation was unsuccessful or ambiguous; cleanup will run, inspect $RUN_DIR/database-create.log" || return
+    manifest_set '.deployment.status = "database_created"' || return
+
+    perl -e 'chdir shift or exit 125; setpgrp 0, 0; exec @ARGV' "$REPO_DIR" \
+        env DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" AICADIA_PORT=0 \
+        cargo run --quiet --bin aicadia \
+        >"$RUN_DIR/server.stdout.log" 2>"$RUN_DIR/server.stderr.log" &
+    SERVER_PID=$!
+
+    ready=''
+    for attempt in $(seq 1 200); do
+        if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+            wait "$SERVER_PID" 2>/dev/null || true
+            fail "disposable Aicadia server exited before readiness; inspect $RUN_DIR/server.stderr.log"
+            return 1
+        fi
+        ready="$(jq -c 'select(.event == "server_ready" and (.address | type == "string"))' "$RUN_DIR/server.stdout.log" 2>/dev/null | tail -1)"
+        [[ -z "$ready" ]] || break
+        sleep 0.1
+    done
+    [[ -n "$ready" ]] || fail 'disposable Aicadia server did not become ready within 20 seconds.' || return
+    address="$(jq -r '.address' <<<"$ready")" || return
+    [[ "$address" =~ ^127\.0\.0\.1:[0-9]+$ ]] || fail 'server readiness address was not loopback.' || return
+    BASE_URL="http://$address"
+    MCP_URL="$BASE_URL/mcp"
+    manifest_set '.deployment.server_address = $address | .deployment.status = "ready"' --arg address "$address" || return
+}
+
+verify_deployment() {
+    local world openapi listed database_probe
+
+    world="$(curl_json "$BASE_URL/api/world")" || fail 'disposable World endpoint is unavailable.' || return
+    jq -e '.name == "Aicadia"' <<<"$world" >/dev/null || fail 'disposable World returned an unexpected response.' || return
+    openapi="$(curl_json "$BASE_URL/api/openapi.json")" || fail 'disposable OpenAPI document is unavailable.' || return
+    jq -e --argjson expected "$CAPABILITIES" '
+        ([.paths[][] | .operationId] | sort) == ($expected | sort)
+        and ([.paths[][] | .operationId] | index("create_user") | not)
+    ' <<<"$openapi" >/dev/null || fail 'public HTTP catalog is not the exact five-capability contract.' || return
+    listed="$(curl_json \
+        -H 'Content-Type: application/json' \
+        -H 'Accept: application/json, text/event-stream' \
+        -H 'MCP-Protocol-Version: 2026-07-28' \
+        -H 'Mcp-Method: tools/list' \
+        -H "Origin: $BASE_URL" \
+        --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-playtest","version":"0.1.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}' \
+        "$MCP_URL")" || fail 'disposable MCP tools/list is unavailable.' || return
+    jq -e --argjson expected "$CAPABILITIES" '
+        [.result.tools[].name] == $expected
+        and ([.result.tools[].name] | index("create_user") | not)
+    ' <<<"$listed" >/dev/null || fail 'public MCP catalog is not the exact five-capability contract.' || return
+    database_probe="$(curl --disable --silent --show-error --connect-timeout 2 --max-time 10 \
+        -H 'Aicadia-User-Id: 00000000-0000-0000-0000-000000000000' \
+        -o /dev/null -w '%{http_code}' "$BASE_URL/api/user")" || fail 'disposable database path is unavailable.' || return
+    [[ "$database_probe" == 404 ]] || fail "disposable database probe returned HTTP $database_probe." || return
+}
+
+provision_user() {
+    (cd "$REPO_DIR" && DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" \
+        cargo run --quiet --bin aicadia-provision-user)
+}
+
+verify_provisioned_user() {
+    local user_id="$1" response
+    response="$(curl_json -H "Aicadia-User-Id: $user_id" "$BASE_URL/api/user")" || return 1
+    jq -e --arg id "$user_id" '.id == $id' <<<"$response" >/dev/null
+}
+
+prepare_agent_evidence_files() {
+    local path
+    for path in \
+        "$RUN_DIR/agent-a.events.jsonl" "$RUN_DIR/agent-a.stderr.log" "$RUN_DIR/agent-a.final.json" \
+        "$RUN_DIR/agent-b.events.jsonl" "$RUN_DIR/agent-b.stderr.log" "$RUN_DIR/agent-b.final.json" \
+        "$RUN_DIR/agent-a.exit-status" "$RUN_DIR/agent-b.exit-status"; do
+        : >"$path" || return 1
+        chmod 600 "$path" || return 1
+    done
+}
+
+run_agent() {
+    local codex_bin="$1" user_id="$2" prompt_file="$3" schema_file="$4" events_file="$5" stderr_file="$6" final_file="$7" isolated_cwd="$8" enabled_tools="$9"
+    local prompt timeout feature status variable timeout_marker agent_pgid
+    local -a command sanitized
+    prompt="$(<"$prompt_file")"
+    timeout="$(agent_timeout_seconds)" || return
+    command=(
+        "$codex_bin"
+        --ask-for-approval never
+        --sandbox read-only
+        --model "$CODEX_MODEL"
+        --enable code_mode_host
+        --config 'suppress_unstable_features_warning=true'
+        --config 'features.code_mode.enabled=true'
+        --config "features.code_mode.direct_only_tool_namespaces=$CODE_MODE_DIRECT_ONLY_NAMESPACES"
+    )
+    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
+        command+=(--disable "$feature")
+    done
+    command+=(
+        --config 'web_search="disabled"'
+        --config 'tools.web_search=false'
+        --config 'agents.enabled=false'
+        --config "model_reasoning_effort=\"$CODEX_REASONING_EFFORT\""
+        --config "mcp_servers.aicadia.url=\"$MCP_URL\""
+        --config 'mcp_servers.aicadia.enabled=true'
+        --config 'mcp_servers.aicadia.required=true'
+        --config "mcp_servers.aicadia.enabled_tools=$enabled_tools"
+        --config 'mcp_servers.aicadia.default_tools_approval_mode="approve"'
+        --config 'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'
+        exec
+        --ephemeral
+        --ignore-user-config
+        --ignore-rules
+        --strict-config
+        --skip-git-repo-check
+        --json
+        --output-schema "$schema_file"
+        --output-last-message "$final_file"
+        "$prompt"
+    )
+
+    while IFS='=' read -r variable _; do
+        case "$variable" in
+            DATABASE_URL|AICADIA_DATABASE_NAME|AICADIA_PORT|AICADIA_AGENT_TIMEOUT_SECONDS|AICADIA_PLAYTEST_*|CODEX_BIN|FAKE_*|PGDATABASE|PGHOST|PGHOSTADDR|PGPASSWORD|PGPORT|PGSERVICE|PGSERVICEFILE|PGSSLMODE|PGUSER)
+                sanitized+=(-u "$variable")
+                ;;
+        esac
+    done < <(env)
+
+    timeout_marker="${events_file%.events.jsonl}.timeout"
+    perl -e 'chdir shift or exit 125; setpgrp 0, 0; exec @ARGV' \
+        "$isolated_cwd" env "${sanitized[@]}" AICADIA_USER_ID="$user_id" "${command[@]}" \
+        >"$events_file" 2>"$stderr_file" &
+    AGENT_PID=$!
+    agent_pgid="$AGENT_PID"
+    perl -e '
+        my ($seconds, $pgid, $marker) = @ARGV;
+        sleep $seconds;
+        if (kill 0, -$pgid) {
+            open my $evidence, ">", $marker or exit 125;
+            print {$evidence} "deadline_exceeded\n";
+            close $evidence or exit 125;
+            kill "TERM", -$pgid;
+            select undef, undef, undef, 0.5;
+            kill "KILL", -$pgid;
+        }
+    ' "$timeout" "$agent_pgid" "$timeout_marker" &
+    AGENT_WATCHDOG_PID=$!
+    wait "$AGENT_PID"
+    status=$?
+    if [[ -f "$timeout_marker" ]]; then
+        wait "$AGENT_WATCHDOG_PID" 2>/dev/null || true
+        AGENT_WATCHDOG_PID=''
+    else
+        stop_agent_watchdog
+    fi
+    terminate_agent_group "$agent_pgid"
+    AGENT_PID=''
+    [[ ! -f "$timeout_marker" ]] || return 142
+    return "$status"
+}
+
+events_are_clean() {
+    local events_file="$1"
+    [[ -s "$events_file" ]] || return 1
+    jq -s -e '
+        def contains_failure:
+            [.. | objects | select(
+                .type? == "error"
+                or .type? == "turn.failed"
+                or .type? == "turn.aborted"
+                or .status? == "failed"
+                or .error? != null
+            )] | length > 0;
+        length > 0
+        and all(.[]; type == "object")
+        and all(.[]; contains_failure | not)
+    ' "$events_file" >/dev/null
+}
+
+agent_a_events_match() {
+    local events_file="$1" name="$2" description="$3"
+    jq -s -e --arg name "$name" --arg description "$description" '
+        def allowed_item: . as $item_type
+            | ["agent_message", "reasoning", "plan", "context_compaction", "mcp_tool_call"]
+            | index($item_type) != null;
+        all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
+        and all(.[] | select(.item?.type == "mcp_tool_call");
+            .item.server == "aicadia"
+            and .item.tool == "create_entity"
+            and .item.arguments == {name: $name, description: $description})
+        and ([.[] | select(.type == "item.completed" and .item.type == "mcp_tool_call") | .item] | length) == 1
+    ' "$events_file" >/dev/null
+}
+
+agent_b_events_match() {
+    local events_file="$1" entity_json="$2" observer_user_id="$3"
+    jq -s -e --argjson entity "$entity_json" --arg observer_user_id "$observer_user_id" '
+        def allowed_item: . as $item_type
+            | ["agent_message", "reasoning", "plan", "context_compaction", "mcp_tool_call"]
+            | index($item_type) != null;
+        def completed_calls: [.[] | select(
+            .type == "item.completed"
+            and .item.type == "mcp_tool_call"
+            and .item.status == "completed"
+            and .item.error == null
+            and (.item.result | type == "object")
+            and (.item.result.structured_content | type == "object")
+        ) | .item];
+        def valid_list_arguments:
+            type == "object"
+            and (
+                (keys | length) == 0
+                or (
+                    keys == ["limit"]
+                    and (.limit | type) == "number"
+                    and (.limit | floor) == .limit
+                    and .limit >= 1
+                    and .limit <= 100
+                )
+            );
+        completed_calls as $calls
+        | ($entity | {id, name}) as $summary
+        | all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
+        and all(.[] | select(.item?.type == "mcp_tool_call");
+            .item.server == "aicadia"
+            and (
+                (.item.tool == "get_user" and .item.arguments == {})
+                or (.item.tool == "list_entity" and (.item.arguments | valid_list_arguments))
+                or (.item.tool == "get_entity" and .item.arguments == {entity_id: $entity.id})
+            ))
+        and ($calls | length) == 3
+        and $calls[0].server == "aicadia" and $calls[0].tool == "get_user"
+        and $calls[0].arguments == {}
+        and $calls[0].result.structured_content.id == $observer_user_id
+        and $calls[1].server == "aicadia" and $calls[1].tool == "list_entity"
+        and ($calls[1].arguments | valid_list_arguments)
+        and ($calls[1].result.structured_content | keys | sort) == (["entity", "next"] | sort)
+        and ($calls[1].result.structured_content.entity | type == "array")
+        and any($calls[1].result.structured_content.entity[]; . == $summary)
+        and (($calls[1].result.structured_content.next == null) or ($calls[1].result.structured_content.next | type == "string"))
+        and $calls[2].server == "aicadia" and $calls[2].tool == "get_entity"
+        and $calls[2].arguments == {entity_id: $entity.id}
+        and $calls[2].result.structured_content == $entity
+    ' "$events_file" >/dev/null
+}
+
+final_is_valid() {
+    local final_file="$1" expected_status="$2" marker="$3" name="$4" description="$5" observer_user_id="$6"
+    jq -e --arg status "$expected_status" --arg marker "$marker" --arg name "$name" \
+        --arg description "$description" --arg observer_user_id "$observer_user_id" '
+        (if $status == "observed" then
+            (keys | sort) == (["status", "marker", "observer_user_id", "entity_id", "name", "description"] | sort)
+            and .observer_user_id == $observer_user_id
+        else
+            (keys | sort) == (["status", "marker", "entity_id", "name", "description"] | sort)
+        end)
+        and .status == $status and .marker == $marker and .name == $name and .description == $description
+        and (.entity_id | test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"))
+    ' "$final_file" >/dev/null 2>&1
+}
+
+observed_final_has_context() {
+    local final_file="$1" marker="$2" observer_user_id="$3"
+    jq -e --arg marker "$marker" --arg observer_user_id "$observer_user_id" '
+        (keys | sort) == (["status", "marker", "observer_user_id", "entity_id", "name", "description"] | sort)
+        and .status == "observed" and .marker == $marker and .observer_user_id == $observer_user_id
+        and (.entity_id | type == "string") and (.name | type == "string") and (.description | type == "string")
+    ' "$final_file" >/dev/null 2>&1
+}
+
+find_marker_entity_id() {
+    local marker="$1" page
+    page="$(curl_json "$BASE_URL/api/entity?limit=100")" || return 1
+    jq -e 'type == "object" and (.entity | type == "array")
+        and all(.entity[]; (.id | type == "string") and (.name | type == "string"))
+        and has("next") and ((.next == null) or ((.next | type == "string") and (.next | length > 0)))' <<<"$page" >/dev/null || return 1
+    jq -er --arg marker "$marker" '
+        [.entity[] | select(.name | contains($marker)) | .id]
+        | select(length == 1) | .[0]
+    ' <<<"$page"
+}
+
+stop_server() {
+    if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+        kill -TERM -- "-$SERVER_PID" 2>/dev/null || kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    SERVER_PID=''
+}
+
+stop_agent_watchdog() {
+    if [[ -n "$AGENT_WATCHDOG_PID" ]]; then
+        if kill -0 "$AGENT_WATCHDOG_PID" 2>/dev/null; then
+            kill -TERM "$AGENT_WATCHDOG_PID" 2>/dev/null || true
+        fi
+        wait "$AGENT_WATCHDOG_PID" 2>/dev/null || true
+    fi
+    AGENT_WATCHDOG_PID=''
+}
+
+terminate_agent_group() {
+    local pgid="$1"
+    [[ -n "$pgid" ]] || return 0
+    kill -TERM -- "-$pgid" 2>/dev/null || true
+    sleep 0.1
+    kill -KILL -- "-$pgid" 2>/dev/null || true
+}
+
+stop_agent() {
+    local agent_pgid="$AGENT_PID"
+    stop_agent_watchdog
+    terminate_agent_group "$agent_pgid"
+    if [[ -n "$AGENT_PID" ]]; then
+        wait "$AGENT_PID" 2>/dev/null || true
+    fi
+    AGENT_PID=''
+}
+
+cleanup_deployment() {
+    local recovery
+    stop_server
+    if [[ $CLEANUP_REQUIRED -eq 1 ]]; then
+        if database_helper drop "$DATABASE_NAME" >"$RUN_DIR/database-drop.log" 2>&1; then
+            CLEANUP_REQUIRED=0
+            manifest_set '.cleanup.status = "dropped" | .cleanup.recovery = null' || true
+        else
+            recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME"
+            manifest_set '.cleanup.status = "failed" | .cleanup.recovery = $recovery' --arg recovery "$recovery" || true
+            fail "could not drop disposable database $DATABASE_NAME; recovery is recorded in $MANIFEST"
+            return 1
+        fi
+    elif [[ -n "$MANIFEST" ]]; then
+        manifest_set '.cleanup.status = "not_needed"' || true
+    fi
+}
+
+cleanup_local_directories() {
+    [[ -z "$ISOLATED_A" ]] || rmdir "$ISOLATED_A" 2>/dev/null || true
+    [[ -z "$ISOLATED_B" ]] || rmdir "$ISOLATED_B" 2>/dev/null || true
+    ISOLATED_A=''
+    ISOLATED_B=''
+}
+
+cleanup_all() {
+    local status=0
+    [[ $CLEANUP_DONE -eq 0 ]] || return 0
+    CLEANUP_DONE=1
+    stop_agent
+    if [[ $CLEANUP_REQUIRED -eq 1 ]]; then
+        cleanup_deployment || status=1
+    else
+        stop_server
+    fi
+    cleanup_local_directories
+    return "$status"
+}
+
+on_exit() {
+    local status="$1"
+    trap - EXIT INT TERM HUP
+    cleanup_all || status=1
+    if [[ $status -ne 0 && -n "$MANIFEST" ]]; then
+        manifest_set 'if .run_status == "interrupted" then . else .run_status = "failed" end' || true
+    fi
+    exit "$status"
+}
+
+on_signal() {
+    local signal="$1" status="$2"
+    trap - INT TERM HUP
+    [[ -z "$MANIFEST" ]] || manifest_set '.run_status = "interrupted" | .interrupted_by = $signal' --arg signal "$signal" || true
+    on_exit "$status"
+}
+
+run_playtest() {
+    local codex_bin marker entity_name entity_description user_a_json user_b_json user_a user_b
+    local a_exit b_exit failed=0 entity_id entity_json cleanup_failed=0
+
+    preflight || return 1
+    codex_bin="$(resolve_codex_bin)" || return 1
+    prepare_artifacts || return 1
+    trap 'on_exit $?' EXIT
+    trap 'on_signal INT 130' INT
+    trap 'on_signal TERM 143' TERM
+    trap 'on_signal HUP 129' HUP
+    marker="$(<"$RUN_DIR/marker.txt")"
+    entity_name="Disposable Playtest Entity $marker"
+    entity_description="Technical cross-User MCP fixture in a disposable World: $marker"
+
+    start_deployment || return 1
+    verify_deployment || return 1
+
+    user_a_json="$(provision_user)" || fail 'failed to provision User A before the Agent phase.' || return
+    user_a="$(jq -er '.id | select(type == "string")' <<<"$user_a_json")" || fail 'User A provisioner returned malformed JSON.' || return
+    printf '%s\n' "$user_a_json" >"$RUN_DIR/user-a.json" || fail 'could not write User A evidence.' || return
+    manifest_set '.provisioning.user_a = $id' --arg id "$user_a" || return
+
+    user_b_json="$(provision_user)" || fail 'failed to provision User B before the Agent phase.' || return
+    user_b="$(jq -er '.id | select(type == "string")' <<<"$user_b_json")" || fail 'User B provisioner returned malformed JSON.' || return
+    printf '%s\n' "$user_b_json" >"$RUN_DIR/user-b.json" || fail 'could not write User B evidence.' || return
+    manifest_set '.provisioning.user_b = $id' --arg id "$user_b" || return
+    [[ "$user_a" != "$user_b" ]] || fail 'provisioning did not create two distinct Users.' || return
+    verify_provisioned_user "$user_a" || fail 'provisioned User A is not visible in the disposable World.' || return
+    verify_provisioned_user "$user_b" || fail 'provisioned User B is not visible in the disposable World.' || return
+    prepare_agent_evidence_files || fail 'could not prepare all Agent evidence files before the Agent phase.' || return
+
+    run_agent "$codex_bin" "$user_a" "$RUN_DIR/agent-a.prompt.txt" "$CREATE_SCHEMA" \
+        "$RUN_DIR/agent-a.events.jsonl" "$RUN_DIR/agent-a.stderr.log" "$RUN_DIR/agent-a.final.json" \
+        "$ISOLATED_A" '["create_entity"]'
+    a_exit=$?
+
+    run_agent "$codex_bin" "$user_b" "$RUN_DIR/agent-b.prompt.txt" "$OBSERVE_SCHEMA" \
+        "$RUN_DIR/agent-b.events.jsonl" "$RUN_DIR/agent-b.stderr.log" "$RUN_DIR/agent-b.final.json" \
+        "$ISOLATED_B" '["get_user","list_entity","get_entity"]'
+    b_exit=$?
+    printf '%s\n' "$a_exit" >"$RUN_DIR/agent-a.exit-status" || fail 'could not write Agent A exit evidence.' || return
+    printf '%s\n' "$b_exit" >"$RUN_DIR/agent-b.exit-status" || fail 'could not write Agent B exit evidence.' || return
+    manifest_set '.agents.a = {exit_status: $exit}' --argjson exit "$a_exit" || return
+    manifest_set '.agents.b = {exit_status: $exit}' --argjson exit "$b_exit" || return
+    cleanup_local_directories
+
+    [[ $a_exit -eq 0 ]] || { fail "Agent A exited $a_exit (a deadline usually exits 142)."; failed=1; }
+    [[ $b_exit -eq 0 ]] || { fail "Agent B exited $b_exit (a deadline usually exits 142)."; failed=1; }
+    events_are_clean "$RUN_DIR/agent-a.events.jsonl" || { fail 'Agent A JSONL contains an error or is malformed.'; failed=1; }
+    events_are_clean "$RUN_DIR/agent-b.events.jsonl" || { fail 'Agent B JSONL contains an error or is malformed.'; failed=1; }
+    agent_a_events_match "$RUN_DIR/agent-a.events.jsonl" "$entity_name" "$entity_description" \
+        || { fail 'Agent A used a forbidden tool, wrong arguments, or not exactly one create_entity call.'; failed=1; }
+    final_is_valid "$RUN_DIR/agent-a.final.json" created "$marker" "$entity_name" "$entity_description" '' \
+        || { fail 'Agent A final artifact does not match exact stored content.'; failed=1; }
+    observed_final_has_context "$RUN_DIR/agent-b.final.json" "$marker" "$user_b" \
+        || { fail 'Agent B final artifact does not match its schema or User B context.'; failed=1; }
+
+    entity_id="$(find_marker_entity_id "$marker")" || { fail 'validation did not find exactly one fixture Entity on the first list page.'; failed=1; entity_id=''; }
+    if [[ -n "$entity_id" ]]; then
+        entity_json="$(curl_json "$BASE_URL/api/entity/$entity_id")" || { fail 'validation could not read the fixture Entity.'; failed=1; entity_json='{}'; }
+        jq -e --arg id "$entity_id" --arg user "$user_a" --arg name "$entity_name" --arg description "$entity_description" '
+            .id == $id and .introduced_by_user_id == $user and .name == $name and .description == $description
+        ' <<<"$entity_json" >/dev/null || { fail 'stored Entity does not match Agent A, User A, and exact fixture content.'; failed=1; }
+        jq -e --arg id "$entity_id" '.entity_id == $id' "$RUN_DIR/agent-a.final.json" >/dev/null 2>&1 \
+            || { fail 'Agent A reported a different Entity id.'; failed=1; }
+        final_is_valid "$RUN_DIR/agent-b.final.json" observed "$marker" "$(jq -r '.name' <<<"$entity_json")" \
+            "$(jq -r '.description' <<<"$entity_json")" "$user_b" || { fail 'Agent B result differs from stored state.'; failed=1; }
+        jq -e --arg id "$entity_id" '.entity_id == $id' "$RUN_DIR/agent-b.final.json" >/dev/null 2>&1 \
+            || { fail 'Agent B did not observe the same Entity id.'; failed=1; }
+        agent_b_events_match "$RUN_DIR/agent-b.events.jsonl" "$entity_json" "$user_b" \
+            || { fail 'Agent B JSONL does not prove ordered User B, list and exact Entity results.'; failed=1; }
+    fi
+
+    if [[ $failed -eq 0 ]]; then
+        manifest_set '.validation = {status: "passed", entity_id: $id}' --arg id "$entity_id" || return
+    else
+        manifest_set '.validation = {status: "failed"}' || return
+    fi
+    cleanup_deployment || cleanup_failed=1
+    [[ $cleanup_failed -eq 0 ]] || return 1
+    if [[ $failed -ne 0 ]]; then
+        fail "playtest failed after exactly two Agent attempts; inspect $RUN_DIR"
+        return 1
+    fi
+    manifest_set '.run_status = "completed"' || return
+    printf 'Playtest passed with exactly two sequential Agents in a disposable World, which was dropped. Artifacts: %s\n' "$RUN_DIR"
+}
+
+main() {
+    case "$#:${1-}" in
+        1:preflight)
+            preflight
+            ;;
+        2:run)
+            [[ "$2" == '--confirm-token-spend' ]] || {
+                fail 'usage: tools/agent-playtest run --confirm-token-spend'
+                return 1
+            }
+            run_playtest
+            ;;
+        *)
+            fail 'usage: tools/agent-playtest preflight | tools/agent-playtest run --confirm-token-spend'
+            ;;
+    esac
+}
+
+main "$@"

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Build Aicadia"
+  short_description: "Guide the next Aicadia development step"
+  default_prompt: "Use $build-aicadia to identify one evidence-backed next Aicadia development step."
+policy:
+  allow_implicit_invocation: true

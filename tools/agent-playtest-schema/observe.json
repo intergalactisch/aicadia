@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": { "type": "string", "const": "observed" },
+    "marker": { "type": "string" },
+    "observer_user_id": { "type": "string" },
+    "entity_id": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" }
+  },
+  "required": ["status", "marker", "observer_user_id", "entity_id", "name", "description"]
+}

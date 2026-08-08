@@ -3,12 +3,15 @@
 Durable research supporting Aicadia concept development.
 
 Research records the question, observations, sources and possible implications. It
-does not silently establish concept direction. A confirmed choice is recorded
-separately in `docs/concept/log/log.md` and, when it has standing value, the relevant
-concept document.
+does not establish current behavior by itself. Accepted current behavior and
+implementation decisions are recorded in `docs/game/`; `docs/concept/` remains
+exploration history.
 
 | Research | Question |
 |---|---|
+| [Codex agent graphs](ai-agent-graphs.md) | How could a graph-shaped Codex workflow improve Aicadia development without entering the game runtime? |
+| [Agent tool interface](agent-tool-interface.md) | What is the smallest correct MCP tool boundary for the Rust World interface? |
+| [Character identity and control](character-entity-control-model.md) | How can accounts control one character at a time while abandoned characters and NPCs retain one durable world identity? |
 | [Persistent world-state](persistent-world-state.md) | How do other shared worlds remember, update and expose state? |
 | [Player-agent interaction](player-agent-interaction.md) | How should a person steer an agent without breaking shared canon? |
 | [World momentum and player reach](world-momentum.md) | What may move world-state without granting a player or the server unlimited authorship? |

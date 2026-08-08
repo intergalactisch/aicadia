@@ -1,0 +1,37 @@
+[
+  {
+    "annotations": {"destructiveHint": false, "idempotentHint": true, "openWorldHint": false, "readOnlyHint": true, "title": "Get world"},
+    "description": "Get the identity of the one persistent shared Aicadia World. No User context is required.",
+    "inputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "type": "object"},
+    "name": "get_world",
+    "outputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"name": {"type": "string"}}, "required": ["name"], "type": "object"}
+  },
+  {
+    "annotations": {"destructiveHint": false, "idempotentHint": true, "openWorldHint": false, "readOnlyHint": true, "title": "Get user"},
+    "description": "Get the durable User represented by this request's Aicadia-User-Id context. This tool does not accept a User id and does not authenticate the caller.",
+    "inputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "type": "object"},
+    "name": "get_user",
+    "outputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"created_at": {"format": "date-time", "type": "string"}, "id": {"format": "uuid", "type": "string"}}, "required": ["id", "created_at"], "type": "object"}
+  },
+  {
+    "annotations": {"destructiveHint": false, "idempotentHint": true, "openWorldHint": false, "readOnlyHint": true, "title": "List entity"},
+    "description": "List shared Entities from newest to oldest. limit defaults to 25 and must be 1 through 100. Copy next into cursor to read the following page; do not interpret the cursor.",
+    "inputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"cursor": {"default": null, "description": "Opaque cursor returned as `next` by a previous list response.", "type": ["string", "null"]}, "limit": {"default": 25, "description": "Page size. Defaults to 25. The World accepts values from 1 through 100.", "format": "int64", "maximum": 100, "minimum": 1, "type": "integer"}}, "type": "object"},
+    "name": "list_entity",
+    "outputSchema": {"$defs": {"EntitySummaryOutput": {"additionalProperties": false, "properties": {"id": {"format": "uuid", "type": "string"}, "name": {"type": "string"}}, "required": ["id", "name"], "type": "object"}}, "$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"entity": {"items": {"$ref": "#/$defs/EntitySummaryOutput"}, "type": "array"}, "next": {"type": ["string", "null"]}}, "required": ["entity", "next"], "type": "object"}
+  },
+  {
+    "annotations": {"destructiveHint": false, "idempotentHint": true, "openWorldHint": false, "readOnlyHint": true, "title": "Get entity"},
+    "description": "Get one shared Entity by its stable Entity id.",
+    "inputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"entity_id": {"description": "Stable Entity id.", "format": "uuid", "type": "string"}}, "required": ["entity_id"], "type": "object"},
+    "name": "get_entity",
+    "outputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"description": {"type": "string"}, "id": {"format": "uuid", "type": "string"}, "introduced_at": {"format": "date-time", "type": "string"}, "introduced_by_user_id": {"format": "uuid", "type": "string"}, "name": {"type": "string"}}, "required": ["id", "name", "description", "introduced_by_user_id", "introduced_at"], "type": "object"}
+  },
+  {
+    "annotations": {"destructiveHint": false, "idempotentHint": false, "openWorldHint": false, "readOnlyHint": false, "title": "Create entity"},
+    "description": "Create one shared Entity for a stable referent introduced by the current User. Use this only when later participants must refer to the same subject. This does not assert fictional creation, ownership or discovery, and repeating it creates another Entity.",
+    "inputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"description": {"description": "Description. The World trims it and accepts 1 through 4,000 Unicode characters.", "maxLength": 4000, "minLength": 1, "type": "string"}, "name": {"description": "Display name. The World trims it and accepts 1 through 120 Unicode characters.", "maxLength": 120, "minLength": 1, "type": "string"}}, "required": ["name", "description"], "type": "object"},
+    "name": "create_entity",
+    "outputSchema": {"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "properties": {"description": {"type": "string"}, "id": {"format": "uuid", "type": "string"}, "introduced_at": {"format": "date-time", "type": "string"}, "introduced_by_user_id": {"format": "uuid", "type": "string"}, "name": {"type": "string"}}, "required": ["id", "name", "description", "introduced_by_user_id", "introduced_at"], "type": "object"}
+  }
+]

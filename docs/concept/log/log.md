@@ -322,3 +322,35 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   `verification_status = unverified | verified` remains only for the specific
   place-verification projection. Exact source-basis vocabulary and claim-reference
   storage remain open.
+
+# 2026-08-07
+
+## Game and MVP direction
+
+- decided: Aicadia is developed as an MMO-like shared-world discovery and settlement
+  game, not as a literary platform or collaborative-fiction database. Human players
+  use their own MCP-connected AI agents to control characters and author changes to
+  one persistent multiplayer world.
+- decided method / Terry: all current design and implementation terminology uses
+  conventional game-development, server and event-sourcing English. Technical terms
+  name an actor, action, state or stored record; presentation metaphors do not enter
+  schema, API or architecture. The initial canonical vocabulary is pinned in the
+  root `CONTEXT.md`.
+- decided method / Terry: the MVP is the filter for all subsequent work. The target
+  loop is player connects agent → reads local world state → prepares and explicitly
+  confirms a player action → server validates and appends one immutable world event
+  → another player can read the resulting state and event. Work that does not decide,
+  implement or verify this loop is deferred.
+- decided: `world_event` replaces `scene` as the technical source-record term.
+  `player_action` is the confirmed request; acceptance creates one immutable
+  `world_event` containing narrative text, claims and provenance. `scene` may still
+  describe narrative content but is not an implementation type.
+- decided: `event_feed` replaces the technical use of ripple, catch-up, morning
+  report and inbox; `action_context` replaces briefing, dossier and catch-up as the
+  input required before action submission. Existing exploration documents retain
+  legacy wording as historical material until their current direction is repinned.
+- direction: player actions should create durable, queryable world structure through
+  discovery, movement, construction, use and continuation. Self-contained narrative
+  detail may remain in event text, but it does not by itself earn a world-state claim
+  or a feed entry. These semantic categories guide agents and are not fixed action
+  enums or domain tables.
