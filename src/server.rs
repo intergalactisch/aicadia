@@ -28,9 +28,9 @@ use utoipa::{OpenApi, openapi::OpenApi as OpenApiDocument};
 use crate::{
     World,
     wire::{
-        CreateEntityInput, EntityOutput, EntityPageOutput, ErrorCode, ErrorDetail, ErrorOutput,
-        GetEntityInput, ListEntityInput, USER_CONTEXT_HEADER, UserOutput, WorldOutput,
-        parse_user_context,
+        CharacterOutput, CreateCharacterInput, CreateEntityInput, EntityOutput, EntityPageOutput,
+        ErrorCode, ErrorDetail, ErrorOutput, GetEntityInput, ListEntityInput, USER_CONTEXT_HEADER,
+        UserOutput, WorldOutput, parse_user_context,
     },
 };
 
@@ -70,6 +70,7 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
     Ok(Router::new()
         .route("/api/world", get(get_world))
         .route("/api/user", get(get_user))
+        .route("/api/character", get(get_character).post(create_character))
         .route("/api/entity", get(list_entity).post(create_entity))
         .route("/api/entity/{entity_id}", get(get_entity))
         .route("/api/openapi.json", get(openapi))
@@ -79,10 +80,20 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(get_world, get_user, list_entity, get_entity, create_entity),
+    paths(
+        get_world,
+        get_user,
+        get_character,
+        create_character,
+        list_entity,
+        get_entity,
+        create_entity
+    ),
     components(schemas(
         WorldOutput,
         UserOutput,
+        CharacterOutput,
+        CreateCharacterInput,
         EntityOutput,
         EntityPageOutput,
         CreateEntityInput,
@@ -127,6 +138,62 @@ async fn get_user(
         .await
         .map(UserOutput::from)
         .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/character",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context")),
+    responses(
+        (status = 200, description = "Current Character", body = CharacterOutput),
+        (status = 400, description = "Invalid User context", body = ErrorOutput),
+        (status = 404, description = "User or Character not found", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn get_character(
+    State(world): State<World>,
+    headers: HeaderMap,
+) -> Result<HttpJson<CharacterOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    world
+        .get_character(user_id)
+        .await
+        .map(CharacterOutput::from)
+        .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/character",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context")),
+    request_body = CreateCharacterInput,
+    responses(
+        (status = 201, description = "Created Character", body = CharacterOutput),
+        (status = 400, description = "Invalid Character or User context", body = ErrorOutput),
+        (status = 404, description = "User not found", body = ErrorOutput),
+        (status = 409, description = "Character already exists", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn create_character(
+    State(world): State<World>,
+    headers: HeaderMap,
+    body: Result<HttpJson<CreateCharacterInput>, JsonRejection>,
+) -> Result<(StatusCode, HttpJson<CharacterOutput>), HttpError> {
+    let user_id = user_context(&headers)?;
+    let input = body
+        .map_err(|_| ErrorOutput::malformed_request("character body is invalid"))?
+        .0;
+    world
+        .create_character(user_id, input.into())
+        .await
+        .map(CharacterOutput::from)
+        .map(|character| (StatusCode::CREATED, HttpJson(character)))
         .map_err(ErrorOutput::from_world)
         .map_err(Into::into)
 }
@@ -225,7 +292,10 @@ impl From<ErrorOutput> for HttpError {
 impl IntoResponse for HttpError {
     fn into_response(self) -> Response {
         let status = match self.0.error.code {
-            ErrorCode::UserNotFound | ErrorCode::EntityNotFound => StatusCode::NOT_FOUND,
+            ErrorCode::UserNotFound | ErrorCode::EntityNotFound | ErrorCode::CharacterNotFound => {
+                StatusCode::NOT_FOUND
+            }
+            ErrorCode::CharacterAlreadyExists => StatusCode::CONFLICT,
             ErrorCode::Unavailable => StatusCode::SERVICE_UNAVAILABLE,
             _ => StatusCode::BAD_REQUEST,
         };
@@ -315,6 +385,56 @@ impl AicadiaMcp {
     }
 
     #[tool(
+        description = "Get the Character role owned by the current User. The result embeds its shared Entity and explicit owner; the Character has no separate id. This tool derives the User from Aicadia-User-Id and accepts no ids.",
+        annotations(
+            title = "Get character",
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
+    )]
+    async fn get_character(
+        &self,
+        Extension(parts): Extension<Parts>,
+        Parameters(_input): Parameters<EmptyInput>,
+    ) -> Result<Json<CharacterOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        self.world
+            .get_character(user_id)
+            .await
+            .map(CharacterOutput::from)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
+        description = "Create the one Character role owned by the current User and its shared Entity. The result embeds that Entity and explicit owner; the Character has no separate id. This tool derives the User from Aicadia-User-Id and accepts no ids.",
+        annotations(
+            title = "Create character",
+            read_only_hint = false,
+            destructive_hint = false,
+            idempotent_hint = false,
+            open_world_hint = false
+        )
+    )]
+    async fn create_character(
+        &self,
+        Extension(parts): Extension<Parts>,
+        Parameters(input): Parameters<CreateCharacterInput>,
+    ) -> Result<Json<CharacterOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        self.world
+            .create_character(user_id, input.into())
+            .await
+            .map(CharacterOutput::from)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
         description = "List shared Entities from newest to oldest. limit defaults to 25 and must be 1 through 100. Copy next into cursor to read the following page; do not interpret the cursor.",
         annotations(
             title = "List entity",
@@ -398,6 +518,8 @@ impl ServerHandler for AicadiaMcp {
         let tools = [
             "get_world",
             "get_user",
+            "get_character",
+            "create_character",
             "list_entity",
             "get_entity",
             "create_entity",
@@ -428,7 +550,7 @@ impl ServerHandler for AicadiaMcp {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(Implementation::new("aicadia", MCP_VERSION))
             .with_instructions(
-                "Inspect and extend the shared Aicadia World through the five listed tools.",
+                "Inspect and extend the shared Aicadia World through the seven listed tools.",
             )
     }
 

@@ -145,6 +145,84 @@ impl World {
         .map_err(|error| storage_error("create_entity", error))?
         .ok_or(WorldError::UserNotFound)
     }
+
+    pub async fn get_character(&self, user_id: UserId) -> Result<Character, WorldError> {
+        self.get_user(user_id).await?;
+        sqlx::query_as::<_, CharacterRow>(
+            r#"
+            SELECT entity.id AS entity_id, entity.name, entity.description,
+                   entity.introduced_by_user_id, entity.introduced_at,
+                   character.owner_user_id
+            FROM character
+            JOIN entity ON entity.id = character.entity_id
+            WHERE character.owner_user_id = $1
+            "#,
+        )
+        .bind(user_id.0)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|error| storage_error("get_character", error))?
+        .map(Character::from)
+        .ok_or(WorldError::CharacterNotFound)
+    }
+
+    pub async fn create_character(
+        &self,
+        user_id: UserId,
+        input: CreateCharacter,
+    ) -> Result<Character, WorldError> {
+        let input = input.normalize()?;
+        let entity_id = Uuid::new_v4();
+        let mut transaction = self
+            .pool
+            .begin()
+            .await
+            .map_err(|error| storage_error("create_character", error))?;
+
+        let entity = sqlx::query_as::<_, Entity>(
+            r#"
+            INSERT INTO entity (id, name, description, introduced_by_user_id)
+            SELECT $1, $2, $3, id
+            FROM "user"
+            WHERE id = $4
+            RETURNING id, name, description, introduced_by_user_id, introduced_at
+            "#,
+        )
+        .bind(entity_id)
+        .bind(input.name)
+        .bind(input.description)
+        .bind(user_id.0)
+        .fetch_optional(&mut *transaction)
+        .await
+        .map_err(|error| storage_error("create_character", error))?
+        .ok_or(WorldError::UserNotFound)?;
+
+        if let Err(error) =
+            sqlx::query("INSERT INTO character (entity_id, owner_user_id) VALUES ($1, $2)")
+                .bind(entity_id)
+                .bind(user_id.0)
+                .execute(&mut *transaction)
+                .await
+        {
+            if error
+                .as_database_error()
+                .and_then(|error| error.constraint())
+                == Some("character_owner_user_id_key")
+            {
+                return Err(WorldError::CharacterAlreadyExists);
+            }
+            return Err(storage_error("create_character", error));
+        }
+
+        transaction
+            .commit()
+            .await
+            .map_err(|error| storage_error("create_character", error))?;
+        Ok(Character {
+            entity,
+            owner_user_id: user_id,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, sqlx::Type)]
@@ -171,6 +249,12 @@ pub struct Entity {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Character {
+    pub entity: Entity,
+    pub owner_user_id: UserId,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EntitySummary {
     pub id: EntityId,
     pub name: String,
@@ -181,6 +265,31 @@ struct EntityListRow {
     id: EntityId,
     name: String,
     introduced_at: DateTime<Utc>,
+}
+
+#[derive(FromRow)]
+struct CharacterRow {
+    entity_id: EntityId,
+    name: String,
+    description: String,
+    introduced_by_user_id: UserId,
+    introduced_at: DateTime<Utc>,
+    owner_user_id: UserId,
+}
+
+impl From<CharacterRow> for Character {
+    fn from(value: CharacterRow) -> Self {
+        Self {
+            entity: Entity {
+                id: value.entity_id,
+                name: value.name,
+                description: value.description,
+                introduced_by_user_id: value.introduced_by_user_id,
+                introduced_at: value.introduced_at,
+            },
+            owner_user_id: value.owner_user_id,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -196,53 +305,61 @@ pub struct CreateEntity {
 
 impl CreateEntity {
     fn normalize(self) -> Result<Self, WorldError> {
-        let name = self.name.trim().to_owned();
-        let description = self.description.trim().to_owned();
-
-        if name.is_empty() {
-            return Err(WorldError::InvalidEntity {
-                field: EntityField::Name,
-                reason: InvalidReason::Empty,
-            });
-        }
-
-        if name.contains('\0') {
-            return Err(WorldError::InvalidEntity {
-                field: EntityField::Name,
-                reason: InvalidReason::ContainsNul,
-            });
-        }
-
-        if name.chars().count() > MAX_ENTITY_NAME_LENGTH {
-            return Err(WorldError::InvalidEntity {
-                field: EntityField::Name,
-                reason: InvalidReason::TooLong,
-            });
-        }
-
-        if description.is_empty() {
-            return Err(WorldError::InvalidEntity {
-                field: EntityField::Description,
-                reason: InvalidReason::Empty,
-            });
-        }
-
-        if description.contains('\0') {
-            return Err(WorldError::InvalidEntity {
-                field: EntityField::Description,
-                reason: InvalidReason::ContainsNul,
-            });
-        }
-
-        if description.chars().count() > MAX_ENTITY_DESCRIPTION_LENGTH {
-            return Err(WorldError::InvalidEntity {
-                field: EntityField::Description,
-                reason: InvalidReason::TooLong,
-            });
-        }
-
+        let (name, description) =
+            normalize_entity_text(self.name, self.description, |field, reason| {
+                WorldError::InvalidEntity { field, reason }
+            })?;
         Ok(Self { name, description })
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CreateCharacter {
+    pub name: String,
+    pub description: String,
+}
+
+impl CreateCharacter {
+    fn normalize(self) -> Result<Self, WorldError> {
+        let (name, description) =
+            normalize_entity_text(self.name, self.description, |field, reason| {
+                WorldError::InvalidCharacter { field, reason }
+            })?;
+        Ok(Self { name, description })
+    }
+}
+
+fn normalize_entity_text(
+    name: String,
+    description: String,
+    invalid: impl Fn(EntityField, InvalidReason) -> WorldError,
+) -> Result<(String, String), WorldError> {
+    let name = name.trim().to_owned();
+    let description = description.trim().to_owned();
+
+    for (field, value, maximum) in [
+        (EntityField::Name, name.as_str(), MAX_ENTITY_NAME_LENGTH),
+        (
+            EntityField::Description,
+            description.as_str(),
+            MAX_ENTITY_DESCRIPTION_LENGTH,
+        ),
+    ] {
+        let reason = if value.is_empty() {
+            Some(InvalidReason::Empty)
+        } else if value.contains('\0') {
+            Some(InvalidReason::ContainsNul)
+        } else if value.chars().count() > maximum {
+            Some(InvalidReason::TooLong)
+        } else {
+            None
+        };
+        if let Some(reason) = reason {
+            return Err(invalid(field, reason));
+        }
+    }
+
+    Ok((name, description))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -292,12 +409,21 @@ pub enum WorldError {
         field: EntityField,
         reason: InvalidReason,
     },
+    #[error("character input is invalid")]
+    InvalidCharacter {
+        field: EntityField,
+        reason: InvalidReason,
+    },
     #[error("entity list limit must be between 1 and 100")]
     InvalidEntityLimit,
     #[error("user was not found")]
     UserNotFound,
     #[error("entity was not found")]
     EntityNotFound,
+    #[error("character was not found")]
+    CharacterNotFound,
+    #[error("user already owns a character")]
+    CharacterAlreadyExists,
     #[error("world storage is unavailable")]
     Unavailable,
 }

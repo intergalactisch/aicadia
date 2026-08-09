@@ -6,7 +6,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 readonly CREATE_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/create.json"
 readonly OBSERVE_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/observe.json"
-readonly CAPABILITIES='["get_world","get_user","list_entity","get_entity","create_entity"]'
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","list_entity","get_entity","create_entity"]'
 readonly CODEX_VERSION='codex-cli 0.147.0'
 readonly CODEX_MODEL='gpt-5.6-sol'
 readonly CODEX_REASONING_EFFORT='high'
@@ -329,7 +329,7 @@ verify_deployment() {
     jq -e --argjson expected "$CAPABILITIES" '
         ([.paths[][] | .operationId] | sort) == ($expected | sort)
         and ([.paths[][] | .operationId] | index("create_user") | not)
-    ' <<<"$openapi" >/dev/null || fail 'public HTTP catalog is not the exact five-capability contract.' || return
+    ' <<<"$openapi" >/dev/null || fail 'public HTTP catalog is not the exact seven-capability contract.' || return
     listed="$(curl_json \
         -H 'Content-Type: application/json' \
         -H 'Accept: application/json, text/event-stream' \
@@ -341,7 +341,7 @@ verify_deployment() {
     jq -e --argjson expected "$CAPABILITIES" '
         [.result.tools[].name] == $expected
         and ([.result.tools[].name] | index("create_user") | not)
-    ' <<<"$listed" >/dev/null || fail 'public MCP catalog is not the exact five-capability contract.' || return
+    ' <<<"$listed" >/dev/null || fail 'public MCP catalog is not the exact seven-capability contract.' || return
     database_probe="$(curl --disable --silent --show-error --connect-timeout 2 --max-time 10 \
         -H 'Aicadia-User-Id: 00000000-0000-0000-0000-000000000000' \
         -o /dev/null -w '%{http_code}' "$BASE_URL/api/user")" || fail 'disposable database path is unavailable.' || return

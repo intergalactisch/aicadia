@@ -354,3 +354,324 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   detail may remain in event text, but it does not by itself earn a world-state claim
   or a feed entry. These semantic categories guide agents and are not fixed action
   enums or domain tables.
+
+# 2026-08-08
+
+## Development method
+
+- challenged and rejected: recommending another Agent playtest or validation pass as
+  the next step was locally tidy but did not materially advance Aicadia as a game.
+- decided method / Terry: Game Progress First. Select the highest-leverage concrete
+  player or World outcome first, then use KISS to size its smallest safe slice.
+  Validation, cleanup, plumbing and documentation lead only when they unlock that
+  outcome or retire a concrete blocker or risk on the selected edge. The current
+  contract bounds implementation but not ambition: once a slice is sufficiently
+  proved, decide the next missing game behavior and update `docs/game/` before code.
+- decided method / Terry: every completed unit of Aicadia work records its meaningful
+  outcome or decision in this log and updates, corrects or removes every affected
+  authoritative document in the same change. This is project memory, not a diary of
+  shell commands.
+- corrected method: the root builder works directly by default. Delegation is used
+  only when requested or when bounded independent work materially helps; a mandatory
+  writer subagent is ceremony and has been removed from the build skill.
+
+## Spatial model
+
+- researched: comparable persistent-game spatial models across EVE Online, Second
+  Life, Luanti, Cataclysm: DDA, OpenTTD, Overture, PostGIS, H3 and OGC; report at
+  `docs/research/persistent-game-spatial-model.md`. Recommendation for the current
+  grill: a Place is an Entity role with the same stable id; the first discovery slice
+  uses exact `place_id` equality for one Place-scoped discovery read, not as a
+  universal visibility rule; boundaries, coordinates, containment, travel and engine
+  cells remain separate later layers. No game-contract decision yet.
+- researched: locality, co-presence and observation across Evennia, Smallville, AI
+  Town, Concordia, Second Life, Luanti, Unreal, Overture and partial-map systems;
+  report at `docs/research/locality-co-presence-and-observation.md`. There is no
+  universal locality rule: direct Place, nesting, distance, access, observation and
+  technical relevance are action-specific layers. The open grill question is
+  corrected from universal visibility to exact inclusion in one Place-scoped
+  discovery read. No game-contract decision yet.
+- researched: World clocks, ticks, scheduled transitions, lazy catch-up, sparse
+  regional simulation and stable procedural context across persistent games,
+  engines, agentic worlds and real-world observation systems; report at
+  `docs/research/world-time-and-sparse-simulation.md`. A clock supplies shared time
+  but performs no work by itself; scalable worlds combine action-specific temporal
+  rules with active regions, bounded catch-up or on-demand derivation. Stable
+  transition identity and randomness are required to prevent time, retries, restarts
+  or visit order from becoming rerolls. Whether and how Aicadia adopts World time or
+  temporal processes remains an open grill decision.
+
+# 2026-08-09
+
+## Development method
+
+- decided method / Terry, strengthening the earlier living-documentation rule:
+  every Aicadia product, domain, behavior, architecture, implementation, evidence or
+  operational choice is recorded when it crystallizes, including rejection,
+  deferral, correction and supersession. Each record keeps the material reason,
+  current status and affected scope; an unfinished grill maintains one active design
+  record with confirmed and open branches rather than waiting for implementation.
+  `AGENTS.md` and the build skill now enforce this across tasks.
+
+## Stochastic discovery rolls
+
+- researched: independent weighted rolls, rising and hard guarantees, entropy-like
+  sequences, shuffle bags and variable result counts across Cataclysm: DDA,
+  Warframe, Hearthstone, Apple GameplayKit and Path of Exile; report at
+  `docs/research/stochastic-discovery-and-bad-luck-protection.md`. No compared model
+  simultaneously bounds droughts, needs no cross-attempt state, removes the
+  incentive to repeat and keeps future results unpredictable. Recurring hard or
+  rising-odds protection is functionally a streak counter even when hidden or
+  derived, while entropy and shuffle bags replace it with other durable sequence
+  state. Idempotent delivery retries, operational rate limits and gameplay
+  bad-luck protection solve separate problems. The open grill question is what
+  concrete Character, Place or investigation change makes a request a new eligible
+  attempt; no investigation-roll contract has been accepted yet.
+- decided direction: prior empty investigations and elapsed time never improve a
+  Character's later discovery odds. Every eligible new investigation resolves the
+  same context-dependent independent chance table, including its possibility of
+  zero, one or several results. There is no hard pity, soft pity, entropy sequence,
+  shuffle bag or hidden accumulated luck. Delivery retries remain idempotent and
+  operational rate limits remain separate safeguards. The exact rule that makes an
+  investigation a new eligible attempt is still open, so this does not yet amend the
+  executable game contract.
+- decided direction: the World resolves the authoritative chance table before the
+  Agent authors any discovery content. The World derives Character and Place,
+  validates context, grants zero, one or several bounded opportunities and makes a
+  delivery retry stable; the Agent then supplies the intelligent content inside the
+  granted envelope. This deliberately introduces an unresolved completion boundary
+  rather than letting Agent-proposed candidates influence the roll.
+- recorded: the confirmed spatial, context, time, responsibility and stochastic
+  discovery directions from the ongoing grill are consolidated in
+  `docs/concept/10-discovery-and-world-context.md`. The record names every remaining
+  decision and is explicitly non-executable; `docs/game/` remains unchanged until a
+  smallest complete behavior is confirmed.
+- corrected direction: the User does not choose a mechanical investigation focus,
+  influence its chance or declare or confirm a discovery. The connected Agent—the
+  only LLM in the flow—selects intelligently from current World state and authors
+  within the envelope; the server-owned World derives context and owns validation
+  and chance resolution. This supersedes the earlier statement that the User steers
+  or chooses the investigation direction. Whether ordinary conversation may advise
+  but never bind the Agent remains open.
+- decided direction: ordinary User conversation may advise the Agent's investigation
+  choice, preserving meaningful human participation without creating server
+  authority. The Agent may follow, reinterpret or ignore expressed curiosity; User
+  wording never maps directly to a mechanical focus, creates no eligible attempt,
+  changes no probability and guarantees no investigation or result. This closes the
+  advisory-influence branch while retaining the User's prohibition on discovery
+  power.
+- decided direction: a successful World roll grants zero, one or several bounded
+  structural World-change opportunities, each with an allowed operation,
+  authoritative scope and limits. The Agent supplies semantic content only after the
+  grant. Blank counts are rejected because they delegate mechanical authority to the
+  Agent; semantic recipes are rejected because they put content intelligence in the
+  server. `World-change opportunity` remains a working design name until the full
+  behavior and canonical nomenclature are accepted.
+- reframed / open: persistence of a granted opportunity was asked too early. The
+  result shape may combine the authoritative roll, structural envelope and relevance
+  metadata derived from explicit World-state heuristics, allowing the Agent to see
+  that the World currently lacks or would benefit from a kind of element. “Fun” may
+  not become free-form server judgment or a universal score; it must decompose into
+  inspectable rules such as missing local variety, repeated outcome shapes or an
+  unresolved structural gap. The next decision is whether those heuristics select a
+  binding direction or only advise the Agent.
+- corrected direction, superseding the preceding open proposal: the World does not
+  select or recommend a semantic direction such as `local_flora`. It returns the
+  authoritative roll, structural envelope, applicable current meta-state and
+  changes. The Agent alone evaluates heuristics, coherence, interest and fun value
+  and decides what discovery fits. The server may derive mechanical data
+  deterministically but owns no `fun_score`, semantic need or content intelligence;
+  the exact raw-versus-derived meta boundary remains open.
+- decided direction: the World returns authoritative facts plus rich, qualitative,
+  neutral signals derived deterministically from them. Each signal may retain its
+  affected scope, relationships, before/after state, time, provenance and inclusion
+  rule so the Agent has enough connected evidence for an insightful judgment. A
+  bare change code is rejected as too poor; ranking, scoring, value assignment and
+  semantic recommendation are rejected as server intelligence. Packaging this rich
+  context in one bounded response or progressive detail remains open.
+- decided direction, closing that packaging choice: the roll response contains a
+  rich qualitative overview plus typed stable references for deeper read-only World
+  inspection. Every reference must be resolvable through a published Agent
+  capability; dead ids are invalid. Required reads ship with semantic parity through
+  `World`, HTTP and MCP and remain separate from investigations: following them
+  consumes no roll, grants no opportunity and changes no state. The exact traversal
+  and query surface remains open.
+- decided direction: Agent inspection may query broadly across exposed World state,
+  but the query contract stays flat, typed and deterministic. It uses allow-listed
+  targets, filters, comparisons, stable ordering and cursor pagination, with
+  explainable predicate matches. SQL, Cypher, GraphQL, recursive patterns, free-text
+  interpretation and semantic or vector search are rejected; an Agent deepens its
+  research through further bounded calls. Whether one call may combine several
+  kinds of World state remains open.
+- decided direction: every inspection query explicitly returns exactly one result
+  kind. Filters may reference exposed fields and relationships, but mixed or joined
+  result shapes are rejected; the Agent combines results through further calls.
+  Every Agent-visible kind of established shared World state must have an explicit
+  read and query path in the MCP catalog with the same semantic capability through
+  `World` and HTTP. “Fully queryable” means complete composition across these typed
+  tools, not an omnipotent query or enormous response; the visibility boundary
+  remains open.
+- decided direction, closing the shared-state boundary: all established shared World
+  state, history, relationships, provenance and neutral meta-signals are Agent-
+  queryable. Random seeds, hidden chance mechanics, authentication and rate-limit
+  state, uncommitted Agent candidates and operational internals are not shared World
+  state and remain outside game queries.
+- decided direction: full Agent queryability covers two separately authorized
+  scopes: all established shared World state and the current Character's complete
+  personal state. Personal reads derive the Character from trusted User request
+  context and never accept a caller-selected Entity id. Personal state need not
+  be published into shared projections merely to be queryable; visibility of other
+  Characters' personal state remains open.
+- decided direction, closing the personal visibility boundary: an Agent may query
+  its current Character's complete personal state but no personal state belonging to
+  another Character. Other Characters are visible only through their established
+  shared World state. This provides a fixed authorization rule without per-field or
+  player-managed visibility controls.
+- corrected direction: a positive roll is volatile because its relevance depends on
+  changing World-state. It is not stored as a durable or stockpilable Character
+  opportunity. The prior `introduce_entity`-style helper envelope is rejected as
+  persistence structure masquerading as gameplay and as an overly prescriptive
+  server decision. The roll now yields a state-bound roll result with
+  generic limits and rich meta-context; the Agent inspects the World and submits one
+  structured candidate World change, after which the World revalidates current state
+  and commits only concrete accepted domain results. The exact two-call interface
+  and staleness rule remain open.
+- challenged / open: choosing a separate deep Investigation interface was paused
+  because its ownership of concrete results was unclear. Applying the existing
+  architecture and deep-module seam discipline yields a proposed map: `World`
+  remains the sole public owner of game behavior, the Agent owns reasoning and
+  candidate authorship, concrete domain behavior owns its invariants inside World,
+  World owns roll/freshness/acceptance and the atomic commit, shared results belong
+  to the World, and HTTP/MCP remain thin transport adapters. No new public module or
+  internal seam is accepted yet.
+- decided direction: the proposed ownership map is accepted. `World` remains the
+  sole public game-behavior seam and owns investigation flow, roll, meta-view,
+  freshness, acceptance and atomic commit. The Agent owns reasoning and candidate
+  authorship; concrete Entity, Place, relationship and future domain behavior owns
+  its invariants inside World; accepted state belongs to the shared World; HTTP and
+  MCP adapters own transport only. Investigation gains no competing public interface
+  and an internal module must still earn its seam from implementation evidence.
+- corrected nomenclature: `resolution` was ambiguous with an Agent or transport
+  session. The working domain term is now `roll result`: the output of exactly one
+  investigation roll. A positive result may carry an opaque technical `roll_token`;
+  neither term denotes stored Character state or a session.
+- provisional direction: only changes to the bounded state and signals on which a
+  roll depended make its result stale. Unrelated changes elsewhere in the immense
+  World do not. The proposed high-velocity implementation is a server-authenticated,
+  client-carried roll token with opaque dependency fingerprints, stateless
+  verification by any World instance and one idempotent Postgres transaction only
+  when a candidate is completed. Choosing this over pending database rows or
+  process-local state remains open.
+- decided direction: a volatile positive roll result is carried by an opaque,
+  server-authenticated `roll_token`, not by an Agent session, process-local state or
+  a durable pending-roll record. The token binds the derived Character, attempt,
+  result limits, contract version and opaque fingerprints of its bounded relevant
+  dependencies. Any World implementation instance can verify it; unrelated World
+  changes do not stale it, and an accepted candidate commits idempotently in one
+  Postgres transaction. Caches may accelerate reads but never determine correctness.
+  The remaining eligibility decision must prevent an Agent from retaining one valid
+  token while farming additional rolls without turning the token into stored
+  gameplay state.
+- decided direction: exactly one roll can be current per Character. When World
+  admits a genuinely new roll it atomically replaces a small server-generated
+  current-roll marker; the new `roll_token` binds that marker, so every older token
+  becomes stale. A delivery retry with the same idempotency key remains the same
+  roll. The marker stores no outcome, meta-state or candidate, needs no cleanup and
+  creates contention only within one Character. This deliberately adds one small
+  per-roll write to the earlier client-carried-token direction; no pending-roll row,
+  Agent session, process affinity or global World lock is introduced. What World
+  admits as a genuinely new roll remains open and must stay distinct from
+  operational throttling.
+- challenged and reopened: the one-current-roll-per-Character direction couples
+  every concurrent conversation for the same Character. A roll in one conversation
+  would silently invalidate unrelated investigation work in another, even though a
+  conversation is transport context and must not become a durable World identity or
+  authority source. The client-carried authenticated token remains accepted, but
+  its concurrency rule is open again. Current recommendation: allow attempt-specific
+  tokens in parallel, aggregate operational limiting across the Character rather
+  than per conversation, and use bounded dependency overlap for optimistic conflict
+  handling—an accepted change stales overlapping tokens while unrelated tokens stay
+  usable. This recommendation is not accepted yet.
+- decided and superseded: one Character may carry several attempt-specific,
+  scope-bound `roll_token`s concurrently across any number of conversations.
+  Conversation identity is not stored in or trusted by World, and operational
+  admission limits aggregate across the Character, so opening another conversation
+  never increases roll throughput. Accepted changes stale only tokens whose bounded
+  dependencies overlap; unrelated investigation work remains usable. This
+  supersedes the Character-global `current_roll_id` and its one-roll-at-a-time
+  behavior, which created false conflicts between unrelated work. The authenticated
+  client-carried token and optimistic transactional revalidation remain accepted.
+- decided direction: an explicit Agent investigation request becomes a fresh
+  eligible attempt only when World admits it before rolling. World derives the
+  Character, applies one operational admission policy across all of its
+  conversations, creates the attempt identity and performs the independent roll.
+  Reusing an idempotency key is a delivery retry; a rejected request creates no
+  attempt, roll or World change. User conversation, free text and asserted effort
+  confer no eligibility. Operational limiting protects throughput but never changes
+  odds or creates gameplay progress; its concrete mechanism and thresholds remain
+  deferred until implementation requires them.
+- process decision: the discovery grill pauses with five explicitly open design
+  areas rather than pursuing speculative completeness. Chance-table derivation,
+  multi-result composition, duplicate or contradictory candidates, exact committed
+  records and the first vertical discovery behavior remain deferred. They are
+  reopened only when a selected smallest end-to-end slice needs them; until then
+  `docs/game/` and the executable MVP remain unchanged.
+- built for evaluation: `docs/concept/discovery-roll-prototype.html` is one
+  self-contained, in-memory logic lab for the question whether scope-bound
+  optimistic rolls remain understandable across multiple conversations for one
+  Character. Free play and four guided walkthroughs expose full World, Character,
+  client-held token and accepted-package state after every action: unrelated scopes
+  both commit, overlapping scopes stale, delivery retry creates one attempt, and
+  closed Character-wide admission creates no attempt for either conversation. The
+  forced zero/one/two branches and all fixture content are prototype controls, not
+  accepted odds, schema or Agent input. DOM-free execution reached every expected
+  terminal state, JavaScript syntax and DOM references were checked, and an offline
+  render confirmed the visual hierarchy. No verdict has been inferred from building
+  it; `docs/game/` and production code remain unchanged pending hands-on evaluation.
+
+## Character production slice
+
+- confirmed behavior: the current User may create and retrieve exactly one owned
+  Character through User-context-derived World, HTTP and MCP operations. Ownership
+  and one-per-User cardinality are server-enforced, creation is atomic under
+  concurrent requests, and the Agent supplies no owner or Character selector.
+  Place, movement, investigation, rolls, discovery, sessions and authentication
+  remain absent.
+- decided after Terry comparison: Character is a concrete Entity role, not a second
+  World subject. `character.entity_id` is the role table's primary/foreign key and
+  `character.owner_user_id` is the unique ownership relation. Domain and Agent
+  results compose the complete Entity instead of copying its fields or relabeling
+  `introduced_at` as Character creation time. Separate Character identity was
+  rejected until accepted behavior requires Character continuity across different
+  Entities; independent Character and Entity namespaces were rejected because they
+  would make every future location, observation and relationship choose a subject
+  kind. The complete contract and relationship/index meanings live in
+  `docs/game/README.md` and `docs/game/agent-interface.md`.
+- corrected spatial lifecycle: creating a Character introduces its durable identity
+  and User ownership but does not place it in the World. A Character may therefore
+  exist without an established Place. Initial placement is a separate future game
+  transition whose actor, authority and result must be decided before adding Place
+  storage; a nullable Place column without such behavior is rejected as unused
+  plumbing. `docs/game/README.md` now states the current no-Place boundary, and the
+  discovery design no longer assumes every Character already has a current Place.
+
+## World history and development backlog
+
+- confirmed product direction: every accepted state-changing game action must leave
+  durable, queryable history sufficient to establish who acted, what the World
+  accepted, when and where it happened, and which Characters, Places and other
+  Entities were involved. Stable ids and explicit roles preserve this context;
+  conversation text, rejected calls, reads and private Agent reasoning are not World
+  history. The exact schema and public nomenclature remain open.
+- decided build method: `.agents/backlog/README.md` is the compact ordered forward
+  plan, with at most one active item and a detailed document only for current or
+  near work. It does not compete with `docs/game/`, research or this log. Builders
+  update current scope, state, dependencies and completion evidence in place while
+  material choices continue to be recorded in their proper authority.
+- proposed next edge, not yet executable contract: build World entry together with
+  the first normalized activity-history spine. Character remains unplaced after
+  creation; a later explicit action establishes spatial presence. Current state and
+  append-only activity are written atomically but remain separate, avoiding both an
+  unused Place column and premature event sourcing. The concrete proposal, open
+  names and migration risk are maintained in
+  `.agents/backlog/items/world-entry-history.md` pending acceptance.

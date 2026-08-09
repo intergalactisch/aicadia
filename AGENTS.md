@@ -11,15 +11,27 @@ discussion but never governs current implementation.
 
 `Terry` is Aicadia's proportional game-and-build gate for concept decisions, domain
 model, executable behaviour, code, tests, docs and operations. Apply the Build
-Heuristics below to substantial work even when the handle is not repeated. Ask four
-questions: does this belong in the current game and build contract; do actor, action,
-state, ownership and nomenclature agree; is this the smallest safe build needed now;
-and does the evidence prove exactly the claim being made? Terry does not require
-speculative completeness or perfection. Development may remain deliberately
-incomplete when its current boundary, evidence claim and next concrete risk are
-explicit; `docs/game/` remains the current truth.
+Heuristics below to substantial work even when the handle is not repeated. Ask five
+questions: what is the highest-value current game-development edge; does this work
+advance it by fulfilling or deliberately evolving the current build contract; do
+actor, action, state, ownership and nomenclature agree; is this the smallest safe
+build needed now; and does the evidence prove exactly the claim being made? Terry
+does not require speculative completeness or perfection. Development may remain
+deliberately incomplete when its current boundary, evidence claim and next concrete
+risk are explicit; `docs/game/` remains the current truth.
 
 ## Build Heuristics
+
+### Game Progress First
+
+Choose next work by the highest-leverage concrete advance toward Aicadia becoming a
+compelling shared-world discovery and settlement game. Identify the valuable player
+or world outcome first, then use KISS to select its smallest safe slice. Tiny
+validation, cleanup, plumbing or documentation work does not win merely because it
+is bounded; it may be next only when it unlocks a meaningful game capability or
+retires a concrete blocker or risk on the selected edge. A working slice is not a
+reason to keep polishing it: when its contract no longer contains the highest-value
+advance, decide the next concrete game behavior, update `docs/game/`, then build it.
 
 ### KISS — Keep It Simple, Stupid
 
@@ -28,14 +40,27 @@ designs both work, choose the one with fewer concepts, tables, states, branches 
 moving parts. Add complexity only after a concrete current scenario shows why the
 smaller design fails; predicted future scale alone is not enough.
 
+### One Subject, One Identity
+
+One durable World subject has one stable identity. A concrete role of an Entity uses
+`entity_id` as its foreign-key identity and never receives a surrogate role id until
+accepted behavior requires an independent lifecycle. Name every foreign key for its
+meaning, such as `owner_user_id`, and add an index only for a current lookup,
+ordering or uniqueness rule.
+
 ### The MVP Is The Filter
 
-The current executable MVP contains exactly one `World`, durable `User` records and
-shared `Entity` records. Its complete use-case surface is `get_world`, `create_user`,
-`get_user`, `list_entity`, `get_entity` and `create_entity`. Every task must directly
-decide, implement or verify that surface. The five player-facing capabilities omit
-`create_user` and ship through both HTTP and MCP. Authentication, OAuth and every
-other game capability remain deferred.
+The current executable MVP contains exactly one `World`, durable `User` records,
+shared `Entity` records and at most one owned `Character` Entity role per User. Its
+complete use-case surface is `get_world`, `create_user`, `get_user`, `get_character`,
+`create_character`, `list_entity`, `get_entity` and `create_entity`. Code may not
+exceed this surface until a next player or World behavior is explicitly accepted in
+`docs/game/`.
+Next-work selection is not limited to this surface: once its value is sufficiently
+proved, choose the next missing game outcome, decide its concrete contract, then
+implement it. The seven current player-facing capabilities omit `create_user` and
+ship through both HTTP and MCP. Authentication, OAuth and every other game capability
+remain deferred until deliberately selected.
 
 ### Singular Domain Names
 
@@ -70,9 +95,9 @@ examples that a future builder can implement and test.
 Treat Aicadia as a game under development, never as a literary platform. Every term
 in code, schema, API, architecture and current concept direction uses conventional
 game-development and server English and states the actor, action, state or stored
-data it represents. The current implementation vocabulary is `world`, `user` and
-`entity`. Existing exploration history may retain old wording. Product copy may be
-layered on later and never shapes the core model.
+data it represents. The current implementation vocabulary is `world`, `user`,
+`character` and `entity`. Existing exploration history may retain old wording.
+Product copy may be layered on later and never shapes the core model.
 
 ### Boring Infrastructure
 
@@ -92,7 +117,7 @@ are never Agent tools.
 
 ### Deferred Means Absent
 
-`claim`, `world_event`, `character`, `rule`, event sourcing and every related status
+`claim`, `world_event`, `rule`, event sourcing and every related status
 or projection are undecided and outside the current MVP. Do not add their tables,
 types, fields, interfaces or abstractions until `docs/game/` explicitly introduces
 required current behavior.
@@ -123,19 +148,50 @@ seems to need one, the feature is wrong.
 Every file, table, endpoint and abstraction justifies itself now — no "might need
 later" code, no dead paths, no placeholder services. Remove what isn't current.
 
-### Documents Earn Their Place
+### Every Choice Leaves A Trail
 
-Current executable behavior and implementation decisions live in `docs/game/`.
-Update those documents with every accepted behavior change. `docs/concept/` remains
-exploration and history and cannot override `docs/game/` or this file. Amend this
-file only for compact, always-on repository instructions.
+Every Aicadia choice that changes or constrains product direction, domain model,
+behavior, architecture, implementation, evidence or operation is incomplete until
+recorded when it crystallizes. Record accepted, rejected, deferred, corrected and
+superseded choices with their material reason, current status and affected scope in
+`docs/concept/log/log.md`; omit shell-command trivia. During an unfinished grill or
+design session, maintain one active concept record that separates confirmed
+direction from open decisions instead of waiting for implementation or final
+agreement. In the same change, update, correct or remove every affected authority so
+known-stale documentation is never left behind: current behavior and implementation
+in `docs/game/`, sourced research plus its index in `docs/research/`, canonical
+vocabulary in `CONTEXT.md`, and development history in the concept log. Write the
+full choice once in its authority and link to it elsewhere. `docs/concept/` cannot
+override `docs/game/` or this file. Amend this file only for an explicitly accepted,
+compact rule that should govern work across tasks.
+
+### Every World Action Leaves History
+
+Every accepted state-changing game action defines and stores a durable, queryable
+historical footprint in the same transaction as its current-state change. It must
+remain possible to establish who acted, what was accepted, when and where it
+happened, and which Characters, Places and other Entities were involved. Record
+stable ids and explicit roles rather than inferring history later from prose. Reads,
+rejected requests, transport traffic and private Agent reasoning are not World
+history. This requirement does not authorize event sourcing or a universal payload;
+current state and each concrete domain result keep their own simplest model.
+
+### The Backlog Is Forward State
+
+`.agents/backlog/README.md` orders the current development edge and later concrete
+game outcomes. It is planning state, never an implementation contract and never a
+replacement for `docs/game/` or the concept log. Keep at most one item active. Update
+an item's current scope, status, dependencies and completion evidence when material
+insight or implementation changes it; record the underlying product or architecture
+choice once in its proper authority and link to it. Do not turn every idea into an
+item, retain stale plans as if still current, or use scores and estimates as a proxy
+for game value.
 
 ### Research Leaves A Trail
 
-Research is never left only in a conversation. Save it under `docs/research/` with
-its question, findings, sources and implications for Aicadia. Research informs a
-choice but does not make one: accepted current behavior and implementation decisions
-land in `docs/game/`.
+A research unit is complete only when its question, findings, sources and
+implications for Aicadia are recorded. Research informs a choice but does not make
+one; acceptance still requires updating the relevant current authority.
 
 ### Five-Year Backcast (`5jaar`)
 

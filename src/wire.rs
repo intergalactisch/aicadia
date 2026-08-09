@@ -6,8 +6,8 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
-    CreateEntity, Entity, EntityCursor, EntityField, EntityId, EntityPage, EntitySummary,
-    InvalidReason, ListEntity, User, UserId, WorldError, WorldView,
+    Character, CreateCharacter, CreateEntity, Entity, EntityCursor, EntityField, EntityId,
+    EntityPage, EntitySummary, InvalidReason, ListEntity, User, UserId, WorldError, WorldView,
 };
 
 pub const USER_CONTEXT_HEADER: &str = "Aicadia-User-Id";
@@ -61,6 +61,23 @@ impl From<Entity> for EntityOutput {
             description: value.description,
             introduced_by_user_id: value.introduced_by_user_id.0,
             introduced_at: value.introduced_at,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct CharacterOutput {
+    pub entity: EntityOutput,
+    pub owner_user_id: Uuid,
+}
+
+impl From<Character> for CharacterOutput {
+    fn from(value: Character) -> Self {
+        Self {
+            entity: value.entity.into(),
+            owner_user_id: value.owner_user_id.0,
         }
     }
 }
@@ -187,6 +204,29 @@ impl From<CreateEntityInput> for CreateEntity {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
+pub struct CreateCharacterInput {
+    /// Display name. The World trims it and accepts 1 through 120 Unicode characters.
+    #[schemars(length(min = 1, max = 120))]
+    #[schema(min_length = 1, max_length = 120)]
+    pub name: String,
+    /// Description. The World trims it and accepts 1 through 4,000 Unicode characters.
+    #[schemars(length(min = 1, max = 4000))]
+    #[schema(min_length = 1, max_length = 4000)]
+    pub description: String,
+}
+
+impl From<CreateCharacterInput> for CreateCharacter {
+    fn from(value: CreateCharacterInput) -> Self {
+        Self {
+            name: value.name,
+            description: value.description,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
 pub struct ErrorOutput {
     pub error: ErrorDetail,
 }
@@ -209,9 +249,12 @@ pub enum ErrorCode {
     UserContextRequired,
     InvalidRequest,
     InvalidEntity,
+    InvalidCharacter,
     InvalidEntityLimit,
     UserNotFound,
     EntityNotFound,
+    CharacterNotFound,
+    CharacterAlreadyExists,
     Unavailable,
 }
 
@@ -282,6 +325,23 @@ impl ErrorOutput {
                     reason,
                 )
             }
+            WorldError::InvalidCharacter { field, reason } => {
+                let field = match field {
+                    EntityField::Name => "name",
+                    EntityField::Description => "description",
+                };
+                let (reason, explanation) = match reason {
+                    InvalidReason::Empty => ("empty", "is empty"),
+                    InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
+                    InvalidReason::TooLong => ("too_long", "is too long"),
+                };
+                Self::with_detail(
+                    ErrorCode::InvalidCharacter,
+                    format!("Character {field} {explanation}."),
+                    field,
+                    reason,
+                )
+            }
             WorldError::InvalidEntityLimit => Self::with_detail(
                 ErrorCode::InvalidEntityLimit,
                 "limit must be from 1 through 100.",
@@ -295,6 +355,14 @@ impl ErrorOutput {
             WorldError::EntityNotFound => Self::new(
                 ErrorCode::EntityNotFound,
                 "entity_id does not identify an existing Entity.",
+            ),
+            WorldError::CharacterNotFound => Self::new(
+                ErrorCode::CharacterNotFound,
+                "The current User does not own a Character.",
+            ),
+            WorldError::CharacterAlreadyExists => Self::new(
+                ErrorCode::CharacterAlreadyExists,
+                "The current User already owns a Character.",
             ),
             WorldError::Unavailable => Self::new(
                 ErrorCode::Unavailable,
@@ -437,9 +505,15 @@ mod test {
             (ErrorCode::UserContextRequired, "user_context_required"),
             (ErrorCode::InvalidRequest, "invalid_request"),
             (ErrorCode::InvalidEntity, "invalid_entity"),
+            (ErrorCode::InvalidCharacter, "invalid_character"),
             (ErrorCode::InvalidEntityLimit, "invalid_entity_limit"),
             (ErrorCode::UserNotFound, "user_not_found"),
             (ErrorCode::EntityNotFound, "entity_not_found"),
+            (ErrorCode::CharacterNotFound, "character_not_found"),
+            (
+                ErrorCode::CharacterAlreadyExists,
+                "character_already_exists",
+            ),
             (ErrorCode::Unavailable, "unavailable"),
         ];
 

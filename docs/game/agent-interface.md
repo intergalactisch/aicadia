@@ -36,6 +36,8 @@ The catalog is closed and complete:
 | --- | --- | --- | --- | --- |
 | `get_world` | `get_world()` | `GET /api/world` | `get_world` | none |
 | `get_user` | `get_user(context.user_id)` | `GET /api/user` | `get_user` | required |
+| `get_character` | `get_character(context.user_id)` | `GET /api/character` | `get_character` | required |
+| `create_character` | `create_character(context.user_id, input)` | `POST /api/character` | `create_character` | required |
 | `list_entity` | `list_entity(input)` | `GET /api/entity` | `list_entity` | none |
 | `get_entity` | `get_entity(entity_id)` | `GET /api/entity/{entity_id}` | `get_entity` | none |
 | `create_entity` | `create_entity(context.user_id, input)` | `POST /api/entity` | `create_entity` | required |
@@ -101,7 +103,8 @@ task or sub-Agent does not hot-reload the MCP tool registry. Restart it or start
 new task after changing the server configuration or `AICADIA_USER_ID`.
 
 Without `AICADIA_USER_ID`, an Agent can still use `get_world`, `list_entity` and
-`get_entity`. `get_user` and `create_entity` remain discoverable but return
+`get_entity`. `get_user`, `get_character`, `create_character` and `create_entity`
+remain discoverable but return
 `user_context_required` when called because their request has no User context.
 
 ### Live cross-User playtest
@@ -119,7 +122,8 @@ tools/agent-playtest run --confirm-token-spend
 
 ## User request context
 
-`get_user` and `create_entity` require this HTTP header:
+`get_user`, `get_character`, `create_character` and `create_entity` require this HTTP
+header:
 
 ```http
 Aicadia-User-Id: 54c18ce9-9ce9-4e17-b52c-04fd57ad8529
@@ -130,8 +134,9 @@ must be one UUID identifying an existing User. Repeated header fields and a sing
 field containing multiple comma-separated values both count as multiple values and
 are rejected. For the HTTP API the value is read from that request. For MCP over
 Streamable HTTP, the MCP client sends the same header on the request carrying the
-tool call. The tool input never accepts `user_id` or `introduced_by_user_id`, so an
-Agent cannot select a different introducer inside its tool arguments.
+tool call. Character tool input never accepts `owner_user_id` or `entity_id`, and Entity
+creation never accepts `user_id` or `introduced_by_user_id`, so an Agent cannot
+select a different owner or introducer inside its tool arguments.
 
 The header is an untrusted local-development assertion, not authentication. Anyone
 who knows a User id can currently present it. The adapter must not call this secure,
@@ -149,7 +154,7 @@ identity. The one `/mcp` endpoint supports two protocol revisions:
 - MCP `2026-07-28` remains stateless. Every call stands alone, carries its required
   per-request protocol metadata and receives no `Mcp-Session-Id`.
 
-Both revisions call the same five tools and the same `World` methods. A legacy
+Both revisions call the same seven tools and the same `World` methods. A legacy
 transport session is connection plumbing only: it does not authenticate a User,
 retain a conversation or enter `World` or game storage. Context-required tool calls
 still carry `Aicadia-User-Id` on the request that invokes the tool.
@@ -173,7 +178,8 @@ result does not vary by User.
 - UUID values are lowercase UUID strings on output; UUID input is case-insensitive.
 - Timestamps are RFC 3339 strings in UTC.
 - HTTP JSON requests use `Content-Type: application/json`.
-- Successful HTTP reads return `200 OK`; `create_entity` returns `201 Created`.
+- Successful HTTP reads return `200 OK`; `create_character` and `create_entity`
+  return `201 Created`.
 - Successful operations return their result object directly, without a `data`
   wrapper.
 - Unknown JSON fields are rejected.
@@ -199,6 +205,26 @@ result does not vary by User.
   "created_at": "2026-08-07T12:00:00Z"
 }
 ```
+
+`Character`:
+
+```json
+{
+  "entity": {
+    "id": "bf734a6f-1502-4453-9279-4c0f091d943f",
+    "name": "Mara Venn",
+    "description": "A careful surveyor at the edge of the known World.",
+    "introduced_by_user_id": "54c18ce9-9ce9-4e17-b52c-04fd57ad8529",
+    "introduced_at": "2026-08-07T12:00:30Z"
+  },
+  "owner_user_id": "54c18ce9-9ce9-4e17-b52c-04fd57ad8529"
+}
+```
+
+The Character has no separate id or copied Entity fields. `entity.id` is its only
+World identity and `owner_user_id` is the ownership relation derived from request
+context; neither is Agent input. `entity.introduced_by_user_id` remains introduction
+attribution and must not be interpreted as ownership.
 
 `EntitySummary`:
 
@@ -265,11 +291,13 @@ OpenAPI `operationId` is exactly the capability name in this table.
 | --- | --- | --- |
 | `GET /api/world` | none | `200` with `WorldView` |
 | `GET /api/user` | `Aicadia-User-Id` header | `200` with `User` |
+| `GET /api/character` | context header; no query or Entity id | `200` with `Character` |
+| `POST /api/character` | context header plus `CreateCharacter` JSON | `201` with `Character` |
 | `GET /api/entity` | optional `cursor` string and `limit` integer query fields | `200` with `EntityPage` |
 | `GET /api/entity/{entity_id}` | UUID path field | `200` with `Entity` |
 | `POST /api/entity` | context header plus `CreateEntity` JSON | `201` with `Entity` |
 
-`CreateEntity` is exactly:
+`CreateCharacter` and `CreateEntity` each contain exactly:
 
 ```json
 {
@@ -279,12 +307,14 @@ OpenAPI `operationId` is exactly the capability name in this table.
 ```
 
 The adapter forwards both strings to `World`. `World` trims and validates them as
-specified in [Aicadia MVP](README.md). Repeating a successful `POST /api/entity`
-creates a distinct Entity; this operation is not idempotent.
+specified in [Aicadia MVP](README.md). Character creation derives the owning User,
+creates its Entity atomically and returns `409 Conflict` if that User already
+owns a Character. Repeating a successful `POST /api/entity` creates a distinct
+Entity; that operation is not idempotent.
 
 ## MCP tools
 
-MCP publishes exactly the five tools returned by `tools/list`. Tool names equal the
+MCP publishes exactly the seven tools returned by `tools/list`. Tool names equal the
 capability names and OpenAPI operation IDs.
 
 ### Descriptions
@@ -295,6 +325,8 @@ The tool descriptions are normative:
 | --- | --- |
 | `get_world` | Get the identity of the one persistent shared Aicadia World. No User context is required. |
 | `get_user` | Get the durable User represented by this request's `Aicadia-User-Id` context. This tool does not accept a User id and does not authenticate the caller. |
+| `get_character` | Get the Character role owned by the current User. The result embeds its shared Entity and explicit owner; the Character has no separate id. This tool derives the User from `Aicadia-User-Id` and accepts no ids. |
+| `create_character` | Create the one Character role owned by the current User and its shared Entity. The result embeds that Entity and explicit owner; the Character has no separate id. This tool derives the User from `Aicadia-User-Id` and accepts no ids. |
 | `list_entity` | List shared Entities from newest to oldest. `limit` defaults to 25 and must be 1 through 100. Copy `next` into `cursor` to read the following page; do not interpret the cursor. |
 | `get_entity` | Get one shared Entity by its stable Entity id. |
 | `create_entity` | Create one shared Entity for a stable referent introduced by the current User. Use this only when later participants must refer to the same subject. This does not assert fictional creation, ownership or discovery, and repeating it creates another Entity. |
@@ -309,13 +341,15 @@ arbitrary external systems.
 | --- | --- | --- | --- | --- | --- |
 | `get_world` | `Get world` | `true` | `false` | `true` | `false` |
 | `get_user` | `Get user` | `true` | `false` | `true` | `false` |
+| `get_character` | `Get character` | `true` | `false` | `true` | `false` |
+| `create_character` | `Create character` | `false` | `false` | `false` | `false` |
 | `list_entity` | `List entity` | `true` | `false` | `true` | `false` |
 | `get_entity` | `Get entity` | `true` | `false` | `true` | `false` |
 | `create_entity` | `Create entity` | `false` | `false` | `false` | `false` |
 
 ### Input schemas
 
-`get_world` and `get_user`:
+`get_world`, `get_user` and `get_character`:
 
 ```json
 {
@@ -363,7 +397,7 @@ arbitrary external systems.
 }
 ```
 
-`create_entity`:
+`create_character` and `create_entity`:
 
 ```json
 {
@@ -373,13 +407,13 @@ arbitrary external systems.
       "type": "string",
       "minLength": 1,
       "maxLength": 120,
-      "description": "Display name of the stable referent. World trims this value."
+      "description": "Display name. The World trims it and accepts 1 through 120 Unicode characters."
     },
     "description": {
       "type": "string",
       "minLength": 1,
       "maxLength": 4000,
-      "description": "English description of the stable referent. World trims this value."
+      "description": "Description. The World trims it and accepts 1 through 4,000 Unicode characters."
     }
   },
   "required": ["name", "description"],
@@ -416,6 +450,34 @@ Each MCP tool declares an `outputSchema`. Required fields and
     "created_at": {"type": "string", "format": "date-time"}
   },
   "required": ["id", "created_at"],
+  "additionalProperties": false
+}
+```
+
+`get_character` and `create_character`:
+
+```json
+{
+  "$defs": {
+    "EntityOutput": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "introduced_by_user_id": {"type": "string", "format": "uuid"},
+        "introduced_at": {"type": "string", "format": "date-time"}
+      },
+      "required": ["id", "name", "description", "introduced_by_user_id", "introduced_at"],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "entity": {"$ref": "#/$defs/EntityOutput"},
+    "owner_user_id": {"type": "string", "format": "uuid"}
+  },
+  "required": ["entity", "owner_user_id"],
   "additionalProperties": false
 }
 ```
@@ -497,14 +559,17 @@ concise English explanations for a human or Agent; callers branch on `code`, not
 | `invalid_request` | Malformed transport input, UUID or cursor | `400` |
 | `user_context_required` | Required `Aicadia-User-Id` is absent | `400` |
 | `invalid_entity` | `name` or `description` violates World validation | `400` |
+| `invalid_character` | Character `name` or `description` violates the shared Entity text validation | `400` |
 | `invalid_entity_limit` | `limit` is outside `1..=100` | `400` |
 | `user_not_found` | Context names no stored User | `404` |
 | `entity_not_found` | `entity_id` names no stored Entity | `404` |
+| `character_not_found` | The current User owns no Character | `404` |
+| `character_already_exists` | The current User already owns a Character | `409` |
 | `unavailable` | PostgreSQL or the World implementation is unavailable | `503` |
 
-For `invalid_entity`, `field` is `name` or `description`; `reason` is `empty`,
-`contains_nul` or `too_long`. Errors never expose SQL, credentials, internal paths or
-stack traces.
+For `invalid_entity` and `invalid_character`, `field` is `name` or `description`;
+`reason` is `empty`, `contains_nul` or `too_long`. Errors never expose SQL,
+credentials, internal paths or stack traces.
 
 An MCP capability error sets `isError: true`, omits `structuredContent` and includes
 the canonical error envelope serialized as one text block in `content`. Omitting
@@ -522,7 +587,7 @@ Agents must be able to discover the entire interface without reading source code
 - MCP `server/discover` advertises exactly `2025-11-25` and `2026-07-28` and only
   the `tools` server capability. Prompts, resources, sampling, roots, tasks,
   subscriptions and dynamic tool-list changes are not advertised.
-- MCP `tools/list` returns exactly the five catalog entries, descriptions,
+- MCP `tools/list` returns exactly the seven catalog entries, descriptions,
   annotations, input schemas and output schemas defined above, in catalog order.
   The static catalog uses `cacheScope: "public"`, a finite non-negative `ttlMs` and
   no `listChanged` capability.
@@ -531,7 +596,7 @@ Agents must be able to discover the entire interface without reading source code
   initialized transport session and do not need MCP 2026 per-request `_meta`; MCP
   `2026-07-28` requests are stateless and require that metadata. Protocol data never
   identifies a User; `Aicadia-User-Id` remains separate request context.
-- `GET /api/openapi.json` describes exactly the five HTTP operations with matching
+- `GET /api/openapi.json` describes exactly the seven HTTP operations with matching
   `operationId` values, shared schemas and canonical error responses.
 - `create_user` and every operational control are absent from both documents.
 - This Markdown document explains the semantic rules that schemas alone cannot
@@ -555,6 +620,17 @@ Read the current User:
 curl -sS \
   -H 'Aicadia-User-Id: 54c18ce9-9ce9-4e17-b52c-04fd57ad8529' \
   http://127.0.0.1:3000/api/user
+```
+
+Create the current User's Character:
+
+```sh
+curl -sS \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H 'Aicadia-User-Id: 54c18ce9-9ce9-4e17-b52c-04fd57ad8529' \
+  --data '{"name":"Mara Venn","description":"A careful surveyor at the edge of the known World."}' \
+  http://127.0.0.1:3000/api/character
 ```
 
 Create an Entity:
@@ -588,26 +664,30 @@ The MCP transport request supplies `Aicadia-User-Id`; it is never embedded in
 The adapter integration suite must prove all of the following against one temporary
 PostgreSQL-backed World:
 
-1. OpenAPI operation IDs and MCP `tools/list` names are the same exact five-name set.
+1. OpenAPI operation IDs and MCP `tools/list` names are the same exact seven-name set.
 2. Neither catalog contains `create_user` or an operational capability.
 3. `get_world` and `get_user` have equivalent HTTP and MCP success results.
 4. An Entity created through HTTP can be read through MCP.
 5. An Entity created through MCP appears in the HTTP Entity list.
-6. HTTP and MCP expose the same normalized result fields and canonical error codes.
-7. Both adapters reject the same invalid Entity inputs through `World` validation.
-8. Both adapters return `entity_not_found` for an unknown Entity.
-9. Context-required operations reject missing, malformed, duplicate and unknown User
+6. A Character created through either adapter is returned through the other, is
+   owned by the contextual User and embeds the exact Entity returned by `get_entity`.
+7. HTTP and MCP expose the same normalized result fields and canonical error codes.
+8. Both adapters reject the same invalid Entity and Character inputs through `World`
+   validation.
+9. Both adapters return the explicit Entity/Character not-found and
+   Character-already-exists errors.
+10. Context-required operations reject missing, malformed, duplicate and unknown User
    context; duplicate values produce `invalid_request`, field
    `Aicadia-User-Id`, reason `multiple_values`.
-10. HTTP returns the documented `400` statuses for request, context and validation
-    failures and `404` for unknown Users and Entities.
-11. MCP treats an unknown tool and missing or mismatched routing or protocol metadata
+11. HTTP returns the documented `400` statuses for request, context and validation
+    failures, `404` for unknown resources and `409` for a second Character.
+12. MCP treats an unknown tool and missing or mismatched routing or protocol metadata
     as protocol errors, not tool execution errors.
-12. Pagination can continue by copying each adapter's opaque `next` cursor.
-13. An MCP `2025-11-25` client can initialize, acknowledge initialization and list
-    all five tools through one temporary transport session without MCP 2026
+13. Pagination can continue by copying each adapter's opaque `next` cursor.
+14. An MCP `2025-11-25` client can initialize, acknowledge initialization and list
+    all seven tools through one temporary transport session without MCP 2026
     per-request `_meta`.
-14. An MCP `2026-07-28` request receives no transport session and is rejected before
+15. An MCP `2026-07-28` request receives no transport session and is rejected before
     dispatch when required per-request protocol metadata is absent.
 
 Generated ids and timestamps are checked for shape and persistence, not compared

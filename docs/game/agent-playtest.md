@@ -64,7 +64,7 @@ After repeating preflight, the runner performs this sequence once:
    contains the safe `DROP IF EXISTS` recovery template.
 2. Create a generated `aicadia_playtest_*` PostgreSQL database and start a private
    Aicadia server on a generated loopback port.
-3. Verify the exact five HTTP operations and MCP tools, then provision two distinct
+3. Verify the exact seven HTTP operations and MCP tools, then provision two distinct
    Users through the operator-only `World::create_user` binary.
 4. Start Agent A once with only `create_entity`; it must make exactly one call with
    the supplied fixture arguments.

@@ -1,5 +1,6 @@
 use aicadia::{
-    CreateEntity, EntityField, EntityId, InvalidReason, ListEntity, UserId, World, WorldError,
+    CreateCharacter, CreateEntity, EntityField, EntityId, InvalidReason, ListEntity, UserId, World,
+    WorldError,
 };
 use chrono::{TimeZone, Utc};
 use sqlx::PgPool;
@@ -15,6 +16,13 @@ async fn create_user(world: &World) -> UserId {
 
 fn entity(name: &str) -> CreateEntity {
     CreateEntity {
+        name: name.to_owned(),
+        description: format!("Description of {name}"),
+    }
+}
+
+fn character(name: &str) -> CreateCharacter {
+    CreateCharacter {
         name: name.to_owned(),
         description: format!("Description of {name}"),
     }
@@ -380,4 +388,152 @@ async fn get_entity_rejects_an_unknown_id(pool: PgPool) {
         .expect_err("unknown entity should not exist");
 
     assert_eq!(error, WorldError::EntityNotFound);
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn character_composes_its_owned_persistent_shared_entity(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let user_id = create_user(&world).await;
+    let created = world
+        .create_character(user_id, character("Mara Venn"))
+        .await
+        .expect("character should be created");
+
+    assert_eq!(created.owner_user_id, user_id);
+    assert_eq!(world.get_character(user_id).await, Ok(created.clone()));
+    let entity = world
+        .get_entity(created.entity.id)
+        .await
+        .expect("character entity should be shared");
+    assert_eq!(entity, created.entity);
+    assert_eq!(entity.introduced_by_user_id, user_id);
+    assert!(
+        world
+            .list_entity(ListEntity::default())
+            .await
+            .expect("entity catalog should be readable")
+            .entity
+            .iter()
+            .any(|summary| summary.id == created.entity.id)
+    );
+
+    drop(world);
+    assert_eq!(World::new(pool).get_character(user_id).await, Ok(created));
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn character_operations_distinguish_unknown_user_missing_and_existing_character(
+    pool: PgPool,
+) {
+    let world = World::new(pool.clone());
+    let unknown_user_id = UserId(Uuid::new_v4());
+    assert_eq!(
+        world.get_character(unknown_user_id).await,
+        Err(WorldError::UserNotFound)
+    );
+    assert_eq!(
+        world
+            .create_character(unknown_user_id, character("Nobody"))
+            .await,
+        Err(WorldError::UserNotFound)
+    );
+    let entity_count: i64 = sqlx::query_scalar("SELECT count(*) FROM entity")
+        .fetch_one(&pool)
+        .await
+        .expect("entity count should be readable");
+    assert_eq!(entity_count, 0);
+
+    let user_id = create_user(&world).await;
+    assert_eq!(
+        world.get_character(user_id).await,
+        Err(WorldError::CharacterNotFound)
+    );
+    world
+        .create_character(user_id, character("Mara Venn"))
+        .await
+        .expect("first character should be created");
+    assert_eq!(
+        world
+            .create_character(user_id, character("Second Character"))
+            .await,
+        Err(WorldError::CharacterAlreadyExists)
+    );
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn character_reuses_entity_validation_without_inserting(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let user_id = create_user(&world).await;
+
+    for (input, field, reason) in [
+        (
+            CreateCharacter {
+                name: "  ".to_owned(),
+                description: "Valid".to_owned(),
+            },
+            EntityField::Name,
+            InvalidReason::Empty,
+        ),
+        (
+            CreateCharacter {
+                name: "Valid".to_owned(),
+                description: "d".repeat(4_001),
+            },
+            EntityField::Description,
+            InvalidReason::TooLong,
+        ),
+        (
+            CreateCharacter {
+                name: "Invalid\0name".to_owned(),
+                description: "Valid".to_owned(),
+            },
+            EntityField::Name,
+            InvalidReason::ContainsNul,
+        ),
+    ] {
+        assert_eq!(
+            world.create_character(user_id, input).await,
+            Err(WorldError::InvalidCharacter { field, reason })
+        );
+    }
+
+    let entity_count: i64 = sqlx::query_scalar("SELECT count(*) FROM entity")
+        .fetch_one(&pool)
+        .await
+        .expect("entity count should be readable");
+    assert_eq!(entity_count, 0);
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn concurrent_character_creation_has_one_winner_and_no_orphan_entity(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let user_id = create_user(&world).await;
+    let barrier = std::sync::Arc::new(tokio::sync::Barrier::new(3));
+    let mut task = Vec::new();
+
+    for name in ["Mara Venn", "Tomas Reed"] {
+        let world = world.clone();
+        let barrier = barrier.clone();
+        task.push(tokio::spawn(async move {
+            barrier.wait().await;
+            world.create_character(user_id, character(name)).await
+        }));
+    }
+    barrier.wait().await;
+    let first = task.remove(0).await.expect("first task should finish");
+    let second = task.remove(0).await.expect("second task should finish");
+
+    assert_eq!(usize::from(first.is_ok()) + usize::from(second.is_ok()), 1);
+    let loser = if first.is_err() { first } else { second };
+    assert_eq!(loser, Err(WorldError::CharacterAlreadyExists));
+    let character_count: i64 = sqlx::query_scalar("SELECT count(*) FROM character")
+        .fetch_one(&pool)
+        .await
+        .expect("character count should be readable");
+    let entity_count: i64 = sqlx::query_scalar("SELECT count(*) FROM entity")
+        .fetch_one(&pool)
+        .await
+        .expect("entity count should be readable");
+    assert_eq!(character_count, 1);
+    assert_eq!(entity_count, 1);
 }

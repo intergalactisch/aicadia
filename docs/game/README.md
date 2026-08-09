@@ -4,8 +4,9 @@ Status: World core and Agent interface contract; authentication and OAuth are
 deferred
 
 This document defines the first executable Aicadia model. It is intentionally
-limited to one persistent World, durable Users and shared create/read-only Entities.
-Code, database migrations and tests must agree with this document.
+limited to one persistent World, durable Users, shared create/read-only Entities and
+one owned Character per User. Code, database migrations and tests must agree with
+this document.
 
 ## Domain model
 
@@ -28,6 +29,17 @@ impl World {
         &self,
         user_id: UserId,
     ) -> Result<User, WorldError>;
+
+    async fn get_character(
+        &self,
+        user_id: UserId,
+    ) -> Result<Character, WorldError>;
+
+    async fn create_character(
+        &self,
+        user_id: UserId,
+        input: CreateCharacter,
+    ) -> Result<Character, WorldError>;
 
     async fn list_entity(
         &self,
@@ -68,6 +80,34 @@ User. It exists for provisioning and tests; it is not an HTTP operation or MCP t
 
 A User is not an Entity and does not represent a location or presence inside the
 World. The current model does not attach an external identity or profile to a User.
+
+### Character
+
+A Character is the User-owned role of the Entity through which later player behavior
+can enter the World. Each User may own zero or one Character. A Character has no
+separate identity or duplicated Entity state:
+
+```rust
+struct Character {
+    entity: Entity,
+    owner_user_id: UserId,
+}
+```
+
+`create_character(user_id, input)` accepts only `name` and `description`, derives
+ownership from the supplied current User, and applies the same trimming, length and
+NUL rules as Entity creation. It atomically creates the Entity and Character role.
+The Entity stores that User as `introduced_by_user_id`, while the role records the
+distinct ownership meaning as `owner_user_id`. A failed or concurrent losing create
+leaves neither an orphan Entity nor a Character row. Repeating after success returns
+`CharacterAlreadyExists`; it never returns the existing Character as a create
+success.
+
+`get_character(user_id)` derives the only possible Character from its owning User.
+Neither operation accepts an Entity id. A Character may exist without an established
+Place: Character creation introduces identity and ownership only and never places the
+Character. Location, movement, investigation, rolls, discovery, sessions and
+authentication remain absent.
 
 ### Entity
 
@@ -147,10 +187,10 @@ protocol metadata. Either revision may carry User request context, but neither
 persists it as game state. Future authentication state also stays outside the World
 interface.
 
-Reads do not receive a User or caller because their current result does not vary by
-caller. `get_world`, `list_entity` and `get_entity` therefore require no User context
-at the transport. `get_user` and `create_entity` use the request's User context;
-only `create_entity` passes it into a mutating World operation.
+Shared reads do not receive a User or caller because their current result does not
+vary by caller. `get_world`, `list_entity` and `get_entity` therefore require no User
+context at the transport. `get_user`, `get_character`, `create_character` and
+`create_entity` derive the User from request context.
 
 The adapters do not authenticate the caller. Their current User header is an
 untrusted, local-development assertion. `World` only verifies that the supplied User
@@ -164,12 +204,15 @@ share one World interface:
 - `get_world` returns the name `Aicadia`.
 - `create_user` creates and returns a User for internal provisioning and tests.
 - `get_user` returns one User by `user_id`.
+- `get_character` returns the Character owned by `user_id`.
+- `create_character` atomically creates the one Character owned by an existing User
+  and its shared Entity.
 - `list_entity` returns a page of Entity summaries.
 - `get_entity` returns one Entity by `entity_id`.
 - `create_entity` accepts and stores one Entity candidate introduced by an existing
   User, then returns the Entity.
 
-The five operations other than `create_user` are available through both HTTP and
+The seven operations other than `create_user` are available through both HTTP and
 MCP. There is no `update` or `delete` behavior in the MVP.
 
 ## Entity listing
@@ -215,7 +258,12 @@ constraints it can enforce:
 - `description` contains from 1 through 4,000 Unicode characters after trimming;
 - `description` does not contain U+0000 (NUL);
 - `create_entity` accepts only an existing `UserId`;
-- `entity_id` and `user_id` are typed UUID values;
+- Character creation accepts only an existing `UserId` and the same Entity text
+  boundary;
+- `character.entity_id` is both its primary key and a foreign key to `entity.id`;
+- `character.owner_user_id` is unique and references its owning User;
+- creating an Entity and Character role is one PostgreSQL transaction;
+- Entity identity and User ownership remain separately typed UUID values;
 - `limit` is from 1 through 100;
 - no uniqueness rule applies to `name` or `description`.
 
@@ -231,9 +279,12 @@ similar candidates refer to the same subject.
 The World interface distinguishes these current failures:
 
 - invalid Entity input;
+- invalid Character input;
 - invalid Entity list limit;
 - User not found;
 - Entity not found;
+- Character not found;
+- Character already exists;
 - PostgreSQL unavailable.
 
 Errors never expose SQL, credentials or stack traces.
@@ -270,7 +321,30 @@ CREATE TABLE entity (
 
 CREATE INDEX entity_introduced_at_id_index
     ON entity (introduced_at DESC, id DESC);
+
+CREATE TABLE character (
+    entity_id uuid NOT NULL,
+    owner_user_id uuid NOT NULL,
+    CONSTRAINT character_pkey PRIMARY KEY (entity_id),
+    CONSTRAINT character_entity_id_fkey
+        FOREIGN KEY (entity_id) REFERENCES entity (id) ON DELETE RESTRICT,
+    CONSTRAINT character_owner_user_id_key UNIQUE (owner_user_id),
+    CONSTRAINT character_owner_user_id_fkey
+        FOREIGN KEY (owner_user_id) REFERENCES "user" (id) ON DELETE RESTRICT
+);
 ```
+
+The current relationships and their database cost are explicit:
+
+| Relationship | Meaning | Enforcement and index |
+| --- | --- | --- |
+| `entity.introduced_by_user_id → user.id` | Attribution: which User introduced the Entity record | Foreign key only; no current query needs another index |
+| `character.entity_id → entity.id` | Role: this Entity is also a Character | Primary key and foreign key; the primary-key index serves the join |
+| `character.owner_user_id → user.id` | Ownership: this User owns this Character | Foreign key and unique index; the index serves `get_character` and concurrent-create arbitration |
+
+Introduction and ownership are deliberately different relationships even though
+`create_character` currently supplies the same contextual User for both. No generic
+role table, polymorphic reference or extra relationship index exists.
 
 ## Required tests
 
@@ -295,6 +369,14 @@ preflight is safe to run without starting an Agent.
     following its typed cursors.
 13. `list_entity` enforces its default and maximum page size.
 14. Restarting `World` against the same database preserves Users and Entities.
+15. Character creation persists explicit ownership and returns its complete shared
+    Entity without creating a separate Character identity or copying Entity fields.
+16. Character reads derive the User, distinguish an unknown User from a missing
+    Character, and accept no caller-selected Entity id.
+17. Character creation reuses Entity text validation and rejects a second Character
+    for one User.
+18. Two concurrent Character creates yield exactly one winner, one Character and one
+    Entity with no orphan.
 
 Run the complete suite with local PostgreSQL running and a role that may create and
 drop SQLx test databases:
@@ -310,16 +392,16 @@ This MVP does not model:
 - authentication, OAuth or authorization;
 - a public `create_user` transport operation;
 - more than one World;
-- a User's physical presence in the World;
+- a Character's location or movement;
 - links or structured statements between Entities;
 - changes to or deletion of an existing Entity;
 - a history of changes;
-- locations, movement or simulation;
+- places, investigation, rolls, discovery or simulation;
 - background work initiated by the server;
 - server-side interpretation of Entity text;
 - automatic Entity extraction, identity resolution or deduplication;
 - Entity types, kinds, taxonomy or structured material values;
 - browser-facing game screens.
 
-Anything outside the six World operations and the two adapter presentations defined
+Anything outside the eight World operations and the two adapter presentations defined
 in [Agent interface](agent-interface.md) is outside this implementation contract.

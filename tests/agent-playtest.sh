@@ -86,9 +86,9 @@ args="$*"
 if [[ "$args" == *'-w %{http_code}'* ]]; then
     printf '404'
 elif [[ "$args" == *'/api/openapi.json'* ]]; then
-    printf '%s\n' '{"paths":{"/api/world":{"get":{"operationId":"get_world"}},"/api/user":{"get":{"operationId":"get_user"}},"/api/entity":{"get":{"operationId":"list_entity"},"post":{"operationId":"create_entity"}},"/api/entity/{entity_id}":{"get":{"operationId":"get_entity"}}}}'
+    printf '%s\n' '{"paths":{"/api/world":{"get":{"operationId":"get_world"}},"/api/user":{"get":{"operationId":"get_user"}},"/api/character":{"get":{"operationId":"get_character"},"post":{"operationId":"create_character"}},"/api/entity":{"get":{"operationId":"list_entity"},"post":{"operationId":"create_entity"}},"/api/entity/{entity_id}":{"get":{"operationId":"get_entity"}}}}'
 elif [[ "$args" == *'/mcp'* ]]; then
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"get_world"},{"name":"get_user"},{"name":"list_entity"},{"name":"get_entity"},{"name":"create_entity"}]}}'
+    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"get_world"},{"name":"get_user"},{"name":"get_character"},{"name":"create_character"},{"name":"list_entity"},{"name":"get_entity"},{"name":"create_entity"}]}}'
 elif [[ "$args" == *'/api/entity?limit=100'* ]]; then
     if [[ -f "$state/entity.json" ]]; then
         jq '{entity: [{id: .id, name: .name}], next: null}' "$state/entity.json"

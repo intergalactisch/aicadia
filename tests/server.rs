@@ -9,9 +9,11 @@ use uuid::Uuid;
 
 const PROTOCOL_VERSION: &str = "2026-07-28";
 const LEGACY_PROTOCOL_VERSION: &str = "2025-11-25";
-const CAPABILITY: [&str; 5] = [
+const CAPABILITY: [&str; 7] = [
     "get_world",
     "get_user",
+    "get_character",
+    "create_character",
     "list_entity",
     "get_entity",
     "create_entity",
@@ -278,7 +280,7 @@ fn assert_protocol_error(
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn catalogs_expose_exactly_the_five_player_capabilities(pool: PgPool) {
+async fn catalogs_expose_exactly_the_seven_player_capabilities(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;
 
     let openapi: Value = server
@@ -648,6 +650,7 @@ async fn invalid_mcp_framing_stays_outside_the_game_error_contract(pool: PgPool)
 async fn http_and_mcp_share_successful_world_state(pool: PgPool) {
     let world = World::new(pool);
     let user = world.create_user().await.expect("setup User should exist");
+    let second_user = world.create_user().await.expect("second User should exist");
     let server = TestServer::start(world).await;
 
     let http_world: Value = server
@@ -674,6 +677,55 @@ async fn http_and_mcp_share_successful_world_state(pool: PgPool) {
         .expect("User should be JSON");
     let mcp_user = server.tool("get_user", json!({}), Some(user.id.0)).await;
     assert_eq!(http_user, *structured(&mcp_user));
+
+    let response = server
+        .client
+        .post(format!("{}/api/character", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&json!({
+            "name": "Mara Venn",
+            "description": "A careful surveyor at the edge of the known World."
+        }))
+        .send()
+        .await
+        .expect("Character create should send");
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let http_character: Value = response.json().await.expect("Character should be JSON");
+    assert_eq!(http_character["owner_user_id"], user.id.0.to_string());
+    let mcp_character = server
+        .tool("get_character", json!({}), Some(user.id.0))
+        .await;
+    assert_eq!(http_character, *structured(&mcp_character));
+    let character_entity = server
+        .tool(
+            "get_entity",
+            json!({"entity_id": http_character["entity"]["id"]}),
+            None,
+        )
+        .await;
+    assert_eq!(*structured(&character_entity), http_character["entity"]);
+
+    let mcp_second_character = server
+        .tool(
+            "create_character",
+            json!({
+                "name": "Tomas Reed",
+                "description": "A patient observer of changes in the shared World."
+            }),
+            Some(second_user.id.0),
+        )
+        .await;
+    let http_second_character: Value = server
+        .client
+        .get(format!("{}/api/character", server.base_url))
+        .header(USER_CONTEXT_HEADER, second_user.id.0.to_string())
+        .send()
+        .await
+        .expect("Character read should send")
+        .json()
+        .await
+        .expect("Character should be JSON");
+    assert_eq!(http_second_character, *structured(&mcp_second_character));
 
     let response = server
         .client
@@ -747,6 +799,64 @@ async fn http_and_mcp_share_canonical_capability_errors(pool: PgPool) {
     let world = World::new(pool);
     let user = world.create_user().await.expect("setup User should exist");
     let server = TestServer::start(world).await;
+
+    let response = server
+        .client
+        .get(format!("{}/api/character", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .send()
+        .await
+        .expect("missing Character request should send");
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let missing_character_http: Value = response.json().await.expect("error should be JSON");
+    let missing_character_mcp = server
+        .tool("get_character", json!({}), Some(user.id.0))
+        .await;
+    assert_eq!(error_code(&missing_character_http), "character_not_found");
+    assert_eq!(mcp_error(&missing_character_mcp), missing_character_http);
+
+    let invalid_character = json!({"name": "   ", "description": "Valid"});
+    let response = server
+        .client
+        .post(format!("{}/api/character", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&invalid_character)
+        .send()
+        .await
+        .expect("invalid Character request should send");
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let invalid_character_http: Value = response.json().await.expect("error should be JSON");
+    let invalid_character_mcp = server
+        .tool("create_character", invalid_character, Some(user.id.0))
+        .await;
+    assert_eq!(error_code(&invalid_character_http), "invalid_character");
+    assert_eq!(mcp_error(&invalid_character_mcp), invalid_character_http);
+
+    let valid_character = json!({"name": "Mara Venn", "description": "A surveyor."});
+    server
+        .tool("create_character", valid_character.clone(), Some(user.id.0))
+        .await;
+    let response = server
+        .client
+        .post(format!("{}/api/character", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&valid_character)
+        .send()
+        .await
+        .expect("duplicate Character request should send");
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    let duplicate_character_http: Value = response.json().await.expect("error should be JSON");
+    let duplicate_character_mcp = server
+        .tool("create_character", valid_character, Some(user.id.0))
+        .await;
+    assert_eq!(
+        error_code(&duplicate_character_http),
+        "character_already_exists"
+    );
+    assert_eq!(
+        mcp_error(&duplicate_character_mcp),
+        duplicate_character_http
+    );
 
     let response = server
         .client
@@ -859,6 +969,21 @@ async fn http_and_mcp_share_canonical_capability_errors(pool: PgPool) {
         mcp_error_code(&mcp_error(&unknown_mcp)),
         error_code(&unknown_http)
     );
+
+    let response = server
+        .client
+        .get(format!("{}/api/character", server.base_url))
+        .header(USER_CONTEXT_HEADER, unknown_user.to_string())
+        .send()
+        .await
+        .expect("unknown Character owner request should send");
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let unknown_character_http: Value = response.json().await.expect("error should be JSON");
+    let unknown_character_mcp = server
+        .tool("get_character", json!({}), Some(unknown_user))
+        .await;
+    assert_eq!(error_code(&unknown_character_http), "user_not_found");
+    assert_eq!(mcp_error(&unknown_character_mcp), unknown_character_http);
 
     let valid_entity = json!({"name": "Context Matrix", "description": "Not stored."});
     let response = server

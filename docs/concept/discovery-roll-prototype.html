@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aicadia discovery roll lab</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: light-dark(#f4f1ea, #161918);
+      --surface: light-dark(#fffdf8, #202523);
+      --surface-strong: light-dark(#ece8de, #2a302d);
+      --text: light-dark(#202421, #f0f2ef);
+      --muted: light-dark(#66706a, #a7b0aa);
+      --border: light-dark(#d7d2c7, #3b433f);
+      --accent: light-dark(#176f5c, #69c9ad);
+      --accent-soft: light-dark(#dceee7, #183c32);
+      --danger: light-dark(#a33b35, #ff958d);
+      --warning: light-dark(#8a5b12, #efc46d);
+      --success: light-dark(#1f704f, #79d2aa);
+      --shadow: light-dark(rgba(34, 39, 36, 0.08), rgba(0, 0, 0, 0.22));
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    button,
+    select {
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    button {
+      padding: 0.62rem 0.9rem;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    button:focus-visible,
+    select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: light-dark(#ffffff, #10231e);
+    }
+
+    button.quiet {
+      background: transparent;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.55rem 2rem 0.55rem 0.7rem;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.25rem 0 4rem;
+    }
+
+    header {
+      max-width: 900px;
+      margin-bottom: 1.5rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 0.5rem;
+      font-size: clamp(1.8rem, 5vw, 3.1rem);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin-bottom: 0.75rem;
+      font-size: 1.18rem;
+    }
+
+    h3 {
+      margin-bottom: 0.45rem;
+      font-size: 1rem;
+    }
+
+    .eyebrow {
+      margin-bottom: 0.5rem;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-width: 780px;
+      margin-bottom: 0.9rem;
+      color: var(--muted);
+      font-size: 1.04rem;
+    }
+
+    .notice {
+      display: grid;
+      gap: 0.25rem;
+      padding: 0.85rem 1rem;
+      border-left: 4px solid var(--warning);
+      background: color-mix(in srgb, var(--warning) 9%, var(--surface));
+    }
+
+    .notice strong {
+      font-size: 0.92rem;
+    }
+
+    .notice span {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .event {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 1.35rem 0;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 8px 30px var(--shadow);
+    }
+
+    .event-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .event-message {
+      margin-top: 0.2rem;
+      font-weight: 650;
+    }
+
+    .event-sequence {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.84rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 8px 30px var(--shadow);
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .panel-heading p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .badge.open,
+    .badge.committed {
+      border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+      color: var(--success);
+    }
+
+    .badge.stale,
+    .badge.rejected {
+      border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+      color: var(--danger);
+    }
+
+    .badge.empty {
+      color: var(--muted);
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+
+    .state-block {
+      min-width: 0;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .state-label {
+      color: var(--muted);
+      font-size: 0.76rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .state-value {
+      margin-top: 0.2rem;
+      overflow-wrap: anywhere;
+      font-weight: 650;
+    }
+
+    .scope-list,
+    .roll-list,
+    .commit-list,
+    .step-list {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .scope,
+    .roll,
+    .commit,
+    .step {
+      padding: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--surface-strong) 52%, transparent);
+    }
+
+    .scope-head,
+    .roll-head,
+    .commit-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .scope-title,
+    .roll-title,
+    .commit-title {
+      font-weight: 700;
+    }
+
+    .scope-meta,
+    .roll-meta,
+    .commit-meta,
+    .empty-copy {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .facts {
+      margin: 0.55rem 0 0;
+      padding-left: 1.1rem;
+      font-size: 0.88rem;
+    }
+
+    .facts li + li {
+      margin-top: 0.25rem;
+    }
+
+    .token-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem 0.75rem;
+      margin-top: 0.65rem;
+      font-size: 0.82rem;
+    }
+
+    .token-details dt {
+      color: var(--muted);
+    }
+
+    .token-details dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .roll-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.7rem;
+    }
+
+    .roll-actions button {
+      min-height: 36px;
+      padding: 0.45rem 0.65rem;
+      font-size: 0.82rem;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+    }
+
+    label {
+      display: grid;
+      gap: 0.32rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .control-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 0.8rem;
+    }
+
+    .control-actions button {
+      flex: 1 1 12rem;
+    }
+
+    .control-actions button.quiet {
+      flex: 0 1 auto;
+    }
+
+    .control-note {
+      margin: 0.65rem 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      overflow-x: auto;
+      padding-bottom: 0.3rem;
+    }
+
+    .tab {
+      flex: 0 0 auto;
+      background: transparent;
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .scenario-copy {
+      margin: 0.85rem 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 2rem minmax(0, 1fr) auto;
+      gap: 0.7rem;
+      align-items: center;
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .step.current {
+      border-color: var(--accent);
+    }
+
+    .step.done .step-number {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .step-copy strong,
+    .step-copy span {
+      display: block;
+    }
+
+    .step-copy span {
+      margin-top: 0.15rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .step button {
+      min-height: 36px;
+      padding: 0.45rem 0.65rem;
+      font-size: 0.82rem;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.85rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .legend strong {
+      display: block;
+      margin-bottom: 0.15rem;
+      color: var(--text);
+    }
+
+    .conversation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+
+    .conversation h3 {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    code {
+      color: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88em;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .state-grid,
+      .legend {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      main {
+        width: min(100% - 1rem, 1180px);
+        padding-top: 1rem;
+      }
+
+      .controls,
+      .state-grid,
+      .legend,
+      .conversation-grid,
+      .token-details {
+        grid-template-columns: 1fr;
+      }
+
+      .step {
+        grid-template-columns: 2rem minmax(0, 1fr);
+      }
+
+      .step button {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Throwaway logic prototype</div>
+      <h1>Aicadia discovery roll lab</h1>
+      <p class="lede">
+        Does optimistic, scope-bound parallelism stay understandable and fair when
+        one Character investigates through multiple conversations while the shared
+        World changes?
+      </p>
+      <div class="notice">
+        <strong>Prototype only — this is not the game contract.</strong>
+        <span>
+          Conversation labels and forced result counts exist only to exercise the
+          model. A real Agent never supplies the roll outcome, and World never stores
+          conversation identity.
+        </span>
+      </div>
+    </header>
+
+    <section class="event" aria-live="polite">
+      <div>
+        <div class="event-label">What just happened</div>
+        <div class="event-message" id="event-message">JavaScript starts the interactive state model.</div>
+      </div>
+      <div class="event-sequence" id="event-sequence">Static preview</div>
+    </section>
+
+    <div class="layout">
+      <div class="stack">
+        <section class="panel" aria-labelledby="world-heading">
+          <div class="panel-heading">
+            <div>
+              <h2 id="world-heading">Authoritative World state</h2>
+              <p>Only established facts and accepted packages live here.</p>
+            </div>
+            <span class="badge" id="admission-badge">Loading state</span>
+          </div>
+          <div class="state-grid" id="character-state">
+            <p class="empty-copy">The interactive model will render the Character context here.</p>
+          </div>
+          <div class="scope-list" id="scope-list" style="margin-top: 1rem;">
+            <p class="empty-copy">The interactive model will render established scope state here.</p>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="conversation-heading">
+          <div class="panel-heading">
+            <div>
+              <h2 id="conversation-heading">Conversation-carried roll results</h2>
+              <p>These are client-held views. Conversation identity is absent from each token.</p>
+            </div>
+          </div>
+          <div class="conversation-grid" id="conversation-grid">
+            <p class="empty-copy">The interactive model will render client-held roll results here.</p>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="commit-heading">
+          <div class="panel-heading">
+            <div>
+              <h2 id="commit-heading">Accepted shared results</h2>
+              <p>Each package records its Character and attempt, never its conversation.</p>
+            </div>
+          </div>
+          <div class="commit-list" id="commit-list">
+            <p class="empty-copy">No candidate package has entered shared World state.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="stack">
+        <section class="panel" aria-labelledby="free-play-heading">
+          <div class="panel-heading">
+            <div>
+              <h2 id="free-play-heading">Free play</h2>
+              <p>Drive either Agent and watch every affected state.</p>
+            </div>
+          </div>
+          <div class="controls">
+            <label>
+              Agent conversation
+              <select id="conversation-select">
+                <option value="a">Conversation A</option>
+                <option value="b">Conversation B</option>
+              </select>
+            </label>
+            <label>
+              Investigation scope
+              <select id="scope-select">
+                <option value="ruin">Ruined observatory</option>
+                <option value="wetland">Glassmere wetland</option>
+                <option value="road">Old amber road</option>
+              </select>
+            </label>
+            <label>
+              Forced branch
+              <select id="result-select">
+                <option value="0">Zero results</option>
+                <option value="1" selected>One result</option>
+                <option value="2">Two results</option>
+              </select>
+            </label>
+          </div>
+          <div class="control-actions">
+            <button class="primary" type="button" id="request-roll">Request investigation</button>
+            <button type="button" id="retry-roll">Retry latest request</button>
+            <button type="button" id="external-change">Change selected scope</button>
+            <button type="button" id="toggle-admission">Loading admission control</button>
+            <button class="quiet" type="button" id="reset-free-play">Reset lab</button>
+          </div>
+          <p class="control-note">
+            “Forced branch” lets the lab reach zero, one and many result states. It
+            is deliberately not part of the proposed World input.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="walkthrough-heading">
+          <div class="panel-heading">
+            <div>
+              <h2 id="walkthrough-heading">Guided walkthroughs</h2>
+              <p>Each scenario resets the lab and isolates one awkward case.</p>
+            </div>
+          </div>
+          <div class="tabs" id="scenario-tabs" role="tablist" aria-label="Discovery scenarios"></div>
+          <p class="scenario-copy" id="scenario-copy"></p>
+          <div class="step-list" id="scenario-steps"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="reading-heading">
+          <h2 id="reading-heading">How to read the model</h2>
+          <div class="legend">
+            <div>
+              <strong>Open</strong>
+              Token still matches its bounded dependencies.
+            </div>
+            <div>
+              <strong>Stale</strong>
+              Relevant state changed; the Agent must read again.
+            </div>
+            <div>
+              <strong>Unrelated</strong>
+              Other scope changes do not invalidate the token.
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const DiscoveryModel = (() => {
+      const scopeSeed = {
+        ruin: {
+          name: "Ruined observatory",
+          version: 1,
+          facts: ["A broken dome is established at Moss End."],
+          candidates: ["Moss-marked archway", "Hollow bell chamber"],
+          external: "Another Character records a newly exposed stairwell."
+        },
+        wetland: {
+          name: "Glassmere wetland",
+          version: 1,
+          facts: ["Shallow mirrored water borders Moss End."],
+          candidates: ["Silver reed colony", "Glasswing moth"],
+          external: "Another Character records a fresh animal trail."
+        },
+        road: {
+          name: "Old amber road",
+          version: 1,
+          facts: ["A buried road leaves Moss End to the east."],
+          candidates: ["Sunken milestone", "Amber gravel seam"],
+          external: "Another Character records a collapsed roadside marker."
+        }
+      };
+
+      function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function fingerprint(scope) {
+        return `${scope.name.toLowerCase().replaceAll(" ", "-")}@${scope.version}`;
+      }
+
+      function initialState() {
+        return {
+          world: {
+            name: "Aicadia",
+            character: {
+              id: "character-7f3a",
+              place: "Moss End"
+            },
+            admissionOpen: true,
+            scopes: clone(scopeSeed),
+            commits: []
+          },
+          clients: {
+            a: { label: "Conversation A", rolls: [], requestSequence: 0 },
+            b: { label: "Conversation B", rolls: [], requestSequence: 0 }
+          },
+          attemptSequence: 0,
+          eventSequence: 0,
+          lastEvent: "The lab is ready. Start freely or choose a walkthrough."
+        };
+      }
+
+      function withEvent(state, message) {
+        state.eventSequence += 1;
+        state.lastEvent = message;
+        return state;
+      }
+
+      function staleOverlappingRolls(state, scopeId, exceptAttemptId) {
+        Object.values(state.clients).forEach((client) => {
+          client.rolls.forEach((roll) => {
+            if (
+              roll.attemptId !== exceptAttemptId &&
+              roll.status === "open" &&
+              roll.scopeId === scopeId
+            ) {
+              roll.status = "stale";
+              roll.staleReason = "Relevant established state changed after this roll.";
+            }
+          });
+        });
+      }
+
+      function latestRoll(client) {
+        return client.rolls.at(-1) ?? null;
+      }
+
+      function reduce(previous, action) {
+        const state = clone(previous);
+
+        if (action.type === "RESET") {
+          return initialState();
+        }
+
+        if (action.type === "SET_ADMISSION") {
+          state.world.admissionOpen = action.open;
+          return withEvent(
+            state,
+            action.open
+              ? "World reopened operational admission for this Character."
+              : "World closed operational admission for this Character across every conversation."
+          );
+        }
+
+        if (action.type === "REQUEST_ROLL") {
+          const client = state.clients[action.clientId];
+          client.requestSequence += 1;
+          const idempotencyKey = action.idempotencyKey ?? `${action.clientId}-request-${client.requestSequence}`;
+
+          const existing = client.rolls.find((roll) => roll.idempotencyKey === idempotencyKey);
+          if (existing) {
+            return withEvent(
+              state,
+              `${client.label} retried ${idempotencyKey}; World returned attempt ${existing.attemptId} unchanged.`
+            );
+          }
+
+          if (!state.world.admissionOpen) {
+            return withEvent(
+              state,
+              `${client.label} was rejected before the gameplay roll. No attempt or roll result was created.`
+            );
+          }
+
+          state.attemptSequence += 1;
+          const scope = state.world.scopes[action.scopeId];
+          const resultCount = Number(action.resultCount);
+          const roll = {
+            attemptId: `attempt-${state.attemptSequence}`,
+            idempotencyKey,
+            characterId: state.world.character.id,
+            scopeId: action.scopeId,
+            scopeName: scope.name,
+            dependencyFingerprint: fingerprint(scope),
+            metaSnapshot: clone(scope.facts),
+            resultCount,
+            status: resultCount === 0 ? "empty" : "open",
+            staleReason: null
+          };
+          client.rolls.push(roll);
+
+          return withEvent(
+            state,
+            resultCount === 0
+              ? `${client.label} received an empty roll result for ${scope.name}. No token authority was granted.`
+              : `${client.label} received attempt ${roll.attemptId} with ${resultCount} result ${resultCount === 1 ? "slot" : "slots"}.`
+          );
+        }
+
+        if (action.type === "RETRY_LATEST") {
+          const client = state.clients[action.clientId];
+          const roll = latestRoll(client);
+          if (!roll) {
+            return withEvent(state, `${client.label} has no earlier request to retry.`);
+          }
+          return reduce(state, {
+            type: "REQUEST_ROLL",
+            clientId: action.clientId,
+            scopeId: roll.scopeId,
+            resultCount: roll.resultCount,
+            idempotencyKey: roll.idempotencyKey
+          });
+        }
+
+        if (action.type === "COMMIT") {
+          const client = state.clients[action.clientId];
+          const roll = client.rolls.find((candidate) => candidate.attemptId === action.attemptId);
+          if (!roll) {
+            return withEvent(state, "World rejected an unknown attempt.");
+          }
+          if (roll.status === "committed") {
+            return withEvent(
+              state,
+              `Completion retry for ${roll.attemptId} returned its existing accepted package without another write.`
+            );
+          }
+          if (roll.status !== "open") {
+            return withEvent(
+              state,
+              `${roll.attemptId} cannot commit because its state is ${roll.status}.`
+            );
+          }
+
+          const scope = state.world.scopes[roll.scopeId];
+          if (roll.dependencyFingerprint !== fingerprint(scope)) {
+            roll.status = "stale";
+            roll.staleReason = "Relevant established state changed after this roll.";
+            return withEvent(
+              state,
+              `${roll.attemptId} became stale during revalidation; World committed nothing.`
+            );
+          }
+
+          const items = scope.candidates.slice(0, roll.resultCount);
+          state.world.commits.push({
+            attemptId: roll.attemptId,
+            characterId: roll.characterId,
+            scopeId: roll.scopeId,
+            scopeName: roll.scopeName,
+            items
+          });
+          scope.facts.push(...items.map((item) => `${item} is now established shared World state.`));
+          scope.version += 1;
+          roll.status = "committed";
+          staleOverlappingRolls(state, roll.scopeId, roll.attemptId);
+
+          return withEvent(
+            state,
+            `World atomically accepted ${items.length} ${items.length === 1 ? "result" : "results"} from ${roll.attemptId}; overlapping open tokens are now stale.`
+          );
+        }
+
+        if (action.type === "EXTERNAL_CHANGE") {
+          const scope = state.world.scopes[action.scopeId];
+          scope.facts.push(scope.external);
+          scope.version += 1;
+          staleOverlappingRolls(state, action.scopeId, null);
+          return withEvent(
+            state,
+            `${scope.name} changed through another accepted World action; only overlapping open tokens became stale.`
+          );
+        }
+
+        return withEvent(state, `Unknown prototype action: ${action.type}`);
+      }
+
+      return { initialState, reduce, fingerprint };
+    })();
+
+    const scenarios = [
+      {
+        id: "parallel",
+        label: "Different scopes",
+        description: "Two conversations investigate unrelated World state. Accepting the ruin result must not destroy the wetland result.",
+        steps: [
+          {
+            label: "A investigates the observatory",
+            note: "World grants one result slot bound to the ruin state.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "a", scopeId: "ruin", resultCount: 1 })
+          },
+          {
+            label: "B investigates the wetland",
+            note: "A second token is valid for the same Character but a different scope.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "b", scopeId: "wetland", resultCount: 1 })
+          },
+          {
+            label: "A submits its result",
+            note: "The observatory changes; the wetland token remains open.",
+            action: (state) => ({ type: "COMMIT", clientId: "a", attemptId: state.clients.a.rolls.at(-1).attemptId })
+          },
+          {
+            label: "B submits its result",
+            note: "The independent wetland result can still enter the shared World.",
+            action: (state) => ({ type: "COMMIT", clientId: "b", attemptId: state.clients.b.rolls.at(-1).attemptId })
+          }
+        ]
+      },
+      {
+        id: "conflict",
+        label: "Same scope",
+        description: "Two conversations investigate the same ruin snapshot. The first accepted result changes that scope; the second must re-read instead of overwriting it.",
+        steps: [
+          {
+            label: "A investigates the observatory",
+            note: "Token A binds the current ruin fingerprint.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "a", scopeId: "ruin", resultCount: 1 })
+          },
+          {
+            label: "B investigates the observatory",
+            note: "Token B binds the same fingerprint without creating a conversation identity in World.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "b", scopeId: "ruin", resultCount: 1 })
+          },
+          {
+            label: "A commits first",
+            note: "World changes the ruin and marks B's overlapping token stale.",
+            action: (state) => ({ type: "COMMIT", clientId: "a", attemptId: state.clients.a.rolls.at(-1).attemptId })
+          },
+          {
+            label: "B tries its old token",
+            note: "World rejects it without changing established state.",
+            action: (state) => ({ type: "COMMIT", clientId: "b", attemptId: state.clients.b.rolls.at(-1).attemptId })
+          }
+        ]
+      },
+      {
+        id: "retry",
+        label: "Delivery retry",
+        description: "A technical retry must return the same attempt and result rather than becoming a free second roll.",
+        steps: [
+          {
+            label: "A receives two result slots",
+            note: "The count is forced only so this prototype can inspect the many-result branch.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "a", scopeId: "road", resultCount: 2 })
+          },
+          {
+            label: "A retries the request",
+            note: "The idempotency key resolves to the same attempt; no second token appears.",
+            action: () => ({ type: "RETRY_LATEST", clientId: "a" })
+          },
+          {
+            label: "A commits the package",
+            note: "Both prototype items enter in one atomic package.",
+            action: (state) => ({ type: "COMMIT", clientId: "a", attemptId: state.clients.a.rolls.at(-1).attemptId })
+          },
+          {
+            label: "A retries completion",
+            note: "World returns the prior accepted package and writes nothing twice.",
+            action: (state) => ({ type: "COMMIT", clientId: "a", attemptId: state.clients.a.rolls.at(-1).attemptId })
+          }
+        ]
+      },
+      {
+        id: "admission",
+        label: "Shared admission",
+        description: "Operational admission belongs to the Character, not a conversation. Closing it must reject both conversations before any gameplay roll exists.",
+        steps: [
+          {
+            label: "World closes admission",
+            note: "This is an operational safeguard, not chance or Character progress.",
+            action: () => ({ type: "SET_ADMISSION", open: false })
+          },
+          {
+            label: "A requests an investigation",
+            note: "World rejects it before creating an attempt.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "a", scopeId: "ruin", resultCount: 1 })
+          },
+          {
+            label: "B also requests one",
+            note: "Another conversation receives no separate allowance.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "b", scopeId: "wetland", resultCount: 1 })
+          },
+          {
+            label: "World reopens admission",
+            note: "No odds, luck or World facts changed while admission was closed.",
+            action: () => ({ type: "SET_ADMISSION", open: true })
+          },
+          {
+            label: "B requests again",
+            note: "World now creates one fresh attempt and resolves the forced branch.",
+            action: () => ({ type: "REQUEST_ROLL", clientId: "b", scopeId: "wetland", resultCount: 1 })
+          }
+        ]
+      }
+    ];
+
+    let state = DiscoveryModel.initialState();
+    let activeScenarioId = scenarios[0].id;
+    let scenarioStep = 0;
+
+    const elements = {
+      eventMessage: document.getElementById("event-message"),
+      eventSequence: document.getElementById("event-sequence"),
+      admissionBadge: document.getElementById("admission-badge"),
+      characterState: document.getElementById("character-state"),
+      scopeList: document.getElementById("scope-list"),
+      conversationGrid: document.getElementById("conversation-grid"),
+      commitList: document.getElementById("commit-list"),
+      conversationSelect: document.getElementById("conversation-select"),
+      scopeSelect: document.getElementById("scope-select"),
+      resultSelect: document.getElementById("result-select"),
+      requestRoll: document.getElementById("request-roll"),
+      retryRoll: document.getElementById("retry-roll"),
+      externalChange: document.getElementById("external-change"),
+      toggleAdmission: document.getElementById("toggle-admission"),
+      resetFreePlay: document.getElementById("reset-free-play"),
+      scenarioTabs: document.getElementById("scenario-tabs"),
+      scenarioCopy: document.getElementById("scenario-copy"),
+      scenarioSteps: document.getElementById("scenario-steps")
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function statusLabel(status) {
+      return {
+        open: "Open",
+        empty: "Empty",
+        committed: "Committed",
+        stale: "Stale",
+        rejected: "Rejected"
+      }[status] ?? status;
+    }
+
+    function renderWorld() {
+      const character = state.world.character;
+      elements.admissionBadge.textContent = state.world.admissionOpen
+        ? "Admission open"
+        : "Admission closed";
+      elements.admissionBadge.className = `badge ${state.world.admissionOpen ? "open" : "rejected"}`;
+      elements.characterState.innerHTML = `
+        <div class="state-block">
+          <div class="state-label">World</div>
+          <div class="state-value">${escapeHtml(state.world.name)}</div>
+        </div>
+        <div class="state-block">
+          <div class="state-label">Derived Character</div>
+          <div class="state-value"><code>${escapeHtml(character.id)}</code></div>
+        </div>
+        <div class="state-block">
+          <div class="state-label">Current Place</div>
+          <div class="state-value">${escapeHtml(character.place)}</div>
+        </div>
+      `;
+
+      elements.scopeList.innerHTML = Object.entries(state.world.scopes).map(([scopeId, scope]) => `
+        <article class="scope">
+          <div class="scope-head">
+            <div>
+              <div class="scope-title">${escapeHtml(scope.name)}</div>
+              <div class="scope-meta">Scope <code>${escapeHtml(scopeId)}</code></div>
+            </div>
+            <span class="badge">fingerprint ${escapeHtml(DiscoveryModel.fingerprint(scope))}</span>
+          </div>
+          <ul class="facts">
+            ${scope.facts.map((fact) => `<li>${escapeHtml(fact)}</li>`).join("")}
+          </ul>
+        </article>
+      `).join("");
+    }
+
+    function renderRoll(clientId, roll) {
+      const tokenAuthority = roll.resultCount === 0 ? "none" : `${roll.resultCount} result ${roll.resultCount === 1 ? "slot" : "slots"}`;
+      return `
+        <article class="roll">
+          <div class="roll-head">
+            <div>
+              <div class="roll-title">${escapeHtml(roll.scopeName)}</div>
+              <div class="roll-meta">${escapeHtml(roll.attemptId)}</div>
+            </div>
+            <span class="badge ${escapeHtml(roll.status)}">${escapeHtml(statusLabel(roll.status))}</span>
+          </div>
+          <dl class="token-details">
+            <div><dt>Character</dt><dd><code>${escapeHtml(roll.characterId)}</code></dd></div>
+            <div><dt>Authority</dt><dd>${escapeHtml(tokenAuthority)}</dd></div>
+            <div><dt>Dependency</dt><dd><code>${escapeHtml(roll.dependencyFingerprint)}</code></dd></div>
+            <div><dt>Idempotency</dt><dd><code>${escapeHtml(roll.idempotencyKey)}</code></dd></div>
+          </dl>
+          <div class="roll-meta" style="margin-top: 0.6rem;">
+            Meta snapshot: ${roll.metaSnapshot.map(escapeHtml).join(" · ")}
+          </div>
+          ${roll.staleReason ? `<div class="roll-meta" style="margin-top: 0.35rem; color: var(--danger);">${escapeHtml(roll.staleReason)}</div>` : ""}
+          <div class="roll-actions">
+            <button type="button" data-commit-client="${escapeHtml(clientId)}" data-commit-attempt="${escapeHtml(roll.attemptId)}" ${roll.status === "empty" ? "disabled" : ""}>
+              ${roll.status === "committed" ? "Retry completion" : "Submit candidate package"}
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderConversations() {
+      elements.conversationGrid.innerHTML = Object.entries(state.clients).map(([clientId, client]) => `
+        <section class="conversation">
+          <h3>
+            <span>${escapeHtml(client.label)}</span>
+            <span class="badge">client only</span>
+          </h3>
+          <div class="roll-list">
+            ${client.rolls.length
+              ? client.rolls.map((roll) => renderRoll(clientId, roll)).join("")
+              : '<p class="empty-copy">No roll results carried by this conversation.</p>'}
+          </div>
+        </section>
+      `).join("");
+    }
+
+    function renderCommits() {
+      if (!state.world.commits.length) {
+        elements.commitList.innerHTML = '<p class="empty-copy">No candidate package has entered shared World state.</p>';
+        return;
+      }
+      elements.commitList.innerHTML = state.world.commits.map((commit) => `
+        <article class="commit">
+          <div class="commit-head">
+            <div>
+              <div class="commit-title">${escapeHtml(commit.scopeName)}</div>
+              <div class="commit-meta">${escapeHtml(commit.items.join(" · "))}</div>
+            </div>
+            <span class="badge committed">Accepted</span>
+          </div>
+          <dl class="token-details">
+            <div><dt>Attempt</dt><dd><code>${escapeHtml(commit.attemptId)}</code></dd></div>
+            <div><dt>Character</dt><dd><code>${escapeHtml(commit.characterId)}</code></dd></div>
+          </dl>
+        </article>
+      `).join("");
+    }
+
+    function renderScenario() {
+      const active = scenarios.find((scenario) => scenario.id === activeScenarioId);
+      elements.scenarioTabs.innerHTML = scenarios.map((scenario) => `
+        <button
+          type="button"
+          class="tab"
+          role="tab"
+          aria-selected="${scenario.id === activeScenarioId}"
+          data-scenario="${escapeHtml(scenario.id)}"
+        >${escapeHtml(scenario.label)}</button>
+      `).join("");
+      elements.scenarioCopy.textContent = active.description;
+      elements.scenarioSteps.innerHTML = active.steps.map((step, index) => {
+        const isDone = index < scenarioStep;
+        const isCurrent = index === scenarioStep;
+        return `
+          <div class="step ${isDone ? "done" : ""} ${isCurrent ? "current" : ""}">
+            <div class="step-number">${isDone ? "✓" : index + 1}</div>
+            <div class="step-copy">
+              <strong>${escapeHtml(step.label)}</strong>
+              <span>${escapeHtml(step.note)}</span>
+            </div>
+            <button type="button" data-scenario-step="${index}" ${isCurrent ? "" : "disabled"}>
+              ${isDone ? "Done" : "Run"}
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function render() {
+      elements.eventMessage.textContent = state.lastEvent;
+      elements.eventSequence.textContent = state.eventSequence === 0 ? "Initial state" : `Event ${state.eventSequence}`;
+      elements.toggleAdmission.textContent = state.world.admissionOpen
+        ? "Close Character admission"
+        : "Open Character admission";
+      renderWorld();
+      renderConversations();
+      renderCommits();
+      renderScenario();
+    }
+
+    function dispatch(action) {
+      state = DiscoveryModel.reduce(state, action);
+      render();
+    }
+
+    function startScenario(id) {
+      activeScenarioId = id;
+      scenarioStep = 0;
+      state = DiscoveryModel.initialState();
+      state.lastEvent = `${scenarios.find((scenario) => scenario.id === id).label} walkthrough started.`;
+      render();
+    }
+
+    elements.requestRoll.addEventListener("click", () => {
+      dispatch({
+        type: "REQUEST_ROLL",
+        clientId: elements.conversationSelect.value,
+        scopeId: elements.scopeSelect.value,
+        resultCount: Number(elements.resultSelect.value)
+      });
+    });
+
+    elements.retryRoll.addEventListener("click", () => {
+      dispatch({ type: "RETRY_LATEST", clientId: elements.conversationSelect.value });
+    });
+
+    elements.externalChange.addEventListener("click", () => {
+      dispatch({ type: "EXTERNAL_CHANGE", scopeId: elements.scopeSelect.value });
+    });
+
+    elements.toggleAdmission.addEventListener("click", () => {
+      dispatch({ type: "SET_ADMISSION", open: !state.world.admissionOpen });
+    });
+
+    elements.resetFreePlay.addEventListener("click", () => {
+      scenarioStep = 0;
+      dispatch({ type: "RESET" });
+    });
+
+    elements.conversationGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-commit-attempt]");
+      if (!button) return;
+      dispatch({
+        type: "COMMIT",
+        clientId: button.dataset.commitClient,
+        attemptId: button.dataset.commitAttempt
+      });
+    });
+
+    elements.scenarioTabs.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-scenario]");
+      if (!button) return;
+      startScenario(button.dataset.scenario);
+    });
+
+    elements.scenarioSteps.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-scenario-step]");
+      if (!button) return;
+      const active = scenarios.find((scenario) => scenario.id === activeScenarioId);
+      const index = Number(button.dataset.scenarioStep);
+      if (index !== scenarioStep) return;
+      const action = active.steps[index].action(state);
+      state = DiscoveryModel.reduce(state, action);
+      scenarioStep += 1;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
