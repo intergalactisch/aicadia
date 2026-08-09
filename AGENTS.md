@@ -51,14 +51,16 @@ ordering or uniqueness rule.
 ### The MVP Is The Filter
 
 The current executable MVP contains exactly one `World`, durable `User` records,
-shared `Entity` records and at most one owned `Character` Entity role per User. Its
-complete use-case surface is `get_world`, `create_user`, `get_user`, `get_character`,
-`create_character`, `list_entity`, `get_entity` and `create_entity`. Code may not
-exceed this surface until a next player or World behavior is explicitly accepted in
+shared `Entity` records, at most one owned `Character` Entity role per User, at most
+one entry `Place` Entity role, nullable current Character placement and normalized
+`activity` history. Its complete use-case surface is `get_world`, `create_user`,
+`get_user`, `get_character`, `create_character`, `create_entry_place`, `enter_world`,
+`list_activity`, `list_entity`, `get_entity` and `create_entity`. Code may not exceed
+this surface until a next player or World behavior is explicitly accepted in
 `docs/game/`.
 Next-work selection is not limited to this surface: once its value is sufficiently
 proved, choose the next missing game outcome, decide its concrete contract, then
-implement it. The seven current player-facing capabilities omit `create_user` and
+implement it. The ten current player-facing capabilities omit `create_user` and
 ship through both HTTP and MCP. Authentication, OAuth and every other game capability
 remain deferred until deliberately selected.
 
@@ -96,8 +98,9 @@ Treat Aicadia as a game under development, never as a literary platform. Every t
 in code, schema, API, architecture and current concept direction uses conventional
 game-development and server English and states the actor, action, state or stored
 data it represents. The current implementation vocabulary is `world`, `user`,
-`character` and `entity`. Existing exploration history may retain old wording.
-Product copy may be layered on later and never shapes the core model.
+`character`, `entity`, `place` and `activity`. Existing exploration history may
+retain old wording. Product copy may be layered on later and never shapes the core
+model.
 
 ### Boring Infrastructure
 

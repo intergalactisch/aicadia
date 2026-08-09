@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "string",
+      "const": "joined"
+    },
+    "marker": {
+      "type": "string"
+    },
+    "observer_user_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "place_id": {
+      "type": "string"
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "activity_operation": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "latest_actor_character_id": {
+      "type": "string"
+    },
+    "latest_context_place_id": {
+      "type": "string"
+    },
+    "latest_destination_place_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "marker",
+    "observer_user_id",
+    "character_id",
+    "place_id",
+    "entity_id",
+    "activity_operation",
+    "latest_actor_character_id",
+    "latest_context_place_id",
+    "latest_destination_place_id"
+  ]
+}

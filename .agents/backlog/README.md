@@ -15,16 +15,17 @@ must be corrected in the same change.
 
 | Horizon | Item | State | Concrete outcome |
 | --- | --- | --- | --- |
-| Now | [World entry with activity history](items/world-entry-history.md) | Proposed | A Character may remain unplaced, later enter the shared World, and receive a durable queryable history from the first accepted game actions onward. |
-| Next | Local Character context and history inspection | Queued | An Agent can read the current Character, optional exact Place, local established state and bounded personal history without selecting another Character. |
+| Now | [Agent world-entry handoff](items/agent-world-entry-handoff.md) | Active | A clean-room Agent can understand and execute World entry and Activity reads from the published MCP contract; two Agents prove shared Place state. |
+| Done | [World entry with activity history](items/world-entry-history.md) | Done | A Character may remain unplaced, later enter the shared World, and receive a durable queryable history from the first accepted game actions onward. |
+| Next | Exact-Place established-state read | Queued | Building on the delivered Character, optional Place and personal history reads, an Agent can inspect established state attached directly to its exact current Place. |
 | Next | First investigation roll | Queued | World admits an Agent request, derives Character and Place, rolls first and returns a retry-stable zero or volatile positive result with neutral context. |
 | Later | First discovery commit | Queued | One Agent-authored candidate becomes one validated concrete shared result plus provenance and activity history. |
 | Later | Place expansion and movement | Queued | Discoveries establish further Places and connections; Characters move through validated transitions while past locations remain queryable. |
 | Later | Rich domain change | Queued | Flora, fauna, materials, partial boundaries and temporal processes gain concrete models only when selected gameplay needs them. |
 
-Only the `Now` row is a candidate for current work. `Next` and `Later` preserve
-sequence and dependency context; they do not authorize implementation or promise a
-specific schema.
+A `Now` row is the one selected current edge. When no row is `Now`, the next edge has
+not been accepted yet. `Next` and `Later` preserve sequence and dependency context;
+they do not authorize implementation or promise a specific schema.
 
 ## Item states
 

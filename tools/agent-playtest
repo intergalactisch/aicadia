@@ -4,9 +4,11 @@ set -o pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-readonly CREATE_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/create.json"
-readonly OBSERVE_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/observe.json"
-readonly CAPABILITIES='["get_world","get_user","get_character","create_character","list_entity","get_entity","create_entity"]'
+readonly FOUND_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/found.json"
+readonly JOIN_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/join.json"
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","list_entity","get_entity","create_entity"]'
+readonly AGENT_A_TOOLS='["create_character","create_entry_place","enter_world","list_activity","create_entity"]'
+readonly AGENT_B_TOOLS='["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'
 readonly CODEX_VERSION='codex-cli 0.147.0'
 readonly CODEX_MODEL='gpt-5.6-sol'
 readonly CODEX_REASONING_EFFORT='high'
@@ -80,8 +82,8 @@ validate_codex() {
         grep -F -- "$feature" <<<"$exec_help" >/dev/null \
             || fail "Codex $CODEX_VERSION no longer exposes required exec flag: $feature" || return
     done
-    validate_codex_role_config "$codex_bin" '["create_entity"]' || return
-    validate_codex_role_config "$codex_bin" '["get_user","list_entity","get_entity"]' || return
+    validate_codex_role_config "$codex_bin" "$AGENT_A_TOOLS" || return
+    validate_codex_role_config "$codex_bin" "$AGENT_B_TOOLS" || return
 }
 
 validate_codex_role_config() {
@@ -149,6 +151,8 @@ validate_output_schema() {
         and all($fields[]; . as $field |
             if $field == "status" then
                 $schema.properties[$field] == {type: "string", const: $status}
+            elif $field == "activity_operation" then
+                $schema.properties[$field] == {type: "array", items: {type: "string"}}
             else
                 $schema.properties[$field] == {type: "string"}
             end)
@@ -166,12 +170,12 @@ preflight() {
     [[ -x "$codex_bin" ]] || fail "Codex binary is not executable: $codex_bin" || return
     [[ -f "$REPO_DIR/Cargo.toml" && -f "$REPO_DIR/src/bin/aicadia-provision-user.rs" && -f "$REPO_DIR/src/bin/aicadia-playtest-database.rs" ]] \
         || fail 'Agent playtest operator binaries are missing.' || return
-    validate_output_schema "$CREATE_SCHEMA" created \
-        '["status","marker","entity_id","name","description"]' \
-        || fail 'create output schema violates the strict playtest schema contract.' || return
-    validate_output_schema "$OBSERVE_SCHEMA" observed \
-        '["status","marker","observer_user_id","entity_id","name","description"]' \
-        || fail 'observe output schema violates the strict playtest schema contract.' || return
+    validate_output_schema "$FOUND_SCHEMA" founded \
+        '["status","marker","character_id","place_id","entity_id","activity_operation","latest_actor_character_id","latest_context_place_id","latest_subject_entity_id"]' \
+        || fail 'found output schema violates the strict playtest schema contract.' || return
+    validate_output_schema "$JOIN_SCHEMA" joined \
+        '["status","marker","observer_user_id","character_id","place_id","entity_id","activity_operation","latest_actor_character_id","latest_context_place_id","latest_destination_place_id"]' \
+        || fail 'join output schema violates the strict playtest schema contract.' || return
 
     (cd "$REPO_DIR" && cargo build --quiet --bin aicadia --bin aicadia-provision-user --bin aicadia-playtest-database) \
         || fail 'required Aicadia operator binaries do not build.' || return
@@ -197,6 +201,8 @@ manifest_set() {
 
 prepare_artifacts() {
     local run_root run_id started_at marker entity_name entity_description recovery
+    local character_a_name character_a_description character_b_name character_b_description
+    local place_name place_description
 
     umask 077
     run_root="${AICADIA_PLAYTEST_OUTPUT_ROOT:-$REPO_DIR/.aicadia-playtest}"
@@ -212,6 +218,12 @@ prepare_artifacts() {
     started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     DATABASE_NAME="aicadia_playtest_$(date -u +%Y%m%d_%H%M%S)_$$_$RANDOM"
     marker="aicadia-playtest-$(date -u +%Y%m%dT%H%M%SZ)-$$-$RANDOM"
+    character_a_name="Founder Character $marker"
+    character_a_description="Disposable founder Character for MCP world-entry proof: $marker"
+    character_b_name="Joining Character $marker"
+    character_b_description="Disposable joining Character for MCP world-entry proof: $marker"
+    place_name="Entry Place $marker"
+    place_description="Disposable shared entry Place for MCP world-entry proof: $marker"
     entity_name="Disposable Playtest Entity $marker"
     entity_description="Technical cross-User MCP fixture in a disposable World: $marker"
     recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME"
@@ -236,7 +248,10 @@ prepare_artifacts() {
     ' >"$MANIFEST" || fail 'could not write the initial run manifest.' || return
     chmod 600 "$MANIFEST"
     printf '%s\n' "$marker" >"$RUN_DIR/marker.txt" || fail 'could not write marker artifact.' || return
-    write_prompts "$RUN_DIR" "$marker" "$entity_name" "$entity_description" \
+    write_prompts "$RUN_DIR" "$marker" \
+        "$character_a_name" "$character_a_description" \
+        "$character_b_name" "$character_b_description" \
+        "$place_name" "$place_description" "$entity_name" "$entity_description" \
         || fail 'could not write Agent prompts.' || return
     ISOLATED_A="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-agent-a-XXXXXXXX")" \
         || fail 'could not create Agent A isolated working directory.' || return
@@ -264,23 +279,33 @@ agent_timeout_seconds() {
 }
 
 write_prompts() {
-    local run_dir="$1" marker="$2" entity_name="$3" entity_description="$4"
+    local run_dir="$1" marker="$2" character_a_name="$3" character_a_description="$4"
+    local character_b_name="$5" character_b_description="$6" place_name="$7" place_description="$8"
+    local entity_name="$9" entity_description="${10}"
     printf '%s\n' "$(cat <<PROMPT
-You are Agent A in a bounded Aicadia MCP cross-User playtest against a disposable World. Use exactly one direct Aicadia MCP call: create_entity. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent.
+You are Agent A in a bounded Aicadia MCP clean-room playtest against a disposable empty World. You have only the published Aicadia tools and their schemas. Use direct Aicadia MCP calls only. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent.
 
-Create exactly one Entity with create_entity using exactly these arguments:
-- name: $entity_name
-- description: $entity_description
+Achieve all of these outcomes without asking the User for an id or confirmation:
+- Create your one Character exactly once with name "$character_a_name" and description "$character_a_description".
+- Enter the World according to the published tool contract. Do not assume an entry Place exists. Call create_entry_place only after enter_world returns entry_place_not_found, using name "$place_name" and description "$place_description", then retry entry.
+- After entry, create exactly one shared Entity with name "$entity_name" and description "$entity_description".
+- Read one first page of your personal Activity after those mutations. Do not use a cursor.
 
-The unique marker is $marker. Do not create another Entity. Return only the structured JSON required by the output schema. Set status to created and marker to the exact marker, then copy entity_id, name, and description from the successful MCP result. If the MCP call fails, do not fabricate a result.
+The unique marker is $marker. Return only the structured JSON required by the output schema. Set status to founded. Copy character_id from the Character Entity id, place_id from its current Place Entity id, entity_id from the created shared Entity, and activity_operation in returned newest-first order. For the latest create_entity Activity, copy its actor Character id, context Place id and subject Entity id into the matching latest_* fields. Treat only the exact entry_place_not_found first-use response as the expected genesis branch; if anything else fails, do not fabricate a result.
 PROMPT
 )" >"$run_dir/agent-a.prompt.txt" || return
     printf '%s\n' "$(cat <<PROMPT
-You are Agent B in a bounded Aicadia MCP cross-User playtest against a disposable World. Use only direct Aicadia MCP calls: get_user, list_entity, and get_entity. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent. Never create an Entity.
+You are Agent B in a bounded Aicadia MCP clean-room playtest against the same disposable World after Agent A. You have only the published Aicadia tools and their schemas. Use direct Aicadia MCP calls only. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent. Never create an entry Place or shared fixture Entity.
 
 The unique marker is $marker.
 
-First call get_user and copy its id as observer_user_id. Then call list_entity once; the newly introduced fixture must be in that first page. Use get_entity with the found id to read the exact Entity. Return only the structured JSON required by the output schema. Set status to observed and marker to the exact marker; copy observer_user_id, entity_id, name, and description only from successful MCP results. If any required MCP call fails or the Entity cannot be observed, do not fabricate a result.
+Achieve all of these outcomes:
+- Create your one Character exactly once with name "$character_b_name" and description "$character_b_description".
+- Enter the existing World through its server-derived entry Place.
+- Read one first page of your personal Activity after entry. Do not use a cursor.
+- Get your contextual User, list the first shared Entity page once and get the exact Entity introduced by Agent A named "$entity_name". Never create another Entity.
+
+Return only the structured JSON required by the output schema. Set status to joined. Copy observer_user_id, both role Entity ids, the shared Entity id and activity_operation in returned newest-first order. For the latest enter_world Activity, copy its actor Character id, context Place id and destination Place id into the matching latest_* fields. If any required MCP call fails or the marked Entity cannot be observed, do not fabricate a result.
 PROMPT
 )" >"$run_dir/agent-b.prompt.txt" || return
 }
@@ -329,7 +354,7 @@ verify_deployment() {
     jq -e --argjson expected "$CAPABILITIES" '
         ([.paths[][] | .operationId] | sort) == ($expected | sort)
         and ([.paths[][] | .operationId] | index("create_user") | not)
-    ' <<<"$openapi" >/dev/null || fail 'public HTTP catalog is not the exact seven-capability contract.' || return
+    ' <<<"$openapi" >/dev/null || fail 'public HTTP catalog is not the exact ten-capability contract.' || return
     listed="$(curl_json \
         -H 'Content-Type: application/json' \
         -H 'Accept: application/json, text/event-stream' \
@@ -341,7 +366,7 @@ verify_deployment() {
     jq -e --argjson expected "$CAPABILITIES" '
         [.result.tools[].name] == $expected
         and ([.result.tools[].name] | index("create_user") | not)
-    ' <<<"$listed" >/dev/null || fail 'public MCP catalog is not the exact seven-capability contract.' || return
+    ' <<<"$listed" >/dev/null || fail 'public MCP catalog is not the exact ten-capability contract.' || return
     database_probe="$(curl --disable --silent --show-error --connect-timeout 2 --max-time 10 \
         -H 'Aicadia-User-Id: 00000000-0000-0000-0000-000000000000' \
         -o /dev/null -w '%{http_code}' "$BASE_URL/api/user")" || fail 'disposable database path is unavailable.' || return
@@ -454,9 +479,15 @@ run_agent() {
 }
 
 events_are_clean() {
-    local events_file="$1"
+    local events_file="$1" expected_failed_mcp="$2"
     [[ -s "$events_file" ]] || return 1
-    jq -s -e '
+    jq -s -e --argjson expected_failed_mcp "$expected_failed_mcp" '
+        def expected_tool_failure:
+            .type == "item.completed"
+            and .item.type == "mcp_tool_call"
+            and .item.status == "failed"
+            and .item.error == null
+            and (.item.result | type == "object");
         def contains_failure:
             [.. | objects | select(
                 .type? == "error"
@@ -467,28 +498,101 @@ events_are_clean() {
             )] | length > 0;
         length > 0
         and all(.[]; type == "object")
-        and all(.[]; contains_failure | not)
+        and ([.[] | select(expected_tool_failure)] | length) == $expected_failed_mcp
+        and (map(if expected_tool_failure then .item.status = "completed" else . end)
+            | all(.[]; contains_failure | not))
     ' "$events_file" >/dev/null
 }
 
 agent_a_events_match() {
-    local events_file="$1" name="$2" description="$3"
-    jq -s -e --arg name "$name" --arg description "$description" '
+    local events_file="$1" character_name="$2" character_description="$3"
+    local place_name="$4" place_description="$5" entity_name="$6" entity_description="$7" user_id="$8"
+    jq -s -e \
+        --arg character_name "$character_name" --arg character_description "$character_description" \
+        --arg place_name "$place_name" --arg place_description "$place_description" \
+        --arg entity_name "$entity_name" --arg entity_description "$entity_description" --arg user_id "$user_id" '
         def allowed_item: . as $item_type
             | ["agent_message", "reasoning", "plan", "context_compaction", "mcp_tool_call"]
             | index($item_type) != null;
-        all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
+        def finished_calls: [.[] | select(
+            .type == "item.completed"
+            and .item.type == "mcp_tool_call"
+            and (.item.status == "completed" or .item.status == "failed")
+            and .item.error == null
+            and (.item.result | type == "object")
+        ) | .item];
+        def valid_first_page_arguments:
+            type == "object"
+            and (
+                (keys | length) == 0
+                or (
+                    keys == ["limit"]
+                    and (.limit | type) == "number"
+                    and (.limit | floor) == .limit
+                    and .limit >= 1
+                    and .limit <= 100
+                )
+            );
+        def game_error_code:
+            .result.content
+            | select(type == "array" and length == 1)
+            | .[0]
+            | select(type == "object" and .type == "text" and (.text | type) == "string")
+            | .text
+            | fromjson?
+            | .error.code?;
+        finished_calls as $calls
+        | $calls[0].result.structured_content as $created_character
+        | $calls[2].result.structured_content as $place
+        | $calls[3].result.structured_content as $entered_character
+        | $calls[4].result.structured_content as $entity
+        | $calls[5].result.structured_content as $history
+        | all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
         and all(.[] | select(.item?.type == "mcp_tool_call");
             .item.server == "aicadia"
-            and .item.tool == "create_entity"
-            and .item.arguments == {name: $name, description: $description})
-        and ([.[] | select(.type == "item.completed" and .item.type == "mcp_tool_call") | .item] | length) == 1
+            and (
+                (.item.tool == "create_character" and .item.arguments == {name: $character_name, description: $character_description})
+                or (.item.tool == "enter_world" and .item.arguments == {})
+                or (.item.tool == "create_entry_place" and .item.arguments == {name: $place_name, description: $place_description})
+                or (.item.tool == "create_entity" and .item.arguments == {name: $entity_name, description: $entity_description})
+                or (.item.tool == "list_activity" and (.item.arguments | valid_first_page_arguments))
+            ))
+        and ($calls | length) == 6
+        and [$calls[].tool] == ["create_character", "enter_world", "create_entry_place", "enter_world", "create_entity", "list_activity"]
+        and [$calls[].status] == ["completed", "failed", "completed", "completed", "completed", "completed"]
+        and $calls[1].arguments == {}
+        and ($calls[1] | game_error_code) == "entry_place_not_found"
+        and ($calls[1].result.structured_content? == null)
+        and $created_character.owner_user_id == $user_id
+        and $created_character.current_place == null
+        and $created_character.entity.name == $character_name
+        and $created_character.entity.description == $character_description
+        and $created_character.entity.introduced_by_user_id == $user_id
+        and $place.is_entry == true
+        and $place.entity.name == $place_name
+        and $place.entity.description == $place_description
+        and $place.entity.introduced_by_user_id == $user_id
+        and $entered_character.entity == $created_character.entity
+        and $entered_character.owner_user_id == $user_id
+        and $entered_character.current_place == $place
+        and $entity.name == $entity_name
+        and $entity.description == $entity_description
+        and $entity.introduced_by_user_id == $user_id
+        and ($history | keys | sort) == (["activity", "next"] | sort)
+        and $history.next == null
+        and ($history.activity | map(.operation)) == ["create_entity", "enter_world", "create_entry_place", "create_character"]
+        and $history.activity[0].actor_character == {id: $created_character.entity.id, name: $character_name}
+        and $history.activity[0].context_place == {entity: {id: $place.entity.id, name: $place_name}, is_entry: true}
+        and $history.activity[0].involved_entity == [{entity: {id: $entity.id, name: $entity_name}, role: "subject"}]
     ' "$events_file" >/dev/null
 }
 
 agent_b_events_match() {
-    local events_file="$1" entity_json="$2" observer_user_id="$3"
-    jq -s -e --argjson entity "$entity_json" --arg observer_user_id "$observer_user_id" '
+    local events_file="$1" entity_json="$2" observer_user_id="$3" place_json="$4"
+    local character_name="$5" character_description="$6"
+    jq -s -e --argjson entity "$entity_json" --argjson place "$place_json" \
+        --arg observer_user_id "$observer_user_id" --arg character_name "$character_name" \
+        --arg character_description "$character_description" '
         def allowed_item: . as $item_type
             | ["agent_message", "reasoning", "plan", "context_compaction", "mcp_tool_call"]
             | index($item_type) != null;
@@ -500,7 +604,7 @@ agent_b_events_match() {
             and (.item.result | type == "object")
             and (.item.result.structured_content | type == "object")
         ) | .item];
-        def valid_list_arguments:
+        def valid_first_page_arguments:
             type == "object"
             and (
                 (keys | length) == 0
@@ -514,62 +618,90 @@ agent_b_events_match() {
             );
         completed_calls as $calls
         | ($entity | {id, name}) as $summary
+        | $calls[0].result.structured_content as $created_character
+        | $calls[1].result.structured_content as $entered_character
+        | $calls[2].result.structured_content as $history
         | all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
         and all(.[] | select(.item?.type == "mcp_tool_call");
             .item.server == "aicadia"
             and (
-                (.item.tool == "get_user" and .item.arguments == {})
-                or (.item.tool == "list_entity" and (.item.arguments | valid_list_arguments))
+                (.item.tool == "create_character" and .item.arguments == {name: $character_name, description: $character_description})
+                or (.item.tool == "enter_world" and .item.arguments == {})
+                or (.item.tool == "list_activity" and (.item.arguments | valid_first_page_arguments))
+                or (.item.tool == "get_user" and .item.arguments == {})
+                or (.item.tool == "list_entity" and (.item.arguments | valid_first_page_arguments))
                 or (.item.tool == "get_entity" and .item.arguments == {entity_id: $entity.id})
             ))
-        and ($calls | length) == 3
-        and $calls[0].server == "aicadia" and $calls[0].tool == "get_user"
-        and $calls[0].arguments == {}
-        and $calls[0].result.structured_content.id == $observer_user_id
-        and $calls[1].server == "aicadia" and $calls[1].tool == "list_entity"
-        and ($calls[1].arguments | valid_list_arguments)
-        and ($calls[1].result.structured_content | keys | sort) == (["entity", "next"] | sort)
-        and ($calls[1].result.structured_content.entity | type == "array")
-        and any($calls[1].result.structured_content.entity[]; . == $summary)
-        and (($calls[1].result.structured_content.next == null) or ($calls[1].result.structured_content.next | type == "string"))
-        and $calls[2].server == "aicadia" and $calls[2].tool == "get_entity"
-        and $calls[2].arguments == {entity_id: $entity.id}
-        and $calls[2].result.structured_content == $entity
+        and ($calls | length) == 6
+        and [$calls[].tool] == ["create_character", "enter_world", "list_activity", "get_user", "list_entity", "get_entity"]
+        and $created_character.owner_user_id == $observer_user_id
+        and $created_character.current_place == null
+        and $created_character.entity.name == $character_name
+        and $created_character.entity.description == $character_description
+        and $created_character.entity.introduced_by_user_id == $observer_user_id
+        and $entered_character.entity == $created_character.entity
+        and $entered_character.owner_user_id == $observer_user_id
+        and $entered_character.current_place == $place
+        and ($history | keys | sort) == (["activity", "next"] | sort)
+        and $history.next == null
+        and ($history.activity | map(.operation)) == ["enter_world", "create_character"]
+        and $history.activity[0].actor_character == {id: $created_character.entity.id, name: $character_name}
+        and $history.activity[0].context_place == {entity: {id: $place.entity.id, name: $place.entity.name}, is_entry: true}
+        and $history.activity[0].involved_entity == [{entity: {id: $place.entity.id, name: $place.entity.name}, role: "destination"}]
+        and $calls[3].arguments == {}
+        and $calls[3].result.structured_content.id == $observer_user_id
+        and ($calls[4].arguments | valid_first_page_arguments)
+        and ($calls[4].result.structured_content | keys | sort) == (["entity", "next"] | sort)
+        and ($calls[4].result.structured_content.entity | type == "array")
+        and any($calls[4].result.structured_content.entity[]; . == $summary)
+        and (($calls[4].result.structured_content.next == null) or ($calls[4].result.structured_content.next | type == "string"))
+        and $calls[5].arguments == {entity_id: $entity.id}
+        and $calls[5].result.structured_content == $entity
     ' "$events_file" >/dev/null
 }
 
-final_is_valid() {
-    local final_file="$1" expected_status="$2" marker="$3" name="$4" description="$5" observer_user_id="$6"
-    jq -e --arg status "$expected_status" --arg marker "$marker" --arg name "$name" \
-        --arg description "$description" --arg observer_user_id "$observer_user_id" '
-        (if $status == "observed" then
-            (keys | sort) == (["status", "marker", "observer_user_id", "entity_id", "name", "description"] | sort)
-            and .observer_user_id == $observer_user_id
-        else
-            (keys | sort) == (["status", "marker", "entity_id", "name", "description"] | sort)
-        end)
-        and .status == $status and .marker == $marker and .name == $name and .description == $description
-        and (.entity_id | test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"))
+found_final_is_valid() {
+    local final_file="$1" marker="$2" character_id="$3" place_id="$4" entity_id="$5"
+    jq -e --arg marker "$marker" --arg character_id "$character_id" --arg place_id "$place_id" --arg entity_id "$entity_id" '
+        (keys | sort) == (["status", "marker", "character_id", "place_id", "entity_id", "activity_operation", "latest_actor_character_id", "latest_context_place_id", "latest_subject_entity_id"] | sort)
+        and .status == "founded"
+        and .marker == $marker
+        and .character_id == $character_id
+        and .place_id == $place_id
+        and .entity_id == $entity_id
+        and .activity_operation == ["create_entity", "enter_world", "create_entry_place", "create_character"]
+        and .latest_actor_character_id == $character_id
+        and .latest_context_place_id == $place_id
+        and .latest_subject_entity_id == $entity_id
     ' "$final_file" >/dev/null 2>&1
 }
 
-observed_final_has_context() {
-    local final_file="$1" marker="$2" observer_user_id="$3"
-    jq -e --arg marker "$marker" --arg observer_user_id "$observer_user_id" '
-        (keys | sort) == (["status", "marker", "observer_user_id", "entity_id", "name", "description"] | sort)
-        and .status == "observed" and .marker == $marker and .observer_user_id == $observer_user_id
-        and (.entity_id | type == "string") and (.name | type == "string") and (.description | type == "string")
+joined_final_is_valid() {
+    local final_file="$1" marker="$2" observer_user_id="$3" character_id="$4" place_id="$5" entity_id="$6"
+    jq -e --arg marker "$marker" --arg observer_user_id "$observer_user_id" \
+        --arg character_id "$character_id" --arg place_id "$place_id" --arg entity_id "$entity_id" '
+        (keys | sort) == (["status", "marker", "observer_user_id", "character_id", "place_id", "entity_id", "activity_operation", "latest_actor_character_id", "latest_context_place_id", "latest_destination_place_id"] | sort)
+        and .status == "joined"
+        and .marker == $marker
+        and .observer_user_id == $observer_user_id
+        and .character_id == $character_id
+        and .place_id == $place_id
+        and .entity_id == $entity_id
+        and .activity_operation == ["enter_world", "create_character"]
+        and .latest_actor_character_id == $character_id
+        and .latest_context_place_id == $place_id
+        and .latest_destination_place_id == $place_id
     ' "$final_file" >/dev/null 2>&1
 }
 
-find_marker_entity_id() {
-    local marker="$1" page
+find_fixture_entity_id() {
+    local entity_name="$1" page
     page="$(curl_json "$BASE_URL/api/entity?limit=100")" || return 1
     jq -e 'type == "object" and (.entity | type == "array")
         and all(.entity[]; (.id | type == "string") and (.name | type == "string"))
         and has("next") and ((.next == null) or ((.next | type == "string") and (.next | length > 0)))' <<<"$page" >/dev/null || return 1
-    jq -er --arg marker "$marker" '
-        [.entity[] | select(.name | contains($marker)) | .id]
+    jq -er --arg name "$entity_name" '
+        [.entity[] | select(.name == $name) | .id]
         | select(length == 1) | .[0]
     ' <<<"$page"
 }
@@ -668,6 +800,9 @@ on_signal() {
 
 run_playtest() {
     local codex_bin marker entity_name entity_description user_a_json user_b_json user_a user_b
+    local character_a_name character_a_description character_b_name character_b_description
+    local place_name place_description character_a_json character_b_json character_a_id character_b_id
+    local place_json place_id activity_a_json activity_b_json
     local a_exit b_exit failed=0 entity_id entity_json cleanup_failed=0
 
     preflight || return 1
@@ -678,6 +813,12 @@ run_playtest() {
     trap 'on_signal TERM 143' TERM
     trap 'on_signal HUP 129' HUP
     marker="$(<"$RUN_DIR/marker.txt")"
+    character_a_name="Founder Character $marker"
+    character_a_description="Disposable founder Character for MCP world-entry proof: $marker"
+    character_b_name="Joining Character $marker"
+    character_b_description="Disposable joining Character for MCP world-entry proof: $marker"
+    place_name="Entry Place $marker"
+    place_description="Disposable shared entry Place for MCP world-entry proof: $marker"
     entity_name="Disposable Playtest Entity $marker"
     entity_description="Technical cross-User MCP fixture in a disposable World: $marker"
 
@@ -698,14 +839,14 @@ run_playtest() {
     verify_provisioned_user "$user_b" || fail 'provisioned User B is not visible in the disposable World.' || return
     prepare_agent_evidence_files || fail 'could not prepare all Agent evidence files before the Agent phase.' || return
 
-    run_agent "$codex_bin" "$user_a" "$RUN_DIR/agent-a.prompt.txt" "$CREATE_SCHEMA" \
+    run_agent "$codex_bin" "$user_a" "$RUN_DIR/agent-a.prompt.txt" "$FOUND_SCHEMA" \
         "$RUN_DIR/agent-a.events.jsonl" "$RUN_DIR/agent-a.stderr.log" "$RUN_DIR/agent-a.final.json" \
-        "$ISOLATED_A" '["create_entity"]'
+        "$ISOLATED_A" "$AGENT_A_TOOLS"
     a_exit=$?
 
-    run_agent "$codex_bin" "$user_b" "$RUN_DIR/agent-b.prompt.txt" "$OBSERVE_SCHEMA" \
+    run_agent "$codex_bin" "$user_b" "$RUN_DIR/agent-b.prompt.txt" "$JOIN_SCHEMA" \
         "$RUN_DIR/agent-b.events.jsonl" "$RUN_DIR/agent-b.stderr.log" "$RUN_DIR/agent-b.final.json" \
-        "$ISOLATED_B" '["get_user","list_entity","get_entity"]'
+        "$ISOLATED_B" "$AGENT_B_TOOLS"
     b_exit=$?
     printf '%s\n' "$a_exit" >"$RUN_DIR/agent-a.exit-status" || fail 'could not write Agent A exit evidence.' || return
     printf '%s\n' "$b_exit" >"$RUN_DIR/agent-b.exit-status" || fail 'could not write Agent B exit evidence.' || return
@@ -715,33 +856,69 @@ run_playtest() {
 
     [[ $a_exit -eq 0 ]] || { fail "Agent A exited $a_exit (a deadline usually exits 142)."; failed=1; }
     [[ $b_exit -eq 0 ]] || { fail "Agent B exited $b_exit (a deadline usually exits 142)."; failed=1; }
-    events_are_clean "$RUN_DIR/agent-a.events.jsonl" || { fail 'Agent A JSONL contains an error or is malformed.'; failed=1; }
-    events_are_clean "$RUN_DIR/agent-b.events.jsonl" || { fail 'Agent B JSONL contains an error or is malformed.'; failed=1; }
-    agent_a_events_match "$RUN_DIR/agent-a.events.jsonl" "$entity_name" "$entity_description" \
-        || { fail 'Agent A used a forbidden tool, wrong arguments, or not exactly one create_entity call.'; failed=1; }
-    final_is_valid "$RUN_DIR/agent-a.final.json" created "$marker" "$entity_name" "$entity_description" '' \
-        || { fail 'Agent A final artifact does not match exact stored content.'; failed=1; }
-    observed_final_has_context "$RUN_DIR/agent-b.final.json" "$marker" "$user_b" \
-        || { fail 'Agent B final artifact does not match its schema or User B context.'; failed=1; }
+    events_are_clean "$RUN_DIR/agent-a.events.jsonl" 1 || { fail 'Agent A JSONL contains an unexpected error or failed-call count.'; failed=1; }
+    events_are_clean "$RUN_DIR/agent-b.events.jsonl" 0 || { fail 'Agent B JSONL contains an error or is malformed.'; failed=1; }
 
-    entity_id="$(find_marker_entity_id "$marker")" || { fail 'validation did not find exactly one fixture Entity on the first list page.'; failed=1; entity_id=''; }
+    entity_id="$(find_fixture_entity_id "$entity_name")" || { fail 'validation did not find exactly one fixture Entity on the first list page.'; failed=1; entity_id=''; }
+    character_a_json="$(curl_json -H "Aicadia-User-Id: $user_a" "$BASE_URL/api/character")" \
+        || { fail 'validation could not read Character A.'; failed=1; character_a_json='{}'; }
+    character_b_json="$(curl_json -H "Aicadia-User-Id: $user_b" "$BASE_URL/api/character")" \
+        || { fail 'validation could not read Character B.'; failed=1; character_b_json='{}'; }
+    activity_a_json="$(curl_json -H "Aicadia-User-Id: $user_a" "$BASE_URL/api/activity?limit=25")" \
+        || { fail 'validation could not read Activity A.'; failed=1; activity_a_json='{}'; }
+    activity_b_json="$(curl_json -H "Aicadia-User-Id: $user_b" "$BASE_URL/api/activity?limit=25")" \
+        || { fail 'validation could not read Activity B.'; failed=1; activity_b_json='{}'; }
+    character_a_id="$(jq -er '.entity.id | select(type == "string")' <<<"$character_a_json")" \
+        || { fail 'Character A response has no Entity id.'; failed=1; character_a_id=''; }
+    character_b_id="$(jq -er '.entity.id | select(type == "string")' <<<"$character_b_json")" \
+        || { fail 'Character B response has no Entity id.'; failed=1; character_b_id=''; }
+    place_json="$(jq -ec '.current_place | select(type == "object")' <<<"$character_a_json")" \
+        || { fail 'Character A is not placed.'; failed=1; place_json='{}'; }
+    place_id="$(jq -er '.entity.id | select(type == "string")' <<<"$place_json")" \
+        || { fail 'Character A Place has no Entity id.'; failed=1; place_id=''; }
+
+    jq -e --arg user "$user_a" --arg name "$character_a_name" --arg description "$character_a_description" \
+        --arg place "$place_id" '
+        .owner_user_id == $user
+        and .entity.name == $name and .entity.description == $description
+        and .current_place.entity.id == $place and .current_place.is_entry == true
+    ' <<<"$character_a_json" >/dev/null || { fail 'stored Character A does not match the founded placement.'; failed=1; }
+    jq -e --arg user "$user_b" --arg name "$character_b_name" --arg description "$character_b_description" \
+        --arg place "$place_id" '
+        .owner_user_id == $user
+        and .entity.name == $name and .entity.description == $description
+        and .current_place.entity.id == $place and .current_place.is_entry == true
+    ' <<<"$character_b_json" >/dev/null || { fail 'stored Character B did not join Character A at the same Place.'; failed=1; }
+    jq -e --arg place "$place_id" --arg name "$place_name" --arg description "$place_description" '
+        .entity.id == $place and .entity.name == $name and .entity.description == $description and .is_entry == true
+    ' <<<"$place_json" >/dev/null || { fail 'stored entry Place does not match the exact genesis fixture.'; failed=1; }
+    jq -e '[.activity[].operation] == ["create_entity", "enter_world", "create_entry_place", "create_character"] and .next == null' \
+        <<<"$activity_a_json" >/dev/null || { fail 'stored Activity A does not contain the exact accepted action history.'; failed=1; }
+    jq -e '[.activity[].operation] == ["enter_world", "create_character"] and .next == null' \
+        <<<"$activity_b_json" >/dev/null || { fail 'stored Activity B does not contain the exact accepted action history.'; failed=1; }
+
     if [[ -n "$entity_id" ]]; then
         entity_json="$(curl_json "$BASE_URL/api/entity/$entity_id")" || { fail 'validation could not read the fixture Entity.'; failed=1; entity_json='{}'; }
         jq -e --arg id "$entity_id" --arg user "$user_a" --arg name "$entity_name" --arg description "$entity_description" '
             .id == $id and .introduced_by_user_id == $user and .name == $name and .description == $description
         ' <<<"$entity_json" >/dev/null || { fail 'stored Entity does not match Agent A, User A, and exact fixture content.'; failed=1; }
-        jq -e --arg id "$entity_id" '.entity_id == $id' "$RUN_DIR/agent-a.final.json" >/dev/null 2>&1 \
-            || { fail 'Agent A reported a different Entity id.'; failed=1; }
-        final_is_valid "$RUN_DIR/agent-b.final.json" observed "$marker" "$(jq -r '.name' <<<"$entity_json")" \
-            "$(jq -r '.description' <<<"$entity_json")" "$user_b" || { fail 'Agent B result differs from stored state.'; failed=1; }
-        jq -e --arg id "$entity_id" '.entity_id == $id' "$RUN_DIR/agent-b.final.json" >/dev/null 2>&1 \
-            || { fail 'Agent B did not observe the same Entity id.'; failed=1; }
-        agent_b_events_match "$RUN_DIR/agent-b.events.jsonl" "$entity_json" "$user_b" \
-            || { fail 'Agent B JSONL does not prove ordered User B, list and exact Entity results.'; failed=1; }
+        agent_a_events_match "$RUN_DIR/agent-a.events.jsonl" \
+            "$character_a_name" "$character_a_description" "$place_name" "$place_description" \
+            "$entity_name" "$entity_description" "$user_a" \
+            || { fail 'Agent A JSONL does not prove the exact genesis, entry, Entity and Activity flow.'; failed=1; }
+        agent_b_events_match "$RUN_DIR/agent-b.events.jsonl" "$entity_json" "$user_b" "$place_json" \
+            "$character_b_name" "$character_b_description" \
+            || { fail 'Agent B JSONL does not prove the exact shared Place, Activity and Entity observation flow.'; failed=1; }
+        found_final_is_valid "$RUN_DIR/agent-a.final.json" "$marker" "$character_a_id" "$place_id" "$entity_id" \
+            || { fail 'Agent A final artifact does not match exact stored World and Activity state.'; failed=1; }
+        joined_final_is_valid "$RUN_DIR/agent-b.final.json" "$marker" "$user_b" "$character_b_id" "$place_id" "$entity_id" \
+            || { fail 'Agent B final artifact does not match exact shared World and Activity state.'; failed=1; }
     fi
 
     if [[ $failed -eq 0 ]]; then
-        manifest_set '.validation = {status: "passed", entity_id: $id}' --arg id "$entity_id" || return
+        manifest_set '.validation = {status: "passed", character_a_id: $character_a, character_b_id: $character_b, place_id: $place, entity_id: $entity}' \
+            --arg character_a "$character_a_id" --arg character_b "$character_b_id" \
+            --arg place "$place_id" --arg entity "$entity_id" || return
     else
         manifest_set '.validation = {status: "failed"}' || return
     fi
@@ -752,7 +929,7 @@ run_playtest() {
         return 1
     fi
     manifest_set '.run_status = "completed"' || return
-    printf 'Playtest passed with exactly two sequential Agents in a disposable World, which was dropped. Artifacts: %s\n' "$RUN_DIR"
+    printf 'Playtest passed with two Characters at one shared entry Place, personal Activity proof and cross-User Entity observation in a disposable World, which was dropped. Artifacts: %s\n' "$RUN_DIR"
 }
 
 main() {

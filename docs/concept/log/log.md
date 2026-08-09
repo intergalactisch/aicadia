@@ -647,13 +647,14 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   would make every future location, observation and relationship choose a subject
   kind. The complete contract and relationship/index meanings live in
   `docs/game/README.md` and `docs/game/agent-interface.md`.
-- corrected spatial lifecycle: creating a Character introduces its durable identity
+- decided for the Character-only slice and now superseded by accepted World entry:
+  creating a Character introduces its durable identity
   and User ownership but does not place it in the World. A Character may therefore
   exist without an established Place. Initial placement is a separate future game
   transition whose actor, authority and result must be decided before adding Place
-  storage; a nullable Place column without such behavior is rejected as unused
-  plumbing. `docs/game/README.md` now states the current no-Place boundary, and the
-  discovery design no longer assumes every Character already has a current Place.
+  storage; a nullable Place column without such behavior was rejected as unused
+  plumbing. The later World-entry choice supplied that behavior and superseded the
+  no-Place storage boundary while retaining deliberately unplaced creation.
 
 ## World history and development backlog
 
@@ -668,10 +669,55 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   near work. It does not compete with `docs/game/`, research or this log. Builders
   update current scope, state, dependencies and completion evidence in place while
   material choices continue to be recorded in their proper authority.
-- proposed next edge, not yet executable contract: build World entry together with
-  the first normalized activity-history spine. Character remains unplaced after
-  creation; a later explicit action establishes spatial presence. Current state and
-  append-only activity are written atomically but remain separate, avoiding both an
-  unused Place column and premature event sourcing. The concrete proposal, open
-  names and migration risk are maintained in
-  `.agents/backlog/items/world-entry-history.md` pending acceptance.
+- accepted and built next edge: World entry ships together with the first normalized
+  `activity` history spine. The first connected Agent representing an existing
+  unplaced Character may author the one entry Place's `name` and `description` with
+  `create_entry_place`; World derives all ids and a unique database invariant allows
+  exactly one concurrent winner. `enter_world` derives Character and entry Place,
+  places only an unplaced Character and is delivery-retry safe without becoming
+  movement. `list_activity` derives the current Character, accepts no Character id,
+  selects actor-or-role-linked involvement exactly once and pages by
+  `(occurred_at, id)` descending.
+- accepted history model: current state remains authoritative. `activity` records
+  accepted operation, responsible User internally, optional actor Character,
+  optional context Place, occurrence time and normalized `activity_entity` links
+  with server-owned `subject` or `destination` roles. `create_character`,
+  `create_entity`, `create_entry_place` and `enter_world` write state and immutable
+  history in one transaction. There is no JSON payload, replay, generic event,
+  rejected-call logging, transcript, score or server inference. Player-visible
+  personal history omits operational User provenance.
+- accepted migration boundary: pre-history Character Entities backfill
+  `create_character`; every pre-role non-Character Entity backfills `create_entity`.
+  The operation, responsible User, subject and original Entity timestamp are exactly
+  derivable. The old schema retained no actor Character or Place context, so both
+  remain absent; no placement history is invented.
+- accepted spatial boundary: `Place` is an Entity role with `entity_id` identity and
+  Character holds one nullable current Place foreign key. Character creation always
+  leaves it null. The one entry Place and explicit World entry are current behavior;
+  coordinates, geometry, containment, routes, additional Places and movement remain
+  deferred. The complete executable contract and wire surface live in
+  `docs/game/README.md` and `docs/game/agent-interface.md`.
+- accepted delivery correction: the implemented World-entry behavior must be
+  understandable from the MCP catalog an external Agent actually receives, not only
+  from repository documentation and adapter tests. The current ten capabilities and
+  game semantics remain unchanged; their descriptions and generated output schemas
+  will make unplaced Character state, genesis, entry retry behavior, Place identity
+  and Activity roles explicit.
+- accepted acceptance boundary: the live Agent playtest expands from only shared
+  Entity visibility to the complete current flow. Agent A creates its Character,
+  establishes the entry Place only after World reports that genesis is absent,
+  enters, creates the shared fixture Entity and reads personal Activity. Agent B
+  creates its own Character, enters the same server-derived Place, reads its own
+  Activity and observes Agent A's Entity. Expected first-use game errors are part of
+  this deterministic flow and must be validated exactly; arbitrary errors remain
+  fatal. A paid live run remains gated by explicit token-spend confirmation, so
+  local completion alone cannot mark the backlog item done.
+- built and token-free verified: all ten generated MCP tools now carry the accepted
+  meanings in their descriptions and output-field schemas, the MCP server instruction
+  publishes the recommended entry sequence, and the exact catalog fixture pins that
+  handoff. The disposable runner now validates the two-Character shared-Place flow,
+  personal Activity operations and roles, and the existing cross-User Entity proof
+  against both direct MCP evidence and authoritative HTTP state. Its fake failure
+  matrix, all 38 Rust tests, formatting, strict lint and the real Codex/PostgreSQL
+  preflight pass without invoking an Agent. The backlog item remains Active because
+  no paid live run was authorized or performed.

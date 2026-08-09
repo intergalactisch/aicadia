@@ -9,11 +9,14 @@ use uuid::Uuid;
 
 const PROTOCOL_VERSION: &str = "2026-07-28";
 const LEGACY_PROTOCOL_VERSION: &str = "2025-11-25";
-const CAPABILITY: [&str; 7] = [
+const CAPABILITY: [&str; 10] = [
     "get_world",
     "get_user",
     "get_character",
     "create_character",
+    "create_entry_place",
+    "enter_world",
+    "list_activity",
     "list_entity",
     "get_entity",
     "create_entity",
@@ -280,7 +283,7 @@ fn assert_protocol_error(
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn catalogs_expose_exactly_the_seven_player_capabilities(pool: PgPool) {
+async fn catalogs_expose_exactly_the_ten_player_capabilities(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;
 
     let openapi: Value = server
@@ -391,6 +394,10 @@ async fn legacy_mcp_session_supports_all_player_capabilities(pool: PgPool) {
     assert_eq!(
         initialized["result"]["protocolVersion"],
         LEGACY_PROTOCOL_VERSION
+    );
+    assert_eq!(
+        initialized["result"]["instructions"],
+        "Inspect and extend the shared Aicadia World through the ten listed tools. For entry: get_character; create_character only when absent; if current_place is null call enter_world; only after entry_place_not_found call create_entry_place and then retry enter_world. Never ask the User for Character or Place ids."
     );
 
     let notification = server
@@ -729,6 +736,66 @@ async fn http_and_mcp_share_successful_world_state(pool: PgPool) {
 
     let response = server
         .client
+        .post(format!("{}/api/place/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&json!({
+            "name": "North Gate",
+            "description": "The one established entry into the shared World."
+        }))
+        .send()
+        .await
+        .expect("entry Place create should send");
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let entry_place: Value = response.json().await.expect("entry Place should be JSON");
+    assert_eq!(entry_place["is_entry"], true);
+    let entered = server.tool("enter_world", json!({}), Some(user.id.0)).await;
+    assert_eq!(
+        structured(&entered)["current_place"],
+        entry_place,
+        "MCP entry should use the HTTP-created server-derived Place"
+    );
+    let response = server
+        .client
+        .post(format!("{}/api/world/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, second_user.id.0.to_string())
+        .send()
+        .await
+        .expect("second Character entry should send");
+    assert_eq!(response.status(), StatusCode::OK);
+    let http_entered: Value = response
+        .json()
+        .await
+        .expect("entered Character should be JSON");
+    assert_eq!(http_entered["current_place"], entry_place);
+
+    let first_activity: Value = server
+        .client
+        .get(format!("{}/api/activity?limit=1", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .send()
+        .await
+        .expect("activity page should send")
+        .json()
+        .await
+        .expect("activity page should be JSON");
+    assert_eq!(first_activity["activity"][0]["operation"], "enter_world");
+    let activity_cursor = first_activity["next"]
+        .as_str()
+        .expect("earlier personal activity should produce a cursor");
+    let next_activity = server
+        .tool(
+            "list_activity",
+            json!({"cursor": activity_cursor, "limit": 1}),
+            Some(user.id.0),
+        )
+        .await;
+    assert_eq!(
+        structured(&next_activity)["activity"][0]["operation"],
+        "create_entry_place"
+    );
+
+    let response = server
+        .client
         .post(format!("{}/api/entity", server.base_url))
         .header(USER_CONTEXT_HEADER, user.id.0.to_string())
         .json(&json!({
@@ -857,6 +924,63 @@ async fn http_and_mcp_share_canonical_capability_errors(pool: PgPool) {
         mcp_error(&duplicate_character_mcp),
         duplicate_character_http
     );
+
+    let response = server
+        .client
+        .post(format!("{}/api/world/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .send()
+        .await
+        .expect("entry without a Place should send");
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let no_entry_http: Value = response.json().await.expect("error should be JSON");
+    let no_entry_mcp = server.tool("enter_world", json!({}), Some(user.id.0)).await;
+    assert_eq!(error_code(&no_entry_http), "entry_place_not_found");
+    assert_eq!(mcp_error(&no_entry_mcp), no_entry_http);
+
+    let invalid_place = json!({"name": "   ", "description": "Valid"});
+    let response = server
+        .client
+        .post(format!("{}/api/place/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&invalid_place)
+        .send()
+        .await
+        .expect("invalid entry Place should send");
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let invalid_place_http: Value = response.json().await.expect("error should be JSON");
+    let invalid_place_mcp = server
+        .tool("create_entry_place", invalid_place, Some(user.id.0))
+        .await;
+    assert_eq!(error_code(&invalid_place_http), "invalid_place");
+    assert_eq!(mcp_error(&invalid_place_mcp), invalid_place_http);
+
+    server
+        .tool(
+            "create_entry_place",
+            json!({"name": "North Gate", "description": "The shared entry."}),
+            Some(user.id.0),
+        )
+        .await;
+    let duplicate_place = json!({"name": "Other Gate", "description": "Must not exist."});
+    let response = server
+        .client
+        .post(format!("{}/api/place/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&duplicate_place)
+        .send()
+        .await
+        .expect("duplicate entry Place should send");
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    let duplicate_place_http: Value = response.json().await.expect("error should be JSON");
+    let duplicate_place_mcp = server
+        .tool("create_entry_place", duplicate_place, Some(user.id.0))
+        .await;
+    assert_eq!(
+        error_code(&duplicate_place_http),
+        "entry_place_already_exists"
+    );
+    assert_eq!(mcp_error(&duplicate_place_mcp), duplicate_place_http);
 
     let response = server
         .client
@@ -1136,4 +1260,119 @@ async fn http_and_mcp_share_canonical_capability_errors(pool: PgPool) {
         assert_eq!(limit_http["error"]["reason"], "out_of_range");
         assert_eq!(mcp_error(&limit_mcp), limit_http);
     }
+
+    for limit in [-1, 0, 101, 65_536] {
+        let response = server
+            .client
+            .get(format!("{}/api/activity?limit={limit}", server.base_url))
+            .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+            .send()
+            .await
+            .expect("out-of-range activity limit request should send");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let limit_http: Value = response.json().await.expect("error should be JSON");
+        let limit_mcp = server
+            .tool("list_activity", json!({"limit": limit}), Some(user.id.0))
+            .await;
+        assert_eq!(error_code(&limit_http), "invalid_activity_limit");
+        assert_eq!(mcp_error(&limit_mcp), limit_http);
+    }
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn http_concurrency_preserves_single_genesis_and_retry_safe_entry(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let first_user = world.create_user().await.unwrap();
+    let second_user = world.create_user().await.unwrap();
+    world
+        .create_character(
+            first_user.id,
+            aicadia::CreateCharacter {
+                name: "Mara Venn".to_owned(),
+                description: "A careful surveyor.".to_owned(),
+            },
+        )
+        .await
+        .unwrap();
+    world
+        .create_character(
+            second_user.id,
+            aicadia::CreateCharacter {
+                name: "Tomas Reed".to_owned(),
+                description: "A patient observer.".to_owned(),
+            },
+        )
+        .await
+        .unwrap();
+    let server = TestServer::start(world).await;
+    let first_genesis = server
+        .client
+        .post(format!("{}/api/place/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, first_user.id.0.to_string())
+        .json(&json!({"name": "North Gate", "description": "First candidate."}))
+        .send();
+    let second_genesis = server
+        .client
+        .post(format!("{}/api/place/entry", server.base_url))
+        .header(USER_CONTEXT_HEADER, second_user.id.0.to_string())
+        .json(&json!({"name": "South Gate", "description": "Second candidate."}))
+        .send();
+    let (first_genesis, second_genesis) = tokio::join!(first_genesis, second_genesis);
+    let status = [
+        first_genesis.unwrap().status(),
+        second_genesis.unwrap().status(),
+    ];
+    assert_eq!(
+        status
+            .iter()
+            .filter(|status| **status == StatusCode::CREATED)
+            .count(),
+        1
+    );
+    assert_eq!(
+        status
+            .iter()
+            .filter(|status| **status == StatusCode::CONFLICT)
+            .count(),
+        1
+    );
+    let place_count: i64 = sqlx::query_scalar("SELECT count(*) FROM place")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let entity_count: i64 = sqlx::query_scalar("SELECT count(*) FROM entity")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(place_count, 1);
+    assert_eq!(entity_count, 3);
+
+    let enter_url = format!("{}/api/world/entry", server.base_url);
+    let first_entry = server
+        .client
+        .post(&enter_url)
+        .header(USER_CONTEXT_HEADER, first_user.id.0.to_string())
+        .send();
+    let second_entry = server
+        .client
+        .post(&enter_url)
+        .header(USER_CONTEXT_HEADER, first_user.id.0.to_string())
+        .send();
+    let (first_entry, second_entry) = tokio::join!(first_entry, second_entry);
+    let first_entry = first_entry.unwrap();
+    let second_entry = second_entry.unwrap();
+    assert_eq!(first_entry.status(), StatusCode::OK);
+    assert_eq!(second_entry.status(), StatusCode::OK);
+    assert_eq!(
+        first_entry.json::<Value>().await.unwrap(),
+        second_entry.json::<Value>().await.unwrap()
+    );
+    let enter_count: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM activity WHERE operation = 'enter_world' AND requested_by_user_id = $1",
+    )
+    .bind(first_user.id.0)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(enter_count, 1);
 }

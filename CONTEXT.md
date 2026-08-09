@@ -20,10 +20,24 @@ behalf but has no durable identity inside the World.
 _Avoid_: User, Character, narrator
 
 **Character**:
-The User-owned role of the Entity through which later player behavior enters the
-World. A Character has no identity separate from that Entity and does not mean User,
-Agent, session or account.
+The User-owned role of the Entity through which player behavior enters the World. A
+Character has no identity separate from that Entity. It may be unplaced or have one
+complete current Place, and does not mean User, Agent, session or account.
 _Avoid_: User, Agent, avatar record with a separate identity
+
+**Place**:
+The spatial role of an Entity. A Place uses the Entity's stable identity; it is not a
+coordinate, geometry, container or second Place id. The current World has at most one
+entry Place.
+_Avoid_: Location id, scene, node, coordinates
+
+**Activity**:
+Immutable normalized history of one accepted state-changing game operation. Activity
+records operation, responsible User internally, optional actor Character, optional
+context Place, occurrence time and involved Entity ids with server-owned roles. It
+does not replace current state or mean transport log, conversation, private Agent
+reasoning or generic event payload.
+_Avoid_: Event sourcing, transcript, audit blob, score
 
 **Entity**:
 One thing or concept that needs a stable identity so participants can refer to the

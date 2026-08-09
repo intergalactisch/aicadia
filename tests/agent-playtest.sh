@@ -86,9 +86,21 @@ args="$*"
 if [[ "$args" == *'-w %{http_code}'* ]]; then
     printf '404'
 elif [[ "$args" == *'/api/openapi.json'* ]]; then
-    printf '%s\n' '{"paths":{"/api/world":{"get":{"operationId":"get_world"}},"/api/user":{"get":{"operationId":"get_user"}},"/api/character":{"get":{"operationId":"get_character"},"post":{"operationId":"create_character"}},"/api/entity":{"get":{"operationId":"list_entity"},"post":{"operationId":"create_entity"}},"/api/entity/{entity_id}":{"get":{"operationId":"get_entity"}}}}'
+    printf '%s\n' '{"paths":{"/api/world":{"get":{"operationId":"get_world"}},"/api/user":{"get":{"operationId":"get_user"}},"/api/character":{"get":{"operationId":"get_character"},"post":{"operationId":"create_character"}},"/api/place/entry":{"post":{"operationId":"create_entry_place"}},"/api/world/entry":{"post":{"operationId":"enter_world"}},"/api/activity":{"get":{"operationId":"list_activity"}},"/api/entity":{"get":{"operationId":"list_entity"},"post":{"operationId":"create_entity"}},"/api/entity/{entity_id}":{"get":{"operationId":"get_entity"}}}}'
 elif [[ "$args" == *'/mcp'* ]]; then
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"get_world"},{"name":"get_user"},{"name":"get_character"},{"name":"create_character"},{"name":"list_entity"},{"name":"get_entity"},{"name":"create_entity"}]}}'
+    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"get_world"},{"name":"get_user"},{"name":"get_character"},{"name":"create_character"},{"name":"create_entry_place"},{"name":"enter_world"},{"name":"list_activity"},{"name":"list_entity"},{"name":"get_entity"},{"name":"create_entity"}]}}'
+elif [[ "$args" == *'/api/character'* ]]; then
+    if [[ "$args" == *'11111111-1111-4111-8111-111111111111'* ]]; then
+        [[ -f "$state/character-a.json" ]] && jq . "$state/character-a.json" || printf '%s\n' '{}'
+    else
+        [[ -f "$state/character-b.json" ]] && jq . "$state/character-b.json" || printf '%s\n' '{}'
+    fi
+elif [[ "$args" == *'/api/activity?limit=25'* ]]; then
+    if [[ "$args" == *'11111111-1111-4111-8111-111111111111'* ]]; then
+        [[ -f "$state/activity-a.json" ]] && jq . "$state/activity-a.json" || printf '%s\n' '{}'
+    else
+        [[ -f "$state/activity-b.json" ]] && jq . "$state/activity-b.json" || printf '%s\n' '{}'
+    fi
 elif [[ "$args" == *'/api/entity?limit=100'* ]]; then
     if [[ -f "$state/entity.json" ]]; then
         jq '{entity: [{id: .id, name: .name}], next: null}' "$state/entity.json"
@@ -158,10 +170,10 @@ if [[ "$*" == *'mcp get aicadia --json' ]]; then
         'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'; do
         grep -Fx -- "$required" <<<"$arguments" >/dev/null || exit 97
     done
-    if [[ "$*" == *'enabled_tools=["create_entity"]'* ]]; then
-        tools='["create_entity"]'
-    elif [[ "$*" == *'enabled_tools=["get_user","list_entity","get_entity"]'* ]]; then
-        tools='["get_user","list_entity","get_entity"]'
+    if [[ "$*" == *'enabled_tools=["create_character","create_entry_place","enter_world","list_activity","create_entity"]'* ]]; then
+        tools='["create_character","create_entry_place","enter_world","list_activity","create_entity"]'
+    elif [[ "$*" == *'enabled_tools=["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'* ]]; then
+        tools='["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'
     else
         exit 96
     fi
@@ -190,9 +202,18 @@ done
 prompt="${!#}"
 printf '%s\n' "$prompt" >"$call_dir/prompt"
 marker="$(sed -n 's/.*\(aicadia-playtest-[0-9A-Za-z-]*\).*/\1/p' <<<"$prompt" | head -1)"
+character_a_name="Founder Character $marker"
+character_a_description="Disposable founder Character for MCP world-entry proof: $marker"
+character_b_name="Joining Character $marker"
+character_b_description="Disposable joining Character for MCP world-entry proof: $marker"
+place_name="Entry Place $marker"
+place_description="Disposable shared entry Place for MCP world-entry proof: $marker"
 name="Disposable Playtest Entity $marker"
 description="Technical cross-User MCP fixture in a disposable World: $marker"
-entity_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+character_a_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+place_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+entity_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+character_b_id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 
 printf '%s\n' '{"type":"thread.started"}'
 code_mode_diagnostic='Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.'
@@ -220,32 +241,80 @@ if [[ $count -eq 1 && "$mode" == 'a-timeout' ]]; then
     printf '%s\n' "$blocking_child" >"$state/timeout-child-pid"
     wait "$blocking_child"
 fi
-if [[ $count -eq 1 && "$mode" == 'a-malformed' ]]; then
-    printf '%s\n' '{"status":"created","marker":"wrong"}' >"$final"
-    exit 0
-fi
 if [[ $count -eq 1 ]]; then
+    created_character="$(jq -nc --arg id "$character_a_id" --arg name "$character_a_name" \
+        --arg description "$character_a_description" --arg user "$AICADIA_USER_ID" \
+        '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:01:00Z"},owner_user_id:$user,current_place:null}')"
+    place="$(jq -nc --arg id "$place_id" --arg name "$place_name" --arg description "$place_description" \
+        --arg user "$AICADIA_USER_ID" \
+        '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:02:00Z"},is_entry:true}')"
+    entered_character="$(jq -nc --argjson character "$created_character" --argjson place "$place" \
+        '$character | .current_place = $place')"
     jq -n --arg id "$entity_id" --arg name "$name" --arg description "$description" --arg user "$AICADIA_USER_ID" \
-        '{id: $id, name: $name, description: $description, introduced_by_user_id: $user, introduced_at: "2026-08-08T12:01:00Z"}' >"$state/entity.json"
-    jq -n --arg marker "$marker" --arg id "$entity_id" --arg name "$name" --arg description "$description" \
-        '{status: "created", marker: $marker, entity_id: $id, name: $name, description: $description}' >"$final"
+        '{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:04:00Z"}' >"$state/entity.json"
+    history="$(jq -nc --arg character "$character_a_id" --arg character_name "$character_a_name" \
+        --arg place "$place_id" --arg place_name "$place_name" --arg entity "$entity_id" --arg entity_name "$name" '
+        {activity:[
+            {id:"e0000000-0000-4000-8000-000000000004",operation:"create_entity",actor_character:{id:$character,name:$character_name},context_place:{entity:{id:$place,name:$place_name},is_entry:true},involved_entity:[{entity:{id:$entity,name:$entity_name},role:"subject"}],occurred_at:"2026-08-08T12:04:00Z"},
+            {id:"e0000000-0000-4000-8000-000000000003",operation:"enter_world",actor_character:{id:$character,name:$character_name},context_place:{entity:{id:$place,name:$place_name},is_entry:true},involved_entity:[{entity:{id:$place,name:$place_name},role:"destination"}],occurred_at:"2026-08-08T12:03:00Z"},
+            {id:"e0000000-0000-4000-8000-000000000002",operation:"create_entry_place",actor_character:{id:$character,name:$character_name},context_place:null,involved_entity:[{entity:{id:$place,name:$place_name},role:"subject"}],occurred_at:"2026-08-08T12:02:00Z"},
+            {id:"e0000000-0000-4000-8000-000000000001",operation:"create_character",actor_character:null,context_place:null,involved_entity:[{entity:{id:$character,name:$character_name},role:"subject"}],occurred_at:"2026-08-08T12:01:00Z"}
+        ],next:null}')"
+    printf '%s\n' "$place" >"$state/place.json"
+    printf '%s\n' "$entered_character" >"$state/character-a.json"
+    printf '%s\n' "$history" >"$state/activity-a.json"
+    if [[ "$mode" == 'a-malformed' ]]; then
+        printf '%s\n' '{"status":"founded","marker":"wrong"}' >"$final"
+    else
+        jq -n --arg marker "$marker" --arg character "$character_a_id" --arg place "$place_id" --arg entity "$entity_id" \
+            '{status:"founded",marker:$marker,character_id:$character,place_id:$place,entity_id:$entity,activity_operation:["create_entity","enter_world","create_entry_place","create_character"],latest_actor_character_id:$character,latest_context_place_id:$place,latest_subject_entity_id:$entity}' >"$final"
+    fi
+    jq -nc --arg name "$character_a_name" --arg description "$character_a_description" --argjson result "$created_character" \
+        '{type:"item.completed",item:{id:"item-1",type:"mcp_tool_call",server:"aicadia",tool:"create_character",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+    error_result='{"error":{"code":"entry_place_not_found","message":"World entry Place was not found."}}'
+    if [[ "$mode" == 'a-wrong-genesis-error' ]]; then
+        error_result='{"error":{"code":"character_not_found","message":"Character was not found."}}'
+    fi
+    jq -nc --arg text "$error_result" \
+        '{type:"item.completed",item:{id:"item-2",type:"mcp_tool_call",server:"aicadia",tool:"enter_world",arguments:{},result:{content:[{type:"text",text:$text}],structured_content:null},status:"failed",error:null}}'
+    jq -nc --arg name "$place_name" --arg description "$place_description" --argjson result "$place" \
+        '{type:"item.completed",item:{id:"item-3",type:"mcp_tool_call",server:"aicadia",tool:"create_entry_place",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+    jq -nc --argjson result "$entered_character" \
+        '{type:"item.completed",item:{id:"item-4",type:"mcp_tool_call",server:"aicadia",tool:"enter_world",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
     jq -nc --arg name "$name" --arg description "$description" --argjson result "$(<"$state/entity.json")" \
-        '{type:"item.completed",item:{id:"item-1",type:"mcp_tool_call",server:"aicadia",tool:"create_entity",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+        '{type:"item.completed",item:{id:"item-5",type:"mcp_tool_call",server:"aicadia",tool:"create_entity",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+    jq -nc --argjson result "$history" \
+        '{type:"item.completed",item:{id:"item-6",type:"mcp_tool_call",server:"aicadia",tool:"list_activity",arguments:{limit:25},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
     if [[ "$mode" == 'a-second-create' ]]; then
         printf '%s\n' '{"type":"item.completed","item":{"id":"item-extra","type":"mcp_tool_call","server":"aicadia","tool":"create_entity","arguments":{"name":"Unmarked","description":"Extra"},"status":"completed","error":null}}'
     fi
 else
+    if [[ ! -f "$state/place.json" ]]; then
+        jq -n --arg id "$place_id" --arg name "$place_name" --arg description "$place_description" \
+            '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:"11111111-1111-4111-8111-111111111111",introduced_at:"2026-08-08T12:02:00Z"},is_entry:true}' >"$state/place.json"
+    fi
     if [[ ! -f "$state/entity.json" ]]; then
         jq -n --arg id "$entity_id" --arg name "$name" --arg description "$description" \
             '{id:$id,name:$name,description:$description,introduced_by_user_id:"11111111-1111-4111-8111-111111111111",introduced_at:"2026-08-08T12:01:00Z"}' >"$state/entity.json"
     fi
-    if [[ -f "$state/entity.json" ]]; then
-        name="$(jq -r '.name' "$state/entity.json")"
-        description="$(jq -r '.description' "$state/entity.json")"
-    fi
-    if [[ "$mode" == 'b-final-fabricated' ]]; then name='Fabricated final'; fi
-    jq -n --arg marker "$marker" --arg observer "$AICADIA_USER_ID" --arg id "$entity_id" --arg name "$name" --arg description "$description" \
-        '{status: "observed", marker: $marker, observer_user_id: $observer, entity_id: $id, name: $name, description: $description}' >"$final"
+    place="$(<"$state/place.json")"
+    created_character="$(jq -nc --arg id "$character_b_id" --arg name "$character_b_name" \
+        --arg description "$character_b_description" --arg user "$AICADIA_USER_ID" \
+        '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:05:00Z"},owner_user_id:$user,current_place:null}')"
+    entered_character="$(jq -nc --argjson character "$created_character" --argjson place "$place" '$character | .current_place = $place')"
+    history="$(jq -nc --arg character "$character_b_id" --arg character_name "$character_b_name" \
+        --arg place "$place_id" --arg place_name "$place_name" '
+        {activity:[
+            {id:"e0000000-0000-4000-8000-000000000006",operation:"enter_world",actor_character:{id:$character,name:$character_name},context_place:{entity:{id:$place,name:$place_name},is_entry:true},involved_entity:[{entity:{id:$place,name:$place_name},role:"destination"}],occurred_at:"2026-08-08T12:06:00Z"},
+            {id:"e0000000-0000-4000-8000-000000000005",operation:"create_character",actor_character:null,context_place:null,involved_entity:[{entity:{id:$character,name:$character_name},role:"subject"}],occurred_at:"2026-08-08T12:05:00Z"}
+        ],next:null}')"
+    printf '%s\n' "$entered_character" >"$state/character-b.json"
+    printf '%s\n' "$history" >"$state/activity-b.json"
+    final_place_id="$place_id"
+    [[ "$mode" != 'b-final-fabricated' ]] || final_place_id='ffffffff-ffff-4fff-8fff-ffffffffffff'
+    jq -n --arg marker "$marker" --arg observer "$AICADIA_USER_ID" --arg character "$character_b_id" \
+        --arg place "$final_place_id" --arg entity "$entity_id" \
+        '{status:"joined",marker:$marker,observer_user_id:$observer,character_id:$character,place_id:$place,entity_id:$entity,activity_operation:["enter_world","create_character"],latest_actor_character_id:$character,latest_context_place_id:$place,latest_destination_place_id:$place}' >"$final"
     user_result="$(jq -nc --arg id "$AICADIA_USER_ID" '{id:$id,created_at:"2026-08-08T12:00:00Z"}')"
     list_result="$(jq -nc --arg id "$entity_id" --arg name "$(jq -r '.name' "$state/entity.json")" '{entity:[{id:$id,name:$name}],next:null}')"
     entity_result="$(<"$state/entity.json")"
@@ -259,9 +328,15 @@ else
         b-low-limit) list_arguments='{"limit":0}' ;;
         b-high-limit) list_arguments='{"limit":101}' ;;
     esac
-    get_user_event="$(jq -nc --argjson result "$user_result" '{type:"item.completed",item:{id:"item-1",type:"mcp_tool_call",server:"aicadia",tool:"get_user",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
-    list_event="$(jq -nc --argjson result "$list_result" --argjson arguments "$list_arguments" '{type:"item.completed",item:{id:"item-2",type:"mcp_tool_call",server:"aicadia",tool:"list_entity",arguments:$arguments,result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
-    get_entity_event="$(jq -nc --argjson result "$entity_result" --arg id "$entity_id" '{type:"item.completed",item:{id:"item-3",type:"mcp_tool_call",server:"aicadia",tool:"get_entity",arguments:{entity_id:$id},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
+    jq -nc --arg name "$character_b_name" --arg description "$character_b_description" --argjson result "$created_character" \
+        '{type:"item.completed",item:{id:"item-1",type:"mcp_tool_call",server:"aicadia",tool:"create_character",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+    jq -nc --argjson result "$entered_character" \
+        '{type:"item.completed",item:{id:"item-2",type:"mcp_tool_call",server:"aicadia",tool:"enter_world",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+    jq -nc --argjson result "$history" \
+        '{type:"item.completed",item:{id:"item-3",type:"mcp_tool_call",server:"aicadia",tool:"list_activity",arguments:{limit:25},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+    get_user_event="$(jq -nc --argjson result "$user_result" '{type:"item.completed",item:{id:"item-4",type:"mcp_tool_call",server:"aicadia",tool:"get_user",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
+    list_event="$(jq -nc --argjson result "$list_result" --argjson arguments "$list_arguments" '{type:"item.completed",item:{id:"item-5",type:"mcp_tool_call",server:"aicadia",tool:"list_entity",arguments:$arguments,result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
+    get_entity_event="$(jq -nc --argjson result "$entity_result" --arg id "$entity_id" '{type:"item.completed",item:{id:"item-6",type:"mcp_tool_call",server:"aicadia",tool:"get_entity",arguments:{entity_id:$id},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
     if [[ "$mode" == 'b-order' ]]; then
         printf '%s\n' "$list_event" "$get_user_event" "$get_entity_event"
     else
@@ -329,10 +404,10 @@ test_schema_semantic_preflight_rejects_missing_status_type() {
     cp "$REPO_DIR/tools/agent-playtest-schema/"*.json "$fake_dir/repo/tools/agent-playtest-schema/"
     touch "$fake_dir/repo/Cargo.toml" "$fake_dir/repo/src/bin/aicadia-provision-user.rs" \
         "$fake_dir/repo/src/bin/aicadia-playtest-database.rs"
-    jq 'del(.properties.status.type)' "$fake_dir/repo/tools/agent-playtest-schema/create.json" \
-        >"$fake_dir/repo/tools/agent-playtest-schema/create.invalid.json"
-    mv "$fake_dir/repo/tools/agent-playtest-schema/create.invalid.json" \
-        "$fake_dir/repo/tools/agent-playtest-schema/create.json"
+    jq 'del(.properties.status.type)' "$fake_dir/repo/tools/agent-playtest-schema/found.json" \
+        >"$fake_dir/repo/tools/agent-playtest-schema/found.invalid.json"
+    mv "$fake_dir/repo/tools/agent-playtest-schema/found.invalid.json" \
+        "$fake_dir/repo/tools/agent-playtest-schema/found.json"
     copied_runner="$fake_dir/repo/tools/agent-playtest"
     if PLAYTEST_RUNNER="$copied_runner" run_with_fakes "$fake_dir" preflight >/dev/null 2>&1; then
         fail 'preflight accepted a status const without an explicit string type'
@@ -389,8 +464,9 @@ assert_two_agent_contract() {
         grep -E '^FAKE_[^=]*=' "$environment" >/dev/null \
             && fail "Agent inherited a FAKE_* environment variable: $environment"
     done
-    assert_line "$argv_a" 'mcp_servers.aicadia.enabled_tools=["create_entity"]'
-    assert_line "$argv_b" 'mcp_servers.aicadia.enabled_tools=["get_user","list_entity","get_entity"]'
+    assert_line "$argv_a" 'mcp_servers.aicadia.enabled_tools=["create_character","create_entry_place","enter_world","list_activity","create_entity"]'
+    assert_line "$argv_b" 'mcp_servers.aicadia.enabled_tools=["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'
+    grep -F 'create_entry_place"]' "$argv_b" >/dev/null && fail 'Agent B received create_entry_place'
     grep -F 'create_entity"]' "$argv_b" >/dev/null && fail 'Agent B received create_entity'
     manifest="$(latest_manifest "$fake_dir")"
     [[ -n "$manifest" ]] || fail 'manifest was not retained'
@@ -452,6 +528,16 @@ test_second_unmarked_create_is_rejected() {
     make_fakes "$fake_dir"
     if FAKE_MODE=a-second-create run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
         fail 'second unmarked create_entity was accepted'
+    fi
+    assert_two_agent_contract "$fake_dir"
+    assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'failed'
+}
+
+test_only_exact_genesis_error_is_allowed() {
+    local fake_dir="$TEST_TMP/wrong-genesis-error"
+    make_fakes "$fake_dir"
+    if FAKE_MODE=a-wrong-genesis-error run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
+        fail 'a different failed MCP result was accepted as the genesis branch'
     fi
     assert_two_agent_contract "$fake_dir"
     assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'failed'
@@ -533,6 +619,7 @@ test_happy_path
 test_provisioning_failure_starts_no_agent_and_retains_evidence
 test_a_failure_still_runs_b_once
 test_second_unmarked_create_is_rejected
+test_only_exact_genesis_error_is_allowed
 test_b_evidence_failures_are_rejected
 test_native_tool_evidence_failures_are_rejected
 test_ambiguous_create_is_dropped_from_initial_manifest_intent

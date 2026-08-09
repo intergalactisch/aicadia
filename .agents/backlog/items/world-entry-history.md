@@ -1,6 +1,6 @@
 ---
-status: proposed
-horizon: now
+status: done
+horizon: done
 updated: 2026-08-09
 ---
 
@@ -14,8 +14,8 @@ World retains immutable, queryable evidence of accepted game actions so it can l
 answer where a Character was, what it did, and which Characters, Places and other
 Entities were involved.
 
-This is the proposed next vertical slice. It is not executable behavior until its
-contract is accepted in `docs/game/`.
+This vertical slice is complete. Its executable authority is recorded in
+`docs/game/README.md` and `docs/game/agent-interface.md`.
 
 ## Why now
 
@@ -25,7 +25,7 @@ World entry without history would make the first meaningful Character transition
 historically invisible and force a retrofit immediately afterward. This slice proves
 both together with one concrete action.
 
-## Proposed player flow
+## Player flow
 
 1. `create_character` continues to create identity and ownership only. The returned
    Character has no current Place.
@@ -43,7 +43,7 @@ Creating the first shared entry Place is World genesis, not discovery. It uses n
 chance roll. Later Places enter through the discovery and expansion behavior, not
 through repeated calls to `create_entry_place`.
 
-## Proposed current-state model
+## Current-state model
 
 - `Place` is an Entity role and uses `place.entity_id` as its primary and foreign
   key. It has no second identity.
@@ -57,12 +57,11 @@ through repeated calls to `create_entry_place`.
 Coordinates, geometry, boundaries, containment, routes, distance and movement are
 absent from this slice.
 
-## Proposed activity-history spine
+## Activity-history spine
 
 Current state remains in ordinary domain tables for fast reads. Each accepted
 state-changing game operation appends one immutable `activity` record in the same
-PostgreSQL transaction; current state is not rebuilt by replaying activities. The
-working name `activity` remains open until the contract is accepted.
+PostgreSQL transaction; current state is not rebuilt by replaying activities.
 
 The minimum normalized shape is:
 
@@ -85,9 +84,9 @@ This supports the required history without a universal JSON payload:
 
 - `actor_character_entity_id` answers which Character acted.
 - `context_place_entity_id` preserves where the action happened even after movement.
-- linked Entity ids with explicit roles such as `subject`, `participant`, `origin`
-  or `destination` identify what and who was involved. Because Character and Place
-  are Entity roles, they use the same stable reference system.
+- linked Entity ids with the current explicit roles `subject` and `destination`
+  identify what was involved. Because Character and Place are Entity roles, they
+  use the same stable reference system.
 - `requested_by_user_id` preserves request provenance but need not be exposed as
   shared Agent-visible history.
 
@@ -98,7 +97,7 @@ snapshot or event-sourcing payload.
 
 ## First history coverage
 
-The first implementation should record the existing and new accepted mutations:
+The implementation records the existing and new accepted mutations:
 
 - `create_character`: the new Character is linked as the action subject; there was
   no pre-existing Character actor or Place.
@@ -109,9 +108,10 @@ The first implementation should record the existing and new accepted mutations:
 - `enter_world`: the Character is actor, the entry Place is the accepted context and
   destination.
 
-Operational `create_user` provisioning is not game activity. The migration must not
-invent facts that cannot be derived reliably for existing rows; any historical
-coverage boundary must be explicit.
+Operational `create_user` provisioning is not game activity. The migration backfills
+pre-history Character Entities as `create_character` and all other pre-role Entities
+as `create_entity`, retaining their derivable User, subject and timestamp. Actor and
+Place context remain absent because the old schema did not retain them.
 
 ## First read boundary
 
@@ -140,16 +140,30 @@ The slice is done only when:
 7. Current contract, Agent descriptions, canonical vocabulary, concept log and this
    backlog agree.
 
-## Open choices before `Ready`
+## Completion evidence
 
-- Confirm that the first Agent, rather than an operator, may author the one entry
-  Place's semantic content.
-- Confirm the public operation names `create_entry_place`, `enter_world` and the
-  personal history read.
-- Decide the honest migration boundary for state created before activity history
-  exists; never fabricate past Character or Place context.
-- Accept or replace the working noun `activity` after testing it against the first
-  concrete API and schema.
+- `migration/0004_world_entry_activity.sql`, `src/world.rs`, `src/wire.rs` and
+  `src/server.rs` implement the accepted state, transaction and adapter contract.
+- `tests/world.rs` proves concurrency, retry safety, rollback, immutability, the
+  exact migration boundary, historical Place retention, authorization and stable
+  pagination; `tests/server.rs` proves HTTP concurrency, HTTP/MCP semantic parity
+  and the complete ten-capability catalog fixture.
+- `DATABASE_URL=postgresql:///postgres cargo test` passes all 38 unit and integration
+  tests; `cargo fmt --check` and `git diff --check` pass.
+- `bash tests/agent-playtest.sh`, Bash syntax checks and the no-spend
+  `DATABASE_URL=postgresql:///postgres tools/agent-playtest preflight` pass.
+- `docs/game/`, `CONTEXT.md`, `docs/concept/log/log.md`, `AGENTS.md` and the Agent
+  playtest contract agree on the current behavior and nomenclature.
+
+## Accepted delivery choices
+
+- The first connected Agent representing an existing unplaced Character may author
+  the one entry Place's semantic name and description.
+- Public operation names are `create_entry_place`, `enter_world` and
+  `list_activity`.
+- Existing rows are backfilled only with facts exactly derivable from stored state;
+  unknown actor and Place context remain absent.
+- `activity` is the singular current history noun.
 
 ## Explicitly deferred
 
