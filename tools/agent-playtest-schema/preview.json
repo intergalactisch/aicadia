@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": { "type": "string", "const": "previewed" },
+    "marker": { "type": "string" },
+    "selected_proposal_id": { "type": "string", "const": "two" },
+    "prose": { "type": "string" },
+    "consequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "const": "introduce_entity" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["type", "name", "description"]
+    }
+  },
+  "required": ["status", "marker", "selected_proposal_id", "prose", "consequence"]
+}

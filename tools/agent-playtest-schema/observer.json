@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": { "type": "string", "const": "observed" },
+    "marker": { "type": "string" },
+    "entity_id": { "type": "string", "format": "uuid" },
+    "place_id": { "type": "string", "format": "uuid" },
+    "prose": { "type": "string" },
+    "entity_name": { "type": "string" }
+  },
+  "required": [
+    "status", "marker", "entity_id", "place_id", "prose", "entity_name"
+  ]
+}

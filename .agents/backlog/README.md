@@ -15,11 +15,14 @@ must be corrected in the same change.
 
 | Horizon | Item | State | Concrete outcome |
 | --- | --- | --- | --- |
-| Now | [Agent world-entry handoff](items/agent-world-entry-handoff.md) | Active | A clean-room Agent can understand and execute World entry and Activity reads from the published MCP contract; two Agents prove shared Place state. |
+| Done | [Current immersive Agent play contract](items/current-agent-play-contract.md) | Done | Every conforming Agent keeps the complete conversation inside Aicadia, renders internal World records as concrete in-world facts and fails closed without its required MCP authority. |
+| Done | [Local Agent play and World ledger](items/local-agent-play-ledger.md) | Done | One hidden development User can return to the same local World, play only through their Agent and inspect accepted Entity and Activity/prose data in a read-only browser ledger. |
+| Done | [Agent world-entry handoff](items/agent-world-entry-handoff.md) | Done | A clean-room Agent can understand and execute World entry and Activity reads from the published MCP contract; two Agents prove shared Place state. |
 | Done | [World entry with activity history](items/world-entry-history.md) | Done | A Character may remain unplaced, later enter the shared World, and receive a durable queryable history from the first accepted game actions onward. |
-| Next | Exact-Place established-state read | Queued | Building on the delivered Character, optional Place and personal history reads, an Agent can inspect established state attached directly to its exact current Place. |
-| Next | First investigation roll | Queued | World admits an Agent request, derives Character and Place, rolls first and returns a retry-stable zero or volatile positive result with neutral context. |
+| Done | [Agent-mediated World action](items/agent-mediated-world-action.md) | Done | A User selects and steers one of three Agent proposals; the Agent submits one readable and structured action package that World accepts or rejects atomically. |
+| Later | First investigation roll | Queued | World admits an Agent request, derives Character and Place, rolls first and returns a retry-stable zero or volatile positive result with neutral context. |
 | Later | First discovery commit | Queued | One Agent-authored candidate becomes one validated concrete shared result plus provenance and activity history. |
+| Later | Place-neighborhood context | Queued | An Agent can inspect a bounded set of explicit containing and adjacent Places through composable typed reads, without geometry or a monolithic context response. |
 | Later | Place expansion and movement | Queued | Discoveries establish further Places and connections; Characters move through validated transitions while past locations remain queryable. |
 | Later | Rich domain change | Queued | Flora, fauna, materials, partial boundaries and temporal processes gain concrete models only when selected gameplay needs them. |
 

@@ -1,7 +1,7 @@
 ---
-status: active
-horizon: now
-updated: 2026-08-09
+status: done
+horizon: done
+updated: 2026-08-10
 ---
 
 # Agent world-entry handoff
@@ -47,17 +47,18 @@ This item is done only when:
 
 ## Current boundary
 
-Implementation and all token-free evidence are complete. Generated MCP descriptions,
-server instructions and output schemas now carry the entry and Activity meanings;
-the checked-in ten-tool fixture pins them. The expanded runner and fake integration
-suite prove its exact two-Agent orchestration, expected genesis-error handling,
-authoritative post-run state validation, fail-closed evidence and cleanup paths.
+Complete. Generated MCP descriptions, server instructions and output schemas carry
+the entry and Activity meanings; the checked-in ten-tool fixture pins them. The
+expanded runner and fake integration suite prove its exact two-Agent orchestration,
+expected genesis-error handling, authoritative post-run state validation,
+fail-closed evidence and cleanup paths.
 
 `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, all 38 Rust tests,
 the Bash syntax checks, `bash tests/agent-playtest.sh`, `git diff --check` and the real
-token-free Codex/PostgreSQL preflight pass on 2026-08-09. The one remaining completion
-condition is an explicitly authorized paid live run. Accepting this slice did not
-authorize that token spend, so this item correctly remains Active.
+token-free Codex/PostgreSQL preflight passed on 2026-08-09. Explicitly authorized
+live run `run-9TOG5yrJ` passed on 2026-08-10: two distinct Characters entered the
+same entry Place, both personal Activity proofs matched authoritative HTTP state,
+Agent B observed Agent A's exact shared Entity, and the disposable World was dropped.
 
 ## Explicit non-goals
 

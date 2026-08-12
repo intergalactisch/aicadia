@@ -33,12 +33,43 @@ retires a concrete blocker or risk on the selected edge. A working slice is not 
 reason to keep polishing it: when its contract no longer contains the highest-value
 advance, decide the next concrete game behavior, update `docs/game/`, then build it.
 
+### Plan Before Build
+
+Before a non-trivial build changes code, schema, executable behavior, authoritative
+docs or operations, create one proportional plan at
+`.agents/plans/<YYYYMMDD-HHMMSS>-<slug>/plan.md`. Align the strategic player or
+World outcome, tactical smallest complete slice, technical seams and exact evidence;
+keep material questions in `draft` and grill until resolved. Present the plan and
+wait for explicit User acceptance before implementation. Keep accepted plans as
+current dependency-ordered execution state, detailed enough for bounded Agent tasks;
+if the outcome, public contract, irreversible state, material cost or evidence claim
+changes, stop, revise and regain acceptance. A micro-change may skip the artifact and
+acceptance only when its outcome is unambiguous; the edit is local, reversible and
+merely restores or preserves accepted behavior; it introduces no product, domain or
+architecture choice; it touches no schema, migration, public contract,
+ownership/history semantics, auth, security, privacy, irreversible or external
+operation, material cost or token spend; and one focused check proves it. Line count
+alone never qualifies. State its surface and check before editing; if discovery
+breaks any condition, stop and plan. A small planned build may use one task.
+Read-only explanation, status, orientation and diagnosis are not builds.
+
 ### KISS — Keep It Simple, Stupid
 
 Build the smallest system that satisfies the confirmed behavior now. When two
 designs both work, choose the one with fewer concepts, tables, states, branches and
 moving parts. Add complexity only after a concrete current scenario shows why the
 smaller design fails; predicted future scale alone is not enough.
+
+### Current Means Current
+
+Implement only the current accepted product contract and current open standards. Do
+not add or retain legacy modes, compatibility paths, deprecated fallbacks, dormant
+feature flags, `allow(dead_code)` exceptions or dead code for hypothetical consumers.
+Remove superseded implementation, tests, fixtures, configuration and current
+documentation together. Preserve historical records as history. Support client
+diversity through semantic capabilities and standards, never through provider,
+model, tool or client allowlists. An exception requires one concrete current consumer
+and explicit User acceptance.
 
 ### One Subject, One Identity
 
@@ -55,12 +86,13 @@ shared `Entity` records, at most one owned `Character` Entity role per User, at 
 one entry `Place` Entity role, nullable current Character placement and normalized
 `activity` history. Its complete use-case surface is `get_world`, `create_user`,
 `get_user`, `get_character`, `create_character`, `create_entry_place`, `enter_world`,
-`list_activity`, `list_entity`, `get_entity` and `create_entity`. Code may not exceed
-this surface until a next player or World behavior is explicitly accepted in
-`docs/game/`.
+`list_activity`, `list_entity`, `get_entity`, `create_entity`,
+`list_entity_at_current_place`, `list_activity_at_current_place` and
+`submit_action`. Code may not exceed this surface until a next player or World
+behavior is explicitly accepted in `docs/game/`.
 Next-work selection is not limited to this surface: once its value is sufficiently
 proved, choose the next missing game outcome, decide its concrete contract, then
-implement it. The ten current player-facing capabilities omit `create_user` and
+implement it. The thirteen current player-facing capabilities omit `create_user` and
 ship through both HTTP and MCP. Authentication, OAuth and every other game capability
 remain deferred until deliberately selected.
 
@@ -102,12 +134,26 @@ data it represents. The current implementation vocabulary is `world`, `user`,
 retain old wording. Product copy may be layered on later and never shapes the core
 model.
 
+### Player Conversation Stays In The World
+
+A conforming player conversation renders internal game and server structure as
+grounded facts about named people, locations, things, events and current
+affordances. It never exposes internal type names, fields, absent-value syntax,
+identifiers, protocol work or delivery progress, even in response to a mechanics
+question. Implementation inspection belongs in a separate development context.
+Aicadia MCP is the sole live-game authority for an Agent; if it is unavailable,
+player interaction fails closed before mutation instead of falling back to source,
+HTTP, a database, tools, logs or remembered state. This presentation rule does not
+rename or weaken the precise internal vocabulary and deterministic World contract.
+
 ### Boring Infrastructure
 
 Postgres. One `World` interface owns game behaviour; HTTP and MCP are thin adapters
-over that same interface. Authentication, OAuth and a web app are deferred. No
-microservices, no graph database, no queues-of-queues. Choose the conventional
-option until the world itself proves a need.
+over that same interface. One local browser page may expose a read-only World,
+Entity and Activity/prose ledger over existing reads. Browser gameplay, general
+web-app scope, authentication and OAuth remain deferred. No microservices, no graph
+database, no queues-of-queues. Choose the conventional option until the world itself
+proves a need.
 
 ### Agent Capability Parity
 

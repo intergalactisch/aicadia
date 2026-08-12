@@ -719,5 +719,642 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   personal Activity operations and roles, and the existing cross-User Entity proof
   against both direct MCP evidence and authoritative HTTP state. Its fake failure
   matrix, all 38 Rust tests, formatting, strict lint and the real Codex/PostgreSQL
-  preflight pass without invoking an Agent. The backlog item remains Active because
-  no paid live run was authorized or performed.
+  preflight pass without invoking an Agent. This supplied the complete token-free
+  basis for the separately gated live acceptance.
+
+# 2026-08-10
+
+## Agent world-entry handoff
+
+- verified and completed: explicitly authorized paid live run `run-9TOG5yrJ` used
+  two isolated `gpt-5.6-sol` Agents at high reasoning. Both created distinct
+  Characters and entered the same server-derived entry Place; each personal
+  Activity proof matched authoritative HTTP state, and Agent B observed Agent A's
+  exact shared Entity. The runner dropped its disposable World after validation.
+- evidence boundary: this confirms clean-room comprehension of the published MCP
+  World-entry flow, Activity roles and shared Entity visibility. It does not prove
+  later Places, movement, investigation, discovery or arbitrary semantic-content
+  quality.
+- backlog state: Agent world-entry handoff is Done. No next game-development edge
+  was accepted automatically, so the backlog deliberately has no `Now` item.
+
+## Build planning and execution
+
+- corrected method: every non-micro Aicadia build must have one proportional durable
+  plan under `.agents/plans/<YYYYMMDD-HHMMSS>-<slug>/plan.md` before implementation
+  changes code, schema, executable behavior, authoritative documentation or
+  operations. The plan aligns the strategic player or World outcome, tactical
+  smallest complete slice, technical design and exact evidence; a small planned
+  build may contain one task.
+- accepted micro-change boundary: a change may skip the plan artifact and separate
+  acceptance only when its outcome is unambiguous, its edit is local and reversible,
+  it only restores or preserves accepted behavior, it introduces no product, domain
+  or architecture choice, it touches no schema, migration, public contract,
+  ownership/history semantics, auth/security/privacy, irreversible or external
+  operation, material cost or token spend, and one focused check proves it. Line
+  count alone does not qualify. Root first states the surface and check; if discovery
+  breaks any condition, work stops and enters the formal planning workflow.
+- decided gate: a plan remains `draft` while material product, domain, contract,
+  irreversible-state, cost or evidence questions are unresolved. Grilling may
+  resolve those questions, but implementation starts only after explicit User
+  acceptance. Material scope learning returns an active plan to `draft` for renewed
+  acceptance; in-scope file, ordering and evidence refinements remain executable.
+- decided execution model: plans are forward state rather than diaries. Tasks name
+  dependencies, allowed surfaces, concrete actions, evidence and stop conditions so
+  root or a bounded delegated Agent can execute them without reconstructing scope.
+  Root retains scope, integration and final evidence ownership; delegation and
+  parallelism remain optional and must reduce risk or latency.
+- anti-ceremony boundary: read-only explanation, orientation, status and diagnosis
+  do not require a plan. Plans do not replace `docs/game/`, the concept log,
+  research or backlog, and contain no estimates, points, deadlines or named owners.
+
+## Exact-Place established-state read — active grill
+
+- confirmed selected edge: the next game outcome is a User-context read of current
+  shared Entity state attached directly to the Character's exact current Place. The
+  Agent supplies no User, Character or Place id; exact stored Place equality is the
+  complete first-slice inclusion rule, not universal visibility or co-presence.
+- confirmed authority boundary: `list_entity` remains the current global shared
+  catalog, while Activity `context_place` remains immutable historical context and
+  cannot be inferred into current Entity location. No `docs/game/` behavior or code
+  changes until the active grill and draft plan are accepted.
+- clarified current contract: `create_character`, not `create_entity`, introduces
+  the current User's Character Entity role; only Character currently has nullable
+  Place state, becoming placed through `enter_world`. Generic `create_entity`
+  introduces a stable shared referent and currently stores no Entity location.
+- reopened action split: a distinct `create_entity_at_current_place` was initially
+  accepted, then challenged as needless public orchestration. The current
+  direction is one `create_entity` capability. The User rejected
+  `at_current_place: bool` in favor of required nullable `place`, containing a Place
+  Entity UUID or `null`; `null` creates an unlocated referent. A nested Place selector
+  is unnecessary because Place already has one stable Entity identity.
+- corrected target rule, superseding the preceding current-Place restriction: a
+  non-null `place` may name any existing Place. It is the new Entity's placement, not
+  evidence of where the User's Character is, and it is not compared against
+  `character.current_place_entity_id`. An id without a Place role returns
+  `place_not_found`. Whether located creation requires a Character at all is reopened.
+- accepted applicability: an ordinary Entity may have optional current Place state;
+  absence remains valid, while most concrete in-World occurrences are expected to be
+  placed as content rather than by schema mandate. This slice creates location only
+  atomically with a new local Entity and does not locate or move an existing Entity.
+  Character keeps its existing nullable placement state; Place remains the anchor.
+- accepted result model: the formerly accepted local-only composed result no longer
+  fits a unified create action. Preserve the existing complete `Entity` return: the
+  caller already supplied the nullable Place, success confirms acceptance, and the
+  contextual read exposes authoritative membership. A one-off `CreatedEntity`
+  wrapper would widen the interface without new behavior. Base `Entity` remains
+  unchanged and one optional `entity_location` relation stays keyed by Entity
+  identity.
+- new User direction / open onboarding design: eventually a new User chooses one of
+  three Character candidates before ordinary play. No current contract, code or
+  prior concept record defines who produces those candidates, whether they persist,
+  or whether selection also enters the World. Current provisioning deliberately
+  permits a User without a Character.
+- accepted onboarding boundary: absence of Character is valid transient
+  onboarding/provisioning state but never a playable state. On an explicit onboarding
+  request the User's own Agent may propose three transient candidates; only the
+  selected option becomes the User's one durable Character Entity. Building this
+  selection flow remains a separate later edge, while contextual game actions reject
+  pre-selection requests explicitly.
+- accepted onboarding composition: keep Character creation, any first-World genesis
+  and World entry as separate accepted domain actions composed immediately by one
+  guided onboarding flow. This preserves honest interrupted state and the existing
+  genesis branch without exposing the intermediate unplaced Character as ordinary
+  play; resume continues entry when `current_place` remains absent.
+- corrected context errors: a supplied id that is not an existing Place yields
+  `place_not_found` and HTTP 404. The Exact-Place read requires a placed Character:
+  missing Character retains `character_not_found`/404 and an unplaced Character
+  yields `character_not_entered`/409; the read never returns a misleading empty page.
+  Create's Character prerequisite is open again.
+- planned vocabulary and results: retain
+  `list_entity_at_current_place`, returning the complete derived Place, Entity
+  summaries and pagination through GET `/api/place/current/entity`. Remove the
+  proposed public local-create operation. Both forms record Activity operation
+  `create_entity`; located creation additionally links its target Place with involved
+  Entity role `location`. Optional actor `context_place` remains where the Character
+  was, so a target Place elsewhere cannot falsify actor context.
+- clarified term: “current Place” is the durable Place referenced by
+  `character.current_place_entity_id`, set by accepted World entry and re-derived
+  from User → owned Character on every contextual read. That read accepts no selector.
+  Consolidated create's `place` instead names the new Entity's placement and need not
+  equal Character current Place. Current Place is never a coordinate, session value
+  or inference from Activity history.
+- accepted retry semantics: located and unlocated `create_entity` remain
+  non-idempotent. Every accepted call creates one new Entity even when content and
+  Place equal an earlier call; no idempotency key or retry-state model is added.
+- accepted create response: consolidated `create_entity` keeps returning complete
+  `Entity`; it does not introduce a composed wrapper.
+- sharpened actor/authority model: an Agent authors and submits candidate content on
+  a User's behalf; the User supplies accountable provenance; only `World` validates,
+  assigns stable identity and creates accepted durable Entity state. An unaccepted
+  candidate is not a World Entity. `create_entity` names the requested World action,
+  not an Agent-side direct write.
+- reopened caller authority: “meta Agent” is not a current domain actor. Old concept
+  exploration contains an administrator-operated world steward, but current
+  `docs/game/` has no admin authentication or privileged provenance and exposes
+  `create_entity` to every User Agent. Decide whether this build preserves equal
+  submission or deliberately introduces a meta-admin boundary. Revised recommendation
+  after the User's challenge: arbitrary-Place creation is World-steward behavior, so
+  raw `create_entity` should not remain a generic player tool; World creation should
+  be invoked through a consciously authorized meta flow or a later concrete gameplay
+  acceptance flow. This may split the write from the current read plan.
+- accepted caller boundary: raw `create_entity` must no longer be a generic
+  player-facing HTTP or MCP capability. It remains authoritative World behavior
+  invoked only through a deliberately selected meta or gameplay acceptance flow.
+  This explicitly evolves the current ten-capability contract; `docs/game/`, code and
+  the always-on MVP surface stay unchanged until a complete replacement plan is
+  accepted and executed.
+- next open dependency: select the first concrete caller before implementing Entity
+  placement or its Exact-Place read. Recommendation: define the consciously operated
+  meta/steward proposal, explicit human confirmation, administrator provenance and
+  deterministic World acceptance first; Character dependence and proposal lifetime
+  belong to that flow. The current read draft is not implementation-ready.
+
+## Meta-steward Entity acceptance — rejected interpretation
+
+- selected edge: build the consciously operated meta/steward acceptance flow before
+  Exact-Place reading. Arbitrary-Place Entity authorship is World seeding rather than
+  Character play; the Exact-Place draft is deferred until a legitimate writer exists.
+- confirmed authority chain: a meta Agent authors transient candidates, an
+  administrator explicitly confirms the exact irreversible package and only World
+  validates, assigns identity and creates durable state. The Agent has no World
+  identity or authority; unconfirmed, unchosen and rejected candidates leave no state.
+- confirmed public boundary: raw `create_entity` is removed from player HTTP/MCP and
+  remains World behavior behind a private operator flow. Global Entity reads remain;
+  a later concrete gameplay flow may earn access to the same World behavior.
+- prior direction reused but not blindly imported: the old world-steward record
+  supports conscious invocation, do nothing, private proposals, explicit final human
+  confirmation, private meta provenance and no server-side Agent. Its obsolete
+  scene/claim package does not govern the current Entity implementation.
+- current technical recommendation: use a repository-local steward skill plus a
+  private stdin/package CLI modelled after existing provisioning binaries. Avoid an
+  admin HTTP/MCP surface, general authentication, server-side inference and durable
+  proposal state.
+- first open grill decision: whether one invocation presents exactly three candidate
+  directions plus do nothing before drafting and separately confirming one exact
+  Entity package. Resolve this and later dependent choices in
+  `.agents/plans/20260811-083145-meta-steward-entity-acceptance/plan.md`.
+
+## Agent-requested World Entity creation — corrected active grill
+
+- rejected interpretation: a human administrator, explicit human confirmation,
+  private meta-steward Agent, privileged provenance and private operator CLI are not
+  part of this outcome. The preceding caller-boundary and meta-steward sections are
+  superseded; their draft plan and backlog item are retained only as dropped history.
+- corrected authority chain: an external Agent makes one explicit `create_entity`
+  request on a User's behalf. World alone determines whether the command is allowed,
+  assigns identity, atomically creates Entity, optional placement and Activity, and
+  returns the accepted Entity or a deterministic error. The Agent requests; it never
+  writes World state directly.
+- corrected autonomy boundary: World acts authoritatively in response to that one
+  call. The server does not invoke an Agent, run an LLM, spend tokens, or create
+  Entity state without an explicit request.
+- corrected public boundary: retain `create_entity` as one player-facing capability
+  through World, HTTP and MCP. Its CRUD name describes the requested World command;
+  it does not grant the caller database or acceptance authority. No separate
+  proposal resource, confirmation step or orchestration layer is introduced.
+- current open grill decision: define the deterministic acceptance predicate behind
+  “suitable/possible.” Recommendation for the smallest strict slice is valid User
+  context, bounded normalized name and description, `place: null` or an existing
+  Place, and successful transaction constraints only. Semantic quality, lore fit,
+  plausibility and duplicate meaning remain Agent reasoning rather than World rules.
+
+## Agent-mediated bundled World action — accepted build
+
+- corrected selected interaction: a User consciously requests a next action. The
+  Agent first queries established World state and the current Character, reasons over
+  that context and presents exactly three grounded proposals. The User selects one
+  and may add free steering; the Agent then prepares the final World submission.
+- corrected commit scope: the ordinary player flow should send one bundled mutation
+  call. World validates and commits every accepted consequence atomically—potentially
+  creating several Entities, changing existing state, changing Character placement
+  and recording the readable narrative layer—then returns the canonical result. A
+  rejected package changes nothing.
+- corrected readable layer: `Story` is not a currently intended domain object. The
+  historical working term is `prose`: human- and Agent-readable narrative text that
+  forms the World story across its linked subjects and meta-lenses. The executable
+  name and whether any current summaries exist alongside immutable action prose
+  remain open.
+- confirmed intelligence split: the Agent authors both prose and explicit structured
+  consequences. World never interprets prose to discover database mutations; it
+  checks the structured package against deterministic domain rules and applies its
+  own internal write plan.
+- confirmed interaction/transport distinction: one User action does not imply one
+  total MCP call. The Agent may make several granular reads and MCP may expose
+  granular domain mutation capabilities for changes that are independently valid.
+  The common bundled submission is nevertheless one public World command, one
+  transaction and one Activity footprint; it is not implemented as sequential public
+  MCP writes and cannot partially succeed.
+- confirmed absolute authority invariant: every MCP capability is an adapter to
+  `World`, never a storage interface. An Agent can inspect returned state and submit
+  intelligent proposals, but can never insert, update or delete durable records
+  directly. World alone deterministically validates each granular or bundled command,
+  decides acceptance and performs every accepted state change.
+- current interface recommendation: share concrete domain validators beneath both
+  bundled and standalone commands. The bundle contains a closed set of typed domain
+  consequences and temporary local references for records created inside the same
+  package; reject a generic SQL/JSON-patch or arbitrary CRUD batch that shifts
+  ordering, invariants and partial-failure handling into the Agent.
+- superseded planning: direct `create_entity({place})` plus Exact-Place reading is no
+  longer the selected player outcome. Exact-Place inspection remains a likely
+  supporting context query; its combined read/write plan is dropped. The current
+  edge is the Agent-mediated World action, still design-only and absent from
+  `docs/game/`.
+- resolved grill question: accepted action prose is immutable history; the accepted
+  lifecycle and its remaining time-axis question are recorded below.
+- selected first evidence scenario: after both Characters enter the shared entry
+  Place, one User chooses and steers a trail-marker direction from three private Agent
+  proposals. The final submitted package contains readable prose and one structured
+  Entity introduction; World derives current Place, atomically creates and places the
+  marker with one Activity, and another Character there can read both marker and
+  prose. This deliberately defers updates, movement, multiple consequences and a
+  generic action engine. The draft build plan is
+  `.agents/plans/20260811-124550-first-agent-mediated-world-action/plan.md`.
+- accepted prose lifecycle: prose belonging to an accepted World action is immutable
+  and append-only. No later action, User, Agent, World behavior or operational path
+  edits or deletes it. World-, Character-, Place- and Entity-oriented history must
+  reference the same canonical prose record and preserve one chronology; mutable
+  current descriptions or future summaries are separate state, never replacements
+  for historical prose.
+- accepted chronology: the current system has one time axis, assigned by World when
+  it accepts an action. Every history lens orders the same Activity/prose records by
+  that acceptance chronology. Agents cannot supply a backdate, change order or insert
+  prose into the past. Prose written now about an earlier subject remains a new
+  present accepted action; a separate world-effective time is deferred until a
+  concrete delayed or historical action requires it.
+- accepted final confirmation: selecting and steering one of three proposals approves
+  the direction but does not authorize the exact irreversible World package. The
+  Agent must show the complete final prose and structured consequences and receive
+  one explicit User confirmation immediately before calling `submit_action`. Reads,
+  proposals and workshop revisions require no confirmation; the server cannot prove
+  the conversational confirmation and relies on the published Agent contract.
+- accepted context composition: “local context” is not one World payload. The Agent
+  orients itself through several typed MCP reads, including World, Character, exact
+  current Place and relevant Place surroundings, and may drill into returned
+  references. A Place neighborhood is a bounded view over explicit spatial
+  relationships such as containment and adjacency; it is not a literal metric or
+  coordinate radius and does not imply visibility.
+- accepted first spatial boundary: the first Agent-mediated action proves the whole
+  interaction at the existing exact entry Place. It does not introduce additional
+  Places, containment or adjacency merely to demonstrate context. Exact Place Entity
+  and Activity/prose reads are supporting capabilities inside that action build, so
+  their separate backlog item is dropped; a bounded Place-neighborhood read remains
+  a later spatial edge.
+- reopened retry and freshness contract: the User proposed obtaining a unique token
+  from an MCP context read and returning it with `submit_action`. One World-issued
+  value must not silently mean both delivery identity and observed-state revision:
+  two Agents can legitimately observe the same state but intend different actions,
+  while one Agent can retry the same intended action after an uncertain response.
+  The open recommendation is therefore a separate per-intent `request_id` for
+  idempotent delivery and an opaque World-issued context revision for optimistic
+  freshness when accepted scope proves which state must remain unchanged. World
+  computes any normalized payload fingerprint itself; payload equality is not action
+  identity.
+- researched retry/freshness recommendation: primary HTTP, UUID, PostgreSQL and
+  production API evidence is recorded in
+  `docs/research/idempotent-action-delivery-and-place-freshness.md`. The smallest
+  robust Aicadia interface uses three distinct values: an Agent-generated UUID for
+  one intended action, a versioned fingerprint World derives from normalized input,
+  and an opaque exact-Place revision returned by side-effect-free local reads. World
+  checks request identity first and, for an unseen request, locks the derived current
+  Place before checking its revision and writing. A stale same-Place package changes
+  nothing; unrelated Places do not invalidate it. A read-issued request nonce,
+  global World revision, pending action/session and cross-MCP database snapshot are
+  rejected recommendations. At this point it remained research-backed draft direction
+  pending the User acceptance recorded immediately below; `docs/game/` was unchanged.
+- accepted retry/freshness contract: the User accepted the researched three-value
+  separation and exact-Place scope. One Agent-generated request UUID identifies an
+  intended action, World derives a versioned normalized fingerprint, and coherent
+  exact-Place reads return the opaque revision submitted as
+  `expected_place_revision`. World resolves accepted request identity before current
+  preconditions, and for an unseen request locks the current Place before comparing
+  revision and writing. Same-Place change rejects the whole stale package; unrelated
+  Place activity does not. This accepted design remains absent from `docs/game/` and
+  implementation until the complete draft plan is accepted.
+- accepted live evidence gate and spend: a paid live Agent playtest is mandatory for
+  completion because the User wants evidence that the published interaction works in
+  a real clean-room Agent, not only in deterministic tests. The User explicitly
+  authorized one bounded paid run on 2026-08-11 after token-free preflight. Extend the
+  existing disposable two-Agent harness to resume one action Agent across grounded
+  proposal, withheld selection/steering, exact no-write preview and explicit
+  confirmation before its sole commit; a separate Agent and HTTP state verify the
+  result. A failed or inconclusive attempt does not authorize an automatic rerun.
+  Current local `codex-cli 0.144.1` differs from the existing `0.147.0` harness pin,
+  so version/resume compatibility is a pre-spend blocker, not a reason to weaken or
+  bypass the gate.
+- accepted plan and installed contract: on 2026-08-11 the User explicitly accepted
+  the complete strategic, tactical, technical and evidence plan, then requested
+  `gpt-5.6-sol` high-reasoning sub-Agents to build it. `docs/game/` now governs the
+  thirteen-capability slice: one closed `introduce_entity` action, exact-Place Entity
+  and Activity/prose reads, immutable canonical prose, atomic World acceptance,
+  per-User request UUID/fingerprint retry identity and an opaque Place revision.
+  Proposals and confirmation remain private Agent obligations; implementation and
+  the single authorized clean-room run remain completion work.
+- rejected and corrected implementation detail: selecting the current Place revision
+  with `MAX(occurred_at, activity_id)` does not establish acceptance order. Equal
+  timestamps make UUID order accidental, and a database clock rollback can make a
+  later accepted Activity compare older, so a successful Place mutation could fail
+  to advance freshness. The Activity tuple remains stable revision-target identity
+  but is not an acceptance-order rule.
+- accepted Place freshness authority: every Place stores one authoritative
+  `latest_activity_id`. `create_entry_place` sets its preallocated genesis Activity
+  pointer when inserting the Place; `enter_world`, placed-actor `create_entity` and
+  `submit_action` lock the Place, insert their Activity and atomically update the
+  pointer to that Activity. Exact-Place reads encode the pointed Activity's
+  `(occurred_at, activity_id)` as identity. This is local current state under the
+  existing Place lock, not event sourcing and not a global revision or counter.
+- rejected live candidate and consumed authorization: the one authorized candidate
+  `run-G8k1sTRm` ran on 2026-08-11, but the API rejected its proposals response schema
+  with `invalid_json_schema` because `uniqueItems` is unsupported. Rejection happened
+  before model generation and before any MCP tool call, so no Agent interaction or
+  World outcome occurred. Ownership was verified before cleanup dropped the
+  disposable database. The attempt consumed the sole authorization; it is not a
+  passing or retryable result.
+- accepted token-free correction and remaining evidence gap: Agent output schemas no
+  longer use `uniqueItems` or the redundant `minLength`/`maxLength` string keywords;
+  the controller retains exact uniqueness and bounds checks. Recursive local
+  supported-keyword and strict-object schema validation plus its fake regression are
+  token-free green, as are public preflight and the full test suite. The complete
+  harness contract and candidate record live in
+  [Agent playtest](../../game/agent-playtest.md).
+- accepted fresh one-run authorization: after the token-free schema correction and
+  full ladder passed, the User explicitly authorized exactly one rerun on 2026-08-11.
+  This authorized one new live candidate only, never an automatic third attempt. At
+  that point the Agent-mediated World action remained Active and incomplete pending
+  the candidate result recorded immediately below.
+- rejected second candidate with strong partial live evidence: fresh authorization
+  was consumed by `run-nvULnvxQ` on 2026-08-11. Proposal, preview and commit phases
+  passed. The observer exited `0`; its exact three MCP reads found the correct Entity
+  id and name, Place, Activity and canonical prose. Its strict final failed solely
+  because the harness required `entity_description`, which the granted
+  `EntitySummary` does not expose. Independent HTTP validation was therefore not
+  reached. Ownership-verified cleanup dropped the disposable database and left zero
+  matching databases. This materially supports the live interaction, commit and
+  observer path, but does not satisfy the complete outcome gate.
+- accepted observer-evidence correction and remaining gate: remove the unobservable
+  observer description without adding a redundant `get_entity` capability. The
+  observer continues to prove Entity id/name, Place and prose; independent HTTP
+  validation still checks the complete Entity description. Fake regression, public
+  preflight and the full test suite are token-free green. The authoritative candidate
+  and harness record is [Agent playtest](../../game/agent-playtest.md). No third run
+  is authorized; the backlog item remains Active and incomplete pending a passing,
+  separately authorized live run.
+- accepted T4 recovery and plan re-acceptance: freeze T1-T3 and every public game
+  surface. Give each evidence layer one role: the action Agent proves the private
+  workshop and single submission, HTTP proves the complete authoritative stored
+  result, the three-read observer proves clean-room MCP discovery of Entity
+  id/name/Place/prose, and the ownership helper proves safe isolation and cleanup.
+  Run HTTP validation immediately after commit and before the observer so the
+  authoritative result is independently retained; both still must pass continuously
+  in one candidate. Do not add `get_entity`, restore observer description, combine
+  partial candidates or reinterpret either rejected manifest. The existing plan was
+  returned to `draft`, then explicitly re-accepted by the User on 2026-08-11.
+  Re-acceptance authorizes only token-free harness work; one future paid candidate
+  still requires a separate explicit authorization after an independent frozen GO.
+- implemented T4R1 evidence order: the runner now retains the accepted commit, then
+  validates the complete authoritative Entity/description/Place/Activity/prose over
+  HTTP before it starts the three-read observer. A failed HTTP gate leaves observer
+  pending; a failed observer retains HTTP as passed but never completes the run.
+  Live-shaped fake started/completed attempt pairs, duplicate/incomplete submission,
+  wrong observer values, authoritative duplicates and cleanup refusal are token-free
+  green, as is public preflight. No public game capability changed and no live/model
+  call occurred. The runnable evidence surface is frozen for independent T4R2 audit.
+- first T4R2 audit NO-GO and bounded correction: authoritative HTTP already checked
+  the Activity operation, prose, Place, subject and location and fetched the action
+  Character, but failed to compare `actor_character` with that Character's id. This
+  could admit a wrong-actor Activity despite the documented evidence claim. Reopen
+  T4R1 only for that comparison and a fail-closed `http-wrong-actor` fake case, then
+  rerun the whole frozen audit. All other checks passed, no other P0-P3 finding was
+  reported, zero resources remained and no live/model call occurred.
+- implemented actor-evidence correction: authoritative HTTP now requires the one
+  canonical `submit_action` Activity's `actor_character.id` to equal the action
+  Character id independently returned by `/api/character`, while preserving the
+  existing operation/prose/Place/subject/location/description/count assertions. A
+  new wrong-actor fake case stops before the observer, records HTTP and validation as
+  failed, retains the passed commit and performs ownership-verified cleanup. Focused
+  fake/preflight evidence is green; the full T4R2 audit is restarted token-free.
+- restarted T4R2 independent GO: executable candidate fingerprint
+  `95600a0777a1375a310ee079254dbbcaf43ae123a921671bf2ed4d971c2a37f9` passed 57 Rust
+  tests, 27 fake runner invocations, 19 fail-closed modes, public preflight and
+  database/process/isolation inspection. The prior actor finding is closed, no
+  unresolved P0-P3 finding or leftover resource remains and no live/model call
+  occurred. The executable candidate is frozen; plan acceptance still did not
+  authorize spending. T4R3 requires one fresh explicit authorization and can run
+  only one candidate without retry.
+- accepted one-candidate T4R3 authorization: after receiving the independent frozen
+  GO, the User explicitly authorized exactly one paid live candidate on 2026-08-11.
+  Starting it consumes the authorization regardless of outcome. It permits no phase
+  retry, second candidate or executable change and does not predetermine completion;
+  T4R4 must reconcile the exact retained evidence afterward.
+- executed sole T4R3 candidate pending independent closure: `run-gE8iED5m` consumed
+  the authorization and the runner reports every proposal, preview, exactly-one
+  commit, authoritative HTTP, minimal observer and ownership-cleanup gate passed in
+  one continuous candidate with `run_status: completed`; no retry occurred. This is
+  not yet promoted to final outcome evidence: T4R4 must independently compare raw
+  JSONL attempt identities/statuses, finals, canonical ids/prose, HTTP counts/roles,
+  file permissions and cleanup before the backlog or plan becomes complete.
+- independently verified live completion: read-only T4R4 review found no P0-P3
+  finding, staleness or evidence drift in `run-gE8iED5m`. It directly confirmed four
+  ordered grounding reads, three private proposals, correctly withheld selection and
+  confirmation, a zero-tool preview, exactly one submission attempt/result, complete
+  authoritative HTTP actor/Place/subject/location/description/prose/count state and a
+  separate three-read observer with no hidden expected ids, prose or description.
+  All forty retained artifacts are private; ownership cleanup is `dropped`; zero
+  database, process, listener or isolated-config leftovers remain. The bounded first
+  Agent-mediated World action is complete, its backlog item is Done and neither this
+  proof nor the two earlier candidates authorize or select the next game edge.
+
+## Local Agent play and World ledger — accepted build
+
+- selected next player outcome: make the proven World action usable as an ordinary
+  persistent local playtest. One seeded development User can return to the same
+  Character, Place, Entity state, Activity and prose without accounts or
+  authentication. A small browser ledger makes that World and its domain models
+  inspectable while the external User-owned Agent remains the sole conversational
+  game interface.
+- confirmed absolute conversation boundary: the game conversation always occurs in
+  the Agent and never in the web interface. The browser ledger contains no chat,
+  prompt/composer, proposal picker, confirmation control, model invocation, Agent
+  bridge or server-side inference. It may only navigate, filter, expand, refresh and
+  otherwise inspect authoritative World data.
+- confirmed authority boundary: onboarding proposals, User steering, previews and
+  confirmations remain private Agent conversation. Every accepted mutation still
+  crosses MCP into `World`; the browser ledger cannot create a Character, enter the
+  World or submit an action. PostgreSQL remembers only accepted game state and
+  Activity/prose, while one private local development profile remembers the seeded
+  User identity needed by both Agent context and ledger reads.
+- accepted local-operation boundary: one local launcher must
+  reuse a persistent development database and seeded User, start the existing server,
+  expose a same-origin read-only data-dense ledger and print the exact MCP connection
+  context for the User's Agent. The Agent should use the existing World-entry and
+  private-workshop contracts, extended only with three transient Character proposals
+  and exact confirmation before the existing `create_character` call. No web
+  framework, auth/account model, durable chat/session or new World mutation is earned
+  by this first playable slice.
+- corrected ledger information scope: the User challenged dedicated current
+  User/Character/Place presentation as premature. That correction is sound: the
+  seeded User is local connection context for the Agent and read adapter, not a
+  player-facing account or dashboard subject. A first ledger need not explain or
+  visualize every domain role merely because the server stores it.
+- accepted smallest ledger scope: show only that the persistent World exists and
+  remembers accepted changes. One page contains a World
+  identity/connection state, a shared Entity ledger with expandable record details,
+  and the local Character's accepted Activity/prose ledger when onboarding has made
+  that contextual read available. Character and Place may appear naturally as typed
+  actor, context and involved-Entity references inside Activity, but receive no
+  separate current-state panel, map or navigation model. Before Character onboarding,
+  the ledger honestly has no personal Activity rather than turning that absence into
+  web onboarding. Reuse existing reads; add no web-only game projection or mutation.
+- accepted planning and execution state: the complete strategic, tactical and
+  technical plan is
+  `.agents/plans/20260812-091744-agent-only-local-play-ledger/plan.md`, tracked as the
+  one active `Now` backlog edge. It deliberately targets Codex CLI first because the
+  existing project MCP config can receive the stable local User context through one
+  environment-scoped command. The User explicitly accepted the plan and authorized
+  one new `gpt-5.6-sol`/`xhigh` orchestrator task to build it, including delegation
+  of dependency-ready plan tasks to `gpt-5.6-sol`/`high` sub-Agents. This execution
+  authorization does not authorize an automatic Aicadia gameplay/model playtest;
+  that remains a separate conscious User action as defined by the plan.
+- corrected stable-identity implementation: independent review proved that an
+  existing database with a missing profile and two concurrent first launchers could
+  each provision an extra User. The launcher now holds one private profile-lifetime
+  lock and refuses any existing selected database without its matching profile. The
+  expanded disposable lifecycle proves both cases leave exactly one User and no
+  second listener. A lower-severity observation remains that a credential-bearing
+  PostgreSQL URL appears briefly in local database-client process arguments; the
+  private profile itself still stores no credentials.
+- completed deterministic local-play outcome: one disposable continuous setup
+  created Character `e28a709e-2555-4691-8df1-b287dd5bc9e8`, entry Place
+  `0976bb79-2971-4778-afa4-409065638537`, Entity
+  `adbb6fbd-941c-411c-8444-f7c052bfdf7d` and Activity
+  `480d9424-f35d-43ed-a8f2-bb8433efb8ca` with canonical prose. After launcher
+  restart, the User and complete canonical HTTP state were byte-identical and a
+  fresh browser page rendered the same visible ids/prose while scrubbing the URL
+  fragment and hiding the User UUID. The full compiler/test/integrity ladder and an
+  independent risk review passed; owned disposable resources were removed. No Agent,
+  OpenAI API or model-driven gameplay run occurred, so Character-candidate quality
+  remains the User's next conscious experiment rather than a completion claim.
+- observed future direction, not a selected edge: the User ultimately wants to host
+  a public read-only World interface under a domain name. The local embedded page is
+  a viable presentation base, but the current no-auth server and personal Activity
+  context are not a public deployment contract. Public read exposure, mutation/MCP
+  isolation, Activity visibility, TLS/process operation and durable hosted Postgres
+  require a separately accepted build before public launch.
+- corrected checkout boundary: the User confirmed that the primary repository
+  checkout is the intended delivery and run location. The completed local-play build
+  was integrated there byte-identically and its full compiler, test and launcher
+  validation passed from that checkout. The Codex worktree is only temporary task
+  isolation, not an Aicadia runtime or deployment requirement.
+
+## Current-only Agent play contract — accepted build
+
+- observed player-experience gap: the first ordinary local Agent conversation
+  completed Character creation, World entry and one shared action correctly, but
+  surfaced UUID generation, exact packages and commit language that belongs to
+  internal execution rather than the User's experience of the World;
+- accepted common contract: every full interactive Agent host receives the same
+  provider- and model-neutral Aicadia instructions and complete tool descriptions.
+  The Agent uses fixed grounded methods for Character creation, entry, orientation,
+  action proposals, confirmation, mechanics explanation and conflict recovery while
+  remaining free in wording and reasoning;
+- accepted truth boundary: typed World results and structured consequences are
+  authoritative. Agent framing and free prose cannot establish additional current
+  state, ownership or mechanics. Ordinary player-facing communication follows the
+  User's language and hides MCP, tools, JSON, ids, UUID generation, request ids,
+  revisions, commits, retries, servers, databases, internal record categories,
+  fields and absent-value syntax for the entire play conversation. A request for
+  implementation detail moves to a separate development conversation rather than
+  opening a technical submode;
+- accepted current-only rule: Aicadia implements only current accepted behavior and
+  current open standards. Superseded modes, compatibility paths, fallbacks, dormant
+  flags, dead-code suppressions and their tests/current documentation are removed
+  together. Historical records remain history. Client diversity follows semantic
+  capabilities rather than provider, model, tool or client allowlists;
+- accepted protocol consequence: Aicadia supports only stateless MCP `2026-07-28`.
+  Its Aicadia-owned `2025-11-25` session mode, helpers, tests and current support
+  claims are removed rather than deprecated;
+- accepted strict/free seam: World continues deterministic validation of typed
+  context, state, consequences, idempotency, freshness and atomic Activity. It does
+  not inspect or score private conversation, infer prose meaning or claim it can
+  prove a human confirmation. MCP prompts, resources, bootstrap tools, prompt
+  storage, narrative linters, provider mappings and server-side model calls are
+  rejected for this slice;
+- accepted evidence boundary: deterministic evidence proves the exact current
+  contract is published, the thirteen capabilities remain aligned and a second User
+  observes the same accepted state. It does not prove identical LLM wording or
+  universal compliance. No new live/model-driven playtest or token spend is
+  authorized by this build;
+- corrected post-completion evidence: raw requests against a fresh binary proved the
+  SDK's stateless `initialize` path still returned success, including an echoed
+  `2025-11-25`, despite current discovery advertising only `2026-07-28`. The earlier
+  old-version `tools/list` probe did not exercise this lifecycle path, so the
+  current-only completion claim was premature;
+- accepted lifecycle correction: reject `initialize` explicitly at the existing
+  `ServerHandler` seam and set current `ServerInfo` metadata defensively. Do not add
+  middleware, a version matrix, session abstraction or compatibility branch;
+- accepted cross-User content hierarchy: typed structure remains authoritative game
+  state, while every natural-language World value is potentially player-authored
+  game data and never an instruction to an Agent. Such content cannot override the
+  Aicadia contract or User intent, authorize a tool call or request technical access.
+  This general rule replaces field-by-field classifications, pattern scanners,
+  sanitizing allowlists, narrative linting and server-side inference;
+- completed correction: the existing `ServerHandler` seam now rejects every
+  `initialize`, reports current protocol metadata and advertises only `2026-07-28`.
+  The one global contract applies one instruction/data hierarchy to all World values.
+  No middleware, version matrix, content taxonomy, filter, linter, classifier, model
+  call or World change was introduced;
+- completed corrected evidence: raw requests against a fresh binary proved current
+  discovery, current and old initialize rejection and old inline-call rejection.
+  Formatter, strict all-target Clippy, all 58 Rust tests, the disposable launcher
+  lifecycle and diff integrity passed again; the launcher reported
+  `codex_invoked=false`, and owned database/listener resources were removed. Final
+  review found no remaining P0-P3 issue in scope. The plan and backlog item are Done.
+  The pre-existing process on port 3000 remains intentionally untouched and needs a
+  conscious restart before a new Agent conversation can receive the corrected
+  contract.
+- observed host and narration failure after that correction: an ordinary Agent start
+  omitted Codex's current MCP feature, failed startup, then silently used repository
+  contracts, source and direct HTTP as substitute authority. The resulting answer
+  accurately located the Discovery Rack and workbench but explained them through
+  internal types, roles, relations, fields and capability language. Correct facts
+  therefore still produced a non-game experience;
+- accepted permanent player boundary: a conforming interactive host never exposes
+  those implementation concepts during play, including when the User asks how an
+  in-world subject works. It answers through named people, locations, things,
+  observable facts and currently supported affordances. Absence is expressed as an
+  ordinary fact. This is one positive rendering contract, not a forbidden-word map,
+  field-copy table, prose linter, classifier or server-side model;
+- accepted sole-authority host boundary: live game state comes only from required
+  Aicadia MCP. Repository files, source, direct HTTP, PostgreSQL, shell, browser,
+  logs and remembered state cannot become fallbacks. The bundled local adapter runs
+  Codex with an empty workspace and isolated transient home/configuration outside
+  the checkout, inherits only available authentication, supplies the exact player
+  contract, enables current MCP and fails before play when the connection is absent.
+  It neither inherits personal skills or extra MCP servers nor pins a model or starts
+  automatically, and it removes its owned authentication copy and conversation state
+  on exit;
+- accepted preview-language correction: candidates and final action previews convey
+  their complete meaning naturally in the User's language. The Agent privately
+  retains semantically identical English values for World; JSON, internal labels and
+  untranslated payload text remain hidden. Any material meaning change requires a
+  new preview and confirmation;
+- accepted evidence boundary for this correction: deterministic tests may prove
+  exact contract delivery, adapter isolation, fail-closed startup and unchanged
+  World semantics, but not arbitrary model prose compliance. No live Codex or model
+  playtest is authorized as part of this correction.
+- completed permanent-player correction: the one runtime contract and all thirteen
+  operation descriptions now keep player output grounded in named in-world subjects,
+  natural absence and current affordances; complete previews use the User's language
+  while semantically identical English remains private. The launcher prints one
+  explicit adapter command. That adapter isolates workspace, home, configuration,
+  skills, extra MCP servers and conversation state, requires current Aicadia MCP and
+  removes its entire owned root after exit. The server, schema, World behavior,
+  capability names/order/schemas/annotations and shared-state semantics did not
+  change;
+- completed evidence: formatter, strict all-target/all-feature Clippy, all 58 Rust
+  tests, the disposable launcher/adapter lifecycle and diff integrity passed. The
+  lifecycle proved stable identity, exact contract injection, isolated host context,
+  fail-closed startup and `codex_invoked=false`. Independent read-only review found
+  no P0-P3 issue, and no test database, player root, new listener or process remained.
+  The pre-existing server on port 3000 was intentionally preserved and must be
+  restarted before manual verification. No live Codex or model playtest occurred.

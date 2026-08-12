@@ -8,8 +8,7 @@ use tokio::{net::TcpListener, task::JoinHandle};
 use uuid::Uuid;
 
 const PROTOCOL_VERSION: &str = "2026-07-28";
-const LEGACY_PROTOCOL_VERSION: &str = "2025-11-25";
-const CAPABILITY: [&str; 10] = [
+const CAPABILITY: [&str; 13] = [
     "get_world",
     "get_user",
     "get_character",
@@ -20,7 +19,12 @@ const CAPABILITY: [&str; 10] = [
     "list_entity",
     "get_entity",
     "create_entity",
+    "list_entity_at_current_place",
+    "list_activity_at_current_place",
+    "submit_action",
 ];
+
+const MCP_INSTRUCTIONS: &str = include_str!("../src/agent-play-contract.txt");
 
 struct TestServer {
     base_url: String,
@@ -165,43 +169,6 @@ impl TestServer {
         assert_eq!(status, StatusCode::OK, "unexpected MCP response: {body}");
         body
     }
-
-    async fn legacy_tool(
-        &self,
-        session_id: &str,
-        request_id: u64,
-        name: &str,
-        arguments: Value,
-        user_id: Option<Uuid>,
-    ) -> Value {
-        let mut request = self
-            .client
-            .post(format!("{}/mcp", self.base_url))
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json, text/event-stream")
-            .header("Mcp-Session-Id", session_id)
-            .header("MCP-Protocol-Version", LEGACY_PROTOCOL_VERSION)
-            .json(&json!({
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "method": "tools/call",
-                "params": {
-                    "name": name,
-                    "arguments": arguments
-                }
-            }));
-        if let Some(user_id) = user_id {
-            request = request.header(USER_CONTEXT_HEADER, user_id.to_string());
-        }
-
-        let response = request.send().await.expect("legacy tool call should send");
-        assert_eq!(
-            response.status(),
-            StatusCode::OK,
-            "unexpected legacy MCP response for {name}"
-        );
-        sse_json(response).await
-    }
 }
 
 impl Drop for TestServer {
@@ -219,19 +186,6 @@ fn request_meta() -> Value {
         },
         "io.modelcontextprotocol/clientCapabilities": {}
     })
-}
-
-async fn sse_json(response: reqwest::Response) -> Value {
-    let body = response
-        .text()
-        .await
-        .expect("MCP SSE response body should be readable");
-    let data = body
-        .lines()
-        .filter_map(|line| line.strip_prefix("data: "))
-        .find(|data| !data.is_empty())
-        .unwrap_or_else(|| panic!("MCP SSE response should contain JSON data: {body}"));
-    serde_json::from_str(data).expect("MCP SSE data should be JSON")
 }
 
 fn structured(body: &Value) -> &Value {
@@ -282,8 +236,150 @@ fn assert_protocol_error(
     );
 }
 
+async fn assert_cross_operation_cursor_rejected(
+    server: &TestServer,
+    http_path: &str,
+    tool_name: &str,
+    cursor: &str,
+    user_id: Option<Uuid>,
+) {
+    let mut request = server.client.get(format!(
+        "{}{}?cursor={cursor}&limit=1",
+        server.base_url, http_path
+    ));
+    if let Some(user_id) = user_id {
+        request = request.header(USER_CONTEXT_HEADER, user_id.to_string());
+    }
+    let response = request
+        .send()
+        .await
+        .expect("cross-operation HTTP cursor request should send");
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = response
+        .json()
+        .await
+        .expect("cross-operation HTTP cursor error should be JSON");
+    let mcp_response = server
+        .tool(tool_name, json!({"cursor": cursor, "limit": 1}), user_id)
+        .await;
+    assert_eq!(error_code(&http_error), "invalid_request");
+    assert_eq!(http_error["error"]["field"], "cursor");
+    assert_eq!(http_error["error"]["reason"], "malformed");
+    assert_eq!(mcp_error(&mcp_response), http_error);
+}
+
 #[sqlx::test(migrations = "./migration")]
-async fn catalogs_expose_exactly_the_ten_player_capabilities(pool: PgPool) {
+async fn ledger_root_serves_the_self_contained_get_only_page(pool: PgPool) {
+    let server = TestServer::start(World::new(pool)).await;
+
+    let response = server
+        .client
+        .get(format!("{}/", server.base_url))
+        .send()
+        .await
+        .expect("ledger request should send");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok()),
+        Some("text/html; charset=utf-8")
+    );
+    let html = response.text().await.expect("ledger should be text");
+    assert!(html.contains("<main id=\"main\">"));
+    assert!(html.contains("Shared Entity"));
+    assert!(html.contains("Personal Activity and prose"));
+    assert!(html.contains("^#user_id="));
+    assert!(html.contains("sessionStorage.setItem"));
+    assert!(html.contains("history.replaceState"));
+    assert!(html.contains("fetch(path, { method: \"GET\", headers })"));
+    assert!(html.contains("/api/world"));
+    assert!(html.contains("/api/entity?"));
+    assert!(html.contains("/api/entity/${"));
+    assert!(html.contains("/api/activity?"));
+    assert_eq!(
+        html.matches("<button ").count(),
+        html.matches("type=\"button\"").count()
+    );
+
+    for forbidden in [
+        "<form",
+        "<input",
+        "<textarea",
+        "<select",
+        "contenteditable",
+        "onclick=",
+        "onsubmit=",
+        "method: \"POST\"",
+        "method: \"PUT\"",
+        "method: \"PATCH\"",
+        "method: \"DELETE\"",
+        "/api/user",
+        "/api/character",
+        "/api/place",
+        "/api/action",
+        "/mcp",
+    ] {
+        assert!(
+            !html.contains(forbidden),
+            "ledger must not contain forbidden mutation or extra-read surface: {forbidden}"
+        );
+    }
+
+    let response = server
+        .client
+        .post(format!("{}/", server.base_url))
+        .send()
+        .await
+        .expect("root POST boundary request should send");
+    assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn ledger_reads_remain_truthful_before_character_onboarding(pool: PgPool) {
+    let world = World::new(pool);
+    let user = world.create_user().await.expect("setup User should exist");
+    let server = TestServer::start(world).await;
+
+    let world_response = server
+        .client
+        .get(format!("{}/api/world", server.base_url))
+        .send()
+        .await
+        .expect("World request should send");
+    assert_eq!(world_response.status(), StatusCode::OK);
+
+    let entity_response = server
+        .client
+        .get(format!("{}/api/entity?limit=100", server.base_url))
+        .send()
+        .await
+        .expect("Entity request should send");
+    assert_eq!(entity_response.status(), StatusCode::OK);
+    let entity_page: Value = entity_response
+        .json()
+        .await
+        .expect("Entity page should be JSON");
+    assert_eq!(entity_page, json!({"entity": [], "next": null}));
+
+    let activity_response = server
+        .client
+        .get(format!("{}/api/activity?limit=100", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .send()
+        .await
+        .expect("pre-Character Activity request should send");
+    assert_eq!(activity_response.status(), StatusCode::NOT_FOUND);
+    let activity_error: Value = activity_response
+        .json()
+        .await
+        .expect("pre-Character Activity error should be JSON");
+    assert_eq!(error_code(&activity_error), "character_not_found");
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;
 
     let openapi: Value = server
@@ -315,6 +411,25 @@ async fn catalogs_expose_exactly_the_ten_player_capabilities(pool: PgPool) {
         openapi["paths"]["/api/entity"]["post"]["responses"]["201"]["description"],
         "Created Entity"
     );
+    assert_eq!(
+        openapi["paths"]["/api/action"]["post"]["responses"]["201"]["description"],
+        "Accepted action"
+    );
+    assert_eq!(
+        openapi["paths"]["/api/action"]["post"]["responses"]["412"]["description"],
+        "Exact current Place changed after it was read"
+    );
+    for schema in [
+        "SubmitActionInput",
+        "AcceptedActionOutput",
+        "CurrentPlaceEntityPageOutput",
+        "CurrentPlaceActivityPageOutput",
+    ] {
+        assert!(
+            openapi["components"]["schemas"].get(schema).is_some(),
+            "OpenAPI should publish shared schema {schema}"
+        );
+    }
     assert!(openapi.to_string().contains("ErrorDetail"));
     assert!(!openapi.to_string().contains("create_user"));
 
@@ -330,9 +445,10 @@ async fn catalogs_expose_exactly_the_ten_player_capabilities(pool: PgPool) {
     assert_eq!(status, StatusCode::OK, "unexpected discover: {discover}");
     assert_eq!(
         discover["result"]["supportedVersions"],
-        json!([LEGACY_PROTOCOL_VERSION, PROTOCOL_VERSION])
+        json!([PROTOCOL_VERSION])
     );
     assert_eq!(discover["result"]["capabilities"], json!({"tools": {}}));
+    assert_eq!(discover["result"]["instructions"], MCP_INSTRUCTIONS);
 
     let (status, listed) = server
         .mcp("tools/list", None, json!({}), None, Some(&server.origin))
@@ -360,156 +476,36 @@ async fn catalogs_expose_exactly_the_ten_player_capabilities(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn legacy_mcp_session_supports_all_player_capabilities(pool: PgPool) {
-    let world = World::new(pool);
-    let user = world.create_user().await.expect("setup User should exist");
-    let server = TestServer::start(world).await;
-
-    let initialize = server
-        .mcp_raw_response(
-            json!({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": LEGACY_PROTOCOL_VERSION,
-                    "capabilities": {},
-                    "clientInfo": {
-                        "name": "aicadia-legacy-test",
-                        "version": "0.1.0"
-                    }
-                }
-            }),
-            &[],
-        )
-        .await;
-    assert_eq!(initialize.status(), StatusCode::OK);
-    let session_id = initialize
-        .headers()
-        .get("Mcp-Session-Id")
-        .and_then(|value| value.to_str().ok())
-        .expect("legacy initialize should create a transport session")
-        .to_owned();
-    let initialized = sse_json(initialize).await;
-    assert_eq!(
-        initialized["result"]["protocolVersion"],
-        LEGACY_PROTOCOL_VERSION
-    );
-    assert_eq!(
-        initialized["result"]["instructions"],
-        "Inspect and extend the shared Aicadia World through the ten listed tools. For entry: get_character; create_character only when absent; if current_place is null call enter_world; only after entry_place_not_found call create_entry_place and then retry enter_world. Never ask the User for Character or Place ids."
-    );
-
-    let notification = server
-        .mcp_raw_response(
-            json!({
-                "jsonrpc": "2.0",
-                "method": "notifications/initialized"
-            }),
-            &[
-                ("Mcp-Session-Id", &session_id),
-                ("MCP-Protocol-Version", LEGACY_PROTOCOL_VERSION),
-            ],
-        )
-        .await;
-    assert_eq!(notification.status(), StatusCode::ACCEPTED);
-
-    let listed = server
-        .mcp_raw_response(
-            json!({
-                "jsonrpc": "2.0",
-                "id": 2,
-                "method": "tools/list",
-                "params": {}
-            }),
-            &[
-                ("Mcp-Session-Id", &session_id),
-                ("MCP-Protocol-Version", LEGACY_PROTOCOL_VERSION),
-            ],
-        )
-        .await;
-    assert_eq!(listed.status(), StatusCode::OK);
-    let listed = sse_json(listed).await;
-    assert_eq!(
-        listed["result"]["tools"]
-            .as_array()
-            .expect("legacy tools/list should return an array")
-            .iter()
-            .map(|tool| tool["name"].as_str().expect("tool should have a name"))
-            .collect::<Vec<_>>(),
-        CAPABILITY
-    );
-    assert!(listed["result"].get("cacheScope").is_none());
-    assert!(listed["result"].get("ttlMs").is_none());
-
-    let world = server
-        .legacy_tool(&session_id, 3, "get_world", json!({}), None)
-        .await;
-    assert_eq!(structured(&world), &json!({"name": "Aicadia"}));
-
-    let read_user = server
-        .legacy_tool(&session_id, 4, "get_user", json!({}), Some(user.id.0))
-        .await;
-    assert_eq!(structured(&read_user)["id"], user.id.0.to_string());
-    assert!(structured(&read_user)["created_at"].is_string());
-
-    let before_create = server
-        .legacy_tool(&session_id, 5, "list_entity", json!({}), None)
-        .await;
-    assert_eq!(structured(&before_create)["entity"], json!([]));
-    assert_eq!(structured(&before_create)["next"], Value::Null);
-
-    let created = server
-        .legacy_tool(
-            &session_id,
-            6,
-            "create_entity",
-            json!({
-                "name": "Legacy Waystone",
-                "description": "A marker introduced through a legacy MCP transport session."
-            }),
-            Some(user.id.0),
-        )
-        .await;
-    let created = structured(&created);
-    assert_eq!(created["name"], "Legacy Waystone");
-    assert_eq!(
-        created["description"],
-        "A marker introduced through a legacy MCP transport session."
-    );
-    assert_eq!(created["introduced_by_user_id"], user.id.0.to_string());
-    let entity_id = created["id"]
-        .as_str()
-        .expect("created Entity should have an id")
-        .to_owned();
-
-    let read_entity = server
-        .legacy_tool(
-            &session_id,
-            7,
-            "get_entity",
-            json!({"entity_id": entity_id}),
-            None,
-        )
-        .await;
-    assert_eq!(structured(&read_entity), created);
-
-    let after_create = server
-        .legacy_tool(&session_id, 8, "list_entity", json!({}), None)
-        .await;
-    assert_eq!(
-        structured(&after_create)["entity"],
-        json!([{
-            "id": entity_id,
-            "name": "Legacy Waystone"
-        }])
-    );
-    assert_eq!(structured(&after_create)["next"], Value::Null);
-}
-
-#[sqlx::test(migrations = "./migration")]
 async fn current_mcp_remains_stateless_and_requires_per_request_metadata(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;
+
+    for (id, version) in [(1, PROTOCOL_VERSION), (2, "2025-11-25")] {
+        let response = server
+            .mcp_raw_response(
+                json!({
+                    "jsonrpc": "2.0",
+                    "id": id,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": version,
+                        "capabilities": {},
+                        "clientInfo": {
+                            "name": "unsupported-initialize-test",
+                            "version": "0.1.0"
+                        }
+                    }
+                }),
+                &[],
+            )
+            .await;
+        assert!(
+            response.headers().get("Mcp-Session-Id").is_none(),
+            "initialize must not create a transport session"
+        );
+        let (status, body) = TestServer::response(response).await;
+        assert_protocol_error(status, &body, StatusCode::OK, -32601);
+    }
+
     let mut params = json!({});
     params
         .as_object_mut()
@@ -520,7 +516,7 @@ async fn current_mcp_remains_stateless_and_requires_per_request_metadata(pool: P
         .mcp_raw_response(
             json!({
                 "jsonrpc": "2.0",
-                "id": 1,
+                "id": 3,
                 "method": "tools/list",
                 "params": params
             }),
@@ -552,7 +548,7 @@ async fn current_mcp_remains_stateless_and_requires_per_request_metadata(pool: P
         .mcp_raw(
             json!({
                 "jsonrpc": "2.0",
-                "id": 2,
+                "id": 4,
                 "method": "tools/list",
                 "params": {}
             }),
@@ -563,6 +559,165 @@ async fn current_mcp_remains_stateless_and_requires_per_request_metadata(pool: P
         )
         .await;
     assert_protocol_error(status, &missing_meta, StatusCode::BAD_REQUEST, -32602);
+
+    let unsupported_version = "2025-11-25";
+    let (status, unsupported) = server
+        .mcp_raw(
+            json!({
+                "jsonrpc": "2.0",
+                "id": 5,
+                "method": "tools/list",
+                "params": {
+                    "_meta": {
+                        "io.modelcontextprotocol/protocolVersion": unsupported_version,
+                        "io.modelcontextprotocol/clientInfo": {
+                            "name": "unsupported-version-test",
+                            "version": "0.1.0"
+                        },
+                        "io.modelcontextprotocol/clientCapabilities": {}
+                    }
+                }
+            }),
+            &[
+                ("MCP-Protocol-Version", unsupported_version),
+                ("Mcp-Method", "tools/list"),
+            ],
+        )
+        .await;
+    assert_protocol_error(status, &unsupported, StatusCode::BAD_REQUEST, -32022);
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabilities(
+    pool: PgPool,
+) {
+    let world = World::new(pool);
+    let user = world.create_user().await.expect("setup User should exist");
+    let server = TestServer::start(world).await;
+
+    for (name, contextual) in [
+        ("get_world", false),
+        ("get_user", true),
+        ("get_character", true),
+        ("create_character", true),
+        ("create_entry_place", true),
+        ("enter_world", true),
+        ("list_activity", true),
+        ("list_entity", false),
+        ("get_entity", false),
+        ("create_entity", true),
+        ("list_entity_at_current_place", true),
+        ("list_activity_at_current_place", true),
+        ("submit_action", true),
+    ] {
+        let response = server
+            .tool(
+                name,
+                json!({"unexpected": true}),
+                contextual.then_some(user.id.0),
+            )
+            .await;
+        assert_eq!(
+            response["result"]["isError"], true,
+            "{name} should return a game error"
+        );
+        let error = mcp_error(&response);
+        assert_eq!(
+            error_code(&error),
+            "invalid_request",
+            "{name} should canonically reject malformed capability arguments"
+        );
+        assert!(
+            response.get("error").is_none(),
+            "{name} argument decoding must not escape as a JSON-RPC protocol error"
+        );
+    }
+
+    let unknown_entity_body = json!({
+        "name": "Must not exist",
+        "description": "Unknown fields reject this body.",
+        "unexpected": true
+    });
+    let http_response = server
+        .client
+        .post(format!("{}/api/entity", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&unknown_entity_body)
+        .send()
+        .await
+        .expect("unknown HTTP Entity field should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("unknown HTTP Entity field should be JSON");
+    let mcp_response = server
+        .tool("create_entity", unknown_entity_body, Some(user.id.0))
+        .await;
+    assert_eq!(mcp_error(&mcp_response), http_error);
+
+    let http_response = server
+        .client
+        .get(format!("{}/api/entity?unexpected=true", server.base_url))
+        .send()
+        .await
+        .expect("unknown HTTP Entity query should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("unknown HTTP Entity query should be JSON");
+    let mcp_response = server
+        .tool("list_entity", json!({"unexpected": true}), None)
+        .await;
+    assert_eq!(mcp_error(&mcp_response), http_error);
+
+    let malformed_action = json!({
+        "request_id": Uuid::new_v4(),
+        "expected_place_revision": "not-a-revision",
+        "prose": "This action must not be decoded.",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Must not exist",
+            "description": "An unknown nested field rejects the body.",
+            "unexpected": true
+        }
+    });
+    let http_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&malformed_action)
+        .send()
+        .await
+        .expect("unknown nested HTTP action field should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("unknown nested HTTP action field should be JSON");
+    let mcp_response = server
+        .tool("submit_action", malformed_action, Some(user.id.0))
+        .await;
+    assert_eq!(mcp_error(&mcp_response), http_error);
+
+    let http_response = server
+        .client
+        .get(format!("{}/api/entity/not-a-uuid", server.base_url))
+        .send()
+        .await
+        .expect("malformed HTTP Entity id should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("malformed HTTP Entity id should be JSON");
+    let mcp_response = server
+        .tool("get_entity", json!({"entity_id": "not-a-uuid"}), None)
+        .await;
+    assert_eq!(mcp_error(&mcp_response), http_error);
+    assert_eq!(http_error["error"]["field"], "entity_id");
+    assert_eq!(http_error["error"]["reason"], "invalid_uuid");
 }
 
 #[sqlx::test(migrations = "./migration")]
@@ -859,6 +1014,549 @@ async fn http_and_mcp_share_successful_world_state(pool: PgPool) {
         first_page["entity"][0]["id"],
         structured(&second_page)["entity"][0]["id"]
     );
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn action_http_and_mcp_share_commit_retry_visibility_and_errors(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let actor = world.create_user().await.expect("actor User should exist");
+    let observer = world
+        .create_user()
+        .await
+        .expect("observer User should exist");
+    let server = TestServer::start(world).await;
+
+    server
+        .tool(
+            "create_character",
+            json!({"name": "Mara Venn", "description": "A careful surveyor."}),
+            Some(actor.id.0),
+        )
+        .await;
+    server
+        .tool(
+            "create_character",
+            json!({"name": "Tomas Reed", "description": "A patient observer."}),
+            Some(observer.id.0),
+        )
+        .await;
+
+    let unplaced_response = server
+        .client
+        .get(format!("{}/api/place/current/entity", server.base_url))
+        .header(USER_CONTEXT_HEADER, observer.id.0.to_string())
+        .send()
+        .await
+        .expect("unplaced exact-Place read should send");
+    assert_eq!(unplaced_response.status(), StatusCode::CONFLICT);
+    let unplaced_http: Value = unplaced_response
+        .json()
+        .await
+        .expect("unplaced error should be JSON");
+    let unplaced_mcp = server
+        .tool(
+            "list_entity_at_current_place",
+            json!({}),
+            Some(observer.id.0),
+        )
+        .await;
+    assert_eq!(error_code(&unplaced_http), "character_not_entered");
+    assert_eq!(mcp_error(&unplaced_mcp), unplaced_http);
+
+    let created_place = server
+        .tool(
+            "create_entry_place",
+            json!({
+                "name": "North Gate",
+                "description": "The one established entry into the shared World."
+            }),
+            Some(actor.id.0),
+        )
+        .await;
+    let created_place = structured(&created_place).clone();
+    for user_id in [actor.id.0, observer.id.0] {
+        let response = server
+            .client
+            .post(format!("{}/api/world/entry", server.base_url))
+            .header(USER_CONTEXT_HEADER, user_id.to_string())
+            .send()
+            .await
+            .expect("World entry should send");
+        assert_eq!(response.status(), StatusCode::OK);
+        let entered: Value = response.json().await.expect("entry should be JSON");
+        assert_eq!(entered["current_place"], created_place);
+    }
+
+    let entity_context: Value = server
+        .client
+        .get(format!("{}/api/place/current/entity", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .send()
+        .await
+        .expect("exact-Place Entity read should send")
+        .json()
+        .await
+        .expect("exact-Place Entity page should be JSON");
+    let activity_context = server
+        .tool(
+            "list_activity_at_current_place",
+            json!({}),
+            Some(actor.id.0),
+        )
+        .await;
+    let activity_context = structured(&activity_context);
+    assert_eq!(
+        entity_context["place_revision"], activity_context["place_revision"],
+        "independent exact-Place reads should expose one shared revision"
+    );
+    assert_eq!(entity_context["place"], created_place);
+    assert_eq!(entity_context["entity"], json!([]));
+
+    let bad_limit_response = server
+        .client
+        .get(format!(
+            "{}/api/place/current/entity?limit=0",
+            server.base_url
+        ))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .send()
+        .await
+        .expect("invalid exact-Place Entity limit should send");
+    assert_eq!(bad_limit_response.status(), StatusCode::BAD_REQUEST);
+    let bad_limit_http: Value = bad_limit_response
+        .json()
+        .await
+        .expect("invalid Entity limit should be JSON");
+    let bad_limit_mcp = server
+        .tool(
+            "list_entity_at_current_place",
+            json!({"limit": 0}),
+            Some(actor.id.0),
+        )
+        .await;
+    assert_eq!(error_code(&bad_limit_http), "invalid_entity_limit");
+    assert_eq!(mcp_error(&bad_limit_mcp), bad_limit_http);
+
+    let bad_cursor_response = server
+        .client
+        .get(format!(
+            "{}/api/place/current/activity?cursor=not-a-cursor",
+            server.base_url
+        ))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .send()
+        .await
+        .expect("invalid exact-Place Activity cursor should send");
+    assert_eq!(bad_cursor_response.status(), StatusCode::BAD_REQUEST);
+    let bad_cursor_http: Value = bad_cursor_response
+        .json()
+        .await
+        .expect("invalid Activity cursor should be JSON");
+    let bad_cursor_mcp = server
+        .tool(
+            "list_activity_at_current_place",
+            json!({"cursor": "not-a-cursor"}),
+            Some(actor.id.0),
+        )
+        .await;
+    assert_eq!(error_code(&bad_cursor_http), "invalid_request");
+    assert_eq!(mcp_error(&bad_cursor_mcp), bad_cursor_http);
+
+    let invalid_action = json!({
+        "request_id": Uuid::new_v4(),
+        "expected_place_revision": entity_context["place_revision"],
+        "prose": "   ",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Rejected Marker",
+            "description": "This marker must not exist."
+        }
+    });
+    let invalid_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&invalid_action)
+        .send()
+        .await
+        .expect("invalid action should send");
+    assert_eq!(invalid_response.status(), StatusCode::BAD_REQUEST);
+    let invalid_http: Value = invalid_response
+        .json()
+        .await
+        .expect("invalid action error should be JSON");
+    let mut invalid_mcp_input = invalid_action;
+    invalid_mcp_input["request_id"] = json!(Uuid::new_v4());
+    let invalid_mcp = server
+        .tool("submit_action", invalid_mcp_input, Some(actor.id.0))
+        .await;
+    assert_eq!(
+        invalid_http,
+        json!({
+            "error": {
+                "code": "invalid_action",
+                "message": "Action prose is empty.",
+                "field": "prose",
+                "reason": "empty"
+            }
+        })
+    );
+    assert_eq!(mcp_error(&invalid_mcp), invalid_http);
+
+    let malformed_action = json!({
+        "request_id": Uuid::new_v4(),
+        "expected_place_revision": "not-a-revision",
+        "prose": "This package must not be accepted.",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Rejected Marker",
+            "description": "This marker must not exist."
+        }
+    });
+    let malformed_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&malformed_action)
+        .send()
+        .await
+        .expect("malformed action should send");
+    assert_eq!(malformed_response.status(), StatusCode::BAD_REQUEST);
+    let malformed_http: Value = malformed_response
+        .json()
+        .await
+        .expect("malformed error should be JSON");
+    let malformed_mcp = server
+        .tool("submit_action", malformed_action, Some(actor.id.0))
+        .await;
+    assert_eq!(error_code(&malformed_http), "invalid_request");
+    assert_eq!(malformed_http["error"]["field"], "expected_place_revision");
+    assert_eq!(mcp_error(&malformed_mcp), malformed_http);
+
+    let unsupported_consequence = json!({
+        "request_id": Uuid::new_v4(),
+        "expected_place_revision": entity_context["place_revision"],
+        "prose": "This unsupported consequence must not change the World.",
+        "consequence": {
+            "type": "move_character",
+            "name": "Impossible Passage",
+            "description": "This consequence is outside the current action surface."
+        }
+    });
+    let unsupported_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&unsupported_consequence)
+        .send()
+        .await
+        .expect("unsupported HTTP consequence should send");
+    assert_eq!(unsupported_response.status(), StatusCode::BAD_REQUEST);
+    let unsupported_http: Value = unsupported_response
+        .json()
+        .await
+        .expect("unsupported consequence error should be JSON");
+    let unsupported_mcp = server
+        .tool("submit_action", unsupported_consequence, Some(actor.id.0))
+        .await;
+    assert_eq!(error_code(&unsupported_http), "invalid_request");
+    assert_eq!(mcp_error(&unsupported_mcp), unsupported_http);
+    let unsupported_writes: (i64, i64) = sqlx::query_as(
+        r#"
+        SELECT
+            (SELECT count(*) FROM entity WHERE name = 'Impossible Passage'),
+            (SELECT count(*) FROM activity WHERE operation = 'submit_action')
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("unsupported consequence write counts should load");
+    assert_eq!(unsupported_writes, (0, 0));
+
+    let request_id = Uuid::new_v4();
+    let action = json!({
+        "request_id": request_id,
+        "expected_place_revision": entity_context["place_revision"],
+        "prose": "Mara braces a carved cedar marker beside the crossing.",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Cedar Crossing Marker",
+            "description": "A waist-high cedar marker carved with three crossing lines."
+        }
+    });
+    let accepted_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&action)
+        .send()
+        .await
+        .expect("action should send");
+    assert_eq!(accepted_response.status(), StatusCode::CREATED);
+    let accepted: Value = accepted_response
+        .json()
+        .await
+        .expect("accepted action should be JSON");
+    assert_eq!(accepted["activity"]["operation"], "submit_action");
+    assert_eq!(
+        accepted["activity"]["prose"],
+        "Mara braces a carved cedar marker beside the crossing."
+    );
+    assert_eq!(accepted["entity"]["name"], "Cedar Crossing Marker");
+    assert_eq!(accepted["place"], created_place);
+    let role = accepted["activity"]["involved_entity"]
+        .as_array()
+        .expect("Activity roles should be an array")
+        .iter()
+        .map(|reference| reference["role"].as_str().expect("role should be a string"))
+        .collect::<BTreeSet<_>>();
+    assert_eq!(role, BTreeSet::from(["location", "subject"]));
+
+    let http_retry = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&action)
+        .send()
+        .await
+        .expect("HTTP delivery retry should send");
+    assert_eq!(http_retry.status(), StatusCode::CREATED);
+    assert_eq!(
+        http_retry
+            .json::<Value>()
+            .await
+            .expect("HTTP delivery retry should be JSON"),
+        accepted
+    );
+    let retry = server
+        .tool("submit_action", action.clone(), Some(actor.id.0))
+        .await;
+    assert_eq!(structured(&retry), &accepted);
+
+    let observer_entities = server
+        .tool(
+            "list_entity_at_current_place",
+            json!({}),
+            Some(observer.id.0),
+        )
+        .await;
+    assert_eq!(
+        structured(&observer_entities)["entity"],
+        json!([{
+            "id": accepted["entity"]["id"],
+            "name": "Cedar Crossing Marker"
+        }])
+    );
+    let observer_activity: Value = server
+        .client
+        .get(format!(
+            "{}/api/place/current/activity?limit=1",
+            server.base_url
+        ))
+        .header(USER_CONTEXT_HEADER, observer.id.0.to_string())
+        .send()
+        .await
+        .expect("observer Activity read should send")
+        .json()
+        .await
+        .expect("observer Activity page should be JSON");
+    assert_eq!(observer_activity["activity"][0], accepted["activity"]);
+    assert_ne!(
+        observer_activity["place_revision"],
+        entity_context["place_revision"]
+    );
+    let activity_cursor = observer_activity["next"]
+        .as_str()
+        .expect("Place Activity should have another page");
+    let next_observer_activity = server
+        .tool(
+            "list_activity_at_current_place",
+            json!({"cursor": activity_cursor, "limit": 1}),
+            Some(observer.id.0),
+        )
+        .await;
+    assert_eq!(
+        structured(&next_observer_activity)["place_revision"],
+        observer_activity["place_revision"]
+    );
+    assert_ne!(
+        structured(&next_observer_activity)["activity"][0]["id"],
+        observer_activity["activity"][0]["id"]
+    );
+
+    let changed = json!({
+        "request_id": request_id,
+        "expected_place_revision": entity_context["place_revision"],
+        "prose": "Different content under an accepted request id.",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Conflicting Marker",
+            "description": "This marker must not be created."
+        }
+    });
+    let conflict_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&changed)
+        .send()
+        .await
+        .expect("conflicting retry should send");
+    assert_eq!(conflict_response.status(), StatusCode::CONFLICT);
+    let conflict_http: Value = conflict_response
+        .json()
+        .await
+        .expect("conflict should be JSON");
+    let conflict_mcp = server
+        .tool("submit_action", changed, Some(actor.id.0))
+        .await;
+    assert_eq!(error_code(&conflict_http), "action_request_conflict");
+    assert_eq!(mcp_error(&conflict_mcp), conflict_http);
+
+    let stale = json!({
+        "request_id": Uuid::new_v4(),
+        "expected_place_revision": entity_context["place_revision"],
+        "prose": "A stale action must not change the World.",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Stale Marker",
+            "description": "This marker must not be created."
+        }
+    });
+    let stale_response = server
+        .client
+        .post(format!("{}/api/action", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .json(&stale)
+        .send()
+        .await
+        .expect("stale action should send");
+    assert_eq!(stale_response.status(), StatusCode::PRECONDITION_FAILED);
+    let stale_http: Value = stale_response
+        .json()
+        .await
+        .expect("freshness error should be JSON");
+    let mut stale_mcp_input = stale;
+    stale_mcp_input["request_id"] = json!(Uuid::new_v4());
+    let stale_mcp = server
+        .tool("submit_action", stale_mcp_input, Some(actor.id.0))
+        .await;
+    assert_eq!(error_code(&stale_http), "place_revision_conflict");
+    assert_eq!(mcp_error(&stale_mcp), stale_http);
+
+    let latest_revision = observer_activity["place_revision"].clone();
+    let second_action = json!({
+        "request_id": Uuid::new_v4(),
+        "expected_place_revision": latest_revision,
+        "prose": "Tomas sets a second marker where travelers can compare the routes.",
+        "consequence": {
+            "type": "introduce_entity",
+            "name": "Route Comparison Marker",
+            "description": "A second cedar marker with two route notches."
+        }
+    });
+    let second_accepted = server
+        .tool("submit_action", second_action, Some(observer.id.0))
+        .await;
+    assert_eq!(
+        structured(&second_accepted)["activity"]["operation"],
+        "submit_action"
+    );
+
+    let first_entity_page: Value = server
+        .client
+        .get(format!(
+            "{}/api/place/current/entity?limit=1",
+            server.base_url
+        ))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .send()
+        .await
+        .expect("first exact-Place Entity page should send")
+        .json()
+        .await
+        .expect("first exact-Place Entity page should be JSON");
+    let entity_cursor = first_entity_page["next"]
+        .as_str()
+        .expect("two placed Entities should produce a cursor");
+    let second_entity_page = server
+        .tool(
+            "list_entity_at_current_place",
+            json!({"cursor": entity_cursor, "limit": 1}),
+            Some(actor.id.0),
+        )
+        .await;
+    assert_eq!(
+        structured(&second_entity_page)["place_revision"],
+        first_entity_page["place_revision"]
+    );
+    assert_ne!(
+        structured(&second_entity_page)["entity"][0]["id"],
+        first_entity_page["entity"][0]["id"]
+    );
+
+    let global_entity_page: Value = server
+        .client
+        .get(format!("{}/api/entity?limit=1", server.base_url))
+        .send()
+        .await
+        .expect("global Entity cursor source should send")
+        .json()
+        .await
+        .expect("global Entity cursor source should be JSON");
+    let global_entity_cursor = global_entity_page["next"]
+        .as_str()
+        .expect("global Entity state should have another page")
+        .to_owned();
+    let personal_activity_page: Value = server
+        .client
+        .get(format!("{}/api/activity?limit=1", server.base_url))
+        .header(USER_CONTEXT_HEADER, actor.id.0.to_string())
+        .send()
+        .await
+        .expect("personal Activity cursor source should send")
+        .json()
+        .await
+        .expect("personal Activity cursor source should be JSON");
+    let personal_activity_cursor = personal_activity_page["next"]
+        .as_str()
+        .expect("personal Activity state should have another page")
+        .to_owned();
+    let operation = [
+        ("/api/entity", "list_entity", global_entity_cursor, None),
+        (
+            "/api/activity",
+            "list_activity",
+            personal_activity_cursor,
+            Some(actor.id.0),
+        ),
+        (
+            "/api/place/current/entity",
+            "list_entity_at_current_place",
+            entity_cursor.to_owned(),
+            Some(actor.id.0),
+        ),
+        (
+            "/api/place/current/activity",
+            "list_activity_at_current_place",
+            activity_cursor.to_owned(),
+            Some(actor.id.0),
+        ),
+    ];
+    for (source_index, (_, _, source_cursor, _)) in operation.iter().enumerate() {
+        for (target_index, (http_path, tool_name, _, user_id)) in operation.iter().enumerate() {
+            if source_index != target_index {
+                assert_cross_operation_cursor_rejected(
+                    &server,
+                    http_path,
+                    tool_name,
+                    source_cursor,
+                    *user_id,
+                )
+                .await;
+            }
+        }
+    }
 }
 
 #[sqlx::test(migrations = "./migration")]

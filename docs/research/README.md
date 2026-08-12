@@ -9,8 +9,10 @@ exploration history.
 
 | Research | Question |
 |---|---|
+| [Current MCP Agent guidance](current-mcp-agent-guidance.md) | How can every current MCP Agent receive the same provider-neutral play methods while World remains deterministic and strict? |
 | [Codex agent graphs](ai-agent-graphs.md) | How could a graph-shaped Codex workflow improve Aicadia development without entering the game runtime? |
 | [Agent tool interface](agent-tool-interface.md) | What is the smallest correct MCP tool boundary for the Rust World interface? |
+| [Idempotent action delivery and Place freshness](idempotent-action-delivery-and-place-freshness.md) | How should an Agent safely retry one action while World rejects a package grounded in stale relevant Place state? |
 | [Character identity and control](character-entity-control-model.md) | How can accounts control one character at a time while abandoned characters and NPCs retain one durable world identity? |
 | [Persistent world-state](persistent-world-state.md) | How do other shared worlds remember, update and expose state? |
 | [Player-agent interaction](player-agent-interaction.md) | How should a person steer an agent without breaking shared canon? |

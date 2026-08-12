@@ -3,625 +3,478 @@ set -euo pipefail
 
 readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly RUNNER="$REPO_DIR/tools/agent-playtest"
+readonly STEERING='Make it a weathered cedar trail marker whose carving includes the unique playtest marker verbatim.'
 TEST_TMP="$(mktemp -d)"
 trap '[[ "${KEEP_AGENT_PLAYTEST_TMP:-0}" == 1 ]] || rm -rf "$TEST_TMP"' EXIT
 
-fail() {
-    printf 'agent-playtest test: %s\n' "$*" >&2
-    exit 1
-}
-
-assert_eq() {
-    [[ "$1" == "$2" ]] || fail "expected [$2], got [$1]"
-}
-
-assert_contains() {
-    grep -F -- "$2" "$1" >/dev/null || fail "$1 does not contain [$2]"
-}
-
-assert_line() {
-    grep -Fx -- "$2" "$1" >/dev/null || fail "$1 does not contain exact line [$2]"
-}
-
-assert_pair() {
-    awk -v first="$2" -v second="$3" 'previous == first && $0 == second { found = 1 } { previous = $0 } END { exit !found }' "$1" \
-        || fail "$1 does not contain adjacent lines [$2] [$3]"
-}
-
-assert_no_pair() {
-    if awk -v first="$2" -v second="$3" 'previous == first && $0 == second { found = 1 } { previous = $0 } END { exit !found }' "$1"; then
-        fail "$1 contains forbidden adjacent lines [$2] [$3]"
-    fi
+fail() { printf 'agent-playtest test: %s\n' "$*" >&2; exit 1; }
+assert_contains() { grep -F -- "$2" "$1" >/dev/null || fail "$1 lacks [$2]"; }
+assert_not_contains() { ! grep -F -- "$2" "$1" >/dev/null || fail "$1 unexpectedly contains [$2]"; }
+assert_eq() { [[ "$1" == "$2" ]] || fail "expected [$2], got [$1]"; }
+assert_live_attempt_shape() {
+    local events="$1" tools="$2"
+    jq -s -e --argjson tools "$tools" '
+        [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
+        | ($tools|length) as $count
+        | [$observed[]|select(.event_type=="item.started")|.item] as $started
+        | [$observed[]|select(.event_type=="item.completed")|.item] as $completed
+        | ($observed|length)==($count*2)
+        and [$observed[].event_type]==([range(0;$count)|["item.started","item.completed"]]|add)
+        and all($observed[];(.item|keys|sort)==(["arguments","error","id","result","server","status","tool","type"]|sort))
+        and [$started[].id]==[$completed[].id] and ([$completed[].id]|unique|length)==$count
+        and [$started[].tool]==$tools and [$completed[].tool]==$tools
+        and [$started[].arguments]==[$completed[].arguments]
+        and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
+        and all($completed[];.server=="aicadia" and .status=="completed"
+            and (.result|keys|sort)==(["content","structured_content"]|sort)
+            and (.result.content|type)=="array" and (.result.structured_content|type)=="object" and .error==null)
+    ' "$events" >/dev/null || fail "$events does not mirror live started/completed MCP attempts"
 }
 
 make_fakes() {
-    local fake_dir="$1"
-    mkdir -p "$fake_dir/bin" "$fake_dir/state" "$fake_dir/output"
+    local root="$1"
+    mkdir -p "$root/bin" "$root/state" "$root/output"
+    cp "$REPO_DIR/tests/agent-tool-catalog.json" "$root/state/catalog.json"
 
-    cat >"$fake_dir/bin/cargo" <<'FAKE'
+    cat >"$root/bin/cargo" <<'FAKE'
 #!/usr/bin/env bash
 set -euo pipefail
 state="$(cd "$(dirname "$0")/../state" && pwd)"
 mode="$(<"$state/mode")"
 args="$*"
-if [[ "$args" == 'build --quiet --bin aicadia --bin aicadia-provision-user --bin aicadia-playtest-database' ]]; then
-    printf '%s\n' build >>"$state/preflight-actions"
-elif [[ "$args" == 'run --quiet --bin aicadia-playtest-database -- probe' ]]; then
-    printf '%s\n' probe >>"$state/database-actions"
-elif [[ "$args" == run\ --quiet\ --bin\ aicadia-playtest-database\ --\ create\ * ]]; then
-    printf 'create %s\n' "${!#}" >>"$state/database-actions"
-    [[ "$mode" != 'ambiguous-create' ]] || exit 19
-elif [[ "$args" == run\ --quiet\ --bin\ aicadia-playtest-database\ --\ drop\ * ]]; then
-    printf 'drop %s\n' "${!#}" >>"$state/database-actions"
-elif [[ "$args" == 'run --quiet --bin aicadia' ]]; then
-    printf '%s\n' '{"event":"server_ready","address":"127.0.0.1:45678"}'
-    trap 'exit 0' TERM INT
-    while :; do sleep 1; done
-elif [[ "$args" == 'run --quiet --bin aicadia-provision-user' ]]; then
-    count=0
-    [[ ! -f "$state/provision-count" ]] || count="$(<"$state/provision-count")"
-    count=$((count + 1))
-    printf '%s\n' "$count" >"$state/provision-count"
-    if [[ "$mode" == 'provision-fail' && $count -eq 2 ]]; then
-        exit 18
-    fi
-    if [[ $count -eq 1 ]]; then
-        id='11111111-1111-4111-8111-111111111111'
-    else
-        id='22222222-2222-4222-8222-222222222222'
-    fi
-    printf '{"id":"%s","created_at":"2026-08-08T12:00:00Z"}\n' "$id"
-else
-    printf 'unexpected fake cargo call: %s\n' "$args" >&2
-    exit 90
-fi
+case "$args" in
+    'build --quiet --bin aicadia --bin aicadia-provision-user --bin aicadia-playtest-database')
+        printf 'build\n' >>"$state/preflight-actions" ;;
+    run\ --quiet\ --bin\ aicadia-playtest-database\ --\ probe\ *)
+        token="${!#}"
+        printf 'probe-create-tag-verify-drop %s\n' "$token" >>"$state/database-actions"
+        printf 'ownership_probe_passed aicadia_playtest_probe_%s\n' "${token:0:32}" ;;
+    run\ --quiet\ --bin\ aicadia-playtest-database\ --\ create\ *)
+        token="${!#}"; before_token=$(( $# - 1 )); database="${!before_token}"
+        printf 'create-attempt %s %s\n' "$database" "$token" >>"$state/database-actions"
+        if [[ "$mode" == ambiguous-create || "$mode" == ownership-mismatch-create ]]; then exit 19; fi
+        printf '%s\n' "$token" >"$state/database-ownership-token"
+        printf '%s\n' "$database" >"$state/database-name"
+        printf 'ownership_verified %s %s\n' "$database" "$token" ;;
+    run\ --quiet\ --bin\ aicadia-playtest-database\ --\ drop\ *)
+        token="${!#}"; before_token=$(( $# - 1 )); database="${!before_token}"
+        printf 'drop-attempt %s %s\n' "$database" "$token" >>"$state/database-actions"
+        [[ -f "$state/database-name" && "$(<"$state/database-name")" == "$database" ]] || exit 20
+        [[ -f "$state/database-ownership-token" && "$(<"$state/database-ownership-token")" == "$token" ]] || exit 21
+        [[ "$mode" != cleanup-fail ]] || exit 19
+        printf 'ownership_verified_and_dropped %s\n' "$database" ;;
+    'run --quiet --bin aicadia')
+        [[ "$mode" != server-fail ]] || exit 18
+        printf '%s\n' '{"event":"server_ready","address":"127.0.0.1:45678"}'
+        trap 'exit 0' TERM INT
+        while :; do sleep 1; done ;;
+    'run --quiet --bin aicadia-provision-user')
+        count=0; [[ ! -f "$state/provision-count" ]] || count="$(<"$state/provision-count")"
+        count=$((count + 1)); printf '%s\n' "$count" >"$state/provision-count"
+        if [[ $count -eq 1 ]]; then id='11111111-1111-4111-8111-111111111111'; else id='22222222-2222-4222-8222-222222222222'; fi
+        printf '{"id":"%s","created_at":"2026-08-11T12:00:00Z"}\n' "$id" ;;
+    *) printf 'unexpected fake cargo: %s\n' "$args" >&2; exit 90 ;;
+esac
+FAKE
+    cat >"$root/bin/openssl" <<'FAKE'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$*" == 'rand -hex 32' ]] || exit 90
+printf '%s\n' 'abababababababababababababababababababababababababababababababab'
+FAKE
+    cat >"$root/bin/env" <<'FAKE'
+#!/bin/bash
+set -euo pipefail
+state="$(cd "$(dirname "$0")/../state" && pwd)"
+: >"$state/fake-env-invoked"
+exec /usr/bin/env "$@"
 FAKE
 
-    cat >"$fake_dir/bin/curl" <<'FAKE'
+    cat >"$root/bin/curl" <<'FAKE'
 #!/usr/bin/env bash
 set -euo pipefail
 state="$(cd "$(dirname "$0")/../state" && pwd)"
-args="$*"
-[[ "${1:-}" == '--disable' ]] || { printf 'curl --disable was not first\n' >&2; exit 92; }
-if [[ "$args" == *'-w %{http_code}'* ]]; then
-    printf '404'
-elif [[ "$args" == *'/api/openapi.json'* ]]; then
-    printf '%s\n' '{"paths":{"/api/world":{"get":{"operationId":"get_world"}},"/api/user":{"get":{"operationId":"get_user"}},"/api/character":{"get":{"operationId":"get_character"},"post":{"operationId":"create_character"}},"/api/place/entry":{"post":{"operationId":"create_entry_place"}},"/api/world/entry":{"post":{"operationId":"enter_world"}},"/api/activity":{"get":{"operationId":"list_activity"}},"/api/entity":{"get":{"operationId":"list_entity"},"post":{"operationId":"create_entity"}},"/api/entity/{entity_id}":{"get":{"operationId":"get_entity"}}}}'
-elif [[ "$args" == *'/mcp'* ]]; then
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"get_world"},{"name":"get_user"},{"name":"get_character"},{"name":"create_character"},{"name":"create_entry_place"},{"name":"enter_world"},{"name":"list_activity"},{"name":"list_entity"},{"name":"get_entity"},{"name":"create_entity"}]}}'
-elif [[ "$args" == *'/api/character'* ]]; then
-    if [[ "$args" == *'11111111-1111-4111-8111-111111111111'* ]]; then
-        [[ -f "$state/character-a.json" ]] && jq . "$state/character-a.json" || printf '%s\n' '{}'
-    else
-        [[ -f "$state/character-b.json" ]] && jq . "$state/character-b.json" || printf '%s\n' '{}'
-    fi
-elif [[ "$args" == *'/api/activity?limit=25'* ]]; then
-    if [[ "$args" == *'11111111-1111-4111-8111-111111111111'* ]]; then
-        [[ -f "$state/activity-a.json" ]] && jq . "$state/activity-a.json" || printf '%s\n' '{}'
-    else
-        [[ -f "$state/activity-b.json" ]] && jq . "$state/activity-b.json" || printf '%s\n' '{}'
-    fi
-elif [[ "$args" == *'/api/entity?limit=100'* ]]; then
-    if [[ -f "$state/entity.json" ]]; then
-        jq '{entity: [{id: .id, name: .name}], next: null}' "$state/entity.json"
-    else
-        printf '%s\n' '{"entity":[],"next":null}'
-    fi
-elif [[ "$args" == *'/api/entity/'* ]]; then
-    jq . "$state/entity.json"
-elif [[ "$args" == *'/api/user'* ]]; then
-    if [[ "$args" == *'11111111-1111-4111-8111-111111111111'* ]]; then
-        id='11111111-1111-4111-8111-111111111111'
-    else
-        id='22222222-2222-4222-8222-222222222222'
-    fi
-    printf '{"id":"%s","created_at":"2026-08-08T12:00:00Z"}\n' "$id"
-elif [[ "$args" == *'/api/world'* ]]; then
-    printf '%s\n' '{"name":"Aicadia"}'
+output=''; method='GET'; data=''; user=''; previous=''; url="${!#}"
+for argument in "$@"; do
+    case "$previous" in
+        -o) output="$argument" ;;
+        -X) method="$argument" ;;
+        --data) data="$argument" ;;
+        -H) [[ "$argument" != Aicadia-User-Id:* ]] || user="${argument#Aicadia-User-Id: }" ;;
+    esac
+    previous="$argument"
+done
+place_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+action_character='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+observer_character='dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+action_user='11111111-1111-4111-8111-111111111111'
+observer_user='22222222-2222-4222-8222-222222222222'
+marker=''
+[[ ! -f "$state/marker" ]] || marker="$(<"$state/marker")"
+place="$(jq -nc --arg id "$place_id" --arg marker "$marker" --arg user "$action_user" '{entity:{id:$id,name:("Entry Place "+$marker),description:("Disposable shared entry Place for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:02:00Z"},is_entry:true}')"
+character() {
+    local id="$1" owner="$2" role="$3"
+    jq -nc --arg id "$id" --arg owner "$owner" --arg marker "$marker" --arg role "$role" --argjson place "$place" \
+        '{entity:{id:$id,name:($role+" Character "+$marker),description:("Disposable "+($role|ascii_downcase)+" Character for "+$marker),introduced_by_user_id:$owner,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$owner,current_place:$place}'
+}
+response='{}'; status=200
+case "$url" in
+    */api/openapi.json)
+        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{get:{operationId:"list_entity"},post:{operationId:"create_entity"}},"/api/entity/{entity_id}":{get:{operationId:"get_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/action":{post:{operationId:"submit_action"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
+    */mcp)
+        response="$(jq -nc --slurpfile tools "$state/catalog.json" '{jsonrpc:"2.0",id:1,result:{tools:$tools[0]}}')" ;;
+    */api/world) response='{"name":"Aicadia"}' ;;
+    */api/user)
+        if [[ "$output" == /dev/null ]]; then status=404; response='{"error":{"code":"user_not_found"}}';
+        else response="$(jq -nc --arg id "$user" '{id:$id,created_at:"2026-08-11T12:00:00Z"}')"; fi ;;
+    */api/character)
+        if [[ "$method" == POST ]]; then
+            if [[ "$user" == "$action_user" ]]; then response="$(character "$action_character" "$action_user" Action | jq '.current_place=null')";
+            else response="$(character "$observer_character" "$observer_user" Observer | jq '.current_place=null')"; fi
+            status=201
+        elif [[ "$user" == "$action_user" ]]; then response="$(character "$action_character" "$action_user" Action)";
+        else response="$(character "$observer_character" "$observer_user" Observer)"; fi ;;
+    */api/world/entry)
+        if [[ ! -f "$state/place-created" ]]; then status=404; response='{"error":{"code":"entry_place_not_found"}}';
+        elif [[ "$user" == "$action_user" ]]; then response="$(character "$action_character" "$action_user" Action)";
+        else response="$(character "$observer_character" "$observer_user" Observer)"; fi ;;
+    */api/place/entry)
+        : >"$state/place-created"; response="$place"; status=201 ;;
+    */api/place/current/entity*)
+        printf 'http-current-entity\n' >>"$state/timeline"
+        if [[ -f "$state/accepted.json" ]]; then
+            entity="$(jq '.entity|{id,name}' "$state/accepted.json")"
+            if [[ "$(<"$state/mode")" == http-duplicate-entity ]]; then
+                response="$(jq -nc --argjson place "$place" --argjson entity "$entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity,$entity],next:null}')"
+            else
+                response="$(jq -nc --argjson place "$place" --argjson entity "$entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity],next:null}')"
+            fi
+        else response="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"; fi ;;
+    */api/place/current/activity*)
+        printf 'http-current-activity\n' >>"$state/timeline"
+        if [[ -f "$state/accepted.json" ]]; then
+            activity="$(jq '.activity' "$state/accepted.json")"
+            if [[ "$(<"$state/mode")" == http-wrong-actor ]]; then
+                activity="$(jq '.actor_character.id="ffffffff-ffff-4fff-8fff-ffffffffffff"' <<<"$activity")"
+            fi
+            if [[ "$(<"$state/mode")" == http-duplicate-action ]]; then
+                response="$(jq -nc --argjson place "$place" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity,$activity],next:null}')"
+            else
+                response="$(jq -nc --argjson place "$place" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
+            fi
+        else response="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"; fi ;;
+    */api/entity/*) printf 'http-entity\n' >>"$state/timeline"; response="$(jq '.entity' "$state/accepted.json")" ;;
+    *) printf 'unexpected fake curl: %s\n' "$*" >&2; exit 91 ;;
+esac
+if [[ -n "$output" ]]; then
+    [[ "$output" == /dev/null ]] || printf '%s\n' "$response" >"$output"
+    printf '%s' "$status"
 else
-    printf 'unexpected fake curl call: %s\n' "$args" >&2
-    exit 91
+    printf '%s\n' "$response"
 fi
 FAKE
 
-    cat >"$fake_dir/bin/codex-fake" <<'FAKE'
+    cat >"$root/bin/codex-fake" <<'FAKE'
 #!/usr/bin/env bash
 set -euo pipefail
 state="$(cd "$(dirname "$0")/../state" && pwd)"
+mode="$(<"$state/mode")"
 printf '%s\n' "$*" >>"$state/codex-commands"
 case "$*" in
-    --version)
-        printf '%s\n' 'codex-cli 0.147.0'
-        exit 0
-        ;;
-    'login status')
-        printf '%s\n' 'Logged in using ChatGPT'
-        exit 0
-        ;;
-    'debug models')
-        printf '%s\n' '{"models":[{"slug":"gpt-5.6-sol","supported_reasoning_levels":[{"effort":"high"}]}]}'
-        exit 0
-        ;;
-    'exec --help')
-        printf '%s\n' '--ephemeral --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json --output-schema --output-last-message'
-        exit 0
-        ;;
+    --version) [[ "$mode" != cli-drift ]] && printf 'codex-cli 0.144.1\n' || printf 'codex-cli 0.145.0\n'; exit 0 ;;
+    'login status') printf 'Logged in using ChatGPT\n'; exit 0 ;;
+    'debug models') printf '%s\n' '{"models":[{"slug":"gpt-5.6-sol","supported_reasoning_levels":[{"effort":"high"}]}]}'; exit 0 ;;
+    'features list') : ;;
+    'exec --help') printf '%s\n' '--ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json --output-schema --output-last-message'; exit 0 ;;
+    'exec resume --help') printf '%s\n' 'Usage [SESSION_ID] --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json --output-schema --output-last-message'; exit 0 ;;
+    --help) printf '%s\n' '--ask-for-approval --sandbox --model'; exit 0 ;;
 esac
-
 if [[ "$*" == *'features list' ]]; then
-    for feature in apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access code_mode code_mode_host computer_use goals hooks image_generation in_app_browser multi_agent multi_agent_v2 plugins remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install skill_search tool_call_mcp_elicitation tool_suggest unified_exec view_image workspace_dependencies; do
-        enabled=true
-        [[ "$*" != *"--disable $feature"* ]] || enabled=false
+    for feature in apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access code_mode code_mode_host computer_use goals hooks image_generation in_app_browser multi_agent multi_agent_v2 plugins remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install tool_call_mcp_elicitation tool_suggest unified_exec workspace_dependencies; do
+        enabled=true; [[ "$*" != *"--disable $feature"* ]] || enabled=false
+        [[ "$feature" != code_mode && "$feature" != code_mode_host ]] || enabled=true
         printf '%-40s stable %s\n' "$feature" "$enabled"
     done
     exit 0
 fi
-
 if [[ "$*" == *'mcp get aicadia --json' ]]; then
     arguments="$(printf '%s\n' "$@")"
-    for required in \
-        'suppress_unstable_features_warning=true' \
-        'features.code_mode.enabled=true' \
-        'features.code_mode.direct_only_tool_namespaces=["mcp__aicadia"]' \
-        'web_search="disabled"' 'tools.web_search=false' 'agents.enabled=false' \
-        'model_reasoning_effort="high"' 'mcp_servers.aicadia.url="http://127.0.0.1:9/mcp"' \
-        'mcp_servers.aicadia.enabled=true' 'mcp_servers.aicadia.required=true' \
-        'mcp_servers.aicadia.default_tools_approval_mode="approve"' \
-        'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'; do
-        grep -Fx -- "$required" <<<"$arguments" >/dev/null || exit 97
-    done
-    if [[ "$*" == *'enabled_tools=["create_character","create_entry_place","enter_world","list_activity","create_entity"]'* ]]; then
-        tools='["create_character","create_entry_place","enter_world","list_activity","create_entity"]'
-    elif [[ "$*" == *'enabled_tools=["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'* ]]; then
-        tools='["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'
-    else
-        exit 96
-    fi
-    jq -n --argjson tools "$tools" '{name:"aicadia",enabled:true,disabled_reason:null,transport:{type:"streamable_http",url:"http://127.0.0.1:9/mcp",bearer_token_env_var:null,http_headers:null,env_http_headers:{"Aicadia-User-Id":"AICADIA_USER_ID"}},enabled_tools:$tools,disabled_tools:null,startup_timeout_sec:null,tool_timeout_sec:null}'
+    if [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]';
+    elif [[ "$*" == *'enabled_tools=["submit_action"]'* ]]; then tools='["submit_action"]';
+    elif [[ "$*" == *'enabled_tools=["get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_character","list_entity_at_current_place","list_activity_at_current_place"]';
+    else exit 96; fi
+    for required in 'features.code_mode.enabled=true' 'features.code_mode.direct_only_tool_namespaces=["mcp__aicadia"]'; do grep -Fx -- "$required" <<<"$arguments" >/dev/null || exit 97; done
+    jq -nc --argjson tools "$tools" '{name:"aicadia",enabled:true,transport:{type:"streamable_http",url:"http://127.0.0.1:9/mcp",env_http_headers:{"Aicadia-User-Id":"AICADIA_USER_ID"}},enabled_tools:$tools,disabled_tools:null}'
     exit 0
 fi
 
-mode="$(<"$state/mode")"
-count=0
-[[ ! -f "$state/codex-count" ]] || count="$(<"$state/codex-count")"
-count=$((count + 1))
-printf '%s\n' "$count" >"$state/codex-count"
-call_dir="$state/call-$count"
-mkdir "$call_dir"
-printf '%s\n' "$AICADIA_USER_ID" >"$call_dir/user-id"
-env | sort >"$call_dir/environment"
-pwd >"$call_dir/cwd"
-printf '%s\n' "$@" >"$call_dir/argv"
-
-final=''
-previous=''
-for argument in "$@"; do
-    if [[ "$previous" == '--output-last-message' ]]; then final="$argument"; fi
-    previous="$argument"
-done
-prompt="${!#}"
-printf '%s\n' "$prompt" >"$call_dir/prompt"
-marker="$(sed -n 's/.*\(aicadia-playtest-[0-9A-Za-z-]*\).*/\1/p' <<<"$prompt" | head -1)"
-character_a_name="Founder Character $marker"
-character_a_description="Disposable founder Character for MCP world-entry proof: $marker"
-character_b_name="Joining Character $marker"
-character_b_description="Disposable joining Character for MCP world-entry proof: $marker"
-place_name="Entry Place $marker"
-place_description="Disposable shared entry Place for MCP world-entry proof: $marker"
-name="Disposable Playtest Entity $marker"
-description="Technical cross-User MCP fixture in a disposable World: $marker"
-character_a_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-place_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
-entity_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
-character_b_id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'
-
-printf '%s\n' '{"type":"thread.started"}'
-code_mode_diagnostic='Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.'
-case "$mode" in
-    other-error)
-        jq -nc --arg message 'Different native tool startup error' \
-            '{type:"item.completed",item:{id:"item-0",type:"error",message:$message}}'
-        ;;
-    code-mode-host-disabled)
-        jq -nc --arg message "$code_mode_diagnostic" \
-            '{type:"item.completed",item:{id:"item-0",type:"error",message:$message}}'
-        ;;
-esac
+count=0; [[ ! -f "$state/codex-exec-count" ]] || count="$(<"$state/codex-exec-count")"
+count=$((count + 1)); printf '%s\n' "$count" >"$state/codex-exec-count"
+printf 'agent-%s\n' "$count" >>"$state/timeline"
+call="$state/call-$count"; mkdir "$call"
+printf '%s\n' "$@" >"$call/argv"
+/usr/bin/env | sort >"$call/environment"; pwd >"$call/cwd"
+final=''; previous=''
+for argument in "$@"; do [[ "$previous" != --output-last-message ]] || final="$argument"; previous="$argument"; done
+prompt="${!#}"; printf '%s\n' "$prompt" >"$call/prompt"
+marker="$(sed -n 's/.*\(aicadia-action-playtest-[0-9A-Za-z_-]*\).*/\1/p' <<<"$prompt" | head -1)"
+[[ -z "$marker" ]] || printf '%s\n' "$marker" >"$state/marker"
+[[ -s "$state/marker" ]] && marker="$(<"$state/marker")"
+session='33333333-3333-4333-8333-333333333333'
+place_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'; character_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'; observer_id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+entity_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'; activity_id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'; request_id='44444444-4444-4444-8444-444444444444'
+action_user='11111111-1111-4111-8111-111111111111'
+place="$(jq -nc --arg id "$place_id" --arg marker "$marker" --arg user "$action_user" '{entity:{id:$id,name:("Entry Place "+$marker),description:("Disposable shared entry Place for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:02:00Z"},is_entry:true}')"
+printf '%s\n' "{\"type\":\"thread.started\",\"thread_id\":\"$session\"}"
 printf '%s\n' '{"type":"turn.started"}'
-if [[ $count -eq 1 && "$mode" == 'a-program' ]]; then
-    printf '%s\n' '{"type":"item.completed","item":{"id":"item-program","type":"program","status":"completed"}}'
-fi
-if [[ $count -eq 1 && "$mode" == 'a-exit' ]]; then exit 17; fi
-if [[ $count -eq 1 && "$mode" == 'a-timeout' ]]; then
-    (
-        trap '' TERM
-        sleep 10
-    ) &
-    blocking_child=$!
-    printf '%s\n' "$blocking_child" >"$state/timeout-child-pid"
-    wait "$blocking_child"
-fi
-if [[ $count -eq 1 ]]; then
-    created_character="$(jq -nc --arg id "$character_a_id" --arg name "$character_a_name" \
-        --arg description "$character_a_description" --arg user "$AICADIA_USER_ID" \
-        '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:01:00Z"},owner_user_id:$user,current_place:null}')"
-    place="$(jq -nc --arg id "$place_id" --arg name "$place_name" --arg description "$place_description" \
-        --arg user "$AICADIA_USER_ID" \
-        '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:02:00Z"},is_entry:true}')"
-    entered_character="$(jq -nc --argjson character "$created_character" --argjson place "$place" \
-        '$character | .current_place = $place')"
-    jq -n --arg id "$entity_id" --arg name "$name" --arg description "$description" --arg user "$AICADIA_USER_ID" \
-        '{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:04:00Z"}' >"$state/entity.json"
-    history="$(jq -nc --arg character "$character_a_id" --arg character_name "$character_a_name" \
-        --arg place "$place_id" --arg place_name "$place_name" --arg entity "$entity_id" --arg entity_name "$name" '
-        {activity:[
-            {id:"e0000000-0000-4000-8000-000000000004",operation:"create_entity",actor_character:{id:$character,name:$character_name},context_place:{entity:{id:$place,name:$place_name},is_entry:true},involved_entity:[{entity:{id:$entity,name:$entity_name},role:"subject"}],occurred_at:"2026-08-08T12:04:00Z"},
-            {id:"e0000000-0000-4000-8000-000000000003",operation:"enter_world",actor_character:{id:$character,name:$character_name},context_place:{entity:{id:$place,name:$place_name},is_entry:true},involved_entity:[{entity:{id:$place,name:$place_name},role:"destination"}],occurred_at:"2026-08-08T12:03:00Z"},
-            {id:"e0000000-0000-4000-8000-000000000002",operation:"create_entry_place",actor_character:{id:$character,name:$character_name},context_place:null,involved_entity:[{entity:{id:$place,name:$place_name},role:"subject"}],occurred_at:"2026-08-08T12:02:00Z"},
-            {id:"e0000000-0000-4000-8000-000000000001",operation:"create_character",actor_character:null,context_place:null,involved_entity:[{entity:{id:$character,name:$character_name},role:"subject"}],occurred_at:"2026-08-08T12:01:00Z"}
-        ],next:null}')"
-    printf '%s\n' "$place" >"$state/place.json"
-    printf '%s\n' "$entered_character" >"$state/character-a.json"
-    printf '%s\n' "$history" >"$state/activity-a.json"
-    if [[ "$mode" == 'a-malformed' ]]; then
-        printf '%s\n' '{"status":"founded","marker":"wrong"}' >"$final"
-    else
-        jq -n --arg marker "$marker" --arg character "$character_a_id" --arg place "$place_id" --arg entity "$entity_id" \
-            '{status:"founded",marker:$marker,character_id:$character,place_id:$place,entity_id:$entity,activity_operation:["create_entity","enter_world","create_entry_place","create_character"],latest_actor_character_id:$character,latest_context_place_id:$place,latest_subject_entity_id:$entity}' >"$final"
-    fi
-    jq -nc --arg name "$character_a_name" --arg description "$character_a_description" --argjson result "$created_character" \
-        '{type:"item.completed",item:{id:"item-1",type:"mcp_tool_call",server:"aicadia",tool:"create_character",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    error_result='{"error":{"code":"entry_place_not_found","message":"World entry Place was not found."}}'
-    if [[ "$mode" == 'a-wrong-genesis-error' ]]; then
-        error_result='{"error":{"code":"character_not_found","message":"Character was not found."}}'
-    fi
-    jq -nc --arg text "$error_result" \
-        '{type:"item.completed",item:{id:"item-2",type:"mcp_tool_call",server:"aicadia",tool:"enter_world",arguments:{},result:{content:[{type:"text",text:$text}],structured_content:null},status:"failed",error:null}}'
-    jq -nc --arg name "$place_name" --arg description "$place_description" --argjson result "$place" \
-        '{type:"item.completed",item:{id:"item-3",type:"mcp_tool_call",server:"aicadia",tool:"create_entry_place",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    jq -nc --argjson result "$entered_character" \
-        '{type:"item.completed",item:{id:"item-4",type:"mcp_tool_call",server:"aicadia",tool:"enter_world",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    jq -nc --arg name "$name" --arg description "$description" --argjson result "$(<"$state/entity.json")" \
-        '{type:"item.completed",item:{id:"item-5",type:"mcp_tool_call",server:"aicadia",tool:"create_entity",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    jq -nc --argjson result "$history" \
-        '{type:"item.completed",item:{id:"item-6",type:"mcp_tool_call",server:"aicadia",tool:"list_activity",arguments:{limit:25},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    if [[ "$mode" == 'a-second-create' ]]; then
-        printf '%s\n' '{"type":"item.completed","item":{"id":"item-extra","type":"mcp_tool_call","server":"aicadia","tool":"create_entity","arguments":{"name":"Unmarked","description":"Extra"},"status":"completed","error":null}}'
-    fi
-else
-    if [[ ! -f "$state/place.json" ]]; then
-        jq -n --arg id "$place_id" --arg name "$place_name" --arg description "$place_description" \
-            '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:"11111111-1111-4111-8111-111111111111",introduced_at:"2026-08-08T12:02:00Z"},is_entry:true}' >"$state/place.json"
-    fi
-    if [[ ! -f "$state/entity.json" ]]; then
-        jq -n --arg id "$entity_id" --arg name "$name" --arg description "$description" \
-            '{id:$id,name:$name,description:$description,introduced_by_user_id:"11111111-1111-4111-8111-111111111111",introduced_at:"2026-08-08T12:01:00Z"}' >"$state/entity.json"
-    fi
-    place="$(<"$state/place.json")"
-    created_character="$(jq -nc --arg id "$character_b_id" --arg name "$character_b_name" \
-        --arg description "$character_b_description" --arg user "$AICADIA_USER_ID" \
-        '{entity:{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-08T12:05:00Z"},owner_user_id:$user,current_place:null}')"
-    entered_character="$(jq -nc --argjson character "$created_character" --argjson place "$place" '$character | .current_place = $place')"
-    history="$(jq -nc --arg character "$character_b_id" --arg character_name "$character_b_name" \
-        --arg place "$place_id" --arg place_name "$place_name" '
-        {activity:[
-            {id:"e0000000-0000-4000-8000-000000000006",operation:"enter_world",actor_character:{id:$character,name:$character_name},context_place:{entity:{id:$place,name:$place_name},is_entry:true},involved_entity:[{entity:{id:$place,name:$place_name},role:"destination"}],occurred_at:"2026-08-08T12:06:00Z"},
-            {id:"e0000000-0000-4000-8000-000000000005",operation:"create_character",actor_character:null,context_place:null,involved_entity:[{entity:{id:$character,name:$character_name},role:"subject"}],occurred_at:"2026-08-08T12:05:00Z"}
-        ],next:null}')"
-    printf '%s\n' "$entered_character" >"$state/character-b.json"
-    printf '%s\n' "$history" >"$state/activity-b.json"
-    final_place_id="$place_id"
-    [[ "$mode" != 'b-final-fabricated' ]] || final_place_id='ffffffff-ffff-4fff-8fff-ffffffffffff'
-    jq -n --arg marker "$marker" --arg observer "$AICADIA_USER_ID" --arg character "$character_b_id" \
-        --arg place "$final_place_id" --arg entity "$entity_id" \
-        '{status:"joined",marker:$marker,observer_user_id:$observer,character_id:$character,place_id:$place,entity_id:$entity,activity_operation:["enter_world","create_character"],latest_actor_character_id:$character,latest_context_place_id:$place,latest_destination_place_id:$place}' >"$final"
-    user_result="$(jq -nc --arg id "$AICADIA_USER_ID" '{id:$id,created_at:"2026-08-08T12:00:00Z"}')"
-    list_result="$(jq -nc --arg id "$entity_id" --arg name "$(jq -r '.name' "$state/entity.json")" '{entity:[{id:$id,name:$name}],next:null}')"
-    entity_result="$(<"$state/entity.json")"
-    [[ "$mode" != 'b-result-fabricated' ]] || entity_result="$(jq '.description = "Fabricated result"' "$state/entity.json")"
-    list_arguments='{"limit":25}'
-    case "$mode" in
-        b-cursor) list_arguments='{"cursor":"invented"}' ;;
-        b-unexpected-argument) list_arguments='{"limit":25,"unexpected":true}' ;;
-        b-boolean-limit) list_arguments='{"limit":true}' ;;
-        b-float-limit) list_arguments='{"limit":25.5}' ;;
-        b-low-limit) list_arguments='{"limit":0}' ;;
-        b-high-limit) list_arguments='{"limit":101}' ;;
-    esac
-    jq -nc --arg name "$character_b_name" --arg description "$character_b_description" --argjson result "$created_character" \
-        '{type:"item.completed",item:{id:"item-1",type:"mcp_tool_call",server:"aicadia",tool:"create_character",arguments:{name:$name,description:$description},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    jq -nc --argjson result "$entered_character" \
-        '{type:"item.completed",item:{id:"item-2",type:"mcp_tool_call",server:"aicadia",tool:"enter_world",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    jq -nc --argjson result "$history" \
-        '{type:"item.completed",item:{id:"item-3",type:"mcp_tool_call",server:"aicadia",tool:"list_activity",arguments:{limit:25},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
-    get_user_event="$(jq -nc --argjson result "$user_result" '{type:"item.completed",item:{id:"item-4",type:"mcp_tool_call",server:"aicadia",tool:"get_user",arguments:{},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
-    list_event="$(jq -nc --argjson result "$list_result" --argjson arguments "$list_arguments" '{type:"item.completed",item:{id:"item-5",type:"mcp_tool_call",server:"aicadia",tool:"list_entity",arguments:$arguments,result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
-    get_entity_event="$(jq -nc --argjson result "$entity_result" --arg id "$entity_id" '{type:"item.completed",item:{id:"item-6",type:"mcp_tool_call",server:"aicadia",tool:"get_entity",arguments:{entity_id:$id},result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}')"
-    if [[ "$mode" == 'b-order' ]]; then
-        printf '%s\n' "$list_event" "$get_user_event" "$get_entity_event"
-    else
-        printf '%s\n' "$get_user_event" "$list_event" "$get_entity_event"
-    fi
-fi
-printf '%s\n' '{"type":"turn.completed","usage":{"input_tokens":10,"output_tokens":5}}'
+mcp_sequence=0
+mcp() {
+    local tool="$1" arguments="$2" result="$3" id="item_$mcp_sequence"
+    mcp_sequence=$((mcp_sequence + 1))
+    jq -nc --arg id "$id" --arg tool "$tool" --argjson arguments "$arguments" \
+        '{type:"item.started",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:$arguments,result:null,status:"in_progress",error:null}}'
+    jq -nc --arg id "$id" --arg tool "$tool" --argjson arguments "$arguments" --argjson result "$result" \
+        '{type:"item.completed",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:$arguments,result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
+}
+mcp_started() { jq -nc --arg id "$1" --arg tool "$2" '{type:"item.started",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:{},result:null,status:"in_progress",error:null}}'; }
+case "$count" in
+    1)
+        character="$(jq -nc --arg id "$character_id" --arg user "$action_user" --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$user,current_place:$place}')"
+        entity_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"
+        activity_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"
+        mcp get_world '{}' '{"name":"Aicadia"}'
+        mcp get_character '{}' "$character"
+        mcp list_entity_at_current_place '{"limit":25}' "$entity_page"
+        mcp list_activity_at_current_place '{"limit":25}' "$activity_page"
+        if [[ "$mode" == premature-phase1 ]]; then mcp submit_action '{}' '{}'; fi
+        if [[ "$mode" == malformed-proposals ]]; then printf '%s\n' '{"status":"proposed","marker":"wrong"}' >"$final";
+        else jq -n --arg marker "$marker" '{status:"proposed",marker:$marker,place_revision:"v1.fake.before",proposals:[{id:"one",direction:"Inspect the quiet crossing",grounding:"The entered Character is at the empty entry Place"},{id:"two",direction:"Establish a trail marker",grounding:"The current Place has no placed Entities"},{id:"three",direction:"Record signs of passage",grounding:"Place Activity contains no prior action prose"}]}' >"$final"; fi ;;
+    2)
+        if [[ "$mode" == premature-phase2 ]]; then mcp submit_action '{}' '{}'; fi
+        if [[ "$mode" == malformed-preview ]]; then printf '%s\n' '{"status":"previewed"}' >"$final";
+        else jq -n --arg marker "$marker" '{status:"previewed",marker:$marker,selected_proposal_id:"two",prose:("The Character braces a weathered cedar marker engraved "+$marker+" beside the crossing."),consequence:{type:"introduce_entity",name:("Cedar Marker "+$marker),description:("A weathered cedar trail marker bearing the carving "+$marker+".")}}' >"$final"; fi ;;
+    3)
+        preview="$(jq . "$state/../output"/run-*/action-phase-2.final.json 2>/dev/null | tail -n +1)"
+        if [[ -z "$preview" ]]; then preview="$(jq -nc --arg marker "$marker" '{prose:("The Character braces a weathered cedar marker engraved "+$marker+" beside the crossing."),consequence:{type:"introduce_entity",name:("Cedar Marker "+$marker),description:("A weathered cedar trail marker bearing the carving "+$marker+".")}}')"; fi
+        prose="$(jq -r '.prose' <<<"$preview")"; name="$(jq -r '.consequence.name' <<<"$preview")"; description="$(jq -r '.consequence.description' <<<"$preview")"
+        entity="$(jq -nc --arg id "$entity_id" --arg user "$action_user" --arg name "$name" --arg description "$description" '{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-11T12:10:00Z"}')"
+        activity="$(jq -nc --arg id "$activity_id" --arg character "$character_id" --arg place "$place_id" --arg entity "$entity_id" --arg prose "$prose" --arg name "$name" --arg marker "$marker" '{id:$id,operation:"submit_action",actor_character:{id:$character,name:("Action Character "+$marker)},context_place:{entity:{id:$place,name:("Entry Place "+$marker)},is_entry:true},involved_entity:[{entity:{id:$entity,name:$name},role:"subject"},{entity:{id:$place,name:("Entry Place "+$marker)},role:"location"}],prose:$prose,occurred_at:"2026-08-11T12:10:00Z"}')"
+        result="$(jq -nc --argjson activity "$activity" --argjson entity "$entity" --argjson place "$place" '{activity:$activity,entity:$entity,place:$place}')"
+        arguments="$(jq -nc --arg request "$request_id" --arg prose "$prose" --arg name "$name" --arg description "$description" '{request_id:$request,expected_place_revision:"v1.fake.before",prose:$prose,consequence:{type:"introduce_entity",name:$name,description:$description}}')"
+        if [[ "$mode" != no-commit ]]; then mcp submit_action "$arguments" "$result"; fi
+        if [[ "$mode" == double-commit ]]; then mcp submit_action "$arguments" "$result"; fi
+        if [[ "$mode" == incomplete-extra-commit ]]; then mcp_started item-extra-submit submit_action; fi
+        jq -n --argjson activity "$activity" --argjson entity "$entity" '{activity:$activity,entity:$entity}' >"$state/accepted.json"
+        if [[ "$mode" == malformed-commit ]]; then printf '%s\n' '{"status":"committed"}' >"$final";
+        else jq -n --arg marker "$marker" --arg request "$request_id" --arg activity "$activity_id" --arg entity "$entity_id" --arg place "$place_id" --arg prose "$prose" --arg name "$name" --arg description "$description" '{status:"committed",marker:$marker,request_id:$request,activity_id:$activity,entity_id:$entity,place_id:$place,prose:$prose,entity_name:$name,entity_description:$description}' >"$final"; fi ;;
+    4)
+        [[ "$mode" != observer-fail ]] || exit 21
+        accepted="$(<"$state/accepted.json")"; entity="$(jq '.entity' <<<"$accepted")"; activity="$(jq '.activity' <<<"$accepted")"
+        character="$(jq -nc --arg id "$observer_id" --arg user '22222222-2222-4222-8222-222222222222' --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Observer Character "+$marker),description:("Disposable observer Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:03:00Z"},owner_user_id:$user,current_place:$place}')"
+        entity_page="$(jq -nc --argjson place "$place" --argjson entity "$(jq '{id,name}' <<<"$entity")" '{place:$place,place_revision:"v1.fake.after",entity:[$entity],next:null}')"
+        activity_page="$(jq -nc --argjson place "$place" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
+        mcp get_character '{}' "$character"; mcp list_entity_at_current_place '{"limit":25}' "$entity_page"; mcp list_activity_at_current_place '{"limit":25}' "$activity_page"
+        observed_entity="$entity_id"; observed_prose="$(jq -r '.prose' <<<"$activity")"; observed_name="$(jq -r '.name' <<<"$entity")"
+        [[ "$mode" != observer-wrong-id ]] || observed_entity='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+        [[ "$mode" != observer-wrong-prose ]] || observed_prose="Wrong observer prose $marker"
+        [[ "$mode" != observer-wrong-name ]] || observed_name="Wrong observer name $marker"
+        jq -n --arg marker "$marker" --arg entity "$observed_entity" --arg place "$place_id" --arg prose "$observed_prose" --arg name "$observed_name" '{status:"observed",marker:$marker,entity_id:$entity,place_id:$place,prose:$prose,entity_name:$name}' >"$final" ;;
+esac
+printf '%s\n' '{"type":"turn.completed"}'
 FAKE
-    chmod +x "$fake_dir/bin/"*
+    chmod +x "$root/bin/cargo" "$root/bin/curl" "$root/bin/codex-fake" "$root/bin/openssl" "$root/bin/env"
 }
 
-run_with_fakes() {
-    local fake_dir="$1" runner="${PLAYTEST_RUNNER:-$RUNNER}"
-    shift
-    printf '%s\n' "${FAKE_MODE:-happy}" >"$fake_dir/state/mode"
-    PATH="$fake_dir/bin:/usr/bin:/bin" \
-        CODEX_BIN="$fake_dir/bin/codex-fake" \
-        DATABASE_URL='postgresql:///fake' \
-        AICADIA_DATABASE_NAME='must-not-reach-agent' \
-        AICADIA_PORT=9999 \
-        FAKE_STATE="$fake_dir/state" \
-        FAKE_SECRET='must-not-reach-agent' \
-        FAKE_MODE="${FAKE_MODE:-happy}" \
-        PGDATABASE='must-not-reach-agent' \
-        PGHOST='must-not-reach-agent' \
-        PGHOSTADDR='127.0.0.1' \
-        PGPASSWORD='must-not-reach-agent' \
-        PGPORT=5432 \
-        PGSERVICE='must-not-reach-agent' \
-        PGSERVICEFILE='must-not-reach-agent' \
-        PGSSLMODE=disable \
-        PGUSER='must-not-reach-agent' \
-        AICADIA_PLAYTEST_OUTPUT_ROOT="$fake_dir/output" \
-        AICADIA_AGENT_TIMEOUT_SECONDS=30 \
-        AICADIA_PLAYTEST_TEST_MODE=fake \
-        AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS=1 \
-        "$runner" "$@"
+run_fake() {
+    local root="$1" mode="$2" operation="$3"
+    printf '%s\n' "$mode" >"$root/state/mode"
+    case "$operation" in
+        preflight) operation='test-internal-preflight --confirm-fake-controller-test' ;;
+        run) operation='test-internal-run --confirm-fake-controller-test' ;;
+        *) fail "unknown internal fake operation: $operation" ;;
+    esac
+    PATH="$root/bin:$PATH" CODEX_BIN=codex-fake DATABASE_URL=postgres://fake/admin \
+        AICADIA_PLAYTEST_OUTPUT_ROOT="$root/output" AICADIA_PLAYTEST_TEST_MODE=fake \
+        AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS=2 "$RUNNER" $operation >"$root/$mode.stdout" 2>"$root/$mode.stderr"
 }
 
-latest_manifest() {
-    find "$1/output" -name manifest.json -print -quit
+latest_manifest() { find "$1/output" -name manifest.json -type f | sort | tail -1; }
+
+test_no_token_preflight() {
+    local root="$TEST_TMP/preflight"
+    make_fakes "$root"
+    run_fake "$root" happy preflight
+    assert_contains "$root/happy.stdout" 'Preflight passed without codex exec'
+    [[ ! -e "$root/state/codex-exec-count" ]] || fail 'preflight invoked codex exec'
+    assert_contains "$root/state/database-actions" 'probe-create-tag-verify-drop abababab'
+    [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'preflight created run evidence'
 }
 
-test_zero_agent_paths() {
-    local fake_dir="$TEST_TMP/zero"
-    make_fakes "$fake_dir"
-    run_with_fakes "$fake_dir" preflight >/dev/null
-    [[ ! -f "$fake_dir/state/codex-count" ]] || fail 'preflight started an Agent'
-    grep -vFx 'exec --help' "$fake_dir/state/codex-commands" | grep -E '(^| )exec( |$)' >/dev/null \
-        && fail 'preflight invoked codex exec'
-    [[ "$(<"$fake_dir/state/database-actions")" == probe ]] || fail 'preflight mutated PostgreSQL'
-    assert_line "$fake_dir/state/preflight-actions" build
-    assert_eq "$(grep -c 'mcp get aicadia --json' "$fake_dir/state/codex-commands")" '2'
-    for arguments in 'run' 'run --wrong' 'preflight extra'; do
-        if run_with_fakes "$fake_dir" $arguments >/dev/null 2>&1; then fail "invalid invocation passed: $arguments"; fi
-    done
-    [[ ! -f "$fake_dir/state/provision-count" ]] || fail 'invalid invocation provisioned Users'
-}
-
-test_schema_semantic_preflight_rejects_missing_status_type() {
-    local fake_dir="$TEST_TMP/schema-status-type" copied_runner
-    make_fakes "$fake_dir"
-    mkdir -p "$fake_dir/repo/tools/agent-playtest-schema" "$fake_dir/repo/src/bin"
-    cp "$RUNNER" "$fake_dir/repo/tools/agent-playtest"
-    cp "$REPO_DIR/tools/agent-playtest-schema/"*.json "$fake_dir/repo/tools/agent-playtest-schema/"
-    touch "$fake_dir/repo/Cargo.toml" "$fake_dir/repo/src/bin/aicadia-provision-user.rs" \
-        "$fake_dir/repo/src/bin/aicadia-playtest-database.rs"
-    jq 'del(.properties.status.type)' "$fake_dir/repo/tools/agent-playtest-schema/found.json" \
-        >"$fake_dir/repo/tools/agent-playtest-schema/found.invalid.json"
-    mv "$fake_dir/repo/tools/agent-playtest-schema/found.invalid.json" \
-        "$fake_dir/repo/tools/agent-playtest-schema/found.json"
-    copied_runner="$fake_dir/repo/tools/agent-playtest"
-    if PLAYTEST_RUNNER="$copied_runner" run_with_fakes "$fake_dir" preflight >/dev/null 2>&1; then
-        fail 'preflight accepted a status const without an explicit string type'
+test_forbidden_schema_keyword_fails_before_codex() {
+    local root="$TEST_TMP/forbidden-schema" schema_dir temporary
+    make_fakes "$root"
+    printf '%s\n' happy >"$root/state/mode"
+    schema_dir="$root/schema"
+    mkdir -p "$schema_dir"
+    cp "$REPO_DIR"/tools/agent-playtest-schema/*.json "$schema_dir/"
+    temporary="$schema_dir/proposals.tmp.json"
+    jq '.properties.proposals.uniqueItems = true' "$schema_dir/proposals.json" >"$temporary"
+    mv "$temporary" "$schema_dir/proposals.json"
+    if PATH="$root/bin:$PATH" CODEX_BIN=codex-fake DATABASE_URL=postgres://fake/admin \
+        AICADIA_PLAYTEST_OUTPUT_ROOT="$root/output" AICADIA_PLAYTEST_TEST_MODE=fake \
+        AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS=2 AICADIA_INTERNAL_TEST_SCHEMA_DIR="$schema_dir" \
+        "$RUNNER" test-internal-preflight --confirm-fake-controller-test \
+        >"$root/forbidden.stdout" 2>"$root/forbidden.stderr"; then
+        fail 'forbidden Structured Outputs keyword passed preflight'
     fi
-    [[ ! -f "$fake_dir/state/preflight-actions" ]] || fail 'invalid schema reached the build step'
-    [[ ! -f "$fake_dir/state/database-actions" ]] || fail 'invalid schema reached PostgreSQL'
-    [[ ! -f "$fake_dir/state/codex-commands" ]] || fail 'invalid schema invoked Codex'
+    assert_contains "$root/forbidden.stderr" 'strict action playtest schemas are invalid'
+    [[ ! -e "$root/state/codex-commands" ]] || fail 'forbidden schema invoked Codex'
+    [[ ! -e "$root/state/preflight-actions" ]] || fail 'forbidden schema reached operator build'
+    [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'forbidden schema created evidence'
 }
 
-assert_two_agent_contract() {
-    local fake_dir="$1" argv_a argv_b manifest database
-    assert_eq "$(<"$fake_dir/state/codex-count")" '2'
-    assert_eq "$(<"$fake_dir/state/provision-count")" '2'
-    assert_eq "$(find "$fake_dir/output" -name agent-a.exit-status -exec sed -n '1p' {} \;)" "${EXPECTED_A_EXIT:-0}"
-    assert_eq "$(find "$fake_dir/output" -name agent-b.exit-status -exec sed -n '1p' {} \;)" '0'
-    assert_eq "$(<"$fake_dir/state/call-1/user-id")" '11111111-1111-4111-8111-111111111111'
-    assert_eq "$(<"$fake_dir/state/call-2/user-id")" '22222222-2222-4222-8222-222222222222'
-    [[ "$(<"$fake_dir/state/call-1/cwd")" != "$(<"$fake_dir/state/call-2/cwd")" ]] || fail 'Agents shared cwd'
-    [[ "$(<"$fake_dir/state/call-1/cwd")" != "$REPO_DIR"* ]] || fail 'Agent A loaded project config'
-    [[ "$(<"$fake_dir/state/call-2/cwd")" != "$REPO_DIR"* ]] || fail 'Agent B loaded project config'
-    argv_a="$fake_dir/state/call-1/argv"
-    argv_b="$fake_dir/state/call-2/argv"
-    for argv in "$argv_a" "$argv_b"; do
-        assert_line "$argv" 'gpt-5.6-sol'
-        assert_line "$argv" 'model_reasoning_effort="high"'
-        assert_line "$argv" 'agents.enabled=false'
-        assert_line "$argv" 'web_search="disabled"'
-        assert_line "$argv" 'tools.web_search=false'
-        assert_line "$argv" 'suppress_unstable_features_warning=true'
-        assert_line "$argv" 'features.code_mode.enabled=true'
-        assert_line "$argv" 'features.code_mode.direct_only_tool_namespaces=["mcp__aicadia"]'
-        assert_line "$argv" '--ephemeral'
-        assert_line "$argv" '--ignore-user-config'
-        assert_line "$argv" '--ignore-rules'
-        assert_line "$argv" '--strict-config'
-        assert_line "$argv" 'multi_agent'
-        assert_pair "$argv" '--enable' 'code_mode_host'
-        assert_no_pair "$argv" '--disable' 'code_mode_host'
-        assert_no_pair "$argv" '--disable' 'code_mode'
-        assert_line "$argv" 'shell_tool'
-        assert_line "$argv" 'unified_exec'
-        assert_line "$argv" 'browser_use'
-        assert_line "$argv" 'computer_use'
-        assert_line "$argv" 'plugins'
-    done
-    for environment in "$fake_dir/state/call-1/environment" "$fake_dir/state/call-2/environment"; do
-        for forbidden in DATABASE_URL AICADIA_DATABASE_NAME AICADIA_PORT AICADIA_AGENT_TIMEOUT_SECONDS \
-            AICADIA_PLAYTEST_OUTPUT_ROOT AICADIA_PLAYTEST_TEST_MODE AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS \
-            CODEX_BIN FAKE_STATE FAKE_SECRET FAKE_MODE PGDATABASE PGHOST PGHOSTADDR PGPASSWORD PGPORT \
-            PGSERVICE PGSERVICEFILE PGSSLMODE PGUSER; do
-            grep -q "^${forbidden}=" "$environment" \
-                && fail "Agent inherited forbidden environment variable $forbidden: $environment"
-        done
-        grep -E '^FAKE_[^=]*=' "$environment" >/dev/null \
-            && fail "Agent inherited a FAKE_* environment variable: $environment"
-    done
-    assert_line "$argv_a" 'mcp_servers.aicadia.enabled_tools=["create_character","create_entry_place","enter_world","list_activity","create_entity"]'
-    assert_line "$argv_b" 'mcp_servers.aicadia.enabled_tools=["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'
-    grep -F 'create_entry_place"]' "$argv_b" >/dev/null && fail 'Agent B received create_entry_place'
-    grep -F 'create_entity"]' "$argv_b" >/dev/null && fail 'Agent B received create_entity'
-    manifest="$(latest_manifest "$fake_dir")"
-    [[ -n "$manifest" ]] || fail 'manifest was not retained'
-    assert_eq "$(jq -r '.model' "$manifest")" 'gpt-5.6-sol'
-    assert_eq "$(jq -r '.reasoning_effort' "$manifest")" 'high'
-    assert_eq "$(jq -r '.cleanup.status' "$manifest")" 'dropped'
-    database="$(jq -r '.deployment.database' "$manifest")"
-    assert_line "$fake_dir/state/database-actions" "create $database"
-    assert_line "$fake_dir/state/database-actions" "drop $database"
-}
-
-test_happy_path() {
-    local fake_dir="$TEST_TMP/happy"
-    make_fakes "$fake_dir"
-    FAKE_MODE=happy run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null
-    assert_two_agent_contract "$fake_dir"
-    assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'passed'
-}
-
-test_provisioning_failure_starts_no_agent_and_retains_evidence() {
-    local fake_dir="$TEST_TMP/provision-fail" manifest
-    make_fakes "$fake_dir"
-    if FAKE_MODE=provision-fail run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-        fail 'provisioning failure unexpectedly passed'
-    fi
-    [[ ! -f "$fake_dir/state/codex-count" ]] || fail 'provisioning failure started an Agent'
-    manifest="$(latest_manifest "$fake_dir")"
-    assert_eq "$(jq -r '.provisioning.user_a' "$manifest")" '11111111-1111-4111-8111-111111111111'
-    assert_eq "$(jq -r '.cleanup.status' "$manifest")" 'dropped'
-}
-
-test_a_failure_still_runs_b_once() {
-    local mode fake_dir started elapsed child_pid
-    for mode in a-exit a-timeout a-malformed; do
-        fake_dir="$TEST_TMP/$mode"
-        make_fakes "$fake_dir"
-        started=$SECONDS
-        if FAKE_MODE="$mode" run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-            fail "$mode unexpectedly passed"
+test_public_paths_reject_fake_and_codex_overrides() {
+    local root="$TEST_TMP/public-guard"
+    make_fakes "$root"
+    printf '%s\n' happy >"$root/state/mode"
+    for operation in preflight 'run --confirm-token-spend'; do
+        if PATH="$root/bin:$PATH" CODEX_BIN=codex-fake DATABASE_URL=postgres://fake/admin \
+            AICADIA_PLAYTEST_OUTPUT_ROOT="$root/output" AICADIA_PLAYTEST_TEST_MODE=fake \
+            "$RUNNER" $operation >"$root/public.stdout" 2>"$root/public.stderr"; then
+            fail "public $operation accepted fake overrides"
         fi
-        elapsed=$((SECONDS - started))
+        assert_contains "$root/public.stderr" 'public playtest forbids test or executable override'
+    done
+    [[ ! -e "$root/state/codex-commands" ]] || fail 'public override guard invoked Codex'
+    [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'public override guard created evidence'
+    for operation in preflight 'run --confirm-token-spend'; do
+        if PATH="$root/bin:$PATH" DATABASE_URL=postgres://fake/admin \
+            "$RUNNER" $operation >"$root/path.stdout" 2>"$root/path.stderr"; then
+            fail "public $operation accepted PATH-injected tools"
+        fi
+        assert_contains "$root/path.stderr" 'public playtest requires exact cargo command'
+    done
+    [[ ! -e "$root/state/codex-commands" ]] || fail 'PATH guard invoked injected Codex'
+    [[ ! -e "$root/state/fake-env-invoked" ]] || fail 'public guard invoked PATH-injected env'
+    [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'PATH guard created evidence'
+}
+
+test_cli_drift_fails_closed() {
+    local root="$TEST_TMP/cli-drift"
+    make_fakes "$root"
+    if run_fake "$root" cli-drift preflight; then fail 'CLI drift passed'; fi
+    assert_contains "$root/cli-drift.stderr" 'must be exactly codex-cli 0.144.1'
+    [[ ! -e "$root/state/codex-exec-count" ]] || fail 'CLI drift invoked codex exec'
+}
+
+test_happy_resumed_contract() {
+    local root="$TEST_TMP/happy" manifest run_dir commit_line http_line observer_line
+    make_fakes "$root"
+    run_fake "$root" happy run
+    manifest="$(latest_manifest "$root")"; run_dir="$(dirname "$manifest")"
+    jq -e '.evidence_kind=="fake_controller_test" and .run_status=="fake_completed"
+        and .run_status!="completed" and .cleanup.status=="dropped"
+        and (.phases|keys|sort)==(["proposals","preview","commit","http","observer"]|sort)
+        and .validation.status=="passed" and all(.phases[];.status=="passed")
+        and .codex.version=="codex-cli 0.144.1" and .codex.model=="gpt-5.6-sol"
+        and .codex.reasoning_effort=="high" and (.codex.path|endswith("/codex-fake"))
+        and (.deployment.ownership_token|test("^[0-9a-f]{64}$"))' "$manifest" >/dev/null
+    assert_eq "$(stat -f '%Lp' "$run_dir")" 700
+    assert_eq "$(stat -f '%Lp' "$manifest")" 600
+    assert_eq "$(<"$root/state/codex-exec-count")" 4
+    assert_not_contains "$root/state/call-1/prompt" "$STEERING"
+    assert_not_contains "$root/state/call-1/prompt" 'explicitly confirms'
+    assert_contains "$root/state/call-2/prompt" 'selects proposal id two'
+    assert_contains "$root/state/call-2/prompt" 'weathered cedar trail marker'
+    assert_not_contains "$root/state/call-2/prompt" 'explicitly confirms'
+    assert_contains "$root/state/call-3/prompt" 'explicitly confirms the exact retained package'
+    assert_not_contains "$root/state/call-1/argv" '--ephemeral'
+    assert_contains "$root/state/call-2/argv" 'resume'
+    assert_contains "$root/state/call-2/argv" '33333333-3333-4333-8333-333333333333'
+    assert_contains "$root/state/call-3/argv" 'resume'
+    assert_contains "$root/state/call-4/argv" '--ephemeral'
+    assert_contains "$root/state/call-4/argv" 'enabled_tools=["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+    assert_not_contains "$root/state/call-4/argv" 'get_entity'
+    assert_not_contains "$root/state/call-4/prompt" 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    assert_not_contains "$root/state/call-4/prompt" 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    assert_not_contains "$root/state/call-4/prompt" 'The Character braces a weathered cedar marker'
+    jq -e 'has("entity_description") | not' "$run_dir/observer.final.json" >/dev/null
+    assert_live_attempt_shape "$run_dir/action-phase-1.events.jsonl" '["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+    assert_live_attempt_shape "$run_dir/action-phase-3.events.jsonl" '["submit_action"]'
+    assert_live_attempt_shape "$run_dir/observer.events.jsonl" '["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+    commit_line="$(grep -nFx 'agent-3' "$root/state/timeline" | cut -d: -f1)"
+    http_line="$(grep -nFx 'http-current-entity' "$root/state/timeline" | cut -d: -f1)"
+    observer_line="$(grep -nFx 'agent-4' "$root/state/timeline" | cut -d: -f1)"
+    [[ "$commit_line" -lt "$http_line" && "$http_line" -lt "$observer_line" ]] \
+        || fail 'authoritative HTTP did not run after commit and before observer'
+    for call in 1 2 3 4; do
+        assert_not_contains "$root/state/call-$call/environment" 'DATABASE_URL='
+        assert_not_contains "$root/state/call-$call/environment" 'AICADIA_DATABASE_NAME='
+        assert_not_contains "$root/state/call-$call/environment" 'CODEX_BIN='
+        [[ "$(<"$root/state/call-$call/cwd")" != "$REPO_DIR" ]] || fail 'Agent ran in repository'
+    done
+    assert_contains "$root/state/database-actions" 'create-attempt aicadia_playtest_'
+    assert_contains "$root/state/database-actions" 'drop-attempt aicadia_playtest_'
+    printf '%s\n' "$run_dir" >"$TEST_TMP/retained-fake-evidence-path"
+}
+
+test_failure_paths() {
+    local mode root manifest expected_exec actual_exec
+    for mode in premature-phase1 premature-phase2 no-commit double-commit incomplete-extra-commit malformed-proposals malformed-preview malformed-commit observer-fail observer-wrong-id observer-wrong-name observer-wrong-prose server-fail cleanup-fail ambiguous-create ownership-mismatch-create http-duplicate-entity http-duplicate-action http-wrong-actor; do
+        root="$TEST_TMP/failure-$mode"; make_fakes "$root"
+        if run_fake "$root" "$mode" run; then fail "$mode unexpectedly passed"; fi
+        manifest="$(latest_manifest "$root")"; [[ -n "$manifest" ]] || fail "$mode retained no manifest"
+        jq -e '.evidence_kind=="fake_controller_test" and .run_status!="completed"
+            and (.run_status=="failed" or .run_status=="interrupted")' "$manifest" >/dev/null \
+            || fail "$mode manifest did not remain failed fake evidence"
+        if [[ "$mode" == cleanup-fail ]]; then
+            jq -e '.cleanup.status=="failed" and (.cleanup.recovery|type)=="string"' "$manifest" >/dev/null
+        elif [[ "$mode" == ambiguous-create || "$mode" == ownership-mismatch-create ]]; then
+            jq -e '.deployment.status=="create_ambiguous_unowned"
+                and .cleanup.status=="manual_inspection_required"
+                and (.cleanup.recovery|contains("automatic cleanup is forbidden"))' "$manifest" >/dev/null
+            ! grep -F 'drop-attempt' "$root/state/database-actions" >/dev/null || fail "$mode attempted automatic drop"
+        else
+            jq -e '.cleanup.status=="dropped"' "$manifest" >/dev/null
+        fi
         case "$mode" in
-            a-exit) EXPECTED_A_EXIT=17 assert_two_agent_contract "$fake_dir" ;;
-            a-timeout)
-                EXPECTED_A_EXIT=142 assert_two_agent_contract "$fake_dir"
-                [[ $elapsed -lt 9 ]] || fail "timeout case waited $elapsed seconds for its 10-second blocking child"
-                child_pid="$(<"$fake_dir/state/timeout-child-pid")"
-                if kill -0 "$child_pid" 2>/dev/null; then
-                    fail "timeout left blocking Agent child $child_pid running"
-                fi
+            premature-phase1|malformed-proposals) expected_exec=1 ;;
+            premature-phase2|malformed-preview) expected_exec=2 ;;
+            no-commit|double-commit|incomplete-extra-commit|malformed-commit) expected_exec=3 ;;
+            observer-fail|observer-wrong-id|observer-wrong-name|observer-wrong-prose|cleanup-fail) expected_exec=4 ;;
+            http-duplicate-entity|http-duplicate-action|http-wrong-actor) expected_exec=3 ;;
+            server-fail|ambiguous-create|ownership-mismatch-create) expected_exec=0 ;;
+        esac
+        actual_exec=0
+        [[ ! -f "$root/state/codex-exec-count" ]] || actual_exec="$(<"$root/state/codex-exec-count")"
+        assert_eq "$actual_exec" "$expected_exec"
+        case "$mode" in
+            http-duplicate-entity|http-duplicate-action|http-wrong-actor)
+                jq -e '.phases.commit.status=="passed" and .phases.http.status=="failed"
+                    and .validation.status=="failed" and .phases.observer=="pending"' "$manifest" >/dev/null
+                ! grep -Fx 'agent-4' "$root/state/timeline" >/dev/null || fail "$mode started the observer"
+                assert_contains "$root/state/database-actions" 'create-attempt aicadia_playtest_'
+                assert_contains "$root/state/database-actions" 'drop-attempt aicadia_playtest_'
                 ;;
-            *) assert_two_agent_contract "$fake_dir" ;;
+            observer-fail|observer-wrong-id|observer-wrong-name|observer-wrong-prose)
+                jq -e '.phases.http.status=="passed" and .validation.status=="passed"
+                    and .phases.observer.status=="failed"' "$manifest" >/dev/null
+                ;;
+            no-commit|double-commit|incomplete-extra-commit|malformed-commit)
+                jq -e '.phases.commit.status=="failed" and .phases.http=="pending" and .phases.observer=="pending"' "$manifest" >/dev/null
+                ;;
         esac
     done
 }
 
-test_second_unmarked_create_is_rejected() {
-    local fake_dir="$TEST_TMP/second-create"
-    make_fakes "$fake_dir"
-    if FAKE_MODE=a-second-create run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-        fail 'second unmarked create_entity was accepted'
-    fi
-    assert_two_agent_contract "$fake_dir"
-    assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'failed'
-}
-
-test_only_exact_genesis_error_is_allowed() {
-    local fake_dir="$TEST_TMP/wrong-genesis-error"
-    make_fakes "$fake_dir"
-    if FAKE_MODE=a-wrong-genesis-error run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-        fail 'a different failed MCP result was accepted as the genesis branch'
-    fi
-    assert_two_agent_contract "$fake_dir"
-    assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'failed'
-}
-
-test_b_evidence_failures_are_rejected() {
-    local mode fake_dir
-    for mode in b-final-fabricated b-result-fabricated b-order b-cursor \
-        b-unexpected-argument b-boolean-limit b-float-limit b-low-limit b-high-limit; do
-        fake_dir="$TEST_TMP/$mode"
-        make_fakes "$fake_dir"
-        if FAKE_MODE="$mode" run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-            fail "$mode unexpectedly passed"
-        fi
-        assert_two_agent_contract "$fake_dir"
-        assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'failed'
-    done
-}
-
-test_native_tool_evidence_failures_are_rejected() {
-    local mode fake_dir
-    for mode in code-mode-host-disabled other-error a-program; do
-        fake_dir="$TEST_TMP/$mode"
-        make_fakes "$fake_dir"
-        if FAKE_MODE="$mode" run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-            fail "$mode unexpectedly passed"
-        fi
-        assert_two_agent_contract "$fake_dir"
-        assert_eq "$(jq -r '.validation.status' "$(latest_manifest "$fake_dir")")" 'failed'
-    done
-}
-
-test_ambiguous_create_is_dropped_from_initial_manifest_intent() {
-    local fake_dir="$TEST_TMP/ambiguous-create" manifest database
-    make_fakes "$fake_dir"
-    if FAKE_MODE=ambiguous-create run_with_fakes "$fake_dir" run --confirm-token-spend >/dev/null 2>&1; then
-        fail 'ambiguous database create unexpectedly passed'
-    fi
-    manifest="$(latest_manifest "$fake_dir")"
-    database="$(jq -r '.deployment.database' "$manifest")"
-    assert_eq "$(stat -f '%Lp' "$manifest")" '600'
-    assert_eq "$(jq -r '.cleanup.intent' "$manifest")" 'drop_if_exists'
-    assert_line "$fake_dir/state/database-actions" "create $database"
-    assert_line "$fake_dir/state/database-actions" "drop $database"
-    [[ ! -f "$fake_dir/state/codex-count" ]] || fail 'ambiguous create started an Agent'
-}
-
-test_term_signal_uses_cleanup_route() {
-    local fake_dir="$TEST_TMP/signal" runner_pid manifest database
-    make_fakes "$fake_dir"
-    printf '%s\n' signal >"$fake_dir/state/mode"
-    env PATH="$fake_dir/bin:/usr/bin:/bin" \
-        CODEX_BIN="$fake_dir/bin/codex-fake" \
-        DATABASE_URL='postgresql:///fake' \
-        FAKE_STATE="$fake_dir/state" \
-        FAKE_SECRET='must-not-reach-agent' \
-        AICADIA_PLAYTEST_OUTPUT_ROOT="$fake_dir/output" \
-        AICADIA_AGENT_TIMEOUT_SECONDS=30 \
-        AICADIA_PLAYTEST_TEST_MODE=fake \
-        AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS=1 \
-        "$RUNNER" run --confirm-token-spend >/dev/null 2>&1 &
-    runner_pid=$!
-    for _ in $(seq 1 100); do
-        [[ -f "$fake_dir/state/database-actions" ]] && grep -q '^create ' "$fake_dir/state/database-actions" && break
-        sleep 0.02
-    done
-    kill -TERM "$runner_pid"
-    wait "$runner_pid" 2>/dev/null || true
-    manifest="$(latest_manifest "$fake_dir")"
-    database="$(jq -r '.deployment.database' "$manifest")"
-    assert_line "$fake_dir/state/database-actions" "drop $database"
-    assert_eq "$(jq -r '.cleanup.status' "$manifest")" 'dropped'
-    assert_eq "$(jq -r '.run_status' "$manifest")" 'interrupted'
-}
-
-test_zero_agent_paths
-test_schema_semantic_preflight_rejects_missing_status_type
-test_happy_path
-test_provisioning_failure_starts_no_agent_and_retains_evidence
-test_a_failure_still_runs_b_once
-test_second_unmarked_create_is_rejected
-test_only_exact_genesis_error_is_allowed
-test_b_evidence_failures_are_rejected
-test_native_tool_evidence_failures_are_rejected
-test_ambiguous_create_is_dropped_from_initial_manifest_intent
-test_term_signal_uses_cleanup_route
-printf 'agent-playtest fake integration tests passed\n'
+test_no_token_preflight
+test_forbidden_schema_keyword_fails_before_codex
+test_cli_drift_fails_closed
+test_public_paths_reject_fake_and_codex_overrides
+test_happy_resumed_contract
+test_failure_paths
+if [[ "${KEEP_AGENT_PLAYTEST_TMP:-0}" == 1 ]]; then
+    printf 'agent-playtest fake integration tests passed; retained fake evidence root: %s\n' "$TEST_TMP"
+else
+    printf 'agent-playtest fake integration tests passed.\n'
+fi

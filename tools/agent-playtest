@@ -1,24 +1,37 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -u
 set -o pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-readonly FOUND_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/found.json"
-readonly JOIN_SCHEMA="$SCRIPT_DIR/agent-playtest-schema/join.json"
-readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","list_entity","get_entity","create_entity"]'
-readonly AGENT_A_TOOLS='["create_character","create_entry_place","enter_world","list_activity","create_entity"]'
-readonly AGENT_B_TOOLS='["get_user","create_character","enter_world","list_activity","list_entity","get_entity"]'
-readonly CODEX_VERSION='codex-cli 0.147.0'
+readonly SCHEMA_DIR="$SCRIPT_DIR/agent-playtest-schema"
+readonly PROPOSALS_SCHEMA="$SCHEMA_DIR/proposals.json"
+readonly PREVIEW_SCHEMA="$SCHEMA_DIR/preview.json"
+readonly COMMIT_SCHEMA="$SCHEMA_DIR/commit.json"
+readonly OBSERVER_SCHEMA="$SCHEMA_DIR/observer.json"
+readonly TOOL_CATALOG="$REPO_DIR/tests/agent-tool-catalog.json"
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","list_entity","get_entity","create_entity","list_entity_at_current_place","list_activity_at_current_place","submit_action"]'
+readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+readonly ACTION_COMMIT_TOOLS='["submit_action"]'
+readonly OBSERVER_TOOLS='["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+# This is the exact installed version validated during the accepted T4 build. The old
+# 0.147.0 pin described a future binary that was not present; preflight now fails on
+# any drift from the executable that was actually inspected for resume support.
+readonly CODEX_VERSION='codex-cli 0.144.1'
+readonly CODEX_COMMAND_PATH='/opt/homebrew/bin/codex'
+readonly CODEX_SYSTEM_PATH='/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js'
+readonly SYSTEM_ENV='/usr/bin/env'
 readonly CODEX_MODEL='gpt-5.6-sol'
 readonly CODEX_REASONING_EFFORT='high'
 readonly CODE_MODE_DIRECT_ONLY_NAMESPACES='["mcp__aicadia"]'
 readonly DEFAULT_AGENT_TIMEOUT_SECONDS=600
+readonly SELECTED_PROPOSAL_ID='two'
+readonly STEERING='Make it a weathered cedar trail marker whose carving includes the unique playtest marker verbatim.'
 readonly DISABLED_CODEX_FEATURES=(
     apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access
     computer_use goals hooks image_generation in_app_browser multi_agent multi_agent_v2 plugins
-    remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install skill_search
-    tool_call_mcp_elicitation tool_suggest unified_exec view_image workspace_dependencies
+    remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install
+    tool_call_mcp_elicitation tool_suggest unified_exec workspace_dependencies
 )
 
 BASE_URL=''
@@ -26,13 +39,19 @@ MCP_URL=''
 RUN_DIR=''
 MANIFEST=''
 DATABASE_NAME=''
+OWNERSHIP_TOKEN=''
 CLEANUP_REQUIRED=0
 CLEANUP_DONE=0
 SERVER_PID=''
 AGENT_PID=''
 AGENT_WATCHDOG_PID=''
-ISOLATED_A=''
-ISOLATED_B=''
+ISOLATED_ACTION=''
+ISOLATED_OBSERVER=''
+CODEX_COMMAND=()
+SANITIZED_ENV=()
+INTERNAL_TEST_MODE=0
+INSPECTED_CODEX_BIN=''
+INSPECTED_CODEX_VERSION=''
 
 fail() {
     printf 'agent-playtest: %s\n' "$*" >&2
@@ -40,11 +59,56 @@ fail() {
 }
 
 resolve_codex_bin() {
-    if [[ -n "${CODEX_BIN:-}" ]]; then
+    local binary
+    if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
+        [[ -n "${CODEX_BIN:-}" ]] || return 1
         command -v "$CODEX_BIN" 2>/dev/null || return 1
     else
-        command -v codex 2>/dev/null || return 1
+        binary="$(command -v codex 2>/dev/null)" || return 1
+        [[ "$binary" == "$CODEX_COMMAND_PATH" ]] \
+            || fail "public playtest requires Codex command at $CODEX_COMMAND_PATH; found $binary" || return
+        binary="$(/usr/bin/perl -MCwd=abs_path -e 'my $path=abs_path(shift); defined $path or exit 1; print "$path\n"' "$binary")" || return 1
+        [[ "$binary" == "$CODEX_SYSTEM_PATH" ]] \
+            || fail "public playtest requires Codex at exact inspected path $CODEX_SYSTEM_PATH; found $binary" || return
+        printf '%s\n' "$binary"
     fi
+}
+
+validate_public_prerequisite_paths() {
+    local name expected actual
+    [[ $INTERNAL_TEST_MODE -eq 0 ]] || return 0
+    while read -r name expected; do
+        actual="$(command -v "$name" 2>/dev/null)" || return 1
+        [[ "$actual" == "$expected" ]] \
+            || fail "public playtest requires exact $name command at $expected; found $actual" || return
+    done <<'PATHS'
+cargo /Users/sanderjansma/.cargo/bin/cargo
+curl /usr/bin/curl
+jq /usr/bin/jq
+openssl /opt/homebrew/bin/openssl
+perl /usr/bin/perl
+PATHS
+}
+
+reject_public_overrides() {
+    local variable
+    [[ $INTERNAL_TEST_MODE -eq 0 ]] || return 0
+    for variable in CODEX_BIN AICADIA_PLAYTEST_OUTPUT_ROOT AICADIA_PLAYTEST_TEST_MODE AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS; do
+        ! declare -p "$variable" >/dev/null 2>&1 \
+            || fail "public playtest forbids test or executable override: $variable" || return
+    done
+    while IFS= read -r variable; do
+        case "$variable" in
+            FAKE_*|AICADIA_INTERNAL_TEST_*)
+                fail "public playtest forbids fake-only environment: $variable"
+                return 1
+                ;;
+        esac
+    done < <(compgen -e)
+}
+
+new_ownership_token() {
+    openssl rand -hex 32 | tr '[:upper:]' '[:lower:]'
 }
 
 database_helper() {
@@ -55,51 +119,124 @@ curl_json() {
     curl --disable --fail --silent --show-error --connect-timeout 2 --max-time 10 "$@"
 }
 
-validate_codex() {
-    local codex_bin="$1" version login models features feature exec_help
+http_request() {
+    local method="$1" path="$2" user_id="$3" body="$4" expected_status="$5" output_file="$6"
+    local status
+    local -a arguments
+    arguments=(--disable --silent --show-error --connect-timeout 2 --max-time 10
+        -X "$method" -H 'Content-Type: application/json')
+    [[ -z "$user_id" ]] || arguments+=(-H "Aicadia-User-Id: $user_id")
+    [[ -z "$body" ]] || arguments+=(--data "$body")
+    arguments+=(-o "$output_file" -w '%{http_code}' "$BASE_URL$path")
+    status="$(curl "${arguments[@]}")" || return 1
+    [[ "$status" == "$expected_status" ]] || {
+        fail "$method $path returned HTTP $status instead of $expected_status."
+        return 1
+    }
+    jq -e 'type == "object"' "$output_file" >/dev/null
+}
 
-    version="$("$codex_bin" --version)" || fail 'could not read the Codex CLI version.' || return
-    [[ "$version" == "$CODEX_VERSION" ]] || fail "Codex CLI must be exactly $CODEX_VERSION; found $version." || return
+validate_schema_policy() {
+    jq -e '
+        def forbidden: [
+            "uniqueItems", "minLength", "maxLength", "allOf", "not",
+            "dependentRequired", "dependentSchemas", "if", "then", "else"
+        ];
+        ([.. | objects | keys[] | select(. as $key | (forbidden | index($key)) != null)] | length) == 0
+        and all(.. | objects | select(.type? == "object");
+            .additionalProperties == false
+            and (.properties | type) == "object"
+            and (.required | type) == "array"
+            and (.required | unique | length) == (.required | length)
+            and (.required | sort) == (.properties | keys | sort))
+    ' "$1" >/dev/null
+}
 
-    login="$("$codex_bin" login status 2>&1)" || fail 'Codex authentication is unavailable.' || return
-    [[ "$login" == Logged\ in\ using\ * ]] || fail 'Codex must be logged in before the paid run is confirmed.' || return
-
-    models="$("$codex_bin" debug models)" || fail 'Codex model catalog is unavailable.' || return
-    jq -e --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" '
-        [.models[] | select(.slug == $model)] as $model_entry
-        | ($model_entry | length) == 1
-        and any($model_entry[0].supported_reasoning_levels[]; .effort == $effort)
-    ' <<<"$models" >/dev/null || fail "$CODEX_MODEL with $CODEX_REASONING_EFFORT reasoning is not available." || return
-
-    features="$("$codex_bin" features list)" || fail 'Codex feature catalog is unavailable.' || return
-    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
-        awk -v expected="$feature" '$1 == expected && $2 != "removed" { found = 1 } END { exit !found }' <<<"$features" \
-            || fail "Codex $CODEX_VERSION no longer exposes required feature control: $feature" || return
+validate_output_schemas() {
+    local schema_dir="$SCHEMA_DIR"
+    local proposals_schema preview_schema commit_schema observer_schema schema
+    if [[ $INTERNAL_TEST_MODE -eq 1 && -n "${AICADIA_INTERNAL_TEST_SCHEMA_DIR:-}" ]]; then
+        schema_dir="$AICADIA_INTERNAL_TEST_SCHEMA_DIR"
+    fi
+    proposals_schema="$schema_dir/proposals.json"
+    preview_schema="$schema_dir/preview.json"
+    commit_schema="$schema_dir/commit.json"
+    observer_schema="$schema_dir/observer.json"
+    for schema in "$proposals_schema" "$preview_schema" "$commit_schema" "$observer_schema"; do
+        [[ -f "$schema" ]] || return 1
+        validate_schema_policy "$schema" || return 1
     done
+    jq -e '
+        .type == "object" and .additionalProperties == false
+        and .properties.status.const == "proposed"
+        and .properties.proposals.minItems == 3 and .properties.proposals.maxItems == 3
+        and (.required | sort) == (["status","marker","place_revision","proposals"] | sort)
+        and .properties.proposals.items.additionalProperties == false
+        and (.properties.proposals.items.required | sort) == (["id","direction","grounding"] | sort)
+    ' "$proposals_schema" >/dev/null || return 1
+    jq -e '
+        .type == "object" and .additionalProperties == false
+        and .properties.status.const == "previewed"
+        and .properties.selected_proposal_id.const == "two"
+        and .properties.consequence.additionalProperties == false
+        and .properties.consequence.properties.type.const == "introduce_entity"
+        and (.required | sort) == (["status","marker","selected_proposal_id","prose","consequence"] | sort)
+        and (.properties.consequence.required | sort) == (["type","name","description"] | sort)
+    ' "$preview_schema" >/dev/null || return 1
+    jq -e '
+        .type == "object" and .additionalProperties == false
+        and .properties.status.const == "committed"
+        and (.required | sort) == (["status","marker","request_id","activity_id","entity_id","place_id","prose","entity_name","entity_description"] | sort)
+        and .properties.request_id.format == "uuid"
+        and .properties.activity_id.format == "uuid"
+        and .properties.entity_id.format == "uuid"
+        and .properties.place_id.format == "uuid"
+    ' "$commit_schema" >/dev/null || return 1
+    jq -e '
+        .type == "object" and .additionalProperties == false
+        and .properties.status.const == "observed"
+        and (.required | sort) == (["status","marker","entity_id","place_id","prose","entity_name"] | sort)
+        and .properties.entity_id.format == "uuid"
+        and .properties.place_id.format == "uuid"
+    ' "$observer_schema" >/dev/null
+}
 
-    exec_help="$("$codex_bin" exec --help)" || fail 'Codex exec help is unavailable.' || return
-    for feature in --ephemeral --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json --output-schema --output-last-message; do
-        grep -F -- "$feature" <<<"$exec_help" >/dev/null \
-            || fail "Codex $CODEX_VERSION no longer exposes required exec flag: $feature" || return
-    done
-    validate_codex_role_config "$codex_bin" "$AGENT_A_TOOLS" || return
-    validate_codex_role_config "$codex_bin" "$AGENT_B_TOOLS" || return
+validate_catalog_fixture() {
+    jq -e --argjson expected "$CAPABILITIES" '
+        type == "array" and [.[] | .name] == $expected
+        and all(.[];
+            (.name | type) == "string"
+            and (.description | type) == "string"
+            and (.inputSchema | type) == "object"
+            and (.outputSchema | type) == "object"
+            and (.annotations | type) == "object")
+    ' "$TOOL_CATALOG" >/dev/null
+}
+
+validate_allowlists() {
+    jq -n -e --argjson all "$CAPABILITIES" --argjson reads "$ACTION_READ_TOOLS" \
+        --argjson commit "$ACTION_COMMIT_TOOLS" --argjson observer "$OBSERVER_TOOLS" '
+        def subset($set): all(.[]; . as $item | ($set | index($item)) != null);
+        ($reads | subset($all)) and ($commit | subset($all)) and ($observer | subset($all))
+        and ($commit == ["submit_action"])
+        and ([$reads[], $observer[]] | index("submit_action") | not)
+        and ([$reads[], $observer[]] | index("create_character") | not)
+        and ([$reads[], $observer[]] | index("create_entry_place") | not)
+        and ([$reads[], $observer[]] | index("enter_world") | not)
+        and ([$reads[], $observer[]] | index("create_entity") | not)
+    ' >/dev/null
 }
 
 validate_codex_role_config() {
-    local codex_bin="$1" enabled_tools="$2" feature features parse_home parsed status
+    local codex_bin="$1" enabled_tools="$2" parse_home parsed features status feature
     local -a command
-
     parse_home="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-codex-parse-XXXXXXXX")" || return 1
     command=(
-        "$codex_bin"
-        --enable code_mode_host
+        "$codex_bin" --enable code_mode_host
         --config 'suppress_unstable_features_warning=true'
         --config 'features.code_mode.enabled=true'
         --config "features.code_mode.direct_only_tool_namespaces=$CODE_MODE_DIRECT_ONLY_NAMESPACES"
-        --config 'web_search="disabled"'
-        --config 'tools.web_search=false'
-        --config 'agents.enabled=false'
+        --config 'web_search="disabled"' --config 'tools.web_search=false'
         --config "model_reasoning_effort=\"$CODEX_REASONING_EFFORT\""
         --config 'mcp_servers.aicadia.url="http://127.0.0.1:9/mcp"'
         --config 'mcp_servers.aicadia.enabled=true'
@@ -108,9 +245,7 @@ validate_codex_role_config() {
         --config 'mcp_servers.aicadia.default_tools_approval_mode="approve"'
         --config 'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'
     )
-    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
-        command+=(--disable "$feature")
-    done
+    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do command+=(--disable "$feature"); done
     parsed="$(CODEX_HOME="$parse_home" "${command[@]}" mcp get aicadia --json)"
     status=$?
     features="$(CODEX_HOME="$parse_home" "${command[@]}" features list)" || status=$?
@@ -118,72 +253,82 @@ validate_codex_role_config() {
     [[ $status -eq 0 ]] || fail 'Codex rejected the pinned Agent configuration.' || return
     for feature in code_mode code_mode_host; do
         awk -v expected="$feature" '$1 == expected && $NF == "true" { found = 1 } END { exit !found }' <<<"$features" \
-            || fail "Codex parsed required execution plumbing as disabled: $feature" || return
+            || fail "Codex parsed required MCP execution plumbing as disabled: $feature" || return
     done
     for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
-        awk -v expected="$feature" '$1 == expected && $NF == "false" { found = 1 } END { exit !found }' <<<"$features" \
-            || fail "Codex parsed a forbidden native feature as enabled: $feature" || return
+        awk -v expected="$feature" '$1 == expected && $2 != "removed" && $NF == "false" { found = 1 } END { exit !found }' <<<"$features" \
+            || fail "Codex did not parse forbidden feature as disabled: $feature" || return
     done
     jq -e --argjson expected "$enabled_tools" '
         .name == "aicadia" and .enabled == true
         and .transport.type == "streamable_http"
         and .transport.url == "http://127.0.0.1:9/mcp"
         and .transport.env_http_headers == {"Aicadia-User-Id": "AICADIA_USER_ID"}
-        and .enabled_tools == $expected
-        and .disabled_tools == null
+        and .enabled_tools == $expected and .disabled_tools == null
     ' <<<"$parsed" >/dev/null || fail 'Codex parsed an unexpected MCP role configuration.' || return
 }
 
-validate_output_schema() {
-    local schema_file="$1" expected_status="$2" expected_fields="$3"
-    jq -e --arg status "$expected_status" --argjson fields "$expected_fields" '
-        . as $schema
-        | (keys | sort) == (["$schema", "type", "additionalProperties", "properties", "required"] | sort)
-        and .["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-        and .type == "object"
-        and .additionalProperties == false
-        and (.properties | type == "object")
-        and (.properties | keys | sort) == ($fields | sort)
-        and (.required | type == "array")
-        and (.required | length) == ($fields | length)
-        and (.required | unique | length) == (.required | length)
-        and (.required | sort) == ($fields | sort)
-        and all($fields[]; . as $field |
-            if $field == "status" then
-                $schema.properties[$field] == {type: "string", const: $status}
-            elif $field == "activity_operation" then
-                $schema.properties[$field] == {type: "array", items: {type: "string"}}
-            else
-                $schema.properties[$field] == {type: "string"}
-            end)
-    ' "$schema_file" >/dev/null
+validate_codex() {
+    local codex_bin="$1" version login models features exec_help resume_help global_help feature flag
+    version="$("$codex_bin" --version)" || fail 'could not read the Codex CLI version.' || return
+    [[ "$version" == "$CODEX_VERSION" ]] || fail "Codex CLI must be exactly $CODEX_VERSION; found $version." || return
+    INSPECTED_CODEX_BIN="$codex_bin"
+    INSPECTED_CODEX_VERSION="$version"
+    login="$("$codex_bin" login status 2>&1)" || fail 'Codex authentication is unavailable.' || return
+    [[ "$login" == Logged\ in\ using\ * ]] || fail 'Codex must be logged in before the paid run is confirmed.' || return
+    models="$("$codex_bin" debug models)" || fail 'Codex model catalog is unavailable.' || return
+    jq -e --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" '
+        [.models[] | select(.slug == $model)] as $entry
+        | ($entry | length) == 1
+        and any($entry[0].supported_reasoning_levels[]; .effort == $effort)
+    ' <<<"$models" >/dev/null || fail "$CODEX_MODEL with $CODEX_REASONING_EFFORT reasoning is unavailable." || return
+    features="$("$codex_bin" features list)" || fail 'Codex feature catalog is unavailable.' || return
+    for feature in "${DISABLED_CODEX_FEATURES[@]}" code_mode code_mode_host; do
+        awk -v expected="$feature" '$1 == expected && $2 != "removed" { found = 1 } END { exit !found }' <<<"$features" \
+            || fail "Codex $CODEX_VERSION no longer exposes required feature control: $feature" || return
+    done
+    exec_help="$("$codex_bin" exec --help)" || fail 'Codex exec help is unavailable.' || return
+    resume_help="$("$codex_bin" exec resume --help)" || fail 'Codex resume help is unavailable.' || return
+    global_help="$("$codex_bin" --help)" || fail 'Codex global help is unavailable.' || return
+    for flag in --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json --output-schema --output-last-message; do
+        grep -F -- "$flag" <<<"$exec_help" >/dev/null || fail "Codex exec flag is absent: $flag" || return
+        grep -F -- "$flag" <<<"$resume_help" >/dev/null || fail "Codex resume flag is absent: $flag" || return
+    done
+    for flag in --ask-for-approval --sandbox --model; do
+        grep -F -- "$flag" <<<"$global_help" >/dev/null || fail "Codex global flag is absent: $flag" || return
+    done
+    grep -F -- '[SESSION_ID]' <<<"$resume_help" >/dev/null || fail 'Codex cannot resume an explicit session id.' || return
+    validate_codex_role_config "$codex_bin" "$ACTION_READ_TOOLS" || return
+    validate_codex_role_config "$codex_bin" "$ACTION_COMMIT_TOOLS" || return
+    validate_codex_role_config "$codex_bin" "$OBSERVER_TOOLS" || return
 }
 
 preflight() {
-    local codex_bin prerequisite
-
-    [[ -n "${DATABASE_URL:-}" ]] || fail 'DATABASE_URL must name a PostgreSQL administration database; preflight does not mutate it.' || return
-    for prerequisite in cargo curl jq perl; do
+    local codex_bin prerequisite probe_token
+    reject_public_overrides || return
+    [[ -n "${DATABASE_URL:-}" ]] || fail 'DATABASE_URL must name a PostgreSQL administration database.' || return
+    for prerequisite in cargo curl jq openssl perl; do
         command -v "$prerequisite" >/dev/null 2>&1 || fail "missing prerequisite: $prerequisite" || return
     done
-    codex_bin="$(resolve_codex_bin)" || fail 'Codex CLI not found; set CODEX_BIN or install codex.' || return
+    [[ -x "$SYSTEM_ENV" ]] || fail "required exact environment launcher is unavailable: $SYSTEM_ENV" || return
+    validate_public_prerequisite_paths || return
+    codex_bin="$(resolve_codex_bin)" \
+        || fail 'required exact Codex CLI path is unavailable for this playtest mode.' || return
     [[ -x "$codex_bin" ]] || fail "Codex binary is not executable: $codex_bin" || return
     [[ -f "$REPO_DIR/Cargo.toml" && -f "$REPO_DIR/src/bin/aicadia-provision-user.rs" && -f "$REPO_DIR/src/bin/aicadia-playtest-database.rs" ]] \
         || fail 'Agent playtest operator binaries are missing.' || return
-    validate_output_schema "$FOUND_SCHEMA" founded \
-        '["status","marker","character_id","place_id","entity_id","activity_operation","latest_actor_character_id","latest_context_place_id","latest_subject_entity_id"]' \
-        || fail 'found output schema violates the strict playtest schema contract.' || return
-    validate_output_schema "$JOIN_SCHEMA" joined \
-        '["status","marker","observer_user_id","character_id","place_id","entity_id","activity_operation","latest_actor_character_id","latest_context_place_id","latest_destination_place_id"]' \
-        || fail 'join output schema violates the strict playtest schema contract.' || return
-
+    validate_output_schemas || fail 'strict action playtest schemas are invalid.' || return
+    validate_catalog_fixture || fail 'the checked-in complete Agent tool catalog is invalid.' || return
+    validate_allowlists || fail 'least-privilege Agent role allowlists are invalid.' || return
     (cd "$REPO_DIR" && cargo build --quiet --bin aicadia --bin aicadia-provision-user --bin aicadia-playtest-database) \
         || fail 'required Aicadia operator binaries do not build.' || return
     validate_codex "$codex_bin" || return
-    database_helper probe >/dev/null || fail 'DATABASE_URL is unavailable or its role cannot create disposable databases.' || return
-
-    printf 'Preflight passed: operator binaries, PostgreSQL create/drop access, schemas, Codex %s, %s with %s reasoning, authentication, parsed role tool filters, direct-only Aicadia routing with the local Code Mode host, and fail-closed feature controls are ready. No server, User, Entity, or Agent was started; no token-spending command was invoked.\n' \
-        "$CODEX_VERSION" "$CODEX_MODEL" "$CODEX_REASONING_EFFORT"
+    probe_token="$(new_ownership_token)" || fail 'could not generate an unguessable database ownership token.' || return
+    [[ "$probe_token" =~ ^[0-9a-f]{64}$ ]] || fail 'generated database ownership token is malformed.' || return
+    database_helper probe "$probe_token" >/dev/null \
+        || fail 'DATABASE_URL failed the real create, ownership-tag, verify and drop probe.' || return
+    printf 'Preflight passed without codex exec: exact %s at %s, %s/%s, explicit-session resume, four strict schemas, thirteen-tool catalog, three least-privilege roles, operator builds, and a real PostgreSQL owned create/verified-drop probe are ready.\n' \
+        "$INSPECTED_CODEX_VERSION" "$INSPECTED_CODEX_BIN" "$CODEX_MODEL" "$CODEX_REASONING_EFFORT"
 }
 
 manifest_set() {
@@ -191,233 +336,220 @@ manifest_set() {
     shift
     [[ -n "$MANIFEST" && -f "$MANIFEST" ]] || return 0
     temporary="$(mktemp "$RUN_DIR/manifest-XXXXXXXX")" || return 1
-    if ! jq "$@" "$filter" "$MANIFEST" >"$temporary"; then
-        rm -f "$temporary"
-        return 1
-    fi
+    jq "$@" "$filter" "$MANIFEST" >"$temporary" || { rm -f "$temporary"; return 1; }
     chmod 600 "$temporary"
     mv "$temporary" "$MANIFEST"
 }
 
-prepare_artifacts() {
-    local run_root run_id started_at marker entity_name entity_description recovery
-    local character_a_name character_a_description character_b_name character_b_description
-    local place_name place_description
-
-    umask 077
-    run_root="${AICADIA_PLAYTEST_OUTPUT_ROOT:-$REPO_DIR/.aicadia-playtest}"
-    if [[ -e "$run_root" ]]; then
-        [[ -d "$run_root" && ! -L "$run_root" ]] || fail 'artifact root must be a real directory, not a symbolic link.' || return
-    else
-        mkdir -p "$run_root" || fail 'could not create artifact root.' || return
-    fi
-    RUN_DIR="$(mktemp -d "$run_root/run-XXXXXXXX")" || fail 'could not create a secure run directory.' || return
-    chmod 700 "$RUN_DIR"
-    MANIFEST="$RUN_DIR/manifest.json"
-    run_id="$(basename "$RUN_DIR")"
-    started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    DATABASE_NAME="aicadia_playtest_$(date -u +%Y%m%d_%H%M%S)_$$_$RANDOM"
-    marker="aicadia-playtest-$(date -u +%Y%m%dT%H%M%SZ)-$$-$RANDOM"
-    character_a_name="Founder Character $marker"
-    character_a_description="Disposable founder Character for MCP world-entry proof: $marker"
-    character_b_name="Joining Character $marker"
-    character_b_description="Disposable joining Character for MCP world-entry proof: $marker"
-    place_name="Entry Place $marker"
-    place_description="Disposable shared entry Place for MCP world-entry proof: $marker"
-    entity_name="Disposable Playtest Entity $marker"
-    entity_description="Technical cross-User MCP fixture in a disposable World: $marker"
-    recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME"
-
-    jq -n \
-        --arg run_id "$run_id" --arg started_at "$started_at" --arg database "$DATABASE_NAME" \
-        --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" --arg recovery "$recovery" \
-        --argjson timeout "$(agent_timeout_seconds)" '
-        {
-            run_id: $run_id,
-            started_at: $started_at,
-            model: $model,
-            reasoning_effort: $effort,
-            agent_timeout_seconds: $timeout,
-            deployment: {database: $database, server_address: null, status: "not_created"},
-            provisioning: {user_a: "pending", user_b: "pending"},
-            agents: {a: "pending", b: "pending"},
-            validation: "pending",
-            run_status: "preparing",
-            cleanup: {intent: "drop_if_exists", status: "not_required_yet", recovery: $recovery}
-        }
-    ' >"$MANIFEST" || fail 'could not write the initial run manifest.' || return
-    chmod 600 "$MANIFEST"
-    printf '%s\n' "$marker" >"$RUN_DIR/marker.txt" || fail 'could not write marker artifact.' || return
-    write_prompts "$RUN_DIR" "$marker" \
-        "$character_a_name" "$character_a_description" \
-        "$character_b_name" "$character_b_description" \
-        "$place_name" "$place_description" "$entity_name" "$entity_description" \
-        || fail 'could not write Agent prompts.' || return
-    ISOLATED_A="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-agent-a-XXXXXXXX")" \
-        || fail 'could not create Agent A isolated working directory.' || return
-    ISOLATED_B="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-agent-b-XXXXXXXX")" || {
-        rmdir "$ISOLATED_A" 2>/dev/null || true
-        ISOLATED_A=''
-        fail 'could not create Agent B isolated working directory.'
-        return 1
-    }
-    chmod 700 "$ISOLATED_A" "$ISOLATED_B"
-}
-
 agent_timeout_seconds() {
     local value="${AICADIA_AGENT_TIMEOUT_SECONDS:-$DEFAULT_AGENT_TIMEOUT_SECONDS}"
-    if [[ "${AICADIA_PLAYTEST_TEST_MODE:-}" == 'fake' && "${CODEX_BIN##*/}" == 'codex-fake' ]]; then
+    if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
         value="${AICADIA_PLAYTEST_TEST_TIMEOUT_SECONDS:-$value}"
         [[ "$value" =~ ^[0-9]+$ && "$value" -ge 1 && "$value" -le 5 ]] \
-            || fail 'fake playtest timeout must be an integer from 1 through 5.' || return
-        printf '%s\n' "$value"
-        return
+            || fail 'fake timeout must be an integer from 1 through 5.' || return
+    else
+        [[ "$value" =~ ^[0-9]+$ && "$value" -ge 30 && "$value" -le 1800 ]] \
+            || fail 'AICADIA_AGENT_TIMEOUT_SECONDS must be 30 through 1800.' || return
     fi
-    [[ "$value" =~ ^[0-9]+$ && "$value" -ge 30 && "$value" -le 1800 ]] \
-        || fail 'AICADIA_AGENT_TIMEOUT_SECONDS must be an integer from 30 through 1800.' || return
     printf '%s\n' "$value"
 }
 
-write_prompts() {
-    local run_dir="$1" marker="$2" character_a_name="$3" character_a_description="$4"
-    local character_b_name="$5" character_b_description="$6" place_name="$7" place_description="$8"
-    local entity_name="$9" entity_description="${10}"
-    printf '%s\n' "$(cat <<PROMPT
-You are Agent A in a bounded Aicadia MCP clean-room playtest against a disposable empty World. You have only the published Aicadia tools and their schemas. Use direct Aicadia MCP calls only. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent.
+prepare_artifacts() {
+    local run_root run_id marker recovery started_at timeout
+    umask 077
+    if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
+        run_root="${AICADIA_PLAYTEST_OUTPUT_ROOT:?internal tests require a private output root}"
+    else
+        run_root="$REPO_DIR/.aicadia-playtest"
+    fi
+    if [[ -e "$run_root" ]]; then
+        [[ -d "$run_root" && ! -L "$run_root" ]] || fail 'artifact root must be a real directory.' || return
+    else
+        mkdir -p "$run_root" || return
+    fi
+    RUN_DIR="$(mktemp -d "$run_root/run-XXXXXXXX")" || return
+    chmod 700 "$RUN_DIR"
+    MANIFEST="$RUN_DIR/manifest.json"
+    run_id="$(basename "$RUN_DIR")"
+    marker="aicadia-action-playtest-$(date -u +%Y%m%dT%H%M%SZ)-$$-$RANDOM"
+    started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    timeout="$(agent_timeout_seconds)" || return
+    OWNERSHIP_TOKEN="$(new_ownership_token)" || return
+    [[ "$OWNERSHIP_TOKEN" =~ ^[0-9a-f]{64}$ ]] || fail 'generated database ownership token is malformed.' || return
+    DATABASE_NAME="aicadia_playtest_$(date -u +%Y%m%d_%H%M%S)_$$_${OWNERSHIP_TOKEN:0:12}"
+    recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME $OWNERSHIP_TOKEN"
+    jq -n --arg run_id "$run_id" --arg started_at "$started_at" --arg database "$DATABASE_NAME" \
+        --arg evidence_kind "$([[ $INTERNAL_TEST_MODE -eq 1 ]] && printf fake_controller_test || printf live_candidate)" \
+        --arg codex_path "$INSPECTED_CODEX_BIN" --arg codex_version "$INSPECTED_CODEX_VERSION" \
+        --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" \
+        --arg ownership_token "$OWNERSHIP_TOKEN" --arg recovery "$recovery" \
+        --argjson timeout "$timeout" '
+        {run_id:$run_id,started_at:$started_at,evidence_kind:$evidence_kind,
+         codex:{path:$codex_path,version:$codex_version,model:$model,reasoning_effort:$effort},
+         agent_timeout_seconds:$timeout,
+         deployment:{database:$database,ownership_token:$ownership_token,server_address:null,status:"not_created"},
+         provisioning:{action_user:"pending",observer_user:"pending"},
+         setup:"pending",
+         phases:{proposals:"pending",preview:"pending",commit:"pending",http:"pending",observer:"pending"},
+         validation:"pending",run_status:"preparing",
+         cleanup:{intent:"drop_only_after_name_and_token_proof",status:"not_armed",recovery:$recovery}}
+    ' >"$MANIFEST" || return
+    chmod 600 "$MANIFEST"
+    printf '%s\n' "$marker" >"$RUN_DIR/marker.txt"
+    chmod 600 "$RUN_DIR/marker.txt"
+    ISOLATED_ACTION="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-action-agent-XXXXXXXX")" || return
+    ISOLATED_OBSERVER="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-observer-agent-XXXXXXXX")" || return
+    chmod 700 "$ISOLATED_ACTION" "$ISOLATED_OBSERVER"
+}
 
-Achieve all of these outcomes without asking the User for an id or confirmation:
-- Create your one Character exactly once with name "$character_a_name" and description "$character_a_description".
-- Enter the World according to the published tool contract. Do not assume an entry Place exists. Call create_entry_place only after enter_world returns entry_place_not_found, using name "$place_name" and description "$place_description", then retry entry.
-- After entry, create exactly one shared Entity with name "$entity_name" and description "$entity_description".
-- Read one first page of your personal Activity after those mutations. Do not use a cursor.
+write_initial_prompts() {
+    local marker="$1"
+    cat >"$RUN_DIR/action-phase-1.prompt.txt" <<PROMPT
+You are the action Agent in a bounded Aicadia MCP clean-room playtest. The User has consciously asked for their next action in a disposable shared World. You have only four read-only Aicadia tools. Call each exactly once in this order: get_world, get_character, list_entity_at_current_place, list_activity_at_current_place. Use no cursor and supply no out-of-band or User-provided ids; read authoritative ids only from World responses. If the two exact-Place pages do not have the same place_revision, fail instead of proposing.
 
-The unique marker is $marker. Return only the structured JSON required by the output schema. Set status to founded. Copy character_id from the Character Entity id, place_id from its current Place Entity id, entity_id from the created shared Entity, and activity_operation in returned newest-first order. For the latest create_entity Activity, copy its actor Character id, context Place id and subject Entity id into the matching latest_* fields. Treat only the exact entry_place_not_found first-use response as the expected genesis branch; if anything else fails, do not fabricate a result.
+After those grounded reads, return exactly three distinct private action directions. Do not call submit_action or any mutating tool. Do not draft a final package, choose for the User, invent a confirmation or expose private reasoning. The evidence marker is $marker; copy it only into the required marker field. Return only the strict schema result. Copy the unchanged common place_revision into place_revision. Give proposal ids exactly one, two and three in that order, and ground every direction in the observed Character, Place, Entity or Activity state.
 PROMPT
-)" >"$run_dir/agent-a.prompt.txt" || return
-    printf '%s\n' "$(cat <<PROMPT
-You are Agent B in a bounded Aicadia MCP clean-room playtest against the same disposable World after Agent A. You have only the published Aicadia tools and their schemas. Use direct Aicadia MCP calls only. Do not use Code Mode, programmatic tool calling, any other tool, delegation, or a subagent. Never create an entry Place or shared fixture Entity.
-
-The unique marker is $marker.
-
-Achieve all of these outcomes:
-- Create your one Character exactly once with name "$character_b_name" and description "$character_b_description".
-- Enter the existing World through its server-derived entry Place.
-- Read one first page of your personal Activity after entry. Do not use a cursor.
-- Get your contextual User, list the first shared Entity page once and get the exact Entity introduced by Agent A named "$entity_name". Never create another Entity.
-
-Return only the structured JSON required by the output schema. Set status to joined. Copy observer_user_id, both role Entity ids, the shared Entity id and activity_operation in returned newest-first order. For the latest enter_world Activity, copy its actor Character id, context Place id and destination Place id into the matching latest_* fields. If any required MCP call fails or the marked Entity cannot be observed, do not fabricate a result.
+    cat >"$RUN_DIR/observer.prompt.txt" <<PROMPT
+You are an independent observer Agent in a bounded Aicadia MCP clean-room playtest. A different Character has already committed one action at your exact current Place. The evidence marker is $marker. Use only direct Aicadia MCP reads. Call get_character, list_entity_at_current_place and list_activity_at_current_place exactly once each in that order, with no cursor and no out-of-band or User-provided ids. Read authoritative ids from World responses. Find exactly one placed Entity whose name contains the marker and exactly one submit_action Activity whose canonical prose contains it. Return only the strict schema result, copying authoritative ids, the exact Entity name and exact prose. Never mutate, delegate, use another tool or fabricate missing evidence.
 PROMPT
-)" >"$run_dir/agent-b.prompt.txt" || return
+    chmod 600 "$RUN_DIR/action-phase-1.prompt.txt" "$RUN_DIR/observer.prompt.txt"
+}
+
+write_phase_two_prompt() {
+    local marker="$1"
+    cat >"$RUN_DIR/action-phase-2.prompt.txt" <<PROMPT
+The User now selects proposal id $SELECTED_PROPOSAL_ID and adds this steering exactly: "$STEERING" The unique playtest marker is $marker. Draft the complete irreversible package, but do not call any tool and do not mutate World state. The prose, Entity name and Entity description must each contain the marker verbatim, must be English and must satisfy the published semantic bounds. Return only the strict preview schema with the exact prose and one introduce_entity consequence. This selection is not confirmation.
+PROMPT
+    chmod 600 "$RUN_DIR/action-phase-2.prompt.txt"
+}
+
+write_phase_three_prompt() {
+    local marker="$1" preview="$2"
+    local prose name description
+    prose="$(jq -r '.prose' "$preview")"
+    name="$(jq -r '.consequence.name' "$preview")"
+    description="$(jq -r '.consequence.description' "$preview")"
+    cat >"$RUN_DIR/action-phase-3.prompt.txt" <<PROMPT
+The User explicitly confirms the exact retained package below without edits. This is the one irreversible confirmation. Generate one fresh UUID request_id and call submit_action exactly once using the unchanged place_revision from your grounded reads, the exact prose and exact consequence below. Do not re-read, retry or call any other tool. Return only the strict commit schema copied from the accepted result.
+
+Exact confirmed prose:
+$prose
+
+Exact confirmed consequence:
+{"type":"introduce_entity","name":$(jq -Rn --arg value "$name" '$value'),"description":$(jq -Rn --arg value "$description" '$value')}
+
+Evidence marker: $marker
+PROMPT
+    chmod 600 "$RUN_DIR/action-phase-3.prompt.txt"
 }
 
 start_deployment() {
-    local address attempt ready
-
+    local ready address attempt create_result expected_create_result manual_recovery
+    manifest_set '.deployment.status="create_attempted" | .cleanup.status="not_armed"' || return
+    if ! create_result="$(database_helper create "$DATABASE_NAME" "$OWNERSHIP_TOKEN" 2>"$RUN_DIR/database-create.log")"; then
+        manual_recovery="Manual inspection required: verify the pg_database comment for $DATABASE_NAME before any DROP; automatic cleanup is forbidden because ownership was not proved."
+        manifest_set '.deployment.status="create_ambiguous_unowned" | .cleanup.status="manual_inspection_required" | .cleanup.recovery=$recovery' \
+            --arg recovery "$manual_recovery" || true
+        fail 'database creation was unsuccessful or ambiguous; ownership was not proved, so automatic cleanup is forbidden.'
+        return 1
+    fi
+    printf '%s\n' "$create_result" >"$RUN_DIR/database-create.stdout.log"
+    chmod 600 "$RUN_DIR/database-create.stdout.log" "$RUN_DIR/database-create.log"
+    expected_create_result="ownership_verified $DATABASE_NAME $OWNERSHIP_TOKEN"
+    if [[ "$create_result" != "$expected_create_result" ]]; then
+        manual_recovery="Manual inspection required: helper output did not prove ownership for $DATABASE_NAME; automatic cleanup is forbidden."
+        manifest_set '.deployment.status="create_ambiguous_unowned" | .cleanup.status="manual_inspection_required" | .cleanup.recovery=$recovery' \
+            --arg recovery "$manual_recovery" || true
+        fail 'database helper did not return exact ownership proof; automatic cleanup is forbidden.'
+        return 1
+    fi
     CLEANUP_REQUIRED=1
-    manifest_set '.deployment.status = "create_attempted" | .cleanup.status = "required"' \
-        || fail 'could not record cleanup ownership before database creation.' || return
-    database_helper create "$DATABASE_NAME" >"$RUN_DIR/database-create.log" 2>&1 \
-        || fail "database creation was unsuccessful or ambiguous; cleanup will run, inspect $RUN_DIR/database-create.log" || return
-    manifest_set '.deployment.status = "database_created"' || return
-
-    perl -e 'chdir shift or exit 125; setpgrp 0, 0; exec @ARGV' "$REPO_DIR" \
-        env DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" AICADIA_PORT=0 \
-        cargo run --quiet --bin aicadia \
-        >"$RUN_DIR/server.stdout.log" 2>"$RUN_DIR/server.stderr.log" &
+    manifest_set '.deployment.status="ownership_verified" | .cleanup.status="armed"' || return
+    perl -e 'chdir shift or exit 125; setpgrp 0,0; exec @ARGV' "$REPO_DIR" \
+        "$SYSTEM_ENV" DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" AICADIA_PORT=0 \
+        cargo run --quiet --bin aicadia >"$RUN_DIR/server.stdout.log" 2>"$RUN_DIR/server.stderr.log" &
     SERVER_PID=$!
-
     ready=''
     for attempt in $(seq 1 200); do
         if ! kill -0 "$SERVER_PID" 2>/dev/null; then
             wait "$SERVER_PID" 2>/dev/null || true
-            fail "disposable Aicadia server exited before readiness; inspect $RUN_DIR/server.stderr.log"
+            fail 'disposable server exited before readiness.'
             return 1
         fi
-        ready="$(jq -c 'select(.event == "server_ready" and (.address | type == "string"))' "$RUN_DIR/server.stdout.log" 2>/dev/null | tail -1)"
+        ready="$(jq -c 'select(.event=="server_ready" and (.address|type)=="string")' "$RUN_DIR/server.stdout.log" 2>/dev/null | tail -1)"
         [[ -z "$ready" ]] || break
         sleep 0.1
     done
-    [[ -n "$ready" ]] || fail 'disposable Aicadia server did not become ready within 20 seconds.' || return
-    address="$(jq -r '.address' <<<"$ready")" || return
+    [[ -n "$ready" ]] || fail 'disposable server was not ready within 20 seconds.' || return
+    address="$(jq -r '.address' <<<"$ready")"
     [[ "$address" =~ ^127\.0\.0\.1:[0-9]+$ ]] || fail 'server readiness address was not loopback.' || return
     BASE_URL="http://$address"
     MCP_URL="$BASE_URL/mcp"
-    manifest_set '.deployment.server_address = $address | .deployment.status = "ready"' --arg address "$address" || return
+    manifest_set '.deployment.server_address=$address | .deployment.status="ready"' --arg address "$address"
 }
 
 verify_deployment() {
-    local world openapi listed database_probe
-
-    world="$(curl_json "$BASE_URL/api/world")" || fail 'disposable World endpoint is unavailable.' || return
-    jq -e '.name == "Aicadia"' <<<"$world" >/dev/null || fail 'disposable World returned an unexpected response.' || return
-    openapi="$(curl_json "$BASE_URL/api/openapi.json")" || fail 'disposable OpenAPI document is unavailable.' || return
-    jq -e --argjson expected "$CAPABILITIES" '
-        ([.paths[][] | .operationId] | sort) == ($expected | sort)
-        and ([.paths[][] | .operationId] | index("create_user") | not)
-    ' <<<"$openapi" >/dev/null || fail 'public HTTP catalog is not the exact ten-capability contract.' || return
-    listed="$(curl_json \
-        -H 'Content-Type: application/json' \
-        -H 'Accept: application/json, text/event-stream' \
-        -H 'MCP-Protocol-Version: 2026-07-28' \
-        -H 'Mcp-Method: tools/list' \
-        -H "Origin: $BASE_URL" \
-        --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-playtest","version":"0.1.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}' \
-        "$MCP_URL")" || fail 'disposable MCP tools/list is unavailable.' || return
-    jq -e --argjson expected "$CAPABILITIES" '
-        [.result.tools[].name] == $expected
-        and ([.result.tools[].name] | index("create_user") | not)
-    ' <<<"$listed" >/dev/null || fail 'public MCP catalog is not the exact ten-capability contract.' || return
-    database_probe="$(curl --disable --silent --show-error --connect-timeout 2 --max-time 10 \
-        -H 'Aicadia-User-Id: 00000000-0000-0000-0000-000000000000' \
-        -o /dev/null -w '%{http_code}' "$BASE_URL/api/user")" || fail 'disposable database path is unavailable.' || return
-    [[ "$database_probe" == 404 ]] || fail "disposable database probe returned HTTP $database_probe." || return
+    local world openapi listed probe
+    world="$(curl_json "$BASE_URL/api/world")" || return
+    jq -e '.name=="Aicadia"' <<<"$world" >/dev/null || return
+    openapi="$(curl_json "$BASE_URL/api/openapi.json")" || return
+    jq -e --argjson expected "$CAPABILITIES" '([.paths[][]|.operationId]|sort)==($expected|sort) and ([.paths[][]|.operationId]|length)==13' <<<"$openapi" >/dev/null \
+        || fail 'HTTP is not the exact thirteen-capability catalog.' || return
+    listed="$(curl_json -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+        -H 'MCP-Protocol-Version: 2026-07-28' -H 'Mcp-Method: tools/list' -H "Origin: $BASE_URL" \
+        --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-action-playtest","version":"0.1.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}' "$MCP_URL")" || return
+    jq -e --slurpfile expected "$TOOL_CATALOG" '.result.tools == $expected[0]' <<<"$listed" >/dev/null \
+        || fail 'MCP tools/list differs from the complete checked-in catalog.' || return
+    probe="$(curl --disable --silent --show-error --connect-timeout 2 --max-time 10 \
+        -H 'Aicadia-User-Id: 00000000-0000-0000-0000-000000000000' -o /dev/null -w '%{http_code}' "$BASE_URL/api/user")" || return
+    [[ "$probe" == 404 ]] || fail "disposable database probe returned HTTP $probe." || return
 }
 
 provision_user() {
-    (cd "$REPO_DIR" && DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" \
-        cargo run --quiet --bin aicadia-provision-user)
+    (cd "$REPO_DIR" && DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" cargo run --quiet --bin aicadia-provision-user)
 }
 
-verify_provisioned_user() {
-    local user_id="$1" response
-    response="$(curl_json -H "Aicadia-User-Id: $user_id" "$BASE_URL/api/user")" || return 1
-    jq -e --arg id "$user_id" '.id == $id' <<<"$response" >/dev/null
+setup_world() {
+    local marker="$1" user_a="$2" user_b="$3" body
+    body="$(jq -nc --arg name "Action Character $marker" --arg description "Disposable action Character for $marker" '{name:$name,description:$description}')"
+    http_request POST /api/character "$user_a" "$body" 201 "$RUN_DIR/setup-character-a.json" || return
+    http_request POST /api/world/entry "$user_a" '' 404 "$RUN_DIR/setup-entry-missing.json" || return
+    jq -e '.error.code=="entry_place_not_found"' "$RUN_DIR/setup-entry-missing.json" >/dev/null || return
+    body="$(jq -nc --arg name "Entry Place $marker" --arg description "Disposable shared entry Place for $marker" '{name:$name,description:$description}')"
+    http_request POST /api/place/entry "$user_a" "$body" 201 "$RUN_DIR/setup-place.json" || return
+    http_request POST /api/world/entry "$user_a" '' 200 "$RUN_DIR/setup-enter-a.json" || return
+    body="$(jq -nc --arg name "Observer Character $marker" --arg description "Disposable observer Character for $marker" '{name:$name,description:$description}')"
+    http_request POST /api/character "$user_b" "$body" 201 "$RUN_DIR/setup-character-b.json" || return
+    http_request POST /api/world/entry "$user_b" '' 200 "$RUN_DIR/setup-enter-b.json" || return
+    jq -e --slurpfile a "$RUN_DIR/setup-enter-a.json" --slurpfile b "$RUN_DIR/setup-enter-b.json" \
+        '$a[0].owner_user_id != $b[0].owner_user_id and $a[0].entity.id != $b[0].entity.id and $a[0].current_place == $b[0].current_place' \
+        "$RUN_DIR/setup-enter-a.json" >/dev/null || fail 'setup did not place two distinct Characters together.' || return
+    manifest_set '.setup={status:"passed",place_id:$place}' --arg place "$(jq -r '.current_place.entity.id' "$RUN_DIR/setup-enter-a.json")"
 }
 
-prepare_agent_evidence_files() {
+prepare_evidence_files() {
     local path
     for path in \
-        "$RUN_DIR/agent-a.events.jsonl" "$RUN_DIR/agent-a.stderr.log" "$RUN_DIR/agent-a.final.json" \
-        "$RUN_DIR/agent-b.events.jsonl" "$RUN_DIR/agent-b.stderr.log" "$RUN_DIR/agent-b.final.json" \
-        "$RUN_DIR/agent-a.exit-status" "$RUN_DIR/agent-b.exit-status"; do
-        : >"$path" || return 1
-        chmod 600 "$path" || return 1
+        action-phase-1.events.jsonl action-phase-1.stderr.log action-phase-1.final.json action-phase-1.exit-status \
+        action-phase-2.events.jsonl action-phase-2.stderr.log action-phase-2.final.json action-phase-2.exit-status \
+        action-phase-3.events.jsonl action-phase-3.stderr.log action-phase-3.final.json action-phase-3.exit-status \
+        observer.events.jsonl observer.stderr.log observer.final.json observer.exit-status; do
+        : >"$RUN_DIR/$path" || return
+        chmod 600 "$RUN_DIR/$path" || return
     done
 }
 
-run_agent() {
-    local codex_bin="$1" user_id="$2" prompt_file="$3" schema_file="$4" events_file="$5" stderr_file="$6" final_file="$7" isolated_cwd="$8" enabled_tools="$9"
-    local prompt timeout feature status variable timeout_marker agent_pgid
-    local -a command sanitized
-    prompt="$(<"$prompt_file")"
-    timeout="$(agent_timeout_seconds)" || return
-    command=(
-        "$codex_bin"
-        --ask-for-approval never
-        --sandbox read-only
-        --model "$CODEX_MODEL"
-        --enable code_mode_host
-        --config 'suppress_unstable_features_warning=true'
+build_common_codex_command() {
+    local codex_bin="$1" enabled_tools="$2" feature
+    CODEX_COMMAND=(
+        "$codex_bin" --ask-for-approval never --sandbox read-only --model "$CODEX_MODEL"
+        --enable code_mode_host --config 'suppress_unstable_features_warning=true'
         --config 'features.code_mode.enabled=true'
         --config "features.code_mode.direct_only_tool_namespaces=$CODE_MODE_DIRECT_ONLY_NAMESPACES"
     )
-    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do
-        command+=(--disable "$feature")
-    done
-    command+=(
-        --config 'web_search="disabled"'
-        --config 'tools.web_search=false'
-        --config 'agents.enabled=false'
+    for feature in "${DISABLED_CODEX_FEATURES[@]}"; do CODEX_COMMAND+=(--disable "$feature"); done
+    CODEX_COMMAND+=(
+        --config 'web_search="disabled"' --config 'tools.web_search=false'
         --config "model_reasoning_effort=\"$CODEX_REASONING_EFFORT\""
         --config "mcp_servers.aicadia.url=\"$MCP_URL\""
         --config 'mcp_servers.aicadia.enabled=true'
@@ -425,285 +557,240 @@ run_agent() {
         --config "mcp_servers.aicadia.enabled_tools=$enabled_tools"
         --config 'mcp_servers.aicadia.default_tools_approval_mode="approve"'
         --config 'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'
-        exec
-        --ephemeral
-        --ignore-user-config
-        --ignore-rules
-        --strict-config
-        --skip-git-repo-check
-        --json
-        --output-schema "$schema_file"
-        --output-last-message "$final_file"
-        "$prompt"
     )
+}
 
-    while IFS='=' read -r variable _; do
+build_sanitized_env() {
+    local variable
+    SANITIZED_ENV=()
+    while IFS= read -r variable; do
         case "$variable" in
             DATABASE_URL|AICADIA_DATABASE_NAME|AICADIA_PORT|AICADIA_AGENT_TIMEOUT_SECONDS|AICADIA_PLAYTEST_*|CODEX_BIN|FAKE_*|PGDATABASE|PGHOST|PGHOSTADDR|PGPASSWORD|PGPORT|PGSERVICE|PGSERVICEFILE|PGSSLMODE|PGUSER)
-                sanitized+=(-u "$variable")
-                ;;
+                SANITIZED_ENV+=(-u "$variable") ;;
         esac
-    done < <(env)
+    done < <(compgen -e)
+}
 
-    timeout_marker="${events_file%.events.jsonl}.timeout"
-    perl -e 'chdir shift or exit 125; setpgrp 0, 0; exec @ARGV' \
-        "$isolated_cwd" env "${sanitized[@]}" AICADIA_USER_ID="$user_id" "${command[@]}" \
-        >"$events_file" 2>"$stderr_file" &
+run_codex_process() {
+    local cwd="$1" user_id="$2" events="$3" stderr="$4" timeout status timeout_marker agent_pgid
+    shift 4
+    timeout="$(agent_timeout_seconds)" || return
+    build_sanitized_env
+    timeout_marker="${events%.events.jsonl}.timeout"
+    perl -e 'chdir shift or exit 125; setpgrp 0,0; exec @ARGV' "$cwd" \
+        "$SYSTEM_ENV" "${SANITIZED_ENV[@]}" AICADIA_USER_ID="$user_id" "$@" >"$events" 2>"$stderr" &
     AGENT_PID=$!
     agent_pgid="$AGENT_PID"
-    perl -e '
-        my ($seconds, $pgid, $marker) = @ARGV;
-        sleep $seconds;
-        if (kill 0, -$pgid) {
-            open my $evidence, ">", $marker or exit 125;
-            print {$evidence} "deadline_exceeded\n";
-            close $evidence or exit 125;
-            kill "TERM", -$pgid;
-            select undef, undef, undef, 0.5;
-            kill "KILL", -$pgid;
-        }
-    ' "$timeout" "$agent_pgid" "$timeout_marker" &
+    perl -e 'my($seconds,$pgid,$marker)=@ARGV;sleep $seconds;if(kill 0,-$pgid){open my $f,">",$marker or exit 125;print {$f} "deadline_exceeded\n";close $f;kill "TERM",-$pgid;select undef,undef,undef,0.5;kill "KILL",-$pgid}' \
+        "$timeout" "$agent_pgid" "$timeout_marker" &
     AGENT_WATCHDOG_PID=$!
-    wait "$AGENT_PID"
-    status=$?
-    if [[ -f "$timeout_marker" ]]; then
-        wait "$AGENT_WATCHDOG_PID" 2>/dev/null || true
-        AGENT_WATCHDOG_PID=''
-    else
-        stop_agent_watchdog
-    fi
+    wait "$AGENT_PID"; status=$?
+    if [[ -f "$timeout_marker" ]]; then wait "$AGENT_WATCHDOG_PID" 2>/dev/null || true; else stop_agent_watchdog; fi
+    AGENT_WATCHDOG_PID=''
     terminate_agent_group "$agent_pgid"
     AGENT_PID=''
     [[ ! -f "$timeout_marker" ]] || return 142
     return "$status"
 }
 
+run_initial_action_agent() {
+    local codex_bin="$1" user_id="$2"
+    build_common_codex_command "$codex_bin" "$ACTION_READ_TOOLS"
+    CODEX_COMMAND+=(exec --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json
+        --output-schema "$PROPOSALS_SCHEMA" --output-last-message "$RUN_DIR/action-phase-1.final.json"
+        "$(<"$RUN_DIR/action-phase-1.prompt.txt")")
+    run_codex_process "$ISOLATED_ACTION" "$user_id" "$RUN_DIR/action-phase-1.events.jsonl" "$RUN_DIR/action-phase-1.stderr.log" "${CODEX_COMMAND[@]}"
+}
+
+run_resumed_action_agent() {
+    local codex_bin="$1" user_id="$2" session_id="$3" prompt_file="$4" schema="$5" events="$6" stderr="$7" final="$8" enabled_tools="$9"
+    build_common_codex_command "$codex_bin" "$enabled_tools"
+    CODEX_COMMAND+=(exec resume --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json
+        --output-schema "$schema" --output-last-message "$final" "$session_id" "$(<"$prompt_file")")
+    run_codex_process "$ISOLATED_ACTION" "$user_id" "$events" "$stderr" "${CODEX_COMMAND[@]}"
+}
+
+run_observer_agent() {
+    local codex_bin="$1" user_id="$2"
+    build_common_codex_command "$codex_bin" "$OBSERVER_TOOLS"
+    CODEX_COMMAND+=(exec --ephemeral --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check --json
+        --output-schema "$OBSERVER_SCHEMA" --output-last-message "$RUN_DIR/observer.final.json"
+        "$(<"$RUN_DIR/observer.prompt.txt")")
+    run_codex_process "$ISOLATED_OBSERVER" "$user_id" "$RUN_DIR/observer.events.jsonl" "$RUN_DIR/observer.stderr.log" "${CODEX_COMMAND[@]}"
+}
+
 events_are_clean() {
-    local events_file="$1" expected_failed_mcp="$2"
-    [[ -s "$events_file" ]] || return 1
-    jq -s -e --argjson expected_failed_mcp "$expected_failed_mcp" '
-        def expected_tool_failure:
-            .type == "item.completed"
-            and .item.type == "mcp_tool_call"
-            and .item.status == "failed"
-            and .item.error == null
-            and (.item.result | type == "object");
-        def contains_failure:
-            [.. | objects | select(
-                .type? == "error"
-                or .type? == "turn.failed"
-                or .type? == "turn.aborted"
-                or .status? == "failed"
-                or .error? != null
-            )] | length > 0;
-        length > 0
-        and all(.[]; type == "object")
-        and ([.[] | select(expected_tool_failure)] | length) == $expected_failed_mcp
-        and (map(if expected_tool_failure then .item.status = "completed" else . end)
-            | all(.[]; contains_failure | not))
-    ' "$events_file" >/dev/null
+    local file="$1"
+    [[ -s "$file" ]] || return 1
+    jq -s -e '
+        length>0 and all(.[];type=="object")
+        and ([..|objects|select(.type?=="error" or .type?=="turn.failed" or .type?=="turn.aborted" or .status?=="failed" or .error?!=null)]|length)==0
+        and all(.[]|select(.item?!=null);
+            .item.type as $type
+            | ["agent_message","reasoning","plan","context_compaction","mcp_tool_call"]
+            | index($type)!=null)
+    ' "$file" >/dev/null
 }
 
-agent_a_events_match() {
-    local events_file="$1" character_name="$2" character_description="$3"
-    local place_name="$4" place_description="$5" entity_name="$6" entity_description="$7" user_id="$8"
-    jq -s -e \
-        --arg character_name "$character_name" --arg character_description "$character_description" \
-        --arg place_name "$place_name" --arg place_description "$place_description" \
-        --arg entity_name "$entity_name" --arg entity_description "$entity_description" --arg user_id "$user_id" '
-        def allowed_item: . as $item_type
-            | ["agent_message", "reasoning", "plan", "context_compaction", "mcp_tool_call"]
-            | index($item_type) != null;
-        def finished_calls: [.[] | select(
-            .type == "item.completed"
-            and .item.type == "mcp_tool_call"
-            and (.item.status == "completed" or .item.status == "failed")
-            and .item.error == null
-            and (.item.result | type == "object")
-        ) | .item];
-        def valid_first_page_arguments:
-            type == "object"
-            and (
-                (keys | length) == 0
-                or (
-                    keys == ["limit"]
-                    and (.limit | type) == "number"
-                    and (.limit | floor) == .limit
-                    and .limit >= 1
-                    and .limit <= 100
-                )
-            );
-        def game_error_code:
-            .result.content
-            | select(type == "array" and length == 1)
-            | .[0]
-            | select(type == "object" and .type == "text" and (.text | type) == "string")
-            | .text
-            | fromjson?
-            | .error.code?;
-        finished_calls as $calls
-        | $calls[0].result.structured_content as $created_character
-        | $calls[2].result.structured_content as $place
-        | $calls[3].result.structured_content as $entered_character
-        | $calls[4].result.structured_content as $entity
-        | $calls[5].result.structured_content as $history
-        | all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
-        and all(.[] | select(.item?.type == "mcp_tool_call");
-            .item.server == "aicadia"
-            and (
-                (.item.tool == "create_character" and .item.arguments == {name: $character_name, description: $character_description})
-                or (.item.tool == "enter_world" and .item.arguments == {})
-                or (.item.tool == "create_entry_place" and .item.arguments == {name: $place_name, description: $place_description})
-                or (.item.tool == "create_entity" and .item.arguments == {name: $entity_name, description: $entity_description})
-                or (.item.tool == "list_activity" and (.item.arguments | valid_first_page_arguments))
-            ))
-        and ($calls | length) == 6
-        and [$calls[].tool] == ["create_character", "enter_world", "create_entry_place", "enter_world", "create_entity", "list_activity"]
-        and [$calls[].status] == ["completed", "failed", "completed", "completed", "completed", "completed"]
-        and $calls[1].arguments == {}
-        and ($calls[1] | game_error_code) == "entry_place_not_found"
-        and ($calls[1].result.structured_content? == null)
-        and $created_character.owner_user_id == $user_id
-        and $created_character.current_place == null
-        and $created_character.entity.name == $character_name
-        and $created_character.entity.description == $character_description
-        and $created_character.entity.introduced_by_user_id == $user_id
-        and $place.is_entry == true
-        and $place.entity.name == $place_name
-        and $place.entity.description == $place_description
-        and $place.entity.introduced_by_user_id == $user_id
-        and $entered_character.entity == $created_character.entity
-        and $entered_character.owner_user_id == $user_id
-        and $entered_character.current_place == $place
-        and $entity.name == $entity_name
-        and $entity.description == $entity_description
-        and $entity.introduced_by_user_id == $user_id
-        and ($history | keys | sort) == (["activity", "next"] | sort)
-        and $history.next == null
-        and ($history.activity | map(.operation)) == ["create_entity", "enter_world", "create_entry_place", "create_character"]
-        and $history.activity[0].actor_character == {id: $created_character.entity.id, name: $character_name}
-        and $history.activity[0].context_place == {entity: {id: $place.entity.id, name: $place_name}, is_entry: true}
-        and $history.activity[0].involved_entity == [{entity: {id: $entity.id, name: $entity_name}, role: "subject"}]
-    ' "$events_file" >/dev/null
+session_id_from_events() {
+    jq -sr '[.[]|select(.type=="thread.started")|.thread_id|select(type=="string" and test("^[0-9a-fA-F-]{36}$"))] | select(length==1) | .[0]' "$1"
 }
 
-agent_b_events_match() {
-    local events_file="$1" entity_json="$2" observer_user_id="$3" place_json="$4"
-    local character_name="$5" character_description="$6"
-    jq -s -e --argjson entity "$entity_json" --argjson place "$place_json" \
-        --arg observer_user_id "$observer_user_id" --arg character_name "$character_name" \
-        --arg character_description "$character_description" '
-        def allowed_item: . as $item_type
-            | ["agent_message", "reasoning", "plan", "context_compaction", "mcp_tool_call"]
-            | index($item_type) != null;
-        def completed_calls: [.[] | select(
-            .type == "item.completed"
-            and .item.type == "mcp_tool_call"
-            and .item.status == "completed"
-            and .item.error == null
-            and (.item.result | type == "object")
-            and (.item.result.structured_content | type == "object")
-        ) | .item];
-        def valid_first_page_arguments:
-            type == "object"
-            and (
-                (keys | length) == 0
-                or (
-                    keys == ["limit"]
-                    and (.limit | type) == "number"
-                    and (.limit | floor) == .limit
-                    and .limit >= 1
-                    and .limit <= 100
-                )
-            );
-        completed_calls as $calls
-        | ($entity | {id, name}) as $summary
-        | $calls[0].result.structured_content as $created_character
-        | $calls[1].result.structured_content as $entered_character
-        | $calls[2].result.structured_content as $history
-        | all(.[] | select(.item? != null and .item.type != "error"); .item.type | allowed_item)
-        and all(.[] | select(.item?.type == "mcp_tool_call");
-            .item.server == "aicadia"
-            and (
-                (.item.tool == "create_character" and .item.arguments == {name: $character_name, description: $character_description})
-                or (.item.tool == "enter_world" and .item.arguments == {})
-                or (.item.tool == "list_activity" and (.item.arguments | valid_first_page_arguments))
-                or (.item.tool == "get_user" and .item.arguments == {})
-                or (.item.tool == "list_entity" and (.item.arguments | valid_first_page_arguments))
-                or (.item.tool == "get_entity" and .item.arguments == {entity_id: $entity.id})
-            ))
-        and ($calls | length) == 6
-        and [$calls[].tool] == ["create_character", "enter_world", "list_activity", "get_user", "list_entity", "get_entity"]
-        and $created_character.owner_user_id == $observer_user_id
-        and $created_character.current_place == null
-        and $created_character.entity.name == $character_name
-        and $created_character.entity.description == $character_description
-        and $created_character.entity.introduced_by_user_id == $observer_user_id
-        and $entered_character.entity == $created_character.entity
-        and $entered_character.owner_user_id == $observer_user_id
-        and $entered_character.current_place == $place
-        and ($history | keys | sort) == (["activity", "next"] | sort)
-        and $history.next == null
-        and ($history.activity | map(.operation)) == ["enter_world", "create_character"]
-        and $history.activity[0].actor_character == {id: $created_character.entity.id, name: $character_name}
-        and $history.activity[0].context_place == {entity: {id: $place.entity.id, name: $place.entity.name}, is_entry: true}
-        and $history.activity[0].involved_entity == [{entity: {id: $place.entity.id, name: $place.entity.name}, role: "destination"}]
-        and $calls[3].arguments == {}
-        and $calls[3].result.structured_content.id == $observer_user_id
-        and ($calls[4].arguments | valid_first_page_arguments)
-        and ($calls[4].result.structured_content | keys | sort) == (["entity", "next"] | sort)
-        and ($calls[4].result.structured_content.entity | type == "array")
-        and any($calls[4].result.structured_content.entity[]; . == $summary)
-        and (($calls[4].result.structured_content.next == null) or ($calls[4].result.structured_content.next | type == "string"))
-        and $calls[5].arguments == {entity_id: $entity.id}
-        and $calls[5].result.structured_content == $entity
-    ' "$events_file" >/dev/null
+phase_one_is_valid() {
+    local events="$1" final="$2" marker="$3"
+    events_are_clean "$events" || return
+    jq -s -e '
+        [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
+        | [$observed[]|select(.event_type=="item.started")|.item] as $started
+        | [$observed[]|select(.event_type=="item.completed")|.item] as $c
+        | ($observed|length)==8
+        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed"]
+        and ($started|length)==4 and ($c|length)==4
+        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==4
+        and [$started[].tool]==[$c[].tool] and [$started[].arguments]==[$c[].arguments]
+        and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
+        and [$c[].tool]==["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]
+        and all($c[];.server=="aicadia" and .status=="completed" and .error==null and (.result.structured_content|type)=="object")
+        and $c[0].arguments=={} and $c[1].arguments=={}
+        and ($c[2].arguments=={} or $c[2].arguments=={limit:25})
+        and ($c[3].arguments=={} or $c[3].arguments=={limit:25})
+        and $c[0].result.structured_content.name=="Aicadia"
+        and ($c[1].result.structured_content.current_place|type)=="object"
+        and $c[2].result.structured_content.place==$c[1].result.structured_content.current_place
+        and $c[3].result.structured_content.place==$c[1].result.structured_content.current_place
+        and $c[2].result.structured_content.place_revision==$c[3].result.structured_content.place_revision
+    ' "$events" >/dev/null || return
+    local revision
+    revision="$(jq -sr '[.[]|select(.type=="item.completed" and .item.type=="mcp_tool_call")|.item][2].result.structured_content.place_revision' "$events")" || return
+    jq -e --arg marker "$marker" --arg revision "$revision" '
+        (keys|sort)==(["status","marker","place_revision","proposals"]|sort)
+        and .status=="proposed" and .marker==$marker and .place_revision==$revision
+        and (.proposals|length)==3 and [.proposals[].id]==["one","two","three"]
+        and ([.proposals[].direction]|unique|length)==3
+        and ([.proposals[].grounding]|unique|length)==3
+        and all(.proposals[];(.direction|length)>0 and (.grounding|length)>0)
+    ' "$final" >/dev/null
 }
 
-found_final_is_valid() {
-    local final_file="$1" marker="$2" character_id="$3" place_id="$4" entity_id="$5"
-    jq -e --arg marker "$marker" --arg character_id "$character_id" --arg place_id "$place_id" --arg entity_id "$entity_id" '
-        (keys | sort) == (["status", "marker", "character_id", "place_id", "entity_id", "activity_operation", "latest_actor_character_id", "latest_context_place_id", "latest_subject_entity_id"] | sort)
-        and .status == "founded"
-        and .marker == $marker
-        and .character_id == $character_id
-        and .place_id == $place_id
-        and .entity_id == $entity_id
-        and .activity_operation == ["create_entity", "enter_world", "create_entry_place", "create_character"]
-        and .latest_actor_character_id == $character_id
-        and .latest_context_place_id == $place_id
-        and .latest_subject_entity_id == $entity_id
-    ' "$final_file" >/dev/null 2>&1
+preview_is_valid() {
+    local events="$1" final="$2" marker="$3"
+    events_are_clean "$events" || return
+    jq -s -e '[.[]|select(.item?.type=="mcp_tool_call")]|length==0' "$events" >/dev/null || return
+    jq -e --arg marker "$marker" '
+        (keys|sort)==(["status","marker","selected_proposal_id","prose","consequence"]|sort)
+        and .status=="previewed" and .marker==$marker and .selected_proposal_id=="two"
+        and .consequence.type=="introduce_entity"
+        and (.prose|contains($marker)) and (.consequence.name|contains($marker)) and (.consequence.description|contains($marker))
+        and (.prose|length)>0 and (.prose|length)<=4000
+        and (.consequence.name|length)>0 and (.consequence.name|length)<=120
+        and (.consequence.description|length)>0 and (.consequence.description|length)<=4000
+    ' "$final" >/dev/null
 }
 
-joined_final_is_valid() {
-    local final_file="$1" marker="$2" observer_user_id="$3" character_id="$4" place_id="$5" entity_id="$6"
-    jq -e --arg marker "$marker" --arg observer_user_id "$observer_user_id" \
-        --arg character_id "$character_id" --arg place_id "$place_id" --arg entity_id "$entity_id" '
-        (keys | sort) == (["status", "marker", "observer_user_id", "character_id", "place_id", "entity_id", "activity_operation", "latest_actor_character_id", "latest_context_place_id", "latest_destination_place_id"] | sort)
-        and .status == "joined"
-        and .marker == $marker
-        and .observer_user_id == $observer_user_id
-        and .character_id == $character_id
-        and .place_id == $place_id
-        and .entity_id == $entity_id
-        and .activity_operation == ["enter_world", "create_character"]
-        and .latest_actor_character_id == $character_id
-        and .latest_context_place_id == $place_id
-        and .latest_destination_place_id == $place_id
-    ' "$final_file" >/dev/null 2>&1
+commit_is_valid() {
+    local events="$1" final="$2" preview="$3" marker="$4" revision="$5"
+    events_are_clean "$events" || return
+    jq -s -e --arg revision "$revision" --slurpfile preview "$preview" '
+        [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
+        | [$observed[]|select(.event_type=="item.started")|.item] as $started
+        | [$observed[]|select(.event_type=="item.completed")|.item] as $c
+        | ($observed|length)==2 and [$observed[].event_type]==["item.started","item.completed"]
+        and ($started|length)==1 and ($c|length)==1
+        and ($started[0].id|type)=="string" and $started[0].id==$c[0].id
+        and $started[0].server=="aicadia" and $started[0].tool=="submit_action"
+        and $started[0].status=="in_progress" and $started[0].result==null and $started[0].error==null
+        and $started[0].arguments==$c[0].arguments
+        and all($observed[];.item.server=="aicadia" and .item.tool=="submit_action")
+        and ($c|length)==1 and $c[0].server=="aicadia" and $c[0].tool=="submit_action"
+        and $c[0].status=="completed" and $c[0].error==null
+        and ($c[0].arguments|keys|sort)==(["request_id","expected_place_revision","prose","consequence"]|sort)
+        and ($c[0].arguments.request_id|test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"))
+        and $c[0].arguments.expected_place_revision==$revision
+        and $c[0].arguments.prose==$preview[0].prose
+        and $c[0].arguments.consequence==$preview[0].consequence
+        and ($c[0].result.structured_content|type)=="object"
+        and $c[0].result.structured_content.activity.operation=="submit_action"
+        and $c[0].result.structured_content.activity.prose==$preview[0].prose
+        and $c[0].result.structured_content.entity.name==$preview[0].consequence.name
+        and $c[0].result.structured_content.entity.description==$preview[0].consequence.description
+        and $c[0].result.structured_content.activity.context_place.entity.id==$c[0].result.structured_content.place.entity.id
+        and ($c[0].result.structured_content.activity.involved_entity|map(.role)|sort)==["location","subject"]
+    ' "$events" >/dev/null || return
+    local result
+    result="$(jq -sc '[.[]|select(.type=="item.completed" and .item.type=="mcp_tool_call")|.item][0]' "$events")" || return
+    jq -e --arg marker "$marker" --argjson call "$result" --slurpfile preview "$preview" '
+        .status=="committed" and .marker==$marker
+        and .request_id==$call.arguments.request_id
+        and .activity_id==$call.result.structured_content.activity.id
+        and .entity_id==$call.result.structured_content.entity.id
+        and .place_id==$call.result.structured_content.place.entity.id
+        and .prose==$preview[0].prose and .entity_name==$preview[0].consequence.name
+        and .entity_description==$preview[0].consequence.description
+    ' "$final" >/dev/null
 }
 
-find_fixture_entity_id() {
-    local entity_name="$1" page
-    page="$(curl_json "$BASE_URL/api/entity?limit=100")" || return 1
-    jq -e 'type == "object" and (.entity | type == "array")
-        and all(.entity[]; (.id | type == "string") and (.name | type == "string"))
-        and has("next") and ((.next == null) or ((.next | type == "string") and (.next | length > 0)))' <<<"$page" >/dev/null || return 1
-    jq -er --arg name "$entity_name" '
-        [.entity[] | select(.name == $name) | .id]
-        | select(length == 1) | .[0]
-    ' <<<"$page"
+observer_is_valid() {
+    local events="$1" final="$2" marker="$3" preview="$4" entity_id="$5" place_id="$6"
+    events_are_clean "$events" || return
+    jq -s -e --arg marker "$marker" --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" '
+        [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
+        | [$observed[]|select(.event_type=="item.started")|.item] as $started
+        | [$observed[]|select(.event_type=="item.completed")|.item] as $c
+        | ($observed|length)==6
+        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed"]
+        and ($started|length)==3 and ($c|length)==3
+        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==3
+        and [$started[].tool]==[$c[].tool] and [$started[].arguments]==[$c[].arguments]
+        and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
+        and [$c[].tool]==["get_character","list_entity_at_current_place","list_activity_at_current_place"]
+        and all($c[];.server=="aicadia" and .status=="completed" and .error==null)
+        and $c[0].arguments=={}
+        and ($c[1].arguments=={} or $c[1].arguments=={limit:25})
+        and ($c[2].arguments=={} or $c[2].arguments=={limit:25})
+        and $c[0].result.structured_content.current_place.entity.id==$place
+        and $c[1].result.structured_content.place.entity.id==$place
+        and any($c[1].result.structured_content.entity[];.id==$entity and .name==$preview[0].consequence.name)
+        and $c[2].result.structured_content.place.entity.id==$place
+        and any($c[2].result.structured_content.activity[];
+            .operation=="submit_action" and .prose==$preview[0].prose
+            and .context_place.entity.id==$place
+            and any(.involved_entity[];.entity.id==$entity and .role=="subject"))
+    ' "$events" >/dev/null || return
+    jq -e --arg marker "$marker" --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" '
+        .status=="observed" and .marker==$marker and .entity_id==$entity and .place_id==$place
+        and .prose==$preview[0].prose and .entity_name==$preview[0].consequence.name
+    ' "$final" >/dev/null
+}
+
+validate_authoritative_http() {
+    local user_a="$1" user_b="$2" preview="$3" commit="$4" entity_id place_id activity_id
+    entity_id="$(jq -r '.entity_id' "$commit")"
+    place_id="$(jq -r '.place_id' "$commit")"
+    activity_id="$(jq -r '.activity_id' "$commit")"
+    http_request GET '/api/place/current/entity?limit=100' "$user_b" '' 200 "$RUN_DIR/http-observer-entity.json" || return
+    http_request GET '/api/place/current/activity?limit=100' "$user_b" '' 200 "$RUN_DIR/http-observer-activity.json" || return
+    http_request GET "/api/entity/$entity_id" '' '' 200 "$RUN_DIR/http-entity.json" || return
+    http_request GET /api/character "$user_a" '' 200 "$RUN_DIR/http-action-character.json" || return
+    http_request GET /api/character "$user_b" '' 200 "$RUN_DIR/http-observer-character.json" || return
+    jq -e --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" \
+        '.place.entity.id==$place and (.entity|length)==1 and .entity[0].id==$entity and .entity[0].name==$preview[0].consequence.name' \
+        "$RUN_DIR/http-observer-entity.json" >/dev/null || return
+    jq -e --arg activity "$activity_id" --arg entity "$entity_id" --arg place "$place_id" \
+        --slurpfile preview "$preview" --slurpfile action_character "$RUN_DIR/http-action-character.json" '
+        .place.entity.id==$place
+        and ([.activity[]|select(.operation=="submit_action")]|length)==1
+        and ([.activity[]|select(.id==$activity and .operation=="submit_action" and .prose==$preview[0].prose
+            and .actor_character.id==$action_character[0].entity.id
+            and .context_place.entity.id==$place
+            and any(.involved_entity[];.entity.id==$entity and .role=="subject")
+            and any(.involved_entity[];.entity.id==$place and .role=="location"))]|length)==1
+    ' "$RUN_DIR/http-observer-activity.json" >/dev/null || return
+    jq -e --arg entity "$entity_id" --arg user "$user_a" --slurpfile preview "$preview" '
+        .id==$entity and .introduced_by_user_id==$user
+        and .name==$preview[0].consequence.name and .description==$preview[0].consequence.description
+    ' "$RUN_DIR/http-entity.json" >/dev/null || return
+    jq -e --arg place "$place_id" '.current_place.entity.id==$place' "$RUN_DIR/http-action-character.json" >/dev/null || return
+    jq -e --arg place "$place_id" '.current_place.entity.id==$place' "$RUN_DIR/http-observer-character.json" >/dev/null
 }
 
 stop_server() {
@@ -716,29 +803,24 @@ stop_server() {
 
 stop_agent_watchdog() {
     if [[ -n "$AGENT_WATCHDOG_PID" ]]; then
-        if kill -0 "$AGENT_WATCHDOG_PID" 2>/dev/null; then
-            kill -TERM "$AGENT_WATCHDOG_PID" 2>/dev/null || true
-        fi
+        kill -TERM "$AGENT_WATCHDOG_PID" 2>/dev/null || true
         wait "$AGENT_WATCHDOG_PID" 2>/dev/null || true
     fi
     AGENT_WATCHDOG_PID=''
 }
 
 terminate_agent_group() {
-    local pgid="$1"
-    [[ -n "$pgid" ]] || return 0
-    kill -TERM -- "-$pgid" 2>/dev/null || true
+    [[ -n "$1" ]] || return 0
+    kill -TERM -- "-$1" 2>/dev/null || true
     sleep 0.1
-    kill -KILL -- "-$pgid" 2>/dev/null || true
+    kill -KILL -- "-$1" 2>/dev/null || true
 }
 
 stop_agent() {
-    local agent_pgid="$AGENT_PID"
+    local pgid="$AGENT_PID"
     stop_agent_watchdog
-    terminate_agent_group "$agent_pgid"
-    if [[ -n "$AGENT_PID" ]]; then
-        wait "$AGENT_PID" 2>/dev/null || true
-    fi
+    terminate_agent_group "$pgid"
+    [[ -z "$AGENT_PID" ]] || wait "$AGENT_PID" 2>/dev/null || true
     AGENT_PID=''
 }
 
@@ -746,25 +828,24 @@ cleanup_deployment() {
     local recovery
     stop_server
     if [[ $CLEANUP_REQUIRED -eq 1 ]]; then
-        if database_helper drop "$DATABASE_NAME" >"$RUN_DIR/database-drop.log" 2>&1; then
+        if database_helper drop "$DATABASE_NAME" "$OWNERSHIP_TOKEN" >"$RUN_DIR/database-drop.log" 2>&1; then
             CLEANUP_REQUIRED=0
-            manifest_set '.cleanup.status = "dropped" | .cleanup.recovery = null' || true
+            manifest_set '.cleanup.status="dropped" | .cleanup.recovery=null' || true
         else
-            recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME"
-            manifest_set '.cleanup.status = "failed" | .cleanup.recovery = $recovery' --arg recovery "$recovery" || true
-            fail "could not drop disposable database $DATABASE_NAME; recovery is recorded in $MANIFEST"
+            recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME $OWNERSHIP_TOKEN"
+            manifest_set '.cleanup.status="failed" | .cleanup.recovery=$recovery' --arg recovery "$recovery" || true
+            fail "could not drop disposable database $DATABASE_NAME; recovery is in $MANIFEST"
             return 1
         fi
-    elif [[ -n "$MANIFEST" ]]; then
-        manifest_set '.cleanup.status = "not_needed"' || true
+    else
+        manifest_set '.cleanup.status="not_needed"' || true
     fi
 }
 
 cleanup_local_directories() {
-    [[ -z "$ISOLATED_A" ]] || rmdir "$ISOLATED_A" 2>/dev/null || true
-    [[ -z "$ISOLATED_B" ]] || rmdir "$ISOLATED_B" 2>/dev/null || true
-    ISOLATED_A=''
-    ISOLATED_B=''
+    [[ -z "$ISOLATED_ACTION" ]] || rmdir "$ISOLATED_ACTION" 2>/dev/null || true
+    [[ -z "$ISOLATED_OBSERVER" ]] || rmdir "$ISOLATED_OBSERVER" 2>/dev/null || true
+    ISOLATED_ACTION=''; ISOLATED_OBSERVER=''
 }
 
 cleanup_all() {
@@ -772,11 +853,7 @@ cleanup_all() {
     [[ $CLEANUP_DONE -eq 0 ]] || return 0
     CLEANUP_DONE=1
     stop_agent
-    if [[ $CLEANUP_REQUIRED -eq 1 ]]; then
-        cleanup_deployment || status=1
-    else
-        stop_server
-    fi
+    if [[ $CLEANUP_REQUIRED -eq 1 ]]; then cleanup_deployment || status=1; else stop_server; fi
     cleanup_local_directories
     return "$status"
 }
@@ -786,7 +863,7 @@ on_exit() {
     trap - EXIT INT TERM HUP
     cleanup_all || status=1
     if [[ $status -ne 0 && -n "$MANIFEST" ]]; then
-        manifest_set 'if .run_status == "interrupted" then . else .run_status = "failed" end' || true
+        manifest_set 'if .run_status=="interrupted" then . else .run_status="failed" end' || true
     fi
     exit "$status"
 }
@@ -794,17 +871,13 @@ on_exit() {
 on_signal() {
     local signal="$1" status="$2"
     trap - INT TERM HUP
-    [[ -z "$MANIFEST" ]] || manifest_set '.run_status = "interrupted" | .interrupted_by = $signal' --arg signal "$signal" || true
+    [[ -z "$MANIFEST" ]] || manifest_set '.run_status="interrupted" | .interrupted_by=$signal' --arg signal "$signal" || true
     on_exit "$status"
 }
 
 run_playtest() {
-    local codex_bin marker entity_name entity_description user_a_json user_b_json user_a user_b
-    local character_a_name character_a_description character_b_name character_b_description
-    local place_name place_description character_a_json character_b_json character_a_id character_b_id
-    local place_json place_id activity_a_json activity_b_json
-    local a_exit b_exit failed=0 entity_id entity_json cleanup_failed=0
-
+    local codex_bin marker user_a_json user_b_json user_a user_b session_id revision
+    local phase1_exit phase2_exit phase3_exit observer_exit entity_id place_id cleanup_failed=0
     preflight || return 1
     codex_bin="$(resolve_codex_bin)" || return 1
     prepare_artifacts || return 1
@@ -813,140 +886,118 @@ run_playtest() {
     trap 'on_signal TERM 143' TERM
     trap 'on_signal HUP 129' HUP
     marker="$(<"$RUN_DIR/marker.txt")"
-    character_a_name="Founder Character $marker"
-    character_a_description="Disposable founder Character for MCP world-entry proof: $marker"
-    character_b_name="Joining Character $marker"
-    character_b_description="Disposable joining Character for MCP world-entry proof: $marker"
-    place_name="Entry Place $marker"
-    place_description="Disposable shared entry Place for MCP world-entry proof: $marker"
-    entity_name="Disposable Playtest Entity $marker"
-    entity_description="Technical cross-User MCP fixture in a disposable World: $marker"
+    write_initial_prompts "$marker" || return
+    start_deployment || return
+    verify_deployment || return
+    user_a_json="$(provision_user)" || fail 'failed to provision action User.' || return
+    user_b_json="$(provision_user)" || fail 'failed to provision observer User.' || return
+    user_a="$(jq -er '.id|select(type=="string")' <<<"$user_a_json")" || return
+    user_b="$(jq -er '.id|select(type=="string")' <<<"$user_b_json")" || return
+    [[ "$user_a" != "$user_b" ]] || fail 'provisioned Users are not distinct.' || return
+    printf '%s\n' "$user_a_json" >"$RUN_DIR/user-action.json"
+    printf '%s\n' "$user_b_json" >"$RUN_DIR/user-observer.json"
+    chmod 600 "$RUN_DIR/user-action.json" "$RUN_DIR/user-observer.json"
+    manifest_set '.provisioning.action_user=$a | .provisioning.observer_user=$b' --arg a "$user_a" --arg b "$user_b" || return
+    setup_world "$marker" "$user_a" "$user_b" || fail 'could not establish the two-Character disposable setup.' || return
+    prepare_evidence_files || return
 
-    start_deployment || return 1
-    verify_deployment || return 1
+    run_initial_action_agent "$codex_bin" "$user_a"; phase1_exit=$?
+    printf '%s\n' "$phase1_exit" >"$RUN_DIR/action-phase-1.exit-status"
+    [[ $phase1_exit -eq 0 ]] || fail "proposal phase exited $phase1_exit." || return
+    phase_one_is_valid "$RUN_DIR/action-phase-1.events.jsonl" "$RUN_DIR/action-phase-1.final.json" "$marker" \
+        || fail 'proposal phase did not prove grounded reads, exactly three proposals and zero mutation.' || return
+    session_id="$(session_id_from_events "$RUN_DIR/action-phase-1.events.jsonl")" || fail 'proposal phase did not expose one resumable session id.' || return
+    revision="$(jq -r '.place_revision' "$RUN_DIR/action-phase-1.final.json")"
+    manifest_set '.phases.proposals={status:"passed",session_id:$session}' --arg session "$session_id" || return
 
-    user_a_json="$(provision_user)" || fail 'failed to provision User A before the Agent phase.' || return
-    user_a="$(jq -er '.id | select(type == "string")' <<<"$user_a_json")" || fail 'User A provisioner returned malformed JSON.' || return
-    printf '%s\n' "$user_a_json" >"$RUN_DIR/user-a.json" || fail 'could not write User A evidence.' || return
-    manifest_set '.provisioning.user_a = $id' --arg id "$user_a" || return
+    write_phase_two_prompt "$marker" || return
+    run_resumed_action_agent "$codex_bin" "$user_a" "$session_id" "$RUN_DIR/action-phase-2.prompt.txt" \
+        "$PREVIEW_SCHEMA" "$RUN_DIR/action-phase-2.events.jsonl" "$RUN_DIR/action-phase-2.stderr.log" \
+        "$RUN_DIR/action-phase-2.final.json" "$ACTION_READ_TOOLS"; phase2_exit=$?
+    printf '%s\n' "$phase2_exit" >"$RUN_DIR/action-phase-2.exit-status"
+    [[ $phase2_exit -eq 0 ]] || fail "preview phase exited $phase2_exit." || return
+    preview_is_valid "$RUN_DIR/action-phase-2.events.jsonl" "$RUN_DIR/action-phase-2.final.json" "$marker" \
+        || fail 'preview phase did not retain one exact marker package with zero mutation.' || return
+    write_phase_three_prompt "$marker" "$RUN_DIR/action-phase-2.final.json" || return
+    manifest_set '.phases.preview={status:"passed"}' || return
 
-    user_b_json="$(provision_user)" || fail 'failed to provision User B before the Agent phase.' || return
-    user_b="$(jq -er '.id | select(type == "string")' <<<"$user_b_json")" || fail 'User B provisioner returned malformed JSON.' || return
-    printf '%s\n' "$user_b_json" >"$RUN_DIR/user-b.json" || fail 'could not write User B evidence.' || return
-    manifest_set '.provisioning.user_b = $id' --arg id "$user_b" || return
-    [[ "$user_a" != "$user_b" ]] || fail 'provisioning did not create two distinct Users.' || return
-    verify_provisioned_user "$user_a" || fail 'provisioned User A is not visible in the disposable World.' || return
-    verify_provisioned_user "$user_b" || fail 'provisioned User B is not visible in the disposable World.' || return
-    prepare_agent_evidence_files || fail 'could not prepare all Agent evidence files before the Agent phase.' || return
-
-    run_agent "$codex_bin" "$user_a" "$RUN_DIR/agent-a.prompt.txt" "$FOUND_SCHEMA" \
-        "$RUN_DIR/agent-a.events.jsonl" "$RUN_DIR/agent-a.stderr.log" "$RUN_DIR/agent-a.final.json" \
-        "$ISOLATED_A" "$AGENT_A_TOOLS"
-    a_exit=$?
-
-    run_agent "$codex_bin" "$user_b" "$RUN_DIR/agent-b.prompt.txt" "$JOIN_SCHEMA" \
-        "$RUN_DIR/agent-b.events.jsonl" "$RUN_DIR/agent-b.stderr.log" "$RUN_DIR/agent-b.final.json" \
-        "$ISOLATED_B" "$AGENT_B_TOOLS"
-    b_exit=$?
-    printf '%s\n' "$a_exit" >"$RUN_DIR/agent-a.exit-status" || fail 'could not write Agent A exit evidence.' || return
-    printf '%s\n' "$b_exit" >"$RUN_DIR/agent-b.exit-status" || fail 'could not write Agent B exit evidence.' || return
-    manifest_set '.agents.a = {exit_status: $exit}' --argjson exit "$a_exit" || return
-    manifest_set '.agents.b = {exit_status: $exit}' --argjson exit "$b_exit" || return
-    cleanup_local_directories
-
-    [[ $a_exit -eq 0 ]] || { fail "Agent A exited $a_exit (a deadline usually exits 142)."; failed=1; }
-    [[ $b_exit -eq 0 ]] || { fail "Agent B exited $b_exit (a deadline usually exits 142)."; failed=1; }
-    events_are_clean "$RUN_DIR/agent-a.events.jsonl" 1 || { fail 'Agent A JSONL contains an unexpected error or failed-call count.'; failed=1; }
-    events_are_clean "$RUN_DIR/agent-b.events.jsonl" 0 || { fail 'Agent B JSONL contains an error or is malformed.'; failed=1; }
-
-    entity_id="$(find_fixture_entity_id "$entity_name")" || { fail 'validation did not find exactly one fixture Entity on the first list page.'; failed=1; entity_id=''; }
-    character_a_json="$(curl_json -H "Aicadia-User-Id: $user_a" "$BASE_URL/api/character")" \
-        || { fail 'validation could not read Character A.'; failed=1; character_a_json='{}'; }
-    character_b_json="$(curl_json -H "Aicadia-User-Id: $user_b" "$BASE_URL/api/character")" \
-        || { fail 'validation could not read Character B.'; failed=1; character_b_json='{}'; }
-    activity_a_json="$(curl_json -H "Aicadia-User-Id: $user_a" "$BASE_URL/api/activity?limit=25")" \
-        || { fail 'validation could not read Activity A.'; failed=1; activity_a_json='{}'; }
-    activity_b_json="$(curl_json -H "Aicadia-User-Id: $user_b" "$BASE_URL/api/activity?limit=25")" \
-        || { fail 'validation could not read Activity B.'; failed=1; activity_b_json='{}'; }
-    character_a_id="$(jq -er '.entity.id | select(type == "string")' <<<"$character_a_json")" \
-        || { fail 'Character A response has no Entity id.'; failed=1; character_a_id=''; }
-    character_b_id="$(jq -er '.entity.id | select(type == "string")' <<<"$character_b_json")" \
-        || { fail 'Character B response has no Entity id.'; failed=1; character_b_id=''; }
-    place_json="$(jq -ec '.current_place | select(type == "object")' <<<"$character_a_json")" \
-        || { fail 'Character A is not placed.'; failed=1; place_json='{}'; }
-    place_id="$(jq -er '.entity.id | select(type == "string")' <<<"$place_json")" \
-        || { fail 'Character A Place has no Entity id.'; failed=1; place_id=''; }
-
-    jq -e --arg user "$user_a" --arg name "$character_a_name" --arg description "$character_a_description" \
-        --arg place "$place_id" '
-        .owner_user_id == $user
-        and .entity.name == $name and .entity.description == $description
-        and .current_place.entity.id == $place and .current_place.is_entry == true
-    ' <<<"$character_a_json" >/dev/null || { fail 'stored Character A does not match the founded placement.'; failed=1; }
-    jq -e --arg user "$user_b" --arg name "$character_b_name" --arg description "$character_b_description" \
-        --arg place "$place_id" '
-        .owner_user_id == $user
-        and .entity.name == $name and .entity.description == $description
-        and .current_place.entity.id == $place and .current_place.is_entry == true
-    ' <<<"$character_b_json" >/dev/null || { fail 'stored Character B did not join Character A at the same Place.'; failed=1; }
-    jq -e --arg place "$place_id" --arg name "$place_name" --arg description "$place_description" '
-        .entity.id == $place and .entity.name == $name and .entity.description == $description and .is_entry == true
-    ' <<<"$place_json" >/dev/null || { fail 'stored entry Place does not match the exact genesis fixture.'; failed=1; }
-    jq -e '[.activity[].operation] == ["create_entity", "enter_world", "create_entry_place", "create_character"] and .next == null' \
-        <<<"$activity_a_json" >/dev/null || { fail 'stored Activity A does not contain the exact accepted action history.'; failed=1; }
-    jq -e '[.activity[].operation] == ["enter_world", "create_character"] and .next == null' \
-        <<<"$activity_b_json" >/dev/null || { fail 'stored Activity B does not contain the exact accepted action history.'; failed=1; }
-
-    if [[ -n "$entity_id" ]]; then
-        entity_json="$(curl_json "$BASE_URL/api/entity/$entity_id")" || { fail 'validation could not read the fixture Entity.'; failed=1; entity_json='{}'; }
-        jq -e --arg id "$entity_id" --arg user "$user_a" --arg name "$entity_name" --arg description "$entity_description" '
-            .id == $id and .introduced_by_user_id == $user and .name == $name and .description == $description
-        ' <<<"$entity_json" >/dev/null || { fail 'stored Entity does not match Agent A, User A, and exact fixture content.'; failed=1; }
-        agent_a_events_match "$RUN_DIR/agent-a.events.jsonl" \
-            "$character_a_name" "$character_a_description" "$place_name" "$place_description" \
-            "$entity_name" "$entity_description" "$user_a" \
-            || { fail 'Agent A JSONL does not prove the exact genesis, entry, Entity and Activity flow.'; failed=1; }
-        agent_b_events_match "$RUN_DIR/agent-b.events.jsonl" "$entity_json" "$user_b" "$place_json" \
-            "$character_b_name" "$character_b_description" \
-            || { fail 'Agent B JSONL does not prove the exact shared Place, Activity and Entity observation flow.'; failed=1; }
-        found_final_is_valid "$RUN_DIR/agent-a.final.json" "$marker" "$character_a_id" "$place_id" "$entity_id" \
-            || { fail 'Agent A final artifact does not match exact stored World and Activity state.'; failed=1; }
-        joined_final_is_valid "$RUN_DIR/agent-b.final.json" "$marker" "$user_b" "$character_b_id" "$place_id" "$entity_id" \
-            || { fail 'Agent B final artifact does not match exact shared World and Activity state.'; failed=1; }
+    run_resumed_action_agent "$codex_bin" "$user_a" "$session_id" "$RUN_DIR/action-phase-3.prompt.txt" \
+        "$COMMIT_SCHEMA" "$RUN_DIR/action-phase-3.events.jsonl" "$RUN_DIR/action-phase-3.stderr.log" \
+        "$RUN_DIR/action-phase-3.final.json" "$ACTION_COMMIT_TOOLS"; phase3_exit=$?
+    printf '%s\n' "$phase3_exit" >"$RUN_DIR/action-phase-3.exit-status"
+    if [[ $phase3_exit -ne 0 ]]; then
+        manifest_set '.phases.commit={status:"failed",reason:"agent_exit",exit_status:$exit}' --argjson exit "$phase3_exit" || return
+        fail "commit phase exited $phase3_exit."
+        return
     fi
-
-    if [[ $failed -eq 0 ]]; then
-        manifest_set '.validation = {status: "passed", character_a_id: $character_a, character_b_id: $character_b, place_id: $place, entity_id: $entity}' \
-            --arg character_a "$character_a_id" --arg character_b "$character_b_id" \
-            --arg place "$place_id" --arg entity "$entity_id" || return
-    else
-        manifest_set '.validation = {status: "failed"}' || return
+    if ! commit_is_valid "$RUN_DIR/action-phase-3.events.jsonl" "$RUN_DIR/action-phase-3.final.json" \
+        "$RUN_DIR/action-phase-2.final.json" "$marker" "$revision"; then
+        manifest_set '.phases.commit={status:"failed",reason:"validation"}' || return
+        fail 'commit phase did not prove exactly one confirmed submit_action.'
+        return
     fi
+    entity_id="$(jq -r '.entity_id' "$RUN_DIR/action-phase-3.final.json")"
+    place_id="$(jq -r '.place_id' "$RUN_DIR/action-phase-3.final.json")"
+    manifest_set '.phases.commit={status:"passed",entity_id:$entity,place_id:$place}' --arg entity "$entity_id" --arg place "$place_id" || return
+
+    if ! validate_authoritative_http "$user_a" "$user_b" "$RUN_DIR/action-phase-2.final.json" "$RUN_DIR/action-phase-3.final.json"; then
+        manifest_set '.phases.http={status:"failed"} | .validation={status:"failed",authoritative_http:false}' || return
+        fail 'independent HTTP validation disagreed with committed World state.'
+        return
+    fi
+    manifest_set '.phases.http={status:"passed"} | .validation={status:"passed",authoritative_http:true}' || return
+
+    run_observer_agent "$codex_bin" "$user_b"; observer_exit=$?
+    printf '%s\n' "$observer_exit" >"$RUN_DIR/observer.exit-status"
+    if [[ $observer_exit -ne 0 ]]; then
+        manifest_set '.phases.observer={status:"failed",reason:"agent_exit",exit_status:$exit}' --argjson exit "$observer_exit" || return
+        fail "observer phase exited $observer_exit."
+        return
+    fi
+    if ! observer_is_valid "$RUN_DIR/observer.events.jsonl" "$RUN_DIR/observer.final.json" "$marker" \
+        "$RUN_DIR/action-phase-2.final.json" "$entity_id" "$place_id"; then
+        manifest_set '.phases.observer={status:"failed",reason:"validation"}' || return
+        fail 'observer did not independently prove the marker and canonical prose.'
+        return
+    fi
+    manifest_set '.phases.observer={status:"passed"}' || return
     cleanup_deployment || cleanup_failed=1
-    [[ $cleanup_failed -eq 0 ]] || return 1
-    if [[ $failed -ne 0 ]]; then
-        fail "playtest failed after exactly two Agent attempts; inspect $RUN_DIR"
+    if [[ $cleanup_failed -ne 0 ]]; then
+        cleanup_local_directories
+        CLEANUP_DONE=1
         return 1
     fi
-    manifest_set '.run_status = "completed"' || return
-    printf 'Playtest passed with two Characters at one shared entry Place, personal Activity proof and cross-User Entity observation in a disposable World, which was dropped. Artifacts: %s\n' "$RUN_DIR"
+    if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
+        manifest_set '.run_status="fake_completed"' || return
+    else
+        manifest_set '.run_status="completed"' || return
+    fi
+    cleanup_local_directories
+    CLEANUP_DONE=1
+    if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
+        printf 'Fake controller test passed; this is not live Agent evidence. Artifacts: %s\n' "$RUN_DIR"
+    else
+        printf 'Action playtest passed: one resumed Agent produced three proposals, retained one confirmed package and submitted exactly once; an independent Agent and HTTP observed it; disposable World dropped. Artifacts: %s\n' "$RUN_DIR"
+    fi
 }
 
 main() {
     case "$#:${1-}" in
-        1:preflight)
+        1:preflight) preflight ;;
+        2:run)
+            [[ "$2" == --confirm-token-spend ]] || { fail 'usage: tools/agent-playtest run --confirm-token-spend'; return 1; }
+            run_playtest ;;
+        2:test-internal-preflight)
+            [[ "$2" == --confirm-fake-controller-test ]] || return 1
+            INTERNAL_TEST_MODE=1
             preflight
             ;;
-        2:run)
-            [[ "$2" == '--confirm-token-spend' ]] || {
-                fail 'usage: tools/agent-playtest run --confirm-token-spend'
-                return 1
-            }
+        2:test-internal-run)
+            [[ "$2" == --confirm-fake-controller-test ]] || return 1
+            INTERNAL_TEST_MODE=1
             run_playtest
             ;;
-        *)
-            fail 'usage: tools/agent-playtest preflight | tools/agent-playtest run --confirm-token-spend'
-            ;;
+        *) fail 'usage: tools/agent-playtest preflight | tools/agent-playtest run --confirm-token-spend' ;;
     esac
 }
 

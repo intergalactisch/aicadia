@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly DATABASE_NAME="${AICADIA_DATABASE_NAME:-aicadia_local}"
+readonly PORT="${AICADIA_PORT:-3000}"
+readonly DATABASE_URL="${DATABASE_URL:-postgres://localhost/postgres}"
+readonly BASE_URL="http://127.0.0.1:${PORT}"
+readonly MCP_URL="${BASE_URL}/mcp"
+OPEN_LEDGER=1
+SERVER_PID=''
+SERVER_STDOUT=''
+SERVER_STDERR=''
+LOCK_HELD=0
+
+fail() {
+    printf 'aicadia-local: %s\n' "$*" >&2
+    return 1
+}
+
+usage() {
+    printf 'Usage: ./tools/aicadia-local [--no-open]\n'
+}
+
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+        kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    [[ -z "$SERVER_STDOUT" ]] || rm -f "$SERVER_STDOUT"
+    [[ -z "$SERVER_STDERR" ]] || rm -f "$SERVER_STDERR"
+    if (( LOCK_HELD == 1 )); then
+        rmdir "$LOCK_DIR" 2>/dev/null || true
+    fi
+    exit "$status"
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+case "${1:-}" in
+    '') ;;
+    --no-open) OPEN_LEDGER=0 ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; fail "unknown argument: $1"; exit 2 ;;
+esac
+[[ $# -le 1 ]] || { usage >&2; fail 'only one option is accepted'; exit 2; }
+
+if [[ -n "${AICADIA_LOCAL_TEST_STATE_DIR:-}" ]]; then
+    [[ "${AICADIA_LOCAL_TESTING:-0}" == 1 ]] \
+        || { fail 'AICADIA_LOCAL_TEST_STATE_DIR is available only when AICADIA_LOCAL_TESTING=1'; exit 1; }
+    [[ "$AICADIA_LOCAL_TEST_STATE_DIR" == /* ]] \
+        || { fail 'AICADIA_LOCAL_TEST_STATE_DIR must be an absolute path'; exit 1; }
+    STATE_DIR="$AICADIA_LOCAL_TEST_STATE_DIR"
+else
+    STATE_DIR="$REPO_DIR/.aicadia-local"
+fi
+readonly STATE_DIR
+readonly PROFILE="$STATE_DIR/profile.json"
+readonly LOCK_DIR="$STATE_DIR/launcher.lock"
+
+[[ "$DATABASE_NAME" =~ ^[a-z][a-z0-9_]{0,62}$ ]] \
+    || { fail 'AICADIA_DATABASE_NAME must start with a lowercase letter and contain only lowercase letters, digits or underscores (63 bytes maximum)'; exit 1; }
+[[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) \
+    || { fail 'AICADIA_PORT must be an integer from 1 through 65535'; exit 1; }
+[[ -n "$DATABASE_URL" ]] || { fail 'DATABASE_URL must not be empty'; exit 1; }
+
+dependencies=(cargo psql createdb curl jq lsof)
+(( OPEN_LEDGER == 0 )) || dependencies+=(open)
+for dependency in "${dependencies[@]}"; do
+    command -v "$dependency" >/dev/null 2>&1 \
+        || { fail "required program is unavailable: $dependency"; exit 1; }
+done
+
+if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | grep -q .; then
+    fail "loopback port $PORT is already occupied"
+    exit 1
+fi
+
+umask 077
+[[ ! -e "$STATE_DIR" || ( -d "$STATE_DIR" && ! -L "$STATE_DIR" ) ]] \
+    || { fail "$STATE_DIR must be a real directory, not a file or symbolic link"; exit 1; }
+mkdir -p "$STATE_DIR"
+chmod 700 "$STATE_DIR"
+if mkdir "$LOCK_DIR" 2>/dev/null; then
+    LOCK_HELD=1
+    chmod 700 "$LOCK_DIR"
+else
+    fail "another Aicadia local launcher is already active for $STATE_DIR"
+    exit 1
+fi
+
+profile_user_id=''
+if [[ -e "$PROFILE" ]]; then
+    [[ -f "$PROFILE" && ! -L "$PROFILE" ]] \
+        || { fail "$PROFILE must be a regular file"; exit 1; }
+    chmod 600 "$PROFILE"
+    jq -e '
+        type == "object"
+        and (keys == ["database_name", "user_id", "version"])
+        and .version == 1
+        and (.database_name | type == "string")
+        and (.user_id | type == "string")
+    ' "$PROFILE" >/dev/null 2>&1 \
+        || { fail "$PROFILE is corrupt or has an unsupported version"; exit 1; }
+    profile_database_name="$(jq -r '.database_name' "$PROFILE")"
+    [[ "$profile_database_name" == "$DATABASE_NAME" ]] \
+        || { fail "profile database $profile_database_name does not match selected database $DATABASE_NAME"; exit 1; }
+    profile_user_id="$(jq -r '.user_id' "$PROFILE")"
+    [[ "$profile_user_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]] \
+        || { fail "$PROFILE contains an invalid User UUID"; exit 1; }
+fi
+
+database_exists="$(psql "$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+    --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'" 2>/dev/null)" \
+    || { fail 'cannot connect to PostgreSQL with DATABASE_URL'; exit 1; }
+case "$database_exists" in
+    1)
+        [[ -n "$profile_user_id" ]] \
+            || { fail "database $DATABASE_NAME already exists but $PROFILE is missing; refusing to provision another User"; exit 1; }
+        ;;
+    0)
+        [[ -z "$profile_user_id" ]] \
+            || { fail "profile expects missing database $DATABASE_NAME"; exit 1; }
+        if ! createdb --maintenance-db="$DATABASE_URL" --encoding=UTF8 --template=template0 "$DATABASE_NAME"; then
+            database_exists="$(psql "$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+                --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'" 2>/dev/null)" \
+                || { fail "could not verify database $DATABASE_NAME after a creation race"; exit 1; }
+            if [[ "$database_exists" == 1 ]]; then
+                fail "database $DATABASE_NAME appeared without a matching profile; refusing to provision another User"
+            else
+                fail "could not safely create database $DATABASE_NAME"
+            fi
+            exit 1
+        fi
+        ;;
+    *) fail 'PostgreSQL returned an unexpected database lookup result'; exit 1 ;;
+esac
+
+database_identity="$(psql "$DATABASE_URL" --no-psqlrc --quiet --tuples-only --no-align \
+    --command "\\connect \"$DATABASE_NAME\"" --command 'SELECT current_database()' 2>/dev/null)" \
+    || { fail "cannot connect to selected database $DATABASE_NAME"; exit 1; }
+[[ "$database_identity" == "$DATABASE_NAME" ]] \
+    || { fail "unexpected database identity: $database_identity"; exit 1; }
+
+(cd "$REPO_DIR" && cargo build --quiet --bin aicadia --bin aicadia-provision-user) \
+    || { fail 'could not build the Aicadia server and User provisioner'; exit 1; }
+
+SERVER_STDOUT="$(mktemp "$STATE_DIR/server.stdout.XXXXXX")"
+SERVER_STDERR="$(mktemp "$STATE_DIR/server.stderr.XXXXXX")"
+env DATABASE_URL="$DATABASE_URL" AICADIA_DATABASE_NAME="$DATABASE_NAME" AICADIA_PORT="$PORT" \
+    "$REPO_DIR/target/debug/aicadia" >"$SERVER_STDOUT" 2>"$SERVER_STDERR" &
+SERVER_PID=$!
+
+ready=''
+for _attempt in $(seq 1 200); do
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+        wait "$SERVER_PID" 2>/dev/null || true
+        cat "$SERVER_STDERR" >&2
+        fail 'server exited before its ready event'
+        exit 1
+    fi
+    ready="$(jq -c --arg address "127.0.0.1:$PORT" \
+        'select(.event == "server_ready" and .address == $address)' "$SERVER_STDOUT" 2>/dev/null | tail -1)"
+    [[ -z "$ready" ]] || break
+    sleep 0.1
+done
+if [[ -z "$ready" ]]; then
+    cat "$SERVER_STDERR" >&2
+    fail 'server did not become ready within 20 seconds'
+    exit 1
+fi
+
+if [[ -z "$profile_user_id" ]]; then
+    provisioned="$(cd "$REPO_DIR" && env DATABASE_URL="$DATABASE_URL" \
+        AICADIA_DATABASE_NAME="$DATABASE_NAME" "$REPO_DIR/target/debug/aicadia-provision-user")" \
+        || { fail 'User provisioning failed'; exit 1; }
+    profile_user_id="$(jq -er '.id | select(type == "string")' <<<"$provisioned" 2>/dev/null)" \
+        || { fail 'User provisioner returned an invalid result'; exit 1; }
+    [[ "$profile_user_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]] \
+        || { fail 'User provisioner returned an invalid UUID'; exit 1; }
+    profile_tmp="$(mktemp "$STATE_DIR/profile.json.XXXXXX")"
+    jq -n --arg database_name "$DATABASE_NAME" --arg user_id "$profile_user_id" \
+        '{version: 1, database_name: $database_name, user_id: $user_id}' >"$profile_tmp"
+    chmod 600 "$profile_tmp"
+    mv -f "$profile_tmp" "$PROFILE"
+fi
+
+user_response="$(mktemp "$STATE_DIR/user.response.XXXXXX")"
+http_status="$(curl --silent --show-error --connect-timeout 2 --max-time 10 \
+    --output "$user_response" --write-out '%{http_code}' \
+    --header "Aicadia-User-Id: $profile_user_id" "$BASE_URL/api/user")" \
+    || { fail 'could not verify the profiled User'; exit 1; }
+if [[ "$http_status" != 200 ]] \
+    || ! jq -e --arg id "$profile_user_id" '.id == $id' "$user_response" >/dev/null 2>&1; then
+    fail "profiled User verification failed with HTTP $http_status"
+    exit 1
+fi
+rm -f "$user_response"
+
+readonly LEDGER_URL="${BASE_URL}/#user_id=${profile_user_id}"
+printf 'Ledger URL: %s\n' "$LEDGER_URL"
+printf 'MCP URL: %s\n' "$MCP_URL"
+printf "AICADIA_USER_ID='%s' AICADIA_PORT='%s' ./tools/aicadia-agent\n" "$profile_user_id" "$PORT"
+
+if (( OPEN_LEDGER == 1 )); then
+    open "$LEDGER_URL" || { fail 'could not open the local ledger'; exit 1; }
+fi
+
+if wait "$SERVER_PID"; then
+    SERVER_PID=''
+    fail 'server stopped unexpectedly'
+    exit 1
+else
+    server_status=$?
+    SERVER_PID=''
+    fail "server stopped unexpectedly with status $server_status"
+    exit 1
+fi

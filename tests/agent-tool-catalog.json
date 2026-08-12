@@ -1,12 +1,19 @@
 [
   {
-    "name": "get_world",
-    "description": "Get the identity of the one persistent shared Aicadia World. No User context is required.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get world"
+    },
+    "description": "Get the identity of the one persistent shared Aicadia World. No User context is required. Use the result privately to ground play; if its name matters, speak of the World by name without mentioning this tool or an identity record.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "type": "object"
     },
+    "name": "get_world",
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -20,23 +27,23 @@
         "name"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "Get world",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
-    "name": "get_user",
-    "description": "Get the durable User represented by this request's Aicadia-User-Id context. This tool does not accept a User id and does not authenticate the caller.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get user"
+    },
+    "description": "Get the durable User represented by this request's Aicadia-User-Id context. This tool accepts no User id and does not authenticate the caller. Use the result privately and never present its id, fields or provisioning record in player conversation.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "type": "object"
     },
+    "name": "get_user",
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -57,23 +64,23 @@
         "created_at"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "Get user",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get character"
+    },
+    "description": "Read the Character owned by the current User before onboarding or orientation. The embedded Entity id is also the Character id; there is no separate Character id. current_place is the complete current Place or null when the Character exists but has not entered the World. character_not_found is the only trigger for the three-candidate Character workshop. An existing Character must never be recreated. This tool derives the User from request context and accepts no ids. Render the result as the named person and the named location where they stand; express no current Place as a natural fact without category, field or null language.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "type": "object"
+    },
     "name": "get_character",
-    "description": "Get the Character role owned by the current User. The embedded Entity id is also the Character id; there is no separate Character id. current_place is the complete current Place or null when the Character exists but has not entered the World. This tool derives the User from Aicadia-User-Id and accepts no ids.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "type": "object"
-    },
     "outputSchema": {
       "$defs": {
         "EntityOutput": {
@@ -161,140 +168,17 @@
         "current_place"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "Get character",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
-    "name": "create_character",
-    "description": "Create the one Character role owned by the current User and its shared Entity. The embedded Entity id is also the Character id. Creation deliberately returns current_place null and does not enter the World; call enter_world separately when entry is wanted. This tool derives the User from Aicadia-User-Id and accepts no ids.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "description": "Description. The World trims it and accepts 1 through 4,000 Unicode characters.",
-          "maxLength": 4000,
-          "minLength": 1,
-          "type": "string"
-        },
-        "name": {
-          "description": "Display name. The World trims it and accepts 1 through 120 Unicode characters.",
-          "maxLength": 120,
-          "minLength": 1,
-          "type": "string"
-        }
-      },
-      "required": [
-        "name",
-        "description"
-      ],
-      "type": "object"
-    },
-    "outputSchema": {
-      "$defs": {
-        "EntityOutput": {
-          "additionalProperties": false,
-          "properties": {
-            "description": {
-              "description": "Current semantic description of this shared referent.",
-              "type": "string"
-            },
-            "id": {
-              "description": "Stable Entity id used by every concrete role of this referent.",
-              "format": "uuid",
-              "type": "string"
-            },
-            "introduced_at": {
-              "description": "Time at which this Entity was introduced into the shared World.",
-              "format": "date-time",
-              "type": "string"
-            },
-            "introduced_by_user_id": {
-              "description": "User whose accepted request first introduced this Entity.",
-              "format": "uuid",
-              "type": "string"
-            },
-            "name": {
-              "description": "Current semantic name of this shared referent.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "name",
-            "description",
-            "introduced_by_user_id",
-            "introduced_at"
-          ],
-          "type": "object"
-        },
-        "PlaceOutput": {
-          "additionalProperties": false,
-          "properties": {
-            "entity": {
-              "$ref": "#/$defs/EntityOutput",
-              "description": "Complete shared Entity that also has the Place role. Its Entity id is the\nPlace's only id."
-            },
-            "is_entry": {
-              "description": "True only for the one server-recognized World entry Place.",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "entity",
-            "is_entry"
-          ],
-          "type": "object"
-        }
-      },
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "properties": {
-        "current_place": {
-          "description": "Complete current Place. Null means the Character exists but has not entered\nthe World; create_character deliberately returns null.",
-          "oneOf": [
-            {
-              "$ref": "#/$defs/PlaceOutput"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "entity": {
-          "$ref": "#/$defs/EntityOutput",
-          "description": "Complete shared Entity that also has the Character role. Its Entity id is\nthe Character's only id."
-        },
-        "owner_user_id": {
-          "description": "User that exclusively owns this Character role.",
-          "format": "uuid",
-          "type": "string"
-        }
-      },
-      "required": [
-        "entity",
-        "owner_user_id",
-        "current_place"
-      ],
-      "type": "object"
-    },
     "annotations": {
-      "title": "Create character",
-      "readOnlyHint": false,
       "destructiveHint": false,
       "idempotentHint": false,
-      "openWorldHint": false
-    }
-  },
-  {
-    "name": "create_entry_place",
-    "description": "Establish World genesis by creating the one shared entry Place. Call this only for an existing unplaced Character after enter_world returns entry_place_not_found. Supply only semantic name and description; World derives the Place Entity id. Exactly one concurrent request wins. If entry_place_already_exists is returned, another Agent established genesis: call enter_world again. This never creates later Places.",
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Create character"
+    },
+    "description": "Create the current User's one unplaced Character Entity role. Use only after get_character returned character_not_found, private conversation offered exactly three complete candidates, the User selected or freely steered one, the complete final meaning was presented naturally in the User's language, and the User explicitly confirmed it. Selection alone is not confirmation. If the meaning changes, present and confirm it again. Privately submit the semantically identical English name and description once; never display raw English payload text, JSON, field labels or delivery work. The private workshop is not World state and cannot be proven by the server. Creation returns current_place null; use enter_world separately. This tool derives the User from request context and accepts no ids. After acceptance, speak only of the new person by name and say naturally that they have not entered the World yet.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -318,6 +202,129 @@
       ],
       "type": "object"
     },
+    "name": "create_character",
+    "outputSchema": {
+      "$defs": {
+        "EntityOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "Current semantic description of this shared referent.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Stable Entity id used by every concrete role of this referent.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "introduced_at": {
+              "description": "Time at which this Entity was introduced into the shared World.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "introduced_by_user_id": {
+              "description": "User whose accepted request first introduced this Entity.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of this shared referent.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "introduced_by_user_id",
+            "introduced_at"
+          ],
+          "type": "object"
+        },
+        "PlaceOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntityOutput",
+              "description": "Complete shared Entity that also has the Place role. Its Entity id is the\nPlace's only id."
+            },
+            "is_entry": {
+              "description": "True only for the one server-recognized World entry Place.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "entity",
+            "is_entry"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "current_place": {
+          "description": "Complete current Place. Null means the Character exists but has not entered\nthe World; create_character deliberately returns null.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PlaceOutput"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity": {
+          "$ref": "#/$defs/EntityOutput",
+          "description": "Complete shared Entity that also has the Character role. Its Entity id is\nthe Character's only id."
+        },
+        "owner_user_id": {
+          "description": "User that exclusively owns this Character role.",
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity",
+        "owner_user_id",
+        "current_place"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Create entry place"
+    },
+    "description": "Establish World genesis by creating the one shared entry Place. Use only for an existing unplaced Character after enter_world returns entry_place_not_found. Privately supply one semantic English name and description; World derives the Place Entity id. Exactly one concurrent request wins. If entry_place_already_exists is returned, another Agent established genesis: call enter_world again rather than proposing another Place. This never creates later Places. Render success as the named location becoming the beginning of the shared World, without creation-operation, record or id language.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "Description. The World trims it and accepts 1 through 4,000 Unicode characters.",
+          "maxLength": 4000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "name": {
+          "description": "Display name. The World trims it and accepts 1 through 120 Unicode characters.",
+          "maxLength": 120,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ],
+      "type": "object"
+    },
+    "name": "create_entry_place",
     "outputSchema": {
       "$defs": {
         "EntityOutput": {
@@ -374,23 +381,23 @@
         "is_entry"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "Create entry place",
-      "readOnlyHint": false,
-      "destructiveHint": false,
-      "idempotentHint": false,
-      "openWorldHint": false
     }
   },
   {
-    "name": "enter_world",
-    "description": "Enter the shared World with the current unplaced Character at the one server-derived entry Place. Call this directly after obtaining or creating a Character. If entry_place_not_found is returned, establish genesis with create_entry_place and retry. This accepts no ids or Place selector. Retrying successful entry returns the same complete Character and Place without another activity.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Enter world"
+    },
+    "description": "Enter the shared World with the current unplaced Character at the one World-derived entry Place. Use directly after obtaining or creating a Character whose current_place is null. If entry_place_not_found is returned, establish genesis with create_entry_place and retry. This accepts no ids or Place selector. Retrying successful entry returns the same complete Character and Place without another Activity. Render the result as the named person's arrival at the named location and keep entry operations and record categories private.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "type": "object"
     },
+    "name": "enter_world",
     "outputSchema": {
       "$defs": {
         "EntityOutput": {
@@ -478,18 +485,17 @@
         "current_place"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "Enter world",
-      "readOnlyHint": false,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
-    "name": "list_activity",
-    "description": "List immutable accepted World actions involving the current Character from newest to oldest. World derives the Character from User context. actor_character identifies who acted, context_place preserves where acceptance occurred, and involved_entity identifies each subject or destination. Null actor or Place means that context did not yet exist. limit defaults to 25 and must be 1 through 100; copy next unchanged into cursor for the following page.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "List activity"
+    },
+    "description": "List immutable accepted World actions involving the current Character from newest to oldest. World derives the Character from User context. actor_character identifies who acted, context_place preserves where acceptance occurred, and involved_entity identifies each subject, destination or location. Canonical submit_action prose is present only on that Activity. Null actor, Place or prose means that context or value did not exist. limit defaults to 25 and must be 1 through 100; copy next unchanged into cursor for the following page. Render relevant results as named events in natural time order; never expose Activity, role, field, null, cursor or pagination language.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -513,6 +519,7 @@
       },
       "type": "object"
     },
+    "name": "list_activity",
     "outputSchema": {
       "$defs": {
         "ActivityEntityReferenceOutput": {
@@ -524,7 +531,7 @@
             },
             "role": {
               "$ref": "#/$defs/ActivityEntityRoleOutput",
-              "description": "Server-owned meaning of this Entity in the action: subject is what the\naction introduced or acted on; destination is where entry placed the\nCharacter."
+              "description": "Server-owned meaning of this Entity in the action: subject is what the\naction introduced or acted on; destination is where entry placed the\nCharacter; location is where a subject was established."
             }
           },
           "required": [
@@ -536,7 +543,8 @@
         "ActivityEntityRoleOutput": {
           "enum": [
             "subject",
-            "destination"
+            "destination",
+            "location"
           ],
           "type": "string"
         },
@@ -545,7 +553,8 @@
             "create_character",
             "create_entity",
             "create_entry_place",
-            "enter_world"
+            "enter_world",
+            "submit_action"
           ],
           "type": "string"
         },
@@ -594,6 +603,13 @@
             "operation": {
               "$ref": "#/$defs/ActivityOperationOutput",
               "description": "Server-owned name of the accepted World operation."
+            },
+            "prose": {
+              "description": "Canonical readable text accepted with submit_action, or null for every\nother operation.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
@@ -602,6 +618,7 @@
             "actor_character",
             "context_place",
             "involved_entity",
+            "prose",
             "occurred_at"
           ],
           "type": "object"
@@ -667,18 +684,17 @@
         "next"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "List activity",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
-    "name": "list_entity",
-    "description": "List shared Entities from newest to oldest. limit defaults to 25 and must be 1 through 100. Copy next into cursor to read the following page; do not interpret the cursor.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "List entity"
+    },
+    "description": "List shared Entities from newest to oldest. limit defaults to 25 and must be 1 through 100. Copy next unchanged into cursor for the following page; do not interpret the cursor. Render only relevant results as named people, locations or things, never as Entity records, ids, cursors or pages.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -702,6 +718,7 @@
       },
       "type": "object"
     },
+    "name": "list_entity",
     "outputSchema": {
       "$defs": {
         "EntitySummaryOutput": {
@@ -747,18 +764,17 @@
         "next"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "List entity",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
-    "name": "get_entity",
-    "description": "Get one shared Entity by its stable Entity id.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get entity"
+    },
+    "description": "Get one shared Entity by its stable Entity id. Treat the returned typed fields as authoritative; its prose description does not grant unmodeled mechanics. Render the result as the named person, location or thing and state only established qualities and current affordances; never expose the Entity category, id or fields.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -774,6 +790,7 @@
       ],
       "type": "object"
     },
+    "name": "get_entity",
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -810,18 +827,17 @@
         "introduced_at"
       ],
       "type": "object"
-    },
-    "annotations": {
-      "title": "Get entity",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false
     }
   },
   {
-    "name": "create_entity",
-    "description": "Create one shared Entity for a stable referent introduced by the current User. Use this only when later participants must refer to the same subject. This does not assert fictional creation, ownership or discovery, and repeating it creates another Entity. Acceptance also appends create_entity Activity; its actor and context Place are present when the current Character exists and is placed.",
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Create entity"
+    },
+    "description": "Create one shared Entity for a stable referent the current User intends to introduce. Use only when later participants must refer to the same subject. This does not assert fictional creation, ownership or discovery, and repeating it creates another Entity. Acceptance also appends create_entity Activity; its actor and context Place are present when the current Character exists and is placed. Privately supply semantically identical English World content. After acceptance, describe the named person, location or thing as an established in-World fact without operation, record or field language, and imply no mechanics beyond returned typed state.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -845,6 +861,7 @@
       ],
       "type": "object"
     },
+    "name": "create_entity",
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -881,13 +898,708 @@
         "introduced_at"
       ],
       "type": "object"
-    },
+    }
+  },
+  {
     "annotations": {
-      "title": "Create entity",
-      "readOnlyHint": false,
       "destructiveHint": false,
-      "idempotentHint": false,
-      "openWorldHint": false
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "List entity at current place"
+    },
+    "description": "List Entities explicitly placed at the exact current Place derived from the current User's entered Character. Use this to ground orientation and action proposals. The response includes the complete Place and its opaque place_revision. limit defaults to 25 and must be 1 through 100; copy next unchanged into cursor for the following page. This accepts no User, Character or Place ids and does not imply distance, visibility, ownership or a neighborhood. Render the Place by name and its relevant contents as named people or things; keep category, field, revision, cursor and pagination details private.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "default": null,
+          "description": "Opaque cursor returned as `next` by a previous exact-Place Entity page.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit": {
+          "default": 25,
+          "description": "Page size. Defaults to 25. The World accepts values from 1 through 100.",
+          "format": "int64",
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_entity_at_current_place",
+    "outputSchema": {
+      "$defs": {
+        "EntityOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "Current semantic description of this shared referent.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Stable Entity id used by every concrete role of this referent.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "introduced_at": {
+              "description": "Time at which this Entity was introduced into the shared World.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "introduced_by_user_id": {
+              "description": "User whose accepted request first introduced this Entity.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of this shared referent.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "introduced_by_user_id",
+            "introduced_at"
+          ],
+          "type": "object"
+        },
+        "EntitySummaryOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Stable Entity id, including when the Entity also has a Character or Place\nrole.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of the Entity.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "PlaceOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntityOutput",
+              "description": "Complete shared Entity that also has the Place role. Its Entity id is the\nPlace's only id."
+            },
+            "is_entry": {
+              "description": "True only for the one server-recognized World entry Place.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "entity",
+            "is_entry"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "entity": {
+          "description": "Entity summaries explicitly placed at this exact Place.",
+          "items": {
+            "$ref": "#/$defs/EntitySummaryOutput"
+          },
+          "type": "array"
+        },
+        "next": {
+          "description": "Opaque cursor for the following page, or null when no following page exists.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "place": {
+          "$ref": "#/$defs/PlaceOutput",
+          "description": "Complete exact current Place derived from the current Character."
+        },
+        "place_revision": {
+          "description": "Opaque strong revision for this exact Place representation. Copy it\nunchanged into submit_action.expected_place_revision.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "place",
+        "place_revision",
+        "entity",
+        "next"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "List activity at current place"
+    },
+    "description": "List canonical Activity at or involving the exact current Place derived from the current User's entered Character, newest first. Use this to ground orientation and action proposals. Activity includes immutable submit_action prose when present. The response includes the complete Place and its opaque place_revision. limit defaults to 25 and must be 1 through 100; copy next unchanged into cursor for the following page. This accepts no User, Character or Place ids. Typed roles and consequences are authoritative; prose adds no unmodeled state. Render relevant results as events involving named people, locations and things; keep Activity, roles, fields, nulls, revisions, cursors and pagination private.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "default": null,
+          "description": "Opaque cursor returned as `next` by a previous exact-Place Activity page.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit": {
+          "default": 25,
+          "description": "Page size. Defaults to 25. The World accepts values from 1 through 100.",
+          "format": "int64",
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_activity_at_current_place",
+    "outputSchema": {
+      "$defs": {
+        "ActivityEntityReferenceOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntitySummaryOutput",
+              "description": "Shared Entity involved in the accepted action."
+            },
+            "role": {
+              "$ref": "#/$defs/ActivityEntityRoleOutput",
+              "description": "Server-owned meaning of this Entity in the action: subject is what the\naction introduced or acted on; destination is where entry placed the\nCharacter; location is where a subject was established."
+            }
+          },
+          "required": [
+            "entity",
+            "role"
+          ],
+          "type": "object"
+        },
+        "ActivityEntityRoleOutput": {
+          "enum": [
+            "subject",
+            "destination",
+            "location"
+          ],
+          "type": "string"
+        },
+        "ActivityOperationOutput": {
+          "enum": [
+            "create_character",
+            "create_entity",
+            "create_entry_place",
+            "enter_world",
+            "submit_action"
+          ],
+          "type": "string"
+        },
+        "ActivityOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "actor_character": {
+              "description": "Character that performed the action in the World, or null when no Character\nactor existed yet. This is an Entity summary because Character is an Entity\nrole.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/EntitySummaryOutput"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "context_place": {
+              "description": "Place at which World accepted the action, or null when the Character was\nunplaced or no Character actor existed. This historical context does not\nchange when the Character later moves.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/PlaceSummaryOutput"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "description": "Stable id of this immutable accepted-action record.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "involved_entity": {
+              "description": "Shared Entities linked to the action with explicit server-owned roles.",
+              "items": {
+                "$ref": "#/$defs/ActivityEntityReferenceOutput"
+              },
+              "type": "array"
+            },
+            "occurred_at": {
+              "description": "Time at which World accepted this action.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "operation": {
+              "$ref": "#/$defs/ActivityOperationOutput",
+              "description": "Server-owned name of the accepted World operation."
+            },
+            "prose": {
+              "description": "Canonical readable text accepted with submit_action, or null for every\nother operation.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "operation",
+            "actor_character",
+            "context_place",
+            "involved_entity",
+            "prose",
+            "occurred_at"
+          ],
+          "type": "object"
+        },
+        "EntityOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "Current semantic description of this shared referent.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Stable Entity id used by every concrete role of this referent.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "introduced_at": {
+              "description": "Time at which this Entity was introduced into the shared World.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "introduced_by_user_id": {
+              "description": "User whose accepted request first introduced this Entity.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of this shared referent.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "introduced_by_user_id",
+            "introduced_at"
+          ],
+          "type": "object"
+        },
+        "EntitySummaryOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Stable Entity id, including when the Entity also has a Character or Place\nrole.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of the Entity.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "PlaceOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntityOutput",
+              "description": "Complete shared Entity that also has the Place role. Its Entity id is the\nPlace's only id."
+            },
+            "is_entry": {
+              "description": "True only for the one server-recognized World entry Place.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "entity",
+            "is_entry"
+          ],
+          "type": "object"
+        },
+        "PlaceSummaryOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntitySummaryOutput",
+              "description": "Shared Entity summary for this Place; the Entity id is also the Place id."
+            },
+            "is_entry": {
+              "description": "True only for the one server-recognized World entry Place.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "entity",
+            "is_entry"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "activity": {
+          "description": "Canonical Activity at or involving this exact Place, newest first.",
+          "items": {
+            "$ref": "#/$defs/ActivityOutput"
+          },
+          "type": "array"
+        },
+        "next": {
+          "description": "Opaque cursor for the following page, or null when no following page exists.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "place": {
+          "$ref": "#/$defs/PlaceOutput",
+          "description": "Complete exact current Place derived from the current Character."
+        },
+        "place_revision": {
+          "description": "Opaque strong revision for this exact Place representation. Pages used to\nground one action must agree on this value.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "place",
+        "place_revision",
+        "activity",
+        "next"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Submit action"
+    },
+    "description": "Ask World to atomically accept one previously grounded and explicitly confirmed action at the derived current Place. Before calling, privately use separate get_world, get_character, list_entity_at_current_place and list_activity_at_current_place reads with agreeing place_revision values; offer exactly three grounded directions; and accept selection and free steering. Then present the complete intended action as an in-World passage in the User's language, including the full meaning of the one introduce_entity name and description, and obtain explicit confirmation of that complete change. Selection alone is not confirmation. Privately submit semantically identical English prose, name and description without displaying raw English transport text or payload labels. Call exactly once with a fresh request_id and unchanged observed place_revision; supply no User, Character, Entity or Place id. Retry only uncertain delivery with the same id and byte-equivalent input. On place_revision_conflict, do not mutate automatically: re-read, explain naturally that the situation changed and reconfirm a newly grounded change with a new request_id. After acceptance, narrate the event and introduced subject by name without exposing the operation, consequence type, records, ids or delivery details.",
+    "inputSchema": {
+      "$defs": {
+        "ActionConsequenceInput": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "description": "Introduce one new Entity and establish it at the derived current Place.",
+              "properties": {
+                "description": {
+                  "description": "Description. World trims it and accepts 1 through 4,000 Unicode characters.",
+                  "maxLength": 4000,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Display name. World trims it and accepts 1 through 120 Unicode characters.",
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": {
+                  "const": "introduce_entity",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "name",
+                "description"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "consequence": {
+          "$ref": "#/$defs/ActionConsequenceInput",
+          "description": "The one closed first-slice consequence."
+        },
+        "expected_place_revision": {
+          "description": "Opaque exact-Place revision copied unchanged from a grounded Place read.",
+          "type": "string"
+        },
+        "prose": {
+          "description": "Exact canonical English prose previewed and explicitly confirmed by the User.",
+          "maxLength": 4000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "request_id": {
+          "description": "Agent-generated UUID for this one intended action. Reuse only for an\nuncertain delivery retry of byte-equivalent semantic input.",
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "expected_place_revision",
+        "prose",
+        "consequence"
+      ],
+      "type": "object"
+    },
+    "name": "submit_action",
+    "outputSchema": {
+      "$defs": {
+        "ActivityEntityReferenceOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntitySummaryOutput",
+              "description": "Shared Entity involved in the accepted action."
+            },
+            "role": {
+              "$ref": "#/$defs/ActivityEntityRoleOutput",
+              "description": "Server-owned meaning of this Entity in the action: subject is what the\naction introduced or acted on; destination is where entry placed the\nCharacter; location is where a subject was established."
+            }
+          },
+          "required": [
+            "entity",
+            "role"
+          ],
+          "type": "object"
+        },
+        "ActivityEntityRoleOutput": {
+          "enum": [
+            "subject",
+            "destination",
+            "location"
+          ],
+          "type": "string"
+        },
+        "ActivityOperationOutput": {
+          "enum": [
+            "create_character",
+            "create_entity",
+            "create_entry_place",
+            "enter_world",
+            "submit_action"
+          ],
+          "type": "string"
+        },
+        "ActivityOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "actor_character": {
+              "description": "Character that performed the action in the World, or null when no Character\nactor existed yet. This is an Entity summary because Character is an Entity\nrole.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/EntitySummaryOutput"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "context_place": {
+              "description": "Place at which World accepted the action, or null when the Character was\nunplaced or no Character actor existed. This historical context does not\nchange when the Character later moves.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/PlaceSummaryOutput"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "description": "Stable id of this immutable accepted-action record.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "involved_entity": {
+              "description": "Shared Entities linked to the action with explicit server-owned roles.",
+              "items": {
+                "$ref": "#/$defs/ActivityEntityReferenceOutput"
+              },
+              "type": "array"
+            },
+            "occurred_at": {
+              "description": "Time at which World accepted this action.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "operation": {
+              "$ref": "#/$defs/ActivityOperationOutput",
+              "description": "Server-owned name of the accepted World operation."
+            },
+            "prose": {
+              "description": "Canonical readable text accepted with submit_action, or null for every\nother operation.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "operation",
+            "actor_character",
+            "context_place",
+            "involved_entity",
+            "prose",
+            "occurred_at"
+          ],
+          "type": "object"
+        },
+        "EntityOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "Current semantic description of this shared referent.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Stable Entity id used by every concrete role of this referent.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "introduced_at": {
+              "description": "Time at which this Entity was introduced into the shared World.",
+              "format": "date-time",
+              "type": "string"
+            },
+            "introduced_by_user_id": {
+              "description": "User whose accepted request first introduced this Entity.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of this shared referent.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "introduced_by_user_id",
+            "introduced_at"
+          ],
+          "type": "object"
+        },
+        "EntitySummaryOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Stable Entity id, including when the Entity also has a Character or Place\nrole.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Current semantic name of the Entity.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "PlaceOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntityOutput",
+              "description": "Complete shared Entity that also has the Place role. Its Entity id is the\nPlace's only id."
+            },
+            "is_entry": {
+              "description": "True only for the one server-recognized World entry Place.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "entity",
+            "is_entry"
+          ],
+          "type": "object"
+        },
+        "PlaceSummaryOutput": {
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/EntitySummaryOutput",
+              "description": "Shared Entity summary for this Place; the Entity id is also the Place id."
+            },
+            "is_entry": {
+              "description": "True only for the one server-recognized World entry Place.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "entity",
+            "is_entry"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "activity": {
+          "$ref": "#/$defs/ActivityOutput",
+          "description": "One immutable Activity containing the canonical accepted prose."
+        },
+        "entity": {
+          "$ref": "#/$defs/EntityOutput",
+          "description": "Entity introduced by the accepted consequence."
+        },
+        "place": {
+          "$ref": "#/$defs/PlaceOutput",
+          "description": "Exact Place at which World established the Entity."
+        }
+      },
+      "required": [
+        "activity",
+        "entity",
+        "place"
+      ],
+      "type": "object"
     }
   }
 ]

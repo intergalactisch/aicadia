@@ -4,38 +4,43 @@ use axum::{
     Json as HttpJson, Router,
     extract::{Path, Query, State, rejection::JsonRejection, rejection::QueryRejection},
     http::{HeaderMap, StatusCode, request::Parts},
-    response::{IntoResponse, Response},
+    response::{Html, IntoResponse, Response},
     routing::{get, post},
 };
 use rmcp::{
     ServerHandler,
-    handler::server::{
-        router::tool::ToolRouter,
-        tool::Extension,
-        wrapper::{Json, Parameters},
+    handler::server::{router::tool::ToolRouter, tool::Extension, wrapper::Json},
+    model::{
+        CallToolResult, Implementation, JsonObject, ProtocolVersion, ServerCapabilities, ServerInfo,
     },
-    model::{CallToolResult, Implementation, ProtocolVersion, ServerCapabilities, ServerInfo},
     tool, tool_handler, tool_router,
     transport::streamable_http_server::{
-        StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
+        StreamableHttpServerConfig, StreamableHttpService, session::never::NeverSessionManager,
     },
 };
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
 use thiserror::Error;
 use utoipa::{OpenApi, openapi::OpenApi as OpenApiDocument};
 
 use crate::{
-    World,
+    World, agent_contract,
     wire::{
-        ActivityPageOutput, CharacterOutput, CreateCharacterInput, CreateEntityInput,
-        CreateEntryPlaceInput, EntityOutput, EntityPageOutput, ErrorCode, ErrorDetail, ErrorOutput,
-        GetEntityInput, ListActivityInput, ListEntityInput, PlaceOutput, USER_CONTEXT_HEADER,
-        UserOutput, WorldOutput, parse_user_context,
+        AcceptedActionOutput, ActivityPageOutput, CharacterOutput, CreateCharacterInput,
+        CreateEntityInput, CreateEntryPlaceInput, CurrentPlaceActivityPageOutput,
+        CurrentPlaceEntityPageOutput, EntityOutput, EntityPageOutput, ErrorCode, ErrorDetail,
+        ErrorOutput, GetEntityInput, ListActivityAtCurrentPlaceInput, ListActivityInput,
+        ListEntityAtCurrentPlaceInput, ListEntityInput, PlaceOutput, SubmitActionInput,
+        USER_CONTEXT_HEADER, UserOutput, WorldOutput, parse_user_context,
     },
 };
 
 const MCP_VERSION: &str = env!("CARGO_PKG_VERSION");
+const LEDGER_HTML: &str = include_str!("../web/index.html");
+fn mcp_input_schema<T: JsonSchema + 'static>() -> Arc<JsonObject> {
+    rmcp::handler::server::common::schema_for_input::<T>()
+        .unwrap_or_else(|error| panic!("invalid fixed MCP input schema: {error}"))
+}
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -55,20 +60,21 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
 
     let allowed_origin = [format!("http://{address}")];
     let mcp_config = StreamableHttpServerConfig::default()
-        .with_legacy_session_mode(true)
+        .with_legacy_session_mode(false)
         .with_json_response(true)
         .with_sse_keep_alive(None)
         .with_sse_retry(None)
         .with_allowed_origins(allowed_origin)
         .with_stateless_protocol_metadata_required(true);
     let mcp_world = world.clone();
-    let mcp: StreamableHttpService<AicadiaMcp, LocalSessionManager> = StreamableHttpService::new(
+    let mcp: StreamableHttpService<AicadiaMcp, NeverSessionManager> = StreamableHttpService::new(
         move || Ok(AicadiaMcp::new(mcp_world.clone())),
-        Arc::new(LocalSessionManager::default()),
+        Arc::new(NeverSessionManager::default()),
         mcp_config,
     );
 
     Ok(Router::new()
+        .route("/", get(ledger))
         .route("/api/world", get(get_world))
         .route("/api/user", get(get_user))
         .route("/api/character", get(get_character).post(create_character))
@@ -77,9 +83,22 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
         .route("/api/activity", get(list_activity))
         .route("/api/entity", get(list_entity).post(create_entity))
         .route("/api/entity/{entity_id}", get(get_entity))
+        .route(
+            "/api/place/current/entity",
+            get(list_entity_at_current_place),
+        )
+        .route(
+            "/api/place/current/activity",
+            get(list_activity_at_current_place),
+        )
+        .route("/api/action", post(submit_action))
         .route("/api/openapi.json", get(openapi))
         .nest_service("/mcp", mcp)
         .with_state(world))
+}
+
+async fn ledger() -> Html<&'static str> {
+    Html(LEDGER_HTML)
 }
 
 #[derive(OpenApi)]
@@ -94,7 +113,10 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
         list_activity,
         list_entity,
         get_entity,
-        create_entity
+        create_entity,
+        list_entity_at_current_place,
+        list_activity_at_current_place,
+        submit_action
     ),
     components(schemas(
         WorldOutput,
@@ -107,6 +129,10 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
         EntityOutput,
         EntityPageOutput,
         CreateEntityInput,
+        CurrentPlaceEntityPageOutput,
+        CurrentPlaceActivityPageOutput,
+        SubmitActionInput,
+        AcceptedActionOutput,
         ErrorDetail,
         ErrorOutput
     )),
@@ -379,6 +405,107 @@ async fn create_entity(
         .map_err(Into::into)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/place/current/entity",
+    params(
+        ("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context"),
+        ListEntityAtCurrentPlaceInput
+    ),
+    responses(
+        (status = 200, description = "Entities at the exact current Place", body = CurrentPlaceEntityPageOutput),
+        (status = 400, description = "Invalid User context or list input", body = ErrorOutput),
+        (status = 404, description = "User or Character not found", body = ErrorOutput),
+        (status = 409, description = "Character has not entered the World", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn list_entity_at_current_place(
+    State(world): State<World>,
+    headers: HeaderMap,
+    query: Result<Query<ListEntityAtCurrentPlaceInput>, QueryRejection>,
+) -> Result<HttpJson<CurrentPlaceEntityPageOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    let input = query
+        .map_err(|_| ErrorOutput::malformed_request("current Place Entity query is invalid"))?
+        .0
+        .parse()?;
+    world
+        .list_entity_at_current_place(user_id, input)
+        .await
+        .map(CurrentPlaceEntityPageOutput::from)
+        .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/place/current/activity",
+    params(
+        ("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context"),
+        ListActivityAtCurrentPlaceInput
+    ),
+    responses(
+        (status = 200, description = "Activity at the exact current Place", body = CurrentPlaceActivityPageOutput),
+        (status = 400, description = "Invalid User context or list input", body = ErrorOutput),
+        (status = 404, description = "User or Character not found", body = ErrorOutput),
+        (status = 409, description = "Character has not entered the World", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn list_activity_at_current_place(
+    State(world): State<World>,
+    headers: HeaderMap,
+    query: Result<Query<ListActivityAtCurrentPlaceInput>, QueryRejection>,
+) -> Result<HttpJson<CurrentPlaceActivityPageOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    let input = query
+        .map_err(|_| ErrorOutput::malformed_request("current Place Activity query is invalid"))?
+        .0
+        .parse()?;
+    world
+        .list_activity_at_current_place(user_id, input)
+        .await
+        .map(CurrentPlaceActivityPageOutput::from)
+        .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/action",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context")),
+    request_body = SubmitActionInput,
+    responses(
+        (status = 201, description = "Accepted action", body = AcceptedActionOutput),
+        (status = 400, description = "Invalid action or User context", body = ErrorOutput),
+        (status = 404, description = "User or Character not found", body = ErrorOutput),
+        (status = 409, description = "Character is unplaced or request id conflicts", body = ErrorOutput),
+        (status = 412, description = "Exact current Place changed after it was read", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn submit_action(
+    State(world): State<World>,
+    headers: HeaderMap,
+    body: Result<HttpJson<SubmitActionInput>, JsonRejection>,
+) -> Result<(StatusCode, HttpJson<AcceptedActionOutput>), HttpError> {
+    let user_id = user_context(&headers)?;
+    let input = body
+        .map_err(|_| ErrorOutput::malformed_request("action body is invalid"))?
+        .0
+        .parse()?;
+    world
+        .submit_action(user_id, input)
+        .await
+        .map(AcceptedActionOutput::from)
+        .map(|action| (StatusCode::CREATED, HttpJson(action)))
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
 #[derive(Debug)]
 struct HttpError(ErrorOutput);
 
@@ -397,7 +524,10 @@ impl IntoResponse for HttpError {
             | ErrorCode::EntryPlaceNotFound => StatusCode::NOT_FOUND,
             ErrorCode::CharacterAlreadyExists
             | ErrorCode::CharacterAlreadyEntered
-            | ErrorCode::EntryPlaceAlreadyExists => StatusCode::CONFLICT,
+            | ErrorCode::CharacterNotEntered
+            | ErrorCode::EntryPlaceAlreadyExists
+            | ErrorCode::ActionRequestConflict => StatusCode::CONFLICT,
+            ErrorCode::PlaceRevisionConflict => StatusCode::PRECONDITION_FAILED,
             ErrorCode::Unavailable => StatusCode::SERVICE_UNAVAILABLE,
             _ => StatusCode::BAD_REQUEST,
         };
@@ -432,10 +562,9 @@ struct AicadiaMcp {
 
 impl AicadiaMcp {
     fn new(world: World) -> Self {
-        Self {
-            world,
-            tool_router: Self::tool_router(),
-        }
+        let mut tool_router = Self::tool_router();
+        agent_contract::apply(&mut tool_router);
+        Self { world, tool_router }
     }
 
     fn error(error: ErrorOutput) -> CallToolResult {
@@ -443,12 +572,21 @@ impl AicadiaMcp {
             .expect("the fixed wire error contract is always JSON serializable");
         CallToolResult::error(vec![rmcp::model::ContentBlock::text(value)])
     }
+
+    fn decode<T: DeserializeOwned>(
+        input: JsonObject,
+        message: &'static str,
+    ) -> Result<T, CallToolResult> {
+        serde_json::from_value(serde_json::Value::Object(input))
+            .map_err(|_| ErrorOutput::malformed_request(message))
+            .map_err(Self::error)
+    }
 }
 
 #[tool_router]
 impl AicadiaMcp {
     #[tool(
-        description = "Get the identity of the one persistent shared Aicadia World. No User context is required.",
+        input_schema = mcp_input_schema::<EmptyInput>(),
         annotations(
             title = "Get world",
             read_only_hint = true,
@@ -457,12 +595,13 @@ impl AicadiaMcp {
             open_world_hint = false
         )
     )]
-    async fn get_world(&self, Parameters(_input): Parameters<EmptyInput>) -> Json<WorldOutput> {
-        Json(self.world.get_world().into())
+    async fn get_world(&self, input: JsonObject) -> Result<Json<WorldOutput>, CallToolResult> {
+        let _input: EmptyInput = Self::decode(input, "world input is invalid")?;
+        Ok(Json(self.world.get_world().into()))
     }
 
     #[tool(
-        description = "Get the durable User represented by this request's Aicadia-User-Id context. This tool does not accept a User id and does not authenticate the caller.",
+        input_schema = mcp_input_schema::<EmptyInput>(),
         annotations(
             title = "Get user",
             read_only_hint = true,
@@ -474,9 +613,10 @@ impl AicadiaMcp {
     async fn get_user(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(_input): Parameters<EmptyInput>,
+        input: JsonObject,
     ) -> Result<Json<UserOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let _input: EmptyInput = Self::decode(input, "user input is invalid")?;
         self.world
             .get_user(user_id)
             .await
@@ -487,7 +627,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "Get the Character role owned by the current User. The embedded Entity id is also the Character id; there is no separate Character id. current_place is the complete current Place or null when the Character exists but has not entered the World. This tool derives the User from Aicadia-User-Id and accepts no ids.",
+        input_schema = mcp_input_schema::<EmptyInput>(),
         annotations(
             title = "Get character",
             read_only_hint = true,
@@ -499,9 +639,10 @@ impl AicadiaMcp {
     async fn get_character(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(_input): Parameters<EmptyInput>,
+        input: JsonObject,
     ) -> Result<Json<CharacterOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let _input: EmptyInput = Self::decode(input, "character input is invalid")?;
         self.world
             .get_character(user_id)
             .await
@@ -512,7 +653,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "Create the one Character role owned by the current User and its shared Entity. The embedded Entity id is also the Character id. Creation deliberately returns current_place null and does not enter the World; call enter_world separately when entry is wanted. This tool derives the User from Aicadia-User-Id and accepts no ids.",
+        input_schema = mcp_input_schema::<CreateCharacterInput>(),
         annotations(
             title = "Create character",
             read_only_hint = false,
@@ -524,9 +665,10 @@ impl AicadiaMcp {
     async fn create_character(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(input): Parameters<CreateCharacterInput>,
+        input: JsonObject,
     ) -> Result<Json<CharacterOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: CreateCharacterInput = Self::decode(input, "character body is invalid")?;
         self.world
             .create_character(user_id, input.into())
             .await
@@ -537,7 +679,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "Establish World genesis by creating the one shared entry Place. Call this only for an existing unplaced Character after enter_world returns entry_place_not_found. Supply only semantic name and description; World derives the Place Entity id. Exactly one concurrent request wins. If entry_place_already_exists is returned, another Agent established genesis: call enter_world again. This never creates later Places.",
+        input_schema = mcp_input_schema::<CreateEntryPlaceInput>(),
         annotations(
             title = "Create entry place",
             read_only_hint = false,
@@ -549,9 +691,10 @@ impl AicadiaMcp {
     async fn create_entry_place(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(input): Parameters<CreateEntryPlaceInput>,
+        input: JsonObject,
     ) -> Result<Json<PlaceOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: CreateEntryPlaceInput = Self::decode(input, "entry Place body is invalid")?;
         self.world
             .create_entry_place(user_id, input.into())
             .await
@@ -562,7 +705,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "Enter the shared World with the current unplaced Character at the one server-derived entry Place. Call this directly after obtaining or creating a Character. If entry_place_not_found is returned, establish genesis with create_entry_place and retry. This accepts no ids or Place selector. Retrying successful entry returns the same complete Character and Place without another activity.",
+        input_schema = mcp_input_schema::<EmptyInput>(),
         annotations(
             title = "Enter world",
             read_only_hint = false,
@@ -574,9 +717,10 @@ impl AicadiaMcp {
     async fn enter_world(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(_input): Parameters<EmptyInput>,
+        input: JsonObject,
     ) -> Result<Json<CharacterOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let _input: EmptyInput = Self::decode(input, "World entry input is invalid")?;
         self.world
             .enter_world(user_id)
             .await
@@ -587,7 +731,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "List immutable accepted World actions involving the current Character from newest to oldest. World derives the Character from User context. actor_character identifies who acted, context_place preserves where acceptance occurred, and involved_entity identifies each subject or destination. Null actor or Place means that context did not yet exist. limit defaults to 25 and must be 1 through 100; copy next unchanged into cursor for the following page.",
+        input_schema = mcp_input_schema::<ListActivityInput>(),
         annotations(
             title = "List activity",
             read_only_hint = true,
@@ -599,9 +743,10 @@ impl AicadiaMcp {
     async fn list_activity(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(input): Parameters<ListActivityInput>,
+        input: JsonObject,
     ) -> Result<Json<ActivityPageOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: ListActivityInput = Self::decode(input, "activity query is invalid")?;
         let input = input.parse().map_err(Self::error)?;
         self.world
             .list_activity(user_id, input)
@@ -613,7 +758,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "List shared Entities from newest to oldest. limit defaults to 25 and must be 1 through 100. Copy next into cursor to read the following page; do not interpret the cursor.",
+        input_schema = mcp_input_schema::<ListEntityInput>(),
         annotations(
             title = "List entity",
             read_only_hint = true,
@@ -624,8 +769,9 @@ impl AicadiaMcp {
     )]
     async fn list_entity(
         &self,
-        Parameters(input): Parameters<ListEntityInput>,
+        input: JsonObject,
     ) -> Result<Json<EntityPageOutput>, CallToolResult> {
+        let input: ListEntityInput = Self::decode(input, "entity query is invalid")?;
         let input = input.parse().map_err(Self::error)?;
         self.world
             .list_entity(input)
@@ -637,7 +783,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "Get one shared Entity by its stable Entity id.",
+        input_schema = mcp_input_schema::<GetEntityInput>(),
         annotations(
             title = "Get entity",
             read_only_hint = true,
@@ -646,10 +792,8 @@ impl AicadiaMcp {
             open_world_hint = false
         )
     )]
-    async fn get_entity(
-        &self,
-        Parameters(input): Parameters<GetEntityInput>,
-    ) -> Result<Json<EntityOutput>, CallToolResult> {
+    async fn get_entity(&self, input: JsonObject) -> Result<Json<EntityOutput>, CallToolResult> {
+        let input: GetEntityInput = Self::decode(input, "entity input is invalid")?;
         let entity_id = input.parse().map_err(Self::error)?;
         self.world
             .get_entity(entity_id)
@@ -661,7 +805,7 @@ impl AicadiaMcp {
     }
 
     #[tool(
-        description = "Create one shared Entity for a stable referent introduced by the current User. Use this only when later participants must refer to the same subject. This does not assert fictional creation, ownership or discovery, and repeating it creates another Entity. Acceptance also appends create_entity Activity; its actor and context Place are present when the current Character exists and is placed.",
+        input_schema = mcp_input_schema::<CreateEntityInput>(),
         annotations(
             title = "Create entity",
             read_only_hint = false,
@@ -673,9 +817,10 @@ impl AicadiaMcp {
     async fn create_entity(
         &self,
         Extension(parts): Extension<Parts>,
-        Parameters(input): Parameters<CreateEntityInput>,
+        input: JsonObject,
     ) -> Result<Json<EntityOutput>, CallToolResult> {
         let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: CreateEntityInput = Self::decode(input, "entity body is invalid")?;
         self.world
             .create_entity(user_id, input.into())
             .await
@@ -684,14 +829,107 @@ impl AicadiaMcp {
             .map_err(ErrorOutput::from_world)
             .map_err(Self::error)
     }
+
+    #[tool(
+        input_schema = mcp_input_schema::<ListEntityAtCurrentPlaceInput>(),
+        annotations(
+            title = "List entity at current place",
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
+    )]
+    async fn list_entity_at_current_place(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<CurrentPlaceEntityPageOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: ListEntityAtCurrentPlaceInput =
+            Self::decode(input, "current Place Entity query is invalid")?;
+        let input = input.parse().map_err(Self::error)?;
+        self.world
+            .list_entity_at_current_place(user_id, input)
+            .await
+            .map(CurrentPlaceEntityPageOutput::from)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
+        input_schema = mcp_input_schema::<ListActivityAtCurrentPlaceInput>(),
+        annotations(
+            title = "List activity at current place",
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
+    )]
+    async fn list_activity_at_current_place(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<CurrentPlaceActivityPageOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: ListActivityAtCurrentPlaceInput =
+            Self::decode(input, "current Place Activity query is invalid")?;
+        let input = input.parse().map_err(Self::error)?;
+        self.world
+            .list_activity_at_current_place(user_id, input)
+            .await
+            .map(CurrentPlaceActivityPageOutput::from)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
+        input_schema = mcp_input_schema::<SubmitActionInput>(),
+        annotations(
+            title = "Submit action",
+            read_only_hint = false,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
+    )]
+    async fn submit_action(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<AcceptedActionOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: SubmitActionInput = Self::decode(input, "action body is invalid")?;
+        let input = input.parse().map_err(Self::error)?;
+        self.world
+            .submit_action(user_id, input)
+            .await
+            .map(AcceptedActionOutput::from)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
 }
 
 #[tool_handler(router = self.tool_router)]
 impl ServerHandler for AicadiaMcp {
+    async fn initialize(
+        &self,
+        _request: rmcp::model::InitializeRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> Result<rmcp::model::InitializeResult, rmcp::ErrorData> {
+        Err(rmcp::ErrorData::method_not_found::<
+            rmcp::model::InitializeResultMethod,
+        >())
+    }
+
     async fn list_tools(
         &self,
         _request: Option<rmcp::model::PaginatedRequestParams>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<rmcp::model::ListToolsResult, rmcp::ErrorData> {
         let tools = [
             "get_world",
@@ -704,6 +942,9 @@ impl ServerHandler for AicadiaMcp {
             "list_entity",
             "get_entity",
             "create_entity",
+            "list_entity_at_current_place",
+            "list_activity_at_current_place",
+            "submit_action",
         ]
         .into_iter()
         .map(|name| {
@@ -713,30 +954,25 @@ impl ServerHandler for AicadiaMcp {
                 .expect("the fixed player capability catalog must be registered")
         })
         .collect();
-        let supports_cache_hints = context
-            .protocol_version()
-            .is_some_and(|version| version >= ProtocolVersion::V_2026_07_28);
-
         Ok(rmcp::model::ListToolsResult {
             result_type: Some(rmcp::model::ResultType::COMPLETE),
             tools,
             meta: None,
             next_cursor: None,
-            ttl_ms: supports_cache_hints.then_some(0),
-            cache_scope: supports_cache_hints.then_some(rmcp::model::CacheScope::Public),
+            ttl_ms: Some(0),
+            cache_scope: Some(rmcp::model::CacheScope::Public),
         })
     }
 
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+            .with_protocol_version(ProtocolVersion::V_2026_07_28)
             .with_server_info(Implementation::new("aicadia", MCP_VERSION))
-            .with_instructions(
-                "Inspect and extend the shared Aicadia World through the ten listed tools. For entry: get_character; create_character only when absent; if current_place is null call enter_world; only after entry_place_not_found call create_entry_place and then retry enter_world. Never ask the User for Character or Place ids.",
-            )
+            .with_instructions(agent_contract::INSTRUCTIONS)
     }
 
     fn supported_protocol_versions(&self) -> Cow<'static, [ProtocolVersion]> {
-        Cow::Borrowed(&[ProtocolVersion::V_2025_11_25, ProtocolVersion::V_2026_07_28])
+        Cow::Borrowed(&[ProtocolVersion::V_2026_07_28])
     }
 }
 

@@ -6,10 +6,12 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
-    Activity, ActivityCursor, ActivityEntityReference, ActivityEntityRole, ActivityId,
-    ActivityOperation, ActivityPage, Character, CreateCharacter, CreateEntity, CreateEntryPlace,
-    Entity, EntityCursor, EntityField, EntityId, EntityPage, EntitySummary, InvalidReason,
-    ListActivity, ListEntity, Place, PlaceSummary, User, UserId, WorldError, WorldView,
+    AcceptedAction, ActionField, Activity, ActivityCursor, ActivityEntityReference,
+    ActivityEntityRole, ActivityId, ActivityOperation, ActivityPage, Character, CreateCharacter,
+    CreateEntity, CreateEntryPlace, CurrentPlaceActivityPage, CurrentPlaceEntityPage, Entity,
+    EntityCursor, EntityField, EntityId, EntityPage, EntitySummary, IntroduceEntity, InvalidReason,
+    ListActivity, ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace, Place,
+    PlaceRevision, PlaceSummary, SubmitAction, User, UserId, WorldError, WorldView,
 };
 
 pub const USER_CONTEXT_HEADER: &str = "Aicadia-User-Id";
@@ -198,6 +200,7 @@ pub enum ActivityOperationOutput {
     CreateEntity,
     CreateEntryPlace,
     EnterWorld,
+    SubmitAction,
 }
 
 impl From<ActivityOperation> for ActivityOperationOutput {
@@ -207,6 +210,7 @@ impl From<ActivityOperation> for ActivityOperationOutput {
             ActivityOperation::CreateEntity => Self::CreateEntity,
             ActivityOperation::CreateEntryPlace => Self::CreateEntryPlace,
             ActivityOperation::EnterWorld => Self::EnterWorld,
+            ActivityOperation::SubmitAction => Self::SubmitAction,
         }
     }
 }
@@ -216,6 +220,7 @@ impl From<ActivityOperation> for ActivityOperationOutput {
 pub enum ActivityEntityRoleOutput {
     Subject,
     Destination,
+    Location,
 }
 
 impl From<ActivityEntityRole> for ActivityEntityRoleOutput {
@@ -223,6 +228,7 @@ impl From<ActivityEntityRole> for ActivityEntityRoleOutput {
         match value {
             ActivityEntityRole::Subject => Self::Subject,
             ActivityEntityRole::Destination => Self::Destination,
+            ActivityEntityRole::Location => Self::Location,
         }
     }
 }
@@ -235,7 +241,7 @@ pub struct ActivityEntityReferenceOutput {
     pub entity: EntitySummaryOutput,
     /// Server-owned meaning of this Entity in the action: subject is what the
     /// action introduced or acted on; destination is where entry placed the
-    /// Character.
+    /// Character; location is where a subject was established.
     pub role: ActivityEntityRoleOutput,
 }
 
@@ -270,6 +276,11 @@ pub struct ActivityOutput {
     pub context_place: Option<PlaceSummaryOutput>,
     /// Shared Entities linked to the action with explicit server-owned roles.
     pub involved_entity: Vec<ActivityEntityReferenceOutput>,
+    /// Canonical readable text accepted with submit_action, or null for every
+    /// other operation.
+    #[schemars(schema_with = "nullable_string_schema", required)]
+    #[schema(required = true, nullable = true)]
+    pub prose: Option<String>,
     /// Time at which World accepted this action.
     pub occurred_at: DateTime<Utc>,
 }
@@ -292,6 +303,7 @@ impl From<Activity> for ActivityOutput {
             actor_character: value.actor_character.map(Into::into),
             context_place: value.context_place.map(Into::into),
             involved_entity: value.involved_entity.into_iter().map(Into::into).collect(),
+            prose: value.prose,
             occurred_at: value.occurred_at,
         }
     }
@@ -316,6 +328,84 @@ impl From<ActivityPage> for ActivityPageOutput {
         Self {
             activity: value.activity.into_iter().map(Into::into).collect(),
             next: value.next.map(encode_activity_cursor),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct CurrentPlaceEntityPageOutput {
+    /// Complete exact current Place derived from the current Character.
+    pub place: PlaceOutput,
+    /// Opaque strong revision for this exact Place representation. Copy it
+    /// unchanged into submit_action.expected_place_revision.
+    pub place_revision: String,
+    /// Entity summaries explicitly placed at this exact Place.
+    pub entity: Vec<EntitySummaryOutput>,
+    /// Opaque cursor for the following page, or null when no following page exists.
+    #[schemars(schema_with = "nullable_string_schema", required)]
+    #[schema(required = true, nullable = true)]
+    pub next: Option<String>,
+}
+
+impl From<CurrentPlaceEntityPage> for CurrentPlaceEntityPageOutput {
+    fn from(value: CurrentPlaceEntityPage) -> Self {
+        Self {
+            place: value.place.into(),
+            place_revision: encode_place_revision(value.place_revision),
+            entity: value.entity.into_iter().map(Into::into).collect(),
+            next: value.next.map(encode_place_entity_cursor),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct CurrentPlaceActivityPageOutput {
+    /// Complete exact current Place derived from the current Character.
+    pub place: PlaceOutput,
+    /// Opaque strong revision for this exact Place representation. Pages used to
+    /// ground one action must agree on this value.
+    pub place_revision: String,
+    /// Canonical Activity at or involving this exact Place, newest first.
+    pub activity: Vec<ActivityOutput>,
+    /// Opaque cursor for the following page, or null when no following page exists.
+    #[schemars(schema_with = "nullable_string_schema", required)]
+    #[schema(required = true, nullable = true)]
+    pub next: Option<String>,
+}
+
+impl From<CurrentPlaceActivityPage> for CurrentPlaceActivityPageOutput {
+    fn from(value: CurrentPlaceActivityPage) -> Self {
+        Self {
+            place: value.place.into(),
+            place_revision: encode_place_revision(value.place_revision),
+            activity: value.activity.into_iter().map(Into::into).collect(),
+            next: value.next.map(encode_place_activity_cursor),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct AcceptedActionOutput {
+    /// One immutable Activity containing the canonical accepted prose.
+    pub activity: ActivityOutput,
+    /// Entity introduced by the accepted consequence.
+    pub entity: EntityOutput,
+    /// Exact Place at which World established the Entity.
+    pub place: PlaceOutput,
+}
+
+impl From<AcceptedAction> for AcceptedActionOutput {
+    fn from(value: AcceptedAction) -> Self {
+        Self {
+            activity: value.activity.into(),
+            entity: value.entity.into(),
+            place: value.place.into(),
         }
     }
 }
@@ -414,6 +504,82 @@ impl ListActivityInput {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema, IntoParams)]
+#[serde(default, deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+#[into_params(parameter_in = Query)]
+pub struct ListEntityAtCurrentPlaceInput {
+    /// Opaque cursor returned as `next` by a previous exact-Place Entity page.
+    pub cursor: Option<String>,
+    /// Page size. Defaults to 25. The World accepts values from 1 through 100.
+    #[serde(default = "default_page_limit")]
+    #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
+    #[param(default = 25, minimum = 1, maximum = 100)]
+    pub limit: i64,
+}
+
+impl Default for ListEntityAtCurrentPlaceInput {
+    fn default() -> Self {
+        Self {
+            cursor: None,
+            limit: default_page_limit(),
+        }
+    }
+}
+
+impl ListEntityAtCurrentPlaceInput {
+    pub fn parse(self) -> Result<ListEntityAtCurrentPlace, ErrorOutput> {
+        let limit = u16::try_from(self.limit)
+            .map_err(|_| ErrorOutput::from_world(WorldError::InvalidEntityLimit))?;
+        Ok(ListEntityAtCurrentPlace {
+            cursor: self
+                .cursor
+                .as_deref()
+                .map(decode_place_entity_cursor)
+                .transpose()?,
+            limit,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema, IntoParams)]
+#[serde(default, deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+#[into_params(parameter_in = Query)]
+pub struct ListActivityAtCurrentPlaceInput {
+    /// Opaque cursor returned as `next` by a previous exact-Place Activity page.
+    pub cursor: Option<String>,
+    /// Page size. Defaults to 25. The World accepts values from 1 through 100.
+    #[serde(default = "default_page_limit")]
+    #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
+    #[param(default = 25, minimum = 1, maximum = 100)]
+    pub limit: i64,
+}
+
+impl Default for ListActivityAtCurrentPlaceInput {
+    fn default() -> Self {
+        Self {
+            cursor: None,
+            limit: default_page_limit(),
+        }
+    }
+}
+
+impl ListActivityAtCurrentPlaceInput {
+    pub fn parse(self) -> Result<ListActivityAtCurrentPlace, ErrorOutput> {
+        let limit = u16::try_from(self.limit)
+            .map_err(|_| ErrorOutput::from_world(WorldError::InvalidActivityLimit))?;
+        Ok(ListActivityAtCurrentPlace {
+            cursor: self
+                .cursor
+                .as_deref()
+                .map(decode_place_activity_cursor)
+                .transpose()?,
+            limit,
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
@@ -484,6 +650,56 @@ impl From<CreateEntryPlaceInput> for CreateEntryPlace {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum ActionConsequenceInput {
+    /// Introduce one new Entity and establish it at the derived current Place.
+    IntroduceEntity {
+        /// Display name. World trims it and accepts 1 through 120 Unicode characters.
+        #[schemars(length(min = 1, max = 120))]
+        #[schema(min_length = 1, max_length = 120)]
+        name: String,
+        /// Description. World trims it and accepts 1 through 4,000 Unicode characters.
+        #[schemars(length(min = 1, max = 4000))]
+        #[schema(min_length = 1, max_length = 4000)]
+        description: String,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct SubmitActionInput {
+    /// Agent-generated UUID for this one intended action. Reuse only for an
+    /// uncertain delivery retry of byte-equivalent semantic input.
+    pub request_id: Uuid,
+    /// Opaque exact-Place revision copied unchanged from a grounded Place read.
+    pub expected_place_revision: String,
+    /// Exact canonical English prose previewed and explicitly confirmed by the User.
+    #[schemars(length(min = 1, max = 4000))]
+    #[schema(min_length = 1, max_length = 4000)]
+    pub prose: String,
+    /// The one closed first-slice consequence.
+    pub consequence: ActionConsequenceInput,
+}
+
+impl SubmitActionInput {
+    pub fn parse(self) -> Result<SubmitAction, ErrorOutput> {
+        let consequence = match self.consequence {
+            ActionConsequenceInput::IntroduceEntity { name, description } => {
+                IntroduceEntity { name, description }
+            }
+        };
+        Ok(SubmitAction {
+            request_id: self.request_id,
+            expected_place_revision: decode_place_revision(&self.expected_place_revision)?,
+            prose: self.prose,
+            consequence,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct ErrorOutput {
@@ -510,6 +726,7 @@ pub enum ErrorCode {
     InvalidEntity,
     InvalidCharacter,
     InvalidPlace,
+    InvalidAction,
     InvalidEntityLimit,
     InvalidActivityLimit,
     UserNotFound,
@@ -517,8 +734,11 @@ pub enum ErrorCode {
     CharacterNotFound,
     CharacterAlreadyExists,
     CharacterAlreadyEntered,
+    CharacterNotEntered,
     EntryPlaceAlreadyExists,
     EntryPlaceNotFound,
+    ActionRequestConflict,
+    PlaceRevisionConflict,
     Unavailable,
 }
 
@@ -562,6 +782,15 @@ impl ErrorOutput {
             ErrorCode::InvalidRequest,
             "cursor is malformed.",
             "cursor",
+            "malformed",
+        )
+    }
+
+    pub fn invalid_place_revision() -> Self {
+        Self::with_detail(
+            ErrorCode::InvalidRequest,
+            "expected_place_revision is malformed.",
+            "expected_place_revision",
             "malformed",
         )
     }
@@ -623,6 +852,26 @@ impl ErrorOutput {
                     reason,
                 )
             }
+            WorldError::InvalidAction { field, reason } => {
+                let (field, subject) = match field {
+                    ActionField::Prose => ("prose", "Action prose"),
+                    ActionField::ConsequenceName => ("consequence.name", "Action consequence name"),
+                    ActionField::ConsequenceDescription => {
+                        ("consequence.description", "Action consequence description")
+                    }
+                };
+                let (reason, explanation) = match reason {
+                    InvalidReason::Empty => ("empty", "is empty"),
+                    InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
+                    InvalidReason::TooLong => ("too_long", "is too long"),
+                };
+                Self::with_detail(
+                    ErrorCode::InvalidAction,
+                    format!("{subject} {explanation}."),
+                    field,
+                    reason,
+                )
+            }
             WorldError::InvalidEntityLimit => Self::with_detail(
                 ErrorCode::InvalidEntityLimit,
                 "limit must be from 1 through 100.",
@@ -655,6 +904,10 @@ impl ErrorOutput {
                 ErrorCode::CharacterAlreadyEntered,
                 "The current Character is already placed in the World.",
             ),
+            WorldError::CharacterNotEntered => Self::new(
+                ErrorCode::CharacterNotEntered,
+                "The current Character has not entered the World.",
+            ),
             WorldError::EntryPlaceAlreadyExists => Self::new(
                 ErrorCode::EntryPlaceAlreadyExists,
                 "The World already has an entry Place.",
@@ -662,6 +915,14 @@ impl ErrorOutput {
             WorldError::EntryPlaceNotFound => Self::new(
                 ErrorCode::EntryPlaceNotFound,
                 "The World does not have an entry Place yet.",
+            ),
+            WorldError::ActionRequestConflict => Self::new(
+                ErrorCode::ActionRequestConflict,
+                "request_id was already accepted with different action content.",
+            ),
+            WorldError::PlaceRevisionConflict => Self::new(
+                ErrorCode::PlaceRevisionConflict,
+                "The current Place changed after it was read.",
             ),
             WorldError::Unavailable => Self::new(
                 ErrorCode::Unavailable,
@@ -720,6 +981,25 @@ fn encode_activity_cursor(cursor: ActivityCursor) -> String {
     encode_cursor_parts("a1", cursor.occurred_at, cursor.activity_id.0)
 }
 
+fn encode_place_entity_cursor(cursor: EntityCursor) -> String {
+    encode_cursor_parts("pe1", cursor.introduced_at, cursor.entity_id.0)
+}
+
+fn encode_place_activity_cursor(cursor: ActivityCursor) -> String {
+    encode_cursor_parts("pa1", cursor.occurred_at, cursor.activity_id.0)
+}
+
+fn encode_place_revision(revision: PlaceRevision) -> String {
+    URL_SAFE_NO_PAD.encode(format!(
+        "p1|{}|{}|{}",
+        revision.place_entity_id().0,
+        revision
+            .occurred_at()
+            .to_rfc3339_opts(SecondsFormat::Nanos, true),
+        revision.activity_id().0
+    ))
+}
+
 fn encode_cursor_parts(version: &str, timestamp: DateTime<Utc>, id: Uuid) -> String {
     URL_SAFE_NO_PAD.encode(format!(
         "{version}|{}|{id}",
@@ -741,6 +1021,62 @@ fn decode_activity_cursor(value: &str) -> Result<ActivityCursor, ErrorOutput> {
         occurred_at,
         activity_id: ActivityId(activity_id),
     })
+}
+
+fn decode_place_entity_cursor(value: &str) -> Result<EntityCursor, ErrorOutput> {
+    let (introduced_at, entity_id) = decode_cursor_parts(value, "pe1")?;
+    Ok(EntityCursor {
+        introduced_at,
+        entity_id: EntityId(entity_id),
+    })
+}
+
+fn decode_place_activity_cursor(value: &str) -> Result<ActivityCursor, ErrorOutput> {
+    let (occurred_at, activity_id) = decode_cursor_parts(value, "pa1")?;
+    Ok(ActivityCursor {
+        occurred_at,
+        activity_id: ActivityId(activity_id),
+    })
+}
+
+fn decode_place_revision(value: &str) -> Result<PlaceRevision, ErrorOutput> {
+    if value.len() > 384 {
+        return Err(ErrorOutput::invalid_place_revision());
+    }
+    let decoded = URL_SAFE_NO_PAD
+        .decode(value)
+        .map_err(|_| ErrorOutput::invalid_place_revision())?;
+    let decoded =
+        std::str::from_utf8(&decoded).map_err(|_| ErrorOutput::invalid_place_revision())?;
+    let mut part = decoded.split('|');
+    let version = part.next();
+    let place_entity_id = part.next();
+    let occurred_at = part.next();
+    let activity_id = part.next();
+    if version != Some("p1") || part.next().is_some() {
+        return Err(ErrorOutput::invalid_place_revision());
+    }
+
+    let place_entity_id = place_entity_id
+        .ok_or_else(ErrorOutput::invalid_place_revision)
+        .and_then(|value| {
+            Uuid::parse_str(value).map_err(|_| ErrorOutput::invalid_place_revision())
+        })?;
+    let occurred_at = occurred_at
+        .ok_or_else(ErrorOutput::invalid_place_revision)?
+        .parse::<DateTime<Utc>>()
+        .map_err(|_| ErrorOutput::invalid_place_revision())?;
+    let activity_id = activity_id
+        .ok_or_else(ErrorOutput::invalid_place_revision)
+        .and_then(|value| {
+            Uuid::parse_str(value).map_err(|_| ErrorOutput::invalid_place_revision())
+        })?;
+
+    Ok(PlaceRevision::from_parts(
+        EntityId(place_entity_id),
+        occurred_at,
+        ActivityId(activity_id),
+    ))
 }
 
 fn decode_cursor_parts(
@@ -808,6 +1144,66 @@ mod test {
             decode_activity_cursor(&encode_cursor(cursor)),
             Err(ErrorOutput::invalid_cursor())
         );
+        assert_eq!(
+            decode_place_entity_cursor(&encode_place_entity_cursor(cursor)),
+            Ok(cursor)
+        );
+        assert_eq!(
+            decode_place_activity_cursor(&encode_place_activity_cursor(activity_cursor)),
+            Ok(activity_cursor)
+        );
+
+        for encoded in [
+            encode_activity_cursor(activity_cursor),
+            encode_place_entity_cursor(cursor),
+            encode_place_activity_cursor(activity_cursor),
+        ] {
+            assert_eq!(decode_cursor(&encoded), Err(ErrorOutput::invalid_cursor()));
+        }
+        for encoded in [
+            encode_cursor(cursor),
+            encode_place_entity_cursor(cursor),
+            encode_place_activity_cursor(activity_cursor),
+        ] {
+            assert_eq!(
+                decode_activity_cursor(&encoded),
+                Err(ErrorOutput::invalid_cursor())
+            );
+        }
+        for encoded in [
+            encode_cursor(cursor),
+            encode_activity_cursor(activity_cursor),
+            encode_place_activity_cursor(activity_cursor),
+        ] {
+            assert_eq!(
+                decode_place_entity_cursor(&encoded),
+                Err(ErrorOutput::invalid_cursor())
+            );
+        }
+        for encoded in [
+            encode_cursor(cursor),
+            encode_activity_cursor(activity_cursor),
+            encode_place_entity_cursor(cursor),
+        ] {
+            assert_eq!(
+                decode_place_activity_cursor(&encoded),
+                Err(ErrorOutput::invalid_cursor())
+            );
+        }
+
+        let revision = PlaceRevision::from_parts(
+            cursor.entity_id,
+            cursor.introduced_at,
+            activity_cursor.activity_id,
+        );
+        assert_eq!(
+            decode_place_revision(&encode_place_revision(revision)),
+            Ok(revision)
+        );
+        assert_eq!(
+            decode_place_revision(&encode_activity_cursor(activity_cursor)),
+            Err(ErrorOutput::invalid_place_revision())
+        );
     }
 
     #[test]
@@ -842,6 +1238,7 @@ mod test {
             (ErrorCode::InvalidEntity, "invalid_entity"),
             (ErrorCode::InvalidCharacter, "invalid_character"),
             (ErrorCode::InvalidPlace, "invalid_place"),
+            (ErrorCode::InvalidAction, "invalid_action"),
             (ErrorCode::InvalidEntityLimit, "invalid_entity_limit"),
             (ErrorCode::InvalidActivityLimit, "invalid_activity_limit"),
             (ErrorCode::UserNotFound, "user_not_found"),
@@ -855,11 +1252,14 @@ mod test {
                 ErrorCode::CharacterAlreadyEntered,
                 "character_already_entered",
             ),
+            (ErrorCode::CharacterNotEntered, "character_not_entered"),
             (
                 ErrorCode::EntryPlaceAlreadyExists,
                 "entry_place_already_exists",
             ),
             (ErrorCode::EntryPlaceNotFound, "entry_place_not_found"),
+            (ErrorCode::ActionRequestConflict, "action_request_conflict"),
+            (ErrorCode::PlaceRevisionConflict, "place_revision_conflict"),
             (ErrorCode::Unavailable, "unavailable"),
         ];
 
