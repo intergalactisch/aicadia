@@ -209,8 +209,16 @@ jq -e --arg url "mcp_servers.aicadia.url=\"http://127.0.0.1:$PORT/mcp\"" '
 ' "$agent_record_dir/args.json" >/dev/null || fail 'Agent received an unexpected current MCP command'
 contract_argument="$(jq -r '.[] | select(startswith("developer_instructions="))' "$agent_record_dir/args.json")"
 [[ -n "$contract_argument" ]] || fail 'Agent did not receive the player contract as developer instructions'
-[[ "${contract_argument#developer_instructions=}" == "$(jq -Rs . "$REPO_DIR/src/agent_contract/instruction.md")" ]] \
-    || fail 'Agent developer instructions differ from the runtime player contract'
+served_contract="$(curl --silent --fail \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/json, text/event-stream' \
+    --header 'MCP-Protocol-Version: 2026-07-28' \
+    --header 'Mcp-Method: server/discover' \
+    --data '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-local-test","version":"1"},"io.modelcontextprotocol/clientCapabilities":{}}}}' \
+    "http://127.0.0.1:$PORT/mcp" | jq -ec '.result.instructions | select(type == "string")')" \
+    || fail 'the served player contract could not be read for comparison'
+[[ "${contract_argument#developer_instructions=}" == "$served_contract" ]] \
+    || fail 'Agent developer instructions differ from the served player contract'
 
 if "${launcher_env[@]}" "AICADIA_USER_ID=$first_user_id" "AICADIA_PORT=$SECOND_PORT" \
     "TMPDIR=$agent_tmp" "AICADIA_AGENT_FAKE_RECORD_DIR=$agent_record_dir" \

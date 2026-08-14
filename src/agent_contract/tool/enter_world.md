@@ -1,1 +1,6 @@
-Enter the shared World with the current unplaced Character at the one World-derived entry Place. Use directly after obtaining or creating a Character whose current_place is null. If entry_place_not_found is returned, establish genesis with create_entry_place and retry. This accepts no ids or Place selector. Retrying successful entry returns the same complete Character and Place without another Activity. Render the result as the named person's arrival at the named location and keep entry operations and record categories private.
+What it does: places the current unplaced Character at the one World-derived entry Place.
+Use it when: directly after obtaining or creating a Character whose current_place is null.
+Input meaning: empty — no ids and no Place selector; the World derives the Character and the entry Place.
+After acceptance: render the named person's arrival at the named location.
+On failure: entry_place_not_found means genesis has not happened — establish the entry Place with create_entry_place, then retry. Retrying a successful entry returns the same placement without new Activity.
+Never: expose entry operations, ids or record categories in player conversation.

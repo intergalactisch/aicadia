@@ -39,11 +39,14 @@ printed by the launcher:
 AICADIA_USER_ID='<stable-uuid>' AICADIA_PORT='3000' ./tools/aicadia-agent
 ```
 
-The adapter first verifies the local profile and server. It then starts Codex with
+The adapter first verifies the local profile and server, then fetches the
+published player contract from that running server through one stateless
+`server/discover` call and fails closed when it cannot. It then starts Codex with
 an empty workspace and isolated home/configuration outside the development
 repository, copies only available authentication into that private transient home,
 enables current MCP `2026-07-28`, makes the local Aicadia connection required and
-injects the exact published player contract. That keeps repository instructions,
+injects exactly the served player contract — the one delivery of that text, so an
+outdated local copy is impossible. That keeps repository instructions,
 personal skills, extra MCP servers and source code out of the game context and
 prevents a failed Aicadia connection from silently becoming a coding task or
 direct-API substitute. The entire owned temporary root, including its authentication

@@ -1073,7 +1073,7 @@ impl ServerHandler for AicadiaMcp {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
             .with_protocol_version(ProtocolVersion::V_2026_07_28)
             .with_server_info(Implementation::new("aicadia", MCP_VERSION))
-            .with_instructions(agent_contract::INSTRUCTIONS)
+            .with_instructions(agent_contract::instructions())
     }
 
     fn supported_protocol_versions(&self) -> Cow<'static, [ProtocolVersion]> {

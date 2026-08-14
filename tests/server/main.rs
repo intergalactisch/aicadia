@@ -32,7 +32,8 @@ const CAPABILITY: [&str; 13] = [
     "submit_interaction",
 ];
 
-const MCP_INSTRUCTIONS: &str = include_str!("../../src/agent_contract/instruction.md");
+static MCP_INSTRUCTIONS: std::sync::LazyLock<&'static str> =
+    std::sync::LazyLock::new(aicadia::agent_contract::instructions);
 const MCP_TOOL_CATALOG: &str = include_str!("../agent-tool-catalog.json");
 
 struct TestServer {

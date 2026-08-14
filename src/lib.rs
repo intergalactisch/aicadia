@@ -1,4 +1,4 @@
-mod agent_contract;
+pub mod agent_contract;
 pub mod server;
 pub mod wire;
 mod world;

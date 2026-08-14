@@ -213,7 +213,7 @@ async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) 
         json!([PROTOCOL_VERSION])
     );
     assert_eq!(discover["result"]["capabilities"], json!({"tools": {}}));
-    assert_eq!(discover["result"]["instructions"], MCP_INSTRUCTIONS);
+    assert_eq!(discover["result"]["instructions"], *MCP_INSTRUCTIONS);
 
     let (status, listed) = server
         .mcp("tools/list", None, json!({}), None, Some(&server.origin))
@@ -255,13 +255,13 @@ async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) 
     assert_eq!(property["annotations"]["idempotentHint"], true);
     assert_eq!(property["annotations"]["openWorldHint"], false);
     for required in [
-        "Repository files, source, HTTP, databases, shell, browser, logs and remembered conversation are never live-state fallbacks",
-        "Absolute numbers of Users, Characters, buildings or Entities remain honestly unknown",
-        "A distant occurrence is unknown until a later accepted local carrier",
-        "Use Activity-backed history for truthful recognition and callbacks; model memory or plausible prose is not evidence",
-        "Recap selectively: prefer one relevant recent change, one grounded older callback when useful and one present affordance",
-        "Three proposals are invitations, never an exhaustive menu",
-        "Every explicit call stands alone; never continue play, trigger an Agent, notify a User or spend tokens in the background",
+        "never a live-state fallback",
+        "honestly unknown",
+        "accepted local carrier",
+        "model memory or plausible prose is not evidence",
+        "Recap selectively",
+        "invitations, never an exhaustive menu",
+        "spend tokens in the background",
     ] {
         assert!(
             MCP_INSTRUCTIONS.contains(required),

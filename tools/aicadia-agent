@@ -5,7 +5,6 @@ readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly PORT="${AICADIA_PORT:-3000}"
 readonly BASE_URL="http://127.0.0.1:${PORT}"
 readonly MCP_URL="${BASE_URL}/mcp"
-readonly CONTRACT="$REPO_DIR/src/agent_contract/instruction.md"
 PLAYER_DIR=''
 PLAYER_WORK_DIR=''
 PLAYER_HOME=''
@@ -48,9 +47,6 @@ esac
     || { fail 'AICADIA_PORT must be an integer from 1 through 65535'; exit 1; }
 [[ "${AICADIA_USER_ID:-}" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]] \
     || { fail 'AICADIA_USER_ID must contain the stable local User UUID'; exit 1; }
-[[ -f "$CONTRACT" && ! -L "$CONTRACT" ]] \
-    || { fail 'the Aicadia player contract is unavailable'; exit 1; }
-
 for dependency in codex curl jq mktemp; do
     command -v "$dependency" >/dev/null 2>&1 \
         || { fail "required program is unavailable: $dependency"; exit 1; }
@@ -85,6 +81,17 @@ user_response="$(curl --silent --show-error --fail --connect-timeout 2 --max-tim
 jq -e --arg id "$AICADIA_USER_ID" '.id == $id' <<<"$user_response" >/dev/null 2>&1 \
     || { fail 'Aicadia returned a different local User'; exit 1; }
 
+discover_response="$(curl --silent --show-error --fail --connect-timeout 2 --max-time 10 \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/json, text/event-stream' \
+    --header 'MCP-Protocol-Version: 2026-07-28' \
+    --header 'Mcp-Method: server/discover' \
+    --data '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-agent","version":"1"},"io.modelcontextprotocol/clientCapabilities":{}}}}' \
+    "$MCP_URL")" \
+    || { fail 'the Aicadia player contract is unavailable; keep the launcher running and try again'; exit 1; }
+contract_toml="$(jq -ec '.result.instructions | select(type == "string")' <<<"$discover_response")" \
+    || { fail 'the Aicadia player contract is unavailable'; exit 1; }
+
 WORK_ROOT="$(cd "${TMPDIR:-/tmp}" 2>/dev/null && pwd -P)" \
     || { fail 'the temporary working directory is unavailable'; exit 1; }
 readonly WORK_ROOT
@@ -108,8 +115,6 @@ if [[ -f "$source_codex_home/auth.json" && ! -L "$source_codex_home/auth.json" ]
     chmod 600 "$PLAYER_CODEX_HOME/auth.json"
 fi
 
-contract_toml="$(jq -Rs . "$CONTRACT")" \
-    || { fail 'could not load the Aicadia player contract'; exit 1; }
 
 codex_args=(
     --enable mcp_2026_07_28

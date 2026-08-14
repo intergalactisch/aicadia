@@ -97,7 +97,7 @@ validate_token_free_contract() {
         and all(.[];(.description|type)=="string" and (.description|length)>0
             and (.inputSchema|type)=="object" and (.outputSchema|type)=="object")
         and (map(select(.name=="get_entity_at_current_place"))[0].description|contains("Property and Trait"))
-        and (map(select(.name=="submit_action"))[0].description|contains("Trait establishments/developments"))
+        and (map(select(.name=="submit_action"))[0].description|contains("Traits in one mixed package"))
         and (map(select(.name=="submit_interaction"))[0].description|contains("target-authored"))
     ' "$TOOL_CATALOG" >/dev/null || fail 'the fixed Trait-aware thirteen-tool catalog is invalid.' || return
     jq -n -e --argjson all "$CAPABILITIES" --argjson ar "$ACTION_READ_TOOLS" \

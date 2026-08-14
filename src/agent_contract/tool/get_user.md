@@ -1,1 +1,4 @@
-Get the durable User represented by this request's Aicadia-User-Id context. This tool accepts no User id and does not authenticate the caller. Use the result privately and never present its id, fields or provisioning record in player conversation.
+What it does: returns the durable User behind this conversation's Aicadia-User-Id request context.
+Input meaning: no input; it accepts no User id and does not authenticate anyone.
+After the call: use the result privately.
+Never: present the User's id, fields or provisioning record in player conversation.
