@@ -6,12 +6,19 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
-    AcceptedAction, ActionField, Activity, ActivityCursor, ActivityEntityReference,
-    ActivityEntityRole, ActivityId, ActivityOperation, ActivityPage, Character, CreateCharacter,
-    CreateEntity, CreateEntryPlace, CurrentPlaceActivityPage, CurrentPlaceEntityPage, Entity,
-    EntityCursor, EntityField, EntityId, EntityPage, EntitySummary, IntroduceEntity, InvalidReason,
-    ListActivity, ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace, Place,
-    PlaceRevision, PlaceSummary, SubmitAction, User, UserId, WorldError, WorldView,
+    AcceptedAction, AcceptedActionConsequence, AcceptedInteraction, ActionConsequence, ActionField,
+    Activity, ActivityCursor, ActivityEntityReference, ActivityEntityRole, ActivityId,
+    ActivityOperation, ActivityPage, ActivityTraitChange, ChangeEntityProperty, ChangeEntityTrait,
+    Character, CharacterEntityStatePage, CreateCharacter, CreateEntity, CreateEntryPlace,
+    CurrentPlaceActivityPage, CurrentPlaceEntity, CurrentPlaceEntityPage,
+    CurrentPlaceEntityStatePage, Entity, EntityCurrentAssociation, EntityCurrentStateCursor,
+    EntityCurrentStatePage, EntityCursor, EntityField, EntityId, EntityPage, EntityPropertyChange,
+    EntityPropertyChangeInput as WorldPropertyChange, EntitySummary, EntityTrait,
+    EntityTraitChangeInput as WorldTraitChange, EntityTraitId, GetEntityAtCurrentPlace,
+    GetEntityCurrentState, InteractionField, IntroduceEntity, InvalidReason, ListActivity,
+    ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace, Place, PlaceRevision,
+    PlaceSummary, PropertyField, PropertyInput as WorldPropertyInput, PropertyValue, SubmitAction,
+    SubmitInteraction, User, UserId, WorldError, WorldView,
 };
 
 pub const USER_CONTEXT_HEADER: &str = "Aicadia-User-Id";
@@ -139,11 +146,350 @@ pub struct EntitySummaryOutput {
     pub name: String,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct CurrentPlaceEntityOutput {
+    /// Stable id of this selectable local Entity.
+    pub id: Uuid,
+    /// Safe current name of this selectable local Entity.
+    pub name: String,
+    /// Safe current description of this selectable local Entity.
+    pub description: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct CurrentPlaceOutput {
+    /// Stable id of the exact current Place Entity.
+    pub id: Uuid,
+    /// Safe current name of the exact current Place.
+    pub name: String,
+    /// Safe current description of the exact current Place.
+    pub description: String,
+}
+
+impl From<Place> for CurrentPlaceOutput {
+    fn from(value: Place) -> Self {
+        Self {
+            id: value.entity.id.0,
+            name: value.entity.name,
+            description: value.entity.description,
+        }
+    }
+}
+
+impl From<CurrentPlaceEntity> for CurrentPlaceEntityOutput {
+    fn from(value: CurrentPlaceEntity) -> Self {
+        Self {
+            id: value.id.0,
+            name: value.name,
+            description: value.description,
+        }
+    }
+}
+
 impl From<EntitySummary> for EntitySummaryOutput {
     fn from(value: EntitySummary) -> Self {
         Self {
             id: value.id.0,
             name: value.name,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum PropertyValueInput {
+    /// Bounded current text established for the canonical key.
+    Text {
+        /// World trims this value and accepts 1 through 4,000 non-NUL characters.
+        #[schemars(length(min = 1, max = 4000))]
+        #[schema(min_length = 1, max_length = 4000)]
+        text: String,
+    },
+    /// Signed whole-number current value established for the canonical key.
+    Integer { integer: i64 },
+}
+
+impl From<PropertyValueInput> for PropertyValue {
+    fn from(value: PropertyValueInput) -> Self {
+        match value {
+            PropertyValueInput::Text { text } => Self::Text(text),
+            PropertyValueInput::Integer { integer } => Self::Integer(integer),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum PropertyValueOutput {
+    /// Canonical current text value.
+    Text { text: String },
+    /// Canonical current signed whole-number value.
+    Integer { integer: i64 },
+}
+
+impl From<PropertyValue> for PropertyValueOutput {
+    fn from(value: PropertyValue) -> Self {
+        match value {
+            PropertyValue::Text(text) => Self::Text { text },
+            PropertyValue::Integer(integer) => Self::Integer { integer },
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct PropertyInput {
+    /// Canonical English lower-snake-case key. World accepts 1 through 64 ASCII
+    /// characters, starting with a letter.
+    #[schemars(length(min = 1, max = 64))]
+    #[schema(min_length = 1, max_length = 64)]
+    pub key: String,
+    /// One strict tagged text or integer value.
+    pub value: PropertyValueInput,
+}
+
+impl From<PropertyInput> for WorldPropertyInput {
+    fn from(value: PropertyInput) -> Self {
+        Self {
+            key: value.key,
+            value: value.value.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct EntityPropertyChangeInput {
+    /// Exact local Entity selected from current grounded context.
+    pub entity_id: Uuid,
+    /// Canonical English lower-snake-case key.
+    #[schemars(length(min = 1, max = 64))]
+    #[schema(min_length = 1, max_length = 64)]
+    pub key: String,
+    /// One strict tagged text or integer value.
+    pub value: PropertyValueInput,
+}
+
+impl From<EntityPropertyChangeInput> for WorldPropertyChange {
+    fn from(value: EntityPropertyChangeInput) -> Self {
+        Self {
+            entity_id: EntityId(value.entity_id),
+            key: value.key,
+            value: value.value.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum EntityTraitChangeInput {
+    /// Establish the first immutable statement of a World-assigned Trait lineage.
+    Establish {
+        entity_id: Uuid,
+        #[schemars(length(min = 1, max = 4000))]
+        #[schema(min_length = 1, max_length = 4000)]
+        statement: String,
+    },
+    /// Advance one stable Trait lineage to a new immutable current statement.
+    Develop {
+        trait_id: Uuid,
+        #[schemars(length(min = 1, max = 4000))]
+        #[schema(min_length = 1, max_length = 4000)]
+        statement: String,
+    },
+}
+
+impl From<EntityTraitChangeInput> for WorldTraitChange {
+    fn from(value: EntityTraitChangeInput) -> Self {
+        match value {
+            EntityTraitChangeInput::Establish {
+                entity_id,
+                statement,
+            } => Self::Establish {
+                entity_id: EntityId(entity_id),
+                statement,
+            },
+            EntityTraitChangeInput::Develop {
+                trait_id,
+                statement,
+            } => Self::Develop {
+                trait_id: EntityTraitId(trait_id),
+                statement,
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct EntityPropertyOutput {
+    /// Safe summary of the Entity whose current state changed or is being read.
+    pub entity: EntitySummaryOutput,
+    /// Canonical Property key; no internal key id is exposed.
+    pub key: String,
+    /// Exact typed value established by the Activity or held currently.
+    pub value: PropertyValueOutput,
+}
+
+impl From<EntityPropertyChange> for EntityPropertyOutput {
+    fn from(value: EntityPropertyChange) -> Self {
+        Self {
+            entity: value.entity.into(),
+            key: value.key,
+            value: value.value.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct EntityCurrentPropertyOutput {
+    /// Canonical Property key; the internal Property-key identity is never exposed.
+    pub key: String,
+    /// Exact current typed value.
+    pub value: PropertyValueOutput,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct EntityTraitOutput {
+    /// World-assigned stable identity of one Trait lineage.
+    pub id: Uuid,
+    /// Current non-executable statement for this Trait lineage.
+    pub statement: String,
+}
+
+impl From<EntityTrait> for EntityTraitOutput {
+    fn from(value: EntityTrait) -> Self {
+        Self {
+            id: value.id.0,
+            statement: value.statement,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum ActivityTraitChangeOutput {
+    /// This Activity established the first immutable version of a new Trait.
+    Establish {
+        entity: EntitySummaryOutput,
+        r#trait: EntityTraitOutput,
+    },
+    /// This Activity advanced an existing Trait lineage to a new immutable version.
+    Develop {
+        entity: EntitySummaryOutput,
+        r#trait: EntityTraitOutput,
+        previous_statement: String,
+    },
+}
+
+impl From<ActivityTraitChange> for ActivityTraitChangeOutput {
+    fn from(value: ActivityTraitChange) -> Self {
+        match value {
+            ActivityTraitChange::Establish { entity, r#trait } => Self::Establish {
+                entity: entity.into(),
+                r#trait: r#trait.into(),
+            },
+            ActivityTraitChange::Develop {
+                entity,
+                r#trait,
+                previous_statement,
+            } => Self::Develop {
+                entity: entity.into(),
+                r#trait: r#trait.into(),
+                previous_statement,
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum EntityCurrentAssociationOutput {
+    Property {
+        property: EntityCurrentPropertyOutput,
+    },
+    Trait {
+        r#trait: EntityTraitOutput,
+    },
+}
+
+impl From<EntityCurrentAssociation> for EntityCurrentAssociationOutput {
+    fn from(value: EntityCurrentAssociation) -> Self {
+        match value {
+            EntityCurrentAssociation::Property { key, value } => Self::Property {
+                property: EntityCurrentPropertyOutput {
+                    key,
+                    value: value.into(),
+                },
+            },
+            EntityCurrentAssociation::Trait(r#trait) => Self::Trait {
+                r#trait: r#trait.into(),
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct EntityCurrentStatePageOutput {
+    /// Combined bounded current state, Properties before Traits.
+    pub association: Vec<EntityCurrentAssociationOutput>,
+    /// Opaque operation-specific continuation, or null when complete.
+    #[schemars(schema_with = "nullable_string_schema", required)]
+    #[schema(required = true, nullable = true)]
+    pub next: Option<String>,
+}
+
+impl EntityCurrentStatePageOutput {
+    fn from_character(value: EntityCurrentStatePage) -> Self {
+        Self {
+            association: value.association.into_iter().map(Into::into).collect(),
+            next: value.next.map(encode_character_state_cursor),
+        }
+    }
+
+    fn from_current_place_entity(value: EntityCurrentStatePage) -> Self {
+        Self {
+            association: value.association.into_iter().map(Into::into).collect(),
+            next: value.next.map(encode_current_place_entity_state_cursor),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct CharacterEntityStatePageOutput {
+    pub character: CharacterOutput,
+    #[schemars(schema_with = "nullable_string_schema", required)]
+    #[schema(required = true, nullable = true)]
+    pub place_revision: Option<String>,
+    pub current_state: EntityCurrentStatePageOutput,
+}
+
+impl From<CharacterEntityStatePage> for CharacterEntityStatePageOutput {
+    fn from(value: CharacterEntityStatePage) -> Self {
+        Self {
+            character: value.character.into(),
+            place_revision: value.place_revision.map(encode_place_revision),
+            current_state: EntityCurrentStatePageOutput::from_character(value.current_state),
         }
     }
 }
@@ -201,6 +547,7 @@ pub enum ActivityOperationOutput {
     CreateEntryPlace,
     EnterWorld,
     SubmitAction,
+    SubmitInteraction,
 }
 
 impl From<ActivityOperation> for ActivityOperationOutput {
@@ -211,6 +558,7 @@ impl From<ActivityOperation> for ActivityOperationOutput {
             ActivityOperation::CreateEntryPlace => Self::CreateEntryPlace,
             ActivityOperation::EnterWorld => Self::EnterWorld,
             ActivityOperation::SubmitAction => Self::SubmitAction,
+            ActivityOperation::SubmitInteraction => Self::SubmitInteraction,
         }
     }
 }
@@ -221,6 +569,7 @@ pub enum ActivityEntityRoleOutput {
     Subject,
     Destination,
     Location,
+    Target,
 }
 
 impl From<ActivityEntityRole> for ActivityEntityRoleOutput {
@@ -229,6 +578,7 @@ impl From<ActivityEntityRole> for ActivityEntityRoleOutput {
             ActivityEntityRole::Subject => Self::Subject,
             ActivityEntityRole::Destination => Self::Destination,
             ActivityEntityRole::Location => Self::Location,
+            ActivityEntityRole::Target => Self::Target,
         }
     }
 }
@@ -237,11 +587,13 @@ impl From<ActivityEntityRole> for ActivityEntityRoleOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct ActivityEntityReferenceOutput {
-    /// Shared Entity involved in the accepted action.
+    /// Shared Entity involved in this immutable accepted Activity.
     pub entity: EntitySummaryOutput,
-    /// Server-owned meaning of this Entity in the action: subject is what the
+    /// Server-owned meaning of this Entity in the Activity: subject is what an
     /// action introduced or acted on; destination is where entry placed the
-    /// Character; location is where a subject was established.
+    /// Character; location is where the Activity happened; target is where the
+    /// actor directed Interaction behavior and never establishes perception,
+    /// consent, agreement, thought or response.
     pub role: ActivityEntityRoleOutput,
 }
 
@@ -258,7 +610,7 @@ impl From<ActivityEntityReference> for ActivityEntityReferenceOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct ActivityOutput {
-    /// Stable id of this immutable accepted-action record.
+    /// Stable id of this immutable accepted World Activity.
     pub id: Uuid,
     /// Server-owned name of the accepted World operation.
     pub operation: ActivityOperationOutput,
@@ -276,8 +628,14 @@ pub struct ActivityOutput {
     pub context_place: Option<PlaceSummaryOutput>,
     /// Shared Entities linked to the action with explicit server-owned roles.
     pub involved_entity: Vec<ActivityEntityReferenceOutput>,
-    /// Canonical readable text accepted with submit_action, or null for every
-    /// other operation.
+    /// Exact typed Property changes established by this Activity, sorted by Entity
+    /// id and canonical key. Empty when this Activity changed no Property.
+    pub property_change: Vec<EntityPropertyOutput>,
+    /// Exact Trait establishments/developments caused by this Activity. Entity
+    /// references remain compact and current state is not recursively hydrated.
+    pub trait_change: Vec<ActivityTraitChangeOutput>,
+    /// Canonical readable text accepted with submit_action or submit_interaction,
+    /// or null for every other operation.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub prose: Option<String>,
@@ -303,6 +661,8 @@ impl From<Activity> for ActivityOutput {
             actor_character: value.actor_character.map(Into::into),
             context_place: value.context_place.map(Into::into),
             involved_entity: value.involved_entity.into_iter().map(Into::into).collect(),
+            property_change: value.property_change.into_iter().map(Into::into).collect(),
+            trait_change: value.trait_change.into_iter().map(Into::into).collect(),
             prose: value.prose,
             occurred_at: value.occurred_at,
         }
@@ -336,13 +696,15 @@ impl From<ActivityPage> for ActivityPageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceEntityPageOutput {
-    /// Complete exact current Place derived from the current Character.
-    pub place: PlaceOutput,
+    /// Flat safe id, name and description of the exact current Place derived from
+    /// the current Character; complete Entity provenance and entry status are omitted.
+    pub place: CurrentPlaceOutput,
     /// Opaque strong revision for this exact Place representation. Copy it
-    /// unchanged into submit_action.expected_place_revision.
+    /// unchanged into submit_action.expected_place_revision or
+    /// submit_interaction.expected_place_revision.
     pub place_revision: String,
-    /// Entity summaries explicitly placed at this exact Place.
-    pub entity: Vec<EntitySummaryOutput>,
+    /// Safe target facts for other Characters and ordinary Entities at this exact Place.
+    pub entity: Vec<CurrentPlaceEntityOutput>,
     /// Opaque cursor for the following page, or null when no following page exists.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
@@ -364,8 +726,9 @@ impl From<CurrentPlaceEntityPage> for CurrentPlaceEntityPageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceActivityPageOutput {
-    /// Complete exact current Place derived from the current Character.
-    pub place: PlaceOutput,
+    /// Flat safe id, name and description of the exact current Place derived from
+    /// the current Character; complete Entity provenance and entry status are omitted.
+    pub place: CurrentPlaceOutput,
     /// Opaque strong revision for this exact Place representation. Pages used to
     /// ground one action must agree on this value.
     pub place_revision: String,
@@ -391,20 +754,80 @@ impl From<CurrentPlaceActivityPage> for CurrentPlaceActivityPageOutput {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
+pub struct CurrentPlaceEntityStatePageOutput {
+    /// Safe exact current Place derived from the current Character.
+    pub place: CurrentPlaceOutput,
+    /// Opaque strong revision shared by exact-current-Place reads.
+    pub place_revision: String,
+    /// One selected exact-local Entity with compact safe fields.
+    pub entity: CurrentPlaceEntityOutput,
+    /// One combined bounded current Property/Trait association page.
+    pub current_state: EntityCurrentStatePageOutput,
+}
+
+impl From<CurrentPlaceEntityStatePage> for CurrentPlaceEntityStatePageOutput {
+    fn from(value: CurrentPlaceEntityStatePage) -> Self {
+        Self {
+            place: value.place.into(),
+            place_revision: encode_place_revision(value.place_revision),
+            entity: value.entity.into(),
+            current_state: EntityCurrentStatePageOutput::from_current_place_entity(
+                value.current_state,
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
 pub struct AcceptedActionOutput {
     /// One immutable Activity containing the canonical accepted prose.
     pub activity: ActivityOutput,
-    /// Entity introduced by the accepted consequence.
-    pub entity: EntityOutput,
-    /// Exact Place at which World established the Entity.
+    /// Exact tagged consequence accepted by World.
+    pub consequence: AcceptedActionConsequenceOutput,
+    /// Exact Place at which World accepted the Action.
     pub place: PlaceOutput,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub enum AcceptedActionConsequenceOutput {
+    IntroduceEntity {
+        entity: EntityOutput,
+    },
+    ChangeEntityProperty {
+        property_change: Vec<EntityPropertyOutput>,
+    },
+    ChangeEntityTrait {
+        trait_change: Vec<ActivityTraitChangeOutput>,
+    },
+}
+
+impl From<AcceptedActionConsequence> for AcceptedActionConsequenceOutput {
+    fn from(value: AcceptedActionConsequence) -> Self {
+        match value {
+            AcceptedActionConsequence::IntroduceEntity(entity) => Self::IntroduceEntity {
+                entity: entity.into(),
+            },
+            AcceptedActionConsequence::ChangeEntityProperty(property_change) => {
+                Self::ChangeEntityProperty {
+                    property_change: property_change.into_iter().map(Into::into).collect(),
+                }
+            }
+            AcceptedActionConsequence::ChangeEntityTrait(trait_change) => Self::ChangeEntityTrait {
+                trait_change: trait_change.into_iter().map(Into::into).collect(),
+            },
+        }
+    }
 }
 
 impl From<AcceptedAction> for AcceptedActionOutput {
     fn from(value: AcceptedAction) -> Self {
         Self {
             activity: value.activity.into(),
-            entity: value.entity.into(),
+            consequence: value.consequence.into(),
             place: value.place.into(),
         }
     }
@@ -580,6 +1003,87 @@ impl ListActivityAtCurrentPlaceInput {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema, IntoParams)]
+#[serde(default, deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+#[into_params(parameter_in = Query)]
+pub struct GetEntityCurrentStateInput {
+    /// Opaque cursor returned by the same full-Entity fetch.
+    pub cursor: Option<String>,
+    /// Combined Property/Trait page size. Defaults to 25; World accepts 1 through 100.
+    #[serde(default = "default_page_limit")]
+    #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
+    #[param(default = 25, minimum = 1, maximum = 100)]
+    pub limit: i64,
+}
+
+impl Default for GetEntityCurrentStateInput {
+    fn default() -> Self {
+        Self {
+            cursor: None,
+            limit: default_page_limit(),
+        }
+    }
+}
+
+impl GetEntityCurrentStateInput {
+    pub fn parse_character(self) -> Result<GetEntityCurrentState, ErrorOutput> {
+        let limit = u16::try_from(self.limit)
+            .map_err(|_| ErrorOutput::from_world(WorldError::InvalidEntityLimit))?;
+        Ok(GetEntityCurrentState {
+            cursor: self
+                .cursor
+                .as_deref()
+                .map(decode_character_state_cursor)
+                .transpose()?,
+            limit,
+        })
+    }
+
+    pub fn parse_current_place_entity(
+        self,
+        entity_id: EntityId,
+    ) -> Result<GetEntityAtCurrentPlace, ErrorOutput> {
+        let limit = u16::try_from(self.limit)
+            .map_err(|_| ErrorOutput::from_world(WorldError::InvalidEntityLimit))?;
+        Ok(GetEntityAtCurrentPlace {
+            entity_id,
+            cursor: self
+                .cursor
+                .as_deref()
+                .map(decode_current_place_entity_state_cursor)
+                .transpose()?,
+            limit,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct GetEntityAtCurrentPlaceInput {
+    /// Stable id selected from compact exact-current-Place orientation.
+    pub entity_id: Uuid,
+    /// Opaque cursor returned by this same scoped Entity fetch.
+    #[serde(default)]
+    pub cursor: Option<String>,
+    /// Combined Property/Trait page size. Defaults to 25; World accepts 1 through 100.
+    #[serde(default = "default_page_limit")]
+    #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
+    #[schema(default = 25, minimum = 1, maximum = 100)]
+    pub limit: i64,
+}
+
+impl GetEntityAtCurrentPlaceInput {
+    pub fn parse(self) -> Result<GetEntityAtCurrentPlace, ErrorOutput> {
+        GetEntityCurrentStateInput {
+            cursor: self.cursor,
+            limit: self.limit,
+        }
+        .parse_current_place_entity(EntityId(self.entity_id))
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
@@ -592,6 +1096,10 @@ pub struct CreateEntityInput {
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub property: Vec<PropertyInput>,
 }
 
 impl From<CreateEntityInput> for CreateEntity {
@@ -599,6 +1107,7 @@ impl From<CreateEntityInput> for CreateEntity {
         Self {
             name: value.name,
             description: value.description,
+            property: value.property.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -615,6 +1124,10 @@ pub struct CreateCharacterInput {
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub property: Vec<PropertyInput>,
 }
 
 impl From<CreateCharacterInput> for CreateCharacter {
@@ -622,6 +1135,7 @@ impl From<CreateCharacterInput> for CreateCharacter {
         Self {
             name: value.name,
             description: value.description,
+            property: value.property.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -638,6 +1152,10 @@ pub struct CreateEntryPlaceInput {
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub property: Vec<PropertyInput>,
 }
 
 impl From<CreateEntryPlaceInput> for CreateEntryPlace {
@@ -645,6 +1163,7 @@ impl From<CreateEntryPlaceInput> for CreateEntryPlace {
         Self {
             name: value.name,
             description: value.description,
+            property: value.property.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -663,6 +1182,22 @@ pub enum ActionConsequenceInput {
         #[schemars(length(min = 1, max = 4000))]
         #[schema(min_length = 1, max_length = 4000)]
         description: String,
+        #[serde(default)]
+        #[schemars(length(max = 100))]
+        #[schema(max_items = 100)]
+        property: Vec<PropertyInput>,
+    },
+    /// Change one or more typed Properties of exact local Entities atomically.
+    ChangeEntityProperty {
+        #[schemars(length(min = 1, max = 100))]
+        #[schema(min_items = 1, max_items = 100)]
+        property_change: Vec<EntityPropertyChangeInput>,
+    },
+    /// Establish and/or develop one through 100 exact-local Entity-owned Traits.
+    ChangeEntityTrait {
+        #[schemars(length(min = 1, max = 100))]
+        #[schema(min_items = 1, max_items = 100)]
+        trait_change: Vec<EntityTraitChangeInput>,
     },
 }
 
@@ -686,8 +1221,24 @@ pub struct SubmitActionInput {
 impl SubmitActionInput {
     pub fn parse(self) -> Result<SubmitAction, ErrorOutput> {
         let consequence = match self.consequence {
-            ActionConsequenceInput::IntroduceEntity { name, description } => {
-                IntroduceEntity { name, description }
+            ActionConsequenceInput::IntroduceEntity {
+                name,
+                description,
+                property,
+            } => ActionConsequence::IntroduceEntity(IntroduceEntity {
+                name,
+                description,
+                property: property.into_iter().map(Into::into).collect(),
+            }),
+            ActionConsequenceInput::ChangeEntityProperty { property_change } => {
+                ActionConsequence::ChangeEntityProperty(ChangeEntityProperty {
+                    property_change: property_change.into_iter().map(Into::into).collect(),
+                })
+            }
+            ActionConsequenceInput::ChangeEntityTrait { trait_change } => {
+                ActionConsequence::ChangeEntityTrait(ChangeEntityTrait {
+                    trait_change: trait_change.into_iter().map(Into::into).collect(),
+                })
             }
         };
         Ok(SubmitAction {
@@ -696,6 +1247,72 @@ impl SubmitActionInput {
             prose: self.prose,
             consequence,
         })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct SubmitInteractionInput {
+    /// Agent-generated UUID for this one intended Interaction. Reuse only for an
+    /// uncertain delivery retry of semantically identical input.
+    pub request_id: Uuid,
+    /// Opaque exact-Place revision copied unchanged from a grounded Place read.
+    pub expected_place_revision: String,
+    /// Exact canonical English outward behavior previewed and explicitly confirmed
+    /// by the User. It never authors a target's response, thought or private intent.
+    #[schemars(length(min = 1, max = 4000))]
+    #[schema(min_length = 1, max_length = 4000)]
+    pub prose: String,
+    /// Unordered set of 1 through 100 distinct target Entity ids selected from the
+    /// current exact-Place Entity read.
+    #[schemars(length(min = 1, max = 100))]
+    #[schema(min_items = 1, max_items = 100)]
+    pub target_entity_id: Vec<Uuid>,
+    /// Optional typed changes to the actor or explicit targets.
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub property_change: Vec<EntityPropertyChangeInput>,
+    /// Optional mixed establishment/development of Traits owned by the actor or
+    /// explicit targets. This may coexist atomically with Property changes.
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub trait_change: Vec<EntityTraitChangeInput>,
+}
+
+impl SubmitInteractionInput {
+    pub fn parse(self) -> Result<SubmitInteraction, ErrorOutput> {
+        Ok(SubmitInteraction {
+            request_id: self.request_id,
+            expected_place_revision: decode_place_revision(&self.expected_place_revision)?,
+            prose: self.prose,
+            target_entity_id: self.target_entity_id.into_iter().map(EntityId).collect(),
+            property_change: self.property_change.into_iter().map(Into::into).collect(),
+            trait_change: self.trait_change.into_iter().map(Into::into).collect(),
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct AcceptedInteractionOutput {
+    /// Immutable accepted Interaction with actor, location, targets and canonical
+    /// outward behavior.
+    pub activity: ActivityOutput,
+    /// Flat safe id, name and description of the exact Place at which the
+    /// Interaction was accepted; complete Entity provenance and entry status are omitted.
+    pub place: CurrentPlaceOutput,
+}
+
+impl From<AcceptedInteraction> for AcceptedInteractionOutput {
+    fn from(value: AcceptedInteraction) -> Self {
+        Self {
+            activity: value.activity.into(),
+            place: value.place.into(),
+        }
     }
 }
 
@@ -727,6 +1344,9 @@ pub enum ErrorCode {
     InvalidCharacter,
     InvalidPlace,
     InvalidAction,
+    InvalidInteraction,
+    InvalidProperty,
+    InvalidTrait,
     InvalidEntityLimit,
     InvalidActivityLimit,
     UserNotFound,
@@ -738,6 +1358,12 @@ pub enum ErrorCode {
     EntryPlaceAlreadyExists,
     EntryPlaceNotFound,
     ActionRequestConflict,
+    InteractionRequestConflict,
+    InteractionTargetUnavailable,
+    PropertyEntityUnavailable,
+    EntityAtCurrentPlaceUnavailable,
+    TraitUnavailable,
+    PropertyKeyConflict,
     PlaceRevisionConflict,
     Unavailable,
 }
@@ -801,6 +1427,10 @@ impl ErrorOutput {
 
     pub fn from_world(error: WorldError) -> Self {
         match error {
+            WorldError::InvalidRequest => Self::new(
+                ErrorCode::InvalidRequest,
+                "The request does not match the selected World operation.",
+            ),
             WorldError::InvalidEntity { field, reason } => {
                 let field = match field {
                     EntityField::Name => "name",
@@ -810,6 +1440,9 @@ impl ErrorOutput {
                     InvalidReason::Empty => ("empty", "is empty"),
                     InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
                     InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
                 };
                 Self::with_detail(
                     ErrorCode::InvalidEntity,
@@ -827,6 +1460,9 @@ impl ErrorOutput {
                     InvalidReason::Empty => ("empty", "is empty"),
                     InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
                     InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
                 };
                 Self::with_detail(
                     ErrorCode::InvalidCharacter,
@@ -844,6 +1480,9 @@ impl ErrorOutput {
                     InvalidReason::Empty => ("empty", "is empty"),
                     InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
                     InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
                 };
                 Self::with_detail(
                     ErrorCode::InvalidPlace,
@@ -864,6 +1503,9 @@ impl ErrorOutput {
                     InvalidReason::Empty => ("empty", "is empty"),
                     InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
                     InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
                 };
                 Self::with_detail(
                     ErrorCode::InvalidAction,
@@ -872,6 +1514,56 @@ impl ErrorOutput {
                     reason,
                 )
             }
+            WorldError::InvalidInteraction { field, reason } => {
+                let (field, subject) = match field {
+                    InteractionField::Prose => ("prose", "Interaction prose"),
+                    InteractionField::TargetEntityId => {
+                        ("target_entity_id", "Interaction target list")
+                    }
+                };
+                let (reason, explanation) = match reason {
+                    InvalidReason::Empty => ("empty", "is empty"),
+                    InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
+                    InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => {
+                        ("out_of_range", "must contain 1 through 100 targets")
+                    }
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
+                };
+                Self::with_detail(
+                    ErrorCode::InvalidInteraction,
+                    format!("{subject} {explanation}."),
+                    field,
+                    reason,
+                )
+            }
+            WorldError::InvalidProperty { field, reason } => {
+                let field = match field {
+                    PropertyField::Property => "property",
+                    PropertyField::PropertyChange => "property_change",
+                    PropertyField::Key => "key",
+                    PropertyField::Value => "value",
+                };
+                let (reason, explanation) = match reason {
+                    InvalidReason::Empty => ("empty", "is empty"),
+                    InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
+                    InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
+                };
+                Self::with_detail(
+                    ErrorCode::InvalidProperty,
+                    format!("Property {field} {explanation}."),
+                    field,
+                    reason,
+                )
+            }
+            WorldError::InvalidTrait => Self::new(
+                ErrorCode::InvalidTrait,
+                "Trait input is invalid, duplicated or unchanged.",
+            ),
             WorldError::InvalidEntityLimit => Self::with_detail(
                 ErrorCode::InvalidEntityLimit,
                 "limit must be from 1 through 100.",
@@ -880,6 +1572,12 @@ impl ErrorOutput {
             ),
             WorldError::InvalidActivityLimit => Self::with_detail(
                 ErrorCode::InvalidActivityLimit,
+                "limit must be from 1 through 100.",
+                "limit",
+                "out_of_range",
+            ),
+            WorldError::InvalidPropertyLimit => Self::with_detail(
+                ErrorCode::InvalidEntityLimit,
                 "limit must be from 1 through 100.",
                 "limit",
                 "out_of_range",
@@ -919,6 +1617,30 @@ impl ErrorOutput {
             WorldError::ActionRequestConflict => Self::new(
                 ErrorCode::ActionRequestConflict,
                 "request_id was already accepted with different action content.",
+            ),
+            WorldError::InteractionRequestConflict => Self::new(
+                ErrorCode::InteractionRequestConflict,
+                "request_id was already accepted with different interaction content.",
+            ),
+            WorldError::InteractionTargetUnavailable => Self::new(
+                ErrorCode::InteractionTargetUnavailable,
+                "One or more interaction targets are unavailable.",
+            ),
+            WorldError::PropertyEntityUnavailable => Self::new(
+                ErrorCode::PropertyEntityUnavailable,
+                "One or more Property subjects are unavailable.",
+            ),
+            WorldError::TraitUnavailable => Self::new(
+                ErrorCode::TraitUnavailable,
+                "One or more selected Traits are unavailable.",
+            ),
+            WorldError::EntityAtCurrentPlaceUnavailable => Self::new(
+                ErrorCode::EntityAtCurrentPlaceUnavailable,
+                "The selected Entity is unavailable at the current Place.",
+            ),
+            WorldError::PropertyKeyConflict => Self::new(
+                ErrorCode::PropertyKeyConflict,
+                "A Property key already exists with another value type.",
             ),
             WorldError::PlaceRevisionConflict => Self::new(
                 ErrorCode::PlaceRevisionConflict,
@@ -989,6 +1711,36 @@ fn encode_place_activity_cursor(cursor: ActivityCursor) -> String {
     encode_cursor_parts("pa1", cursor.occurred_at, cursor.activity_id.0)
 }
 
+fn encode_character_state_cursor(cursor: EntityCurrentStateCursor) -> String {
+    encode_entity_current_state_cursor(cursor, "gc1")
+}
+
+fn encode_current_place_entity_state_cursor(cursor: EntityCurrentStateCursor) -> String {
+    encode_entity_current_state_cursor(cursor, "ge1")
+}
+
+fn encode_entity_current_state_cursor(cursor: EntityCurrentStateCursor, version: &str) -> String {
+    let (place_entity_id, occurred_at, activity_id) = match cursor.place_revision() {
+        Some(revision) => (
+            revision.place_entity_id().0.to_string(),
+            revision
+                .occurred_at()
+                .to_rfc3339_opts(SecondsFormat::Nanos, true),
+            revision.activity_id().0.to_string(),
+        ),
+        None => ("-".to_owned(), "-".to_owned(), "-".to_owned()),
+    };
+    let (kind, key) = match (cursor.property_key_id(), cursor.trait_id()) {
+        (Some(property_key_id), None) => ("p", property_key_id.to_string()),
+        (None, Some(trait_id)) => ("t", trait_id.0.to_string()),
+        _ => unreachable!("World current-state cursor has exactly one typed key"),
+    };
+    URL_SAFE_NO_PAD.encode(format!(
+        "{version}|{}|{place_entity_id}|{occurred_at}|{activity_id}|{kind}|{key}",
+        cursor.entity_id().0
+    ))
+}
+
 fn encode_place_revision(revision: PlaceRevision) -> String {
     URL_SAFE_NO_PAD.encode(format!(
         "p1|{}|{}|{}",
@@ -1037,6 +1789,82 @@ fn decode_place_activity_cursor(value: &str) -> Result<ActivityCursor, ErrorOutp
         occurred_at,
         activity_id: ActivityId(activity_id),
     })
+}
+
+fn decode_character_state_cursor(value: &str) -> Result<EntityCurrentStateCursor, ErrorOutput> {
+    decode_entity_current_state_cursor(value, "gc1")
+}
+
+fn decode_current_place_entity_state_cursor(
+    value: &str,
+) -> Result<EntityCurrentStateCursor, ErrorOutput> {
+    decode_entity_current_state_cursor(value, "ge1")
+}
+
+fn decode_entity_current_state_cursor(
+    value: &str,
+    expected_version: &str,
+) -> Result<EntityCurrentStateCursor, ErrorOutput> {
+    if value.len() > 768 {
+        return Err(ErrorOutput::invalid_cursor());
+    }
+    let decoded = URL_SAFE_NO_PAD
+        .decode(value)
+        .map_err(|_| ErrorOutput::invalid_cursor())?;
+    let decoded = std::str::from_utf8(&decoded).map_err(|_| ErrorOutput::invalid_cursor())?;
+    let mut part = decoded.split('|');
+    let version = part.next();
+    let entity_id = part.next();
+    let place_entity_id = part.next();
+    let occurred_at = part.next();
+    let activity_id = part.next();
+    let kind = part.next();
+    let key = part.next();
+    if version != Some(expected_version) || part.next().is_some() {
+        return Err(ErrorOutput::invalid_cursor());
+    }
+    let entity_id = entity_id
+        .ok_or_else(ErrorOutput::invalid_cursor)
+        .and_then(|value| Uuid::parse_str(value).map_err(|_| ErrorOutput::invalid_cursor()))?;
+    let place_revision = match (place_entity_id, occurred_at, activity_id) {
+        (Some("-"), Some("-"), Some("-")) => None,
+        (Some(place_entity_id), Some(occurred_at), Some(activity_id)) => {
+            Some(PlaceRevision::from_parts(
+                EntityId(
+                    Uuid::parse_str(place_entity_id).map_err(|_| ErrorOutput::invalid_cursor())?,
+                ),
+                occurred_at
+                    .parse::<DateTime<Utc>>()
+                    .map_err(|_| ErrorOutput::invalid_cursor())?,
+                ActivityId(
+                    Uuid::parse_str(activity_id).map_err(|_| ErrorOutput::invalid_cursor())?,
+                ),
+            ))
+        }
+        _ => return Err(ErrorOutput::invalid_cursor()),
+    };
+    let key = key.ok_or_else(ErrorOutput::invalid_cursor)?;
+    match kind {
+        Some("p") => {
+            let property_key_id = key
+                .parse::<i64>()
+                .map_err(|_| ErrorOutput::invalid_cursor())?;
+            if property_key_id <= 0 {
+                return Err(ErrorOutput::invalid_cursor());
+            }
+            Ok(EntityCurrentStateCursor::from_property(
+                EntityId(entity_id),
+                place_revision,
+                property_key_id,
+            ))
+        }
+        Some("t") => Ok(EntityCurrentStateCursor::from_trait(
+            EntityId(entity_id),
+            place_revision,
+            EntityTraitId(Uuid::parse_str(key).map_err(|_| ErrorOutput::invalid_cursor())?),
+        )),
+        _ => Err(ErrorOutput::invalid_cursor()),
+    }
 }
 
 fn decode_place_revision(value: &str) -> Result<PlaceRevision, ErrorOutput> {
@@ -1152,6 +1980,40 @@ mod test {
             decode_place_activity_cursor(&encode_place_activity_cursor(activity_cursor)),
             Ok(activity_cursor)
         );
+        let property_cursor = EntityCurrentStateCursor::from_property(
+            cursor.entity_id,
+            Some(PlaceRevision::from_parts(
+                cursor.entity_id,
+                cursor.introduced_at,
+                activity_cursor.activity_id,
+            )),
+            17,
+        );
+        assert_eq!(
+            decode_character_state_cursor(&encode_character_state_cursor(property_cursor)),
+            Ok(property_cursor)
+        );
+        assert_eq!(
+            decode_current_place_entity_state_cursor(&encode_current_place_entity_state_cursor(
+                property_cursor,
+            )),
+            Ok(property_cursor)
+        );
+        assert_eq!(
+            decode_current_place_entity_state_cursor(&encode_character_state_cursor(
+                property_cursor,
+            )),
+            Err(ErrorOutput::invalid_cursor())
+        );
+        let trait_cursor = EntityCurrentStateCursor::from_trait(
+            cursor.entity_id,
+            None,
+            EntityTraitId(Uuid::new_v4()),
+        );
+        assert_eq!(
+            decode_character_state_cursor(&encode_character_state_cursor(trait_cursor)),
+            Ok(trait_cursor)
+        );
 
         for encoded in [
             encode_activity_cursor(activity_cursor),
@@ -1239,6 +2101,9 @@ mod test {
             (ErrorCode::InvalidCharacter, "invalid_character"),
             (ErrorCode::InvalidPlace, "invalid_place"),
             (ErrorCode::InvalidAction, "invalid_action"),
+            (ErrorCode::InvalidInteraction, "invalid_interaction"),
+            (ErrorCode::InvalidProperty, "invalid_property"),
+            (ErrorCode::InvalidTrait, "invalid_trait"),
             (ErrorCode::InvalidEntityLimit, "invalid_entity_limit"),
             (ErrorCode::InvalidActivityLimit, "invalid_activity_limit"),
             (ErrorCode::UserNotFound, "user_not_found"),
@@ -1259,6 +2124,24 @@ mod test {
             ),
             (ErrorCode::EntryPlaceNotFound, "entry_place_not_found"),
             (ErrorCode::ActionRequestConflict, "action_request_conflict"),
+            (
+                ErrorCode::InteractionRequestConflict,
+                "interaction_request_conflict",
+            ),
+            (
+                ErrorCode::InteractionTargetUnavailable,
+                "interaction_target_unavailable",
+            ),
+            (
+                ErrorCode::PropertyEntityUnavailable,
+                "property_entity_unavailable",
+            ),
+            (
+                ErrorCode::EntityAtCurrentPlaceUnavailable,
+                "entity_at_current_place_unavailable",
+            ),
+            (ErrorCode::TraitUnavailable, "trait_unavailable"),
+            (ErrorCode::PropertyKeyConflict, "property_key_conflict"),
             (ErrorCode::PlaceRevisionConflict, "place_revision_conflict"),
             (ErrorCode::Unavailable, "unavailable"),
         ];

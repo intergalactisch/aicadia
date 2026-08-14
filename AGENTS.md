@@ -81,20 +81,24 @@ ordering or uniqueness rule.
 
 ### The MVP Is The Filter
 
-The current executable MVP contains exactly one `World`, durable `User` records,
+The current accepted MVP contract contains exactly one `World`, durable `User` records,
 shared `Entity` records, at most one owned `Character` Entity role per User, at most
-one entry `Place` Entity role, nullable current Character placement and normalized
-`activity` history. Its complete use-case surface is `get_world`, `create_user`,
-`get_user`, `get_character`, `create_character`, `create_entry_place`, `enter_world`,
-`list_activity`, `list_entity`, `get_entity`, `create_entity`,
-`list_entity_at_current_place`, `list_activity_at_current_place` and
-`submit_action`. Code may not exceed this surface until a next player or World
-behavior is explicitly accepted in `docs/game/`.
+one entry `Place` Entity role, nullable current Character placement, normalized
+`activity` history, zero or more compact text/integer Properties per Entity and
+zero or more developing non-executable Traits per Entity, with Character-grounded
+Action and directed Interaction Property/Trait consequences at one exact current
+Place. Its complete player-facing use-case surface is `get_world`, `get_user`,
+`get_character`, `create_character`, `create_entry_place`, `enter_world`,
+`list_activity`, `create_entity`, `list_entity_at_current_place`,
+`list_activity_at_current_place`, `get_entity_at_current_place`,
+`submit_action` and `submit_interaction`. Code may not exceed this surface until a
+next player or World behavior is explicitly accepted in `docs/game/`.
 Next-work selection is not limited to this surface: once its value is sufficiently
 proved, choose the next missing game outcome, decide its concrete contract, then
-implement it. The thirteen current player-facing capabilities omit `create_user` and
-ship through both HTTP and MCP. Authentication, OAuth and every other game capability
-remain deferred until deliberately selected.
+implement it. These thirteen player capabilities ship through both HTTP and MCP.
+`create_user` is provisioning; global `list_entity` and `get_entity` are loopback
+operator-ledger reads and never MCP player tools. Authentication, OAuth and every
+other game capability remain deferred until deliberately selected.
 
 ### Singular Domain Names
 

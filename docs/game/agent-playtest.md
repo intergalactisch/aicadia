@@ -1,19 +1,56 @@
 # Agent playtest
 
-Status: resumed-action live acceptance complete in independently verified candidate
-`run-gE8iED5m`
+Status: current Property, Interaction and Trait behavior is proved deterministically
+without model spend; T7 and T8 independent review completed with no P0–P3 finding
+and T8 returns GO for the exact frozen Trait candidate. No paid Trait candidate or
+Trait model run has occurred. The resumed-action live acceptance remains historical
+candidate `run-gE8iED5m`.
 
-The runner now verifies one bounded clean-room gameplay claim: a real Agent can
+The guarded live runner retains one bounded clean-room trail-marker claim: a real Agent can
 ground itself in separate Aicadia MCP reads, offer exactly three private directions,
 incorporate a withheld User selection and steering, retain one exact public package,
 wait for a separately withheld explicit confirmation and call `submit_action`
 exactly once. A separate Agent must then observe the placed marker and the same
-canonical prose at its own Character's exact current Place.
+canonical prose at its own Character's exact current Place. The historical
+Property-era token-free controller added the then-thirteenth flat Property read and
+previewed one initial Property. That catalog shape is superseded, and no new paid
+candidate is authorized or claimed.
 
-World mechanics, wire parity and failure behavior remain deterministic test claims.
+Current Property and Interaction mechanics, wire parity and failure behavior are
+deterministic test claims described below.
 The paid run proves only this one Agent interaction under the pinned setup. It does
 not prove every model, arbitrary prose quality, later Places, movement, discovery or
 future consequence types.
+
+## Current deterministic Trait evidence
+
+T3–T6 now prove the executable three-table lineage/current model, mixed Action and
+Interaction establish/develop packages, exact thirteen-tool replacement, combined
+current Entity state pages, full natural preview/confirmation contract, concurrency,
+retry, rollback, bounded query behavior and adapter parity. Five permanent
+Agent-contract tests pin the current global/tool guidance and exact generated
+catalog. The dedicated [Trait fake playtest](trait-playtest.md) proves contextual
+Action establishment, later Interaction development of the same stable lineage and
+enriched Entity retrieval, including sixteen fail-closed injections, with
+`model_calls: 0` and `paid_candidate: false`. T7 integration and independent review
+completed with no P0–P3 finding. The last all-target run before the final
+vacated-statement regression was 107/107; the subsequent focused regression and full
+World suite pass 75/75, so no newer all-target total is claimed. None of the
+historical runner or candidate evidence below is relabelled as Trait evidence.
+
+The dedicated [Trait playtest](trait-playtest.md) now freezes T8's exact two-Agent,
+two-session and seven-process-call candidate with zero retries. It contextually
+establishes one Trait through Pip's confirmed Action, develops the same stable id
+through his later confirmed Interaction and lets Mara's separate Agent retrieve the
+enriched Entity through `get_entity_at_current_place`, with authoritative HTTP gates
+and ownership-safe disposable-database cleanup. Token-free public preflight is now
+passing against that frozen boundary with `codex_invoked=false`, `model_calls=0` and
+ownership-verified cleanup `dropped`. Independent review returns T8 GO with no
+P0–P3 finding for digest
+`3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`.
+No paid candidate started and no Trait model call occurred. T9 may begin only after
+one fresh explicit User authorization of the exact digest-bound command published
+in the linked dedicated contract; failure never retries automatically.
 
 ## Isolation and authority
 
@@ -27,13 +64,14 @@ The controller owns only disposable test setup and evidence orchestration. It:
 - independently validates the accepted result through HTTP before dropping that
   complete disposable World.
 
-The controller never inserts game rows directly. Both Agents receive only MCP tools
-from the published thirteen-tool catalog. They run in empty isolated working
-directories, with user configuration and project rules ignored, no repository or
-database variables, no shell, web, native application, delegation or multi-Agent
-path, and direct-only access to their Aicadia MCP allowlist. The server performs no
-model call. The Agents receive no out-of-band or User-supplied User, Character,
-Place, Entity or Activity ids; they read authoritative ids from World responses.
+The controller never inserts game rows directly. Both Agents receive only their
+least-privilege MCP subsets from the current thirteen-tool player catalog. They run
+in empty isolated working directories, with user configuration and project rules
+ignored, no repository or database variables, no shell, web, native application,
+delegation or multi-Agent path, and direct-only access to their Aicadia MCP allowlist.
+The server performs no model call. The Agents receive no out-of-band or User-supplied
+User, Character, Place, Entity or Activity ids; they read authoritative ids from
+World responses.
 
 The action Agent's one CLI session is persisted only because phases two and three
 must resume its actual grounded context. The observer is a separate ephemeral
@@ -53,11 +91,12 @@ Entity or Activity, and never invokes `codex exec`. Its database helper performs
 real disposable database create, ownership tag, ownership read-back and verified
 drop. It fails closed unless all of these facts agree:
 
-- the executable is exactly `codex-cli 0.144.1`, the installed version inspected
-  during this build; the earlier `0.147.0` pin described a binary not present here
-  and was corrected before any token spend;
+- the executable is exactly `codex-cli 0.147.0`, the installed version inspected
+  during the current delivery audit; any later path or version drift fails before
+  database or model work;
 - the exact resolved system executable path
-  `/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js` is pinned and retained
+  `/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/lib/node_modules/@openai/codex/bin/codex.js`
+  is pinned and retained
   together with its inspected version, model and reasoning effort; public preflight
   and run reject `CODEX_BIN`, PATH substitution, fake-mode and test-output overrides
   before any Codex command; environment inspection is Bash-native and every server
@@ -72,7 +111,8 @@ drop. It fails closed unless all of these facts agree:
   composition before Codex, while requiring every object schema to close additional
   properties and require exactly its declared properties;
 - the action-read role contains only `get_world`, `get_character`,
-  `list_entity_at_current_place` and `list_activity_at_current_place`;
+  `list_entity_at_current_place`, `list_activity_at_current_place` and
+  `list_entity_property_at_current_place`;
 - the commit role contains only `submit_action`;
 - the observer role contains only `get_character`,
   `list_entity_at_current_place` and `list_activity_at_current_place`;
@@ -135,9 +175,10 @@ claim and authorization. The completed protocol was:
 7. Only after HTTP passes, a separate least-privilege observer Agent reads its
    Character, placed Entities and Place Activity exactly once each. It must copy the
    exact marker Entity name, canonical prose, Entity id and Place id after reading
-   those authoritative ids from World; none is supplied out of band. The Place-local
-   Entity summary does not expose description, so the observer is not asked to
-   fabricate it.
+   those authoritative ids from World; none is supplied out of band. At the time of
+   this historical run, the Place-local Entity summary did not expose description,
+   so the observer was not asked to fabricate it. The current scoped
+   `CurrentPlaceEntityOutput` does include description.
 8. It stops the server and asks the helper to drop only after it re-verifies both the
    generated database name and stored ownership token. A prefix alone never
    authorizes deletion. Token mismatch refuses termination and drop. Cleanup failure
@@ -154,6 +195,63 @@ starts a second Agent attempt. Another paid run always requires fresh User
 authorization.
 
 ## Evidence and recovery
+
+### Delivered deterministic Property evidence
+
+No paid model invocation is Property evidence. The current Agent-contract tests
+`agent_contract_describes_the_exact_thirteen_trait_capabilities`,
+`agent_contract_teaches_property_trait_flow_without_background_authority`,
+`control_like_property_and_trait_content_never_becomes_provenance`,
+`trait_tool_descriptions_pin_creation_orientation_preview_and_response_boundaries`
+and `trait_identifiers_remain_private_protocol_selectors` jointly pin the global
+instructions and all thirteen tool descriptions. They retain every Entity's initial
+Property state, canonical key/type reuse, complete multi-change preview,
+Action-versus-Interaction meaning, structured-current precedence only for fictional
+current meaning, content-versus-instruction separation, control-like content as
+in-World content rather than infrastructure provenance, neutral presentation and no
+background authority.
+
+The historical Property-era fake controller remains contract evidence only for the
+catalog published at its execution time. Its action role performed five MCP-only
+grounding reads with one shared Place revision, and one explicitly confirmed
+`introduce_entity` preview retains its complete initial `material = weathered cedar`
+Property unchanged through the single commit attempt. It does not prove stochastic
+Agent obedience, the full Property World outcome or the current replacement catalog.
+
+That outcome is token-free deterministic World evidence. The named test
+`every_entity_creation_route_atomically_establishes_one_hundred_properties` covers
+all four initial-Property routes;
+`property_action_changes_actor_place_ordinary_and_other_character_uniformly` covers
+one explosion-shaped Action over actor, Place, ordinary Entity and another
+Character; `interaction_property_changes_actor_and_target_without_authoring_a_response`
+covers actor/explicit-target change without a target response; and
+`current_property_read_paginates_local_facts_and_excludes_unplaced_entities` covers
+outward local current values. Their accepted Activities carry the exact typed
+history. `property_http_and_mcp_share_creation_bulk_change_history_and_strict_errors`
+adds all four creation routes, the 100-write explosion, current local pagination,
+actor/target Interaction, exact Activity hydration, retry identity, strict errors
+and rollback through HTTP and MCP. Together these tests execute the scenario that
+the Agent contract describes without claiming a model chose or narrated it
+correctly.
+
+### Current deterministic Interaction evidence
+
+The current Pip-and-Mara outcome is token-free executable evidence, not a relabelled
+live Agent run. `interaction_builds_directional_many_to_many_history_and_scopes_each_view`
+proves one accepted rat-like outward behavior, its actor, exact Place, complete
+target set, target recall, non-target and distant exclusion, and a separately
+authored reverse reply. `interaction_http_and_mcp_share_strict_commit_errors_and_scoped_results`
+proves the same safe local representation and canonical Activity across HTTP and
+MCP, with no owner or control provenance. The remaining Interaction tests prove
+one-to-many bounds, neutral unavailable-target errors, retry identity, concurrency
+and zero partial writes. These deterministic results exercise World and adapter
+authority; they do not claim that a stochastic model will always follow prose
+guidance.
+
+The historical paid trail-marker candidates below remain exactly what they were:
+Agent evidence for the former `submit_action` slice and the catalog published at
+their execution time. They are not renamed as Interaction evidence. No paid model
+was invoked for the Pip-and-Mara result.
 
 Every public run remains under `.aicadia-playtest/`. Its private manifest correlates
 the run id, generated database and ownership token, loopback address, exact Codex
@@ -182,13 +280,17 @@ also prove that authoritative HTTP runs after commit and before the observer. An
 HTTP failure leaves the observer unstarted; an observer failure retains the already
 passed HTTP phase. Fake evidence remains structurally distinct from live evidence.
 
-Observer fixtures prove that the observable Entity id and name plus canonical prose
-are sufficient for a successful observer result, and independently reject a wrong
-Entity id, name or prose. Full Entity description remains independently checked
-against the retained preview by authoritative HTTP validation.
+The historical observer fixtures prove that the then-observable Entity id and name
+plus canonical prose were sufficient for a successful observer result, and
+independently reject a wrong Entity id, name or prose. In that historical harness,
+full Entity description remained independently checked against the retained preview
+by authoritative HTTP validation. The current Character-scoped Entity output now
+returns id, name and description; this later contract change does not alter what the
+recorded candidate observed.
 
-The fake suite also injects a forbidden `uniqueItems` keyword into an isolated schema
-copy and proves preflight rejects it before operator build, any Codex command or
+That historical fake suite also pinned its then-current thirteen-tool catalog and
+injected a forbidden `uniqueItems` keyword into an isolated schema copy; its
+preflight proved rejection before operator build, any Codex command or
 evidence creation. Array `minItems` and `maxItems` and UUID `format` remain in the
 published schemas. String non-emptiness, semantic bounds, exactly three proposals,
 proposal ids and distinct directions/grounding are proved by the controller and
@@ -217,13 +319,16 @@ recursive fail-closed schema-policy gate described above.
 Authorized rerun `run-nvULnvxQ` ran on 2026-08-11. Its proposal, preview and commit
 phases passed. The observer's three MCP reads found the correct placed Entity and
 canonical prose, but its final validation failed because the harness required an
-`entity_description` field that the observer's Place-local Entity summary tool does
-not expose. The authoritative HTTP stage was therefore not reached. Cleanup
+`entity_description` field that the Place-local Entity summary tool published at
+that time did not expose. The current scoped Entity output does expose description,
+but that does not retroactively change this failed run. The authoritative HTTP stage
+was therefore not reached. Cleanup
 finished with `dropped`, no `aicadia_playtest_%` database remained, and the candidate
 is not complete outcome evidence. The observer schema, prompt and validation were
-corrected token-free to require only observable Entity id, name, Place and prose;
-the HTTP stage still checks the complete Entity description. It remains strong
-partial evidence and is not relabelled by the later successful candidate.
+corrected token-free for that catalog to require only observable Entity id, name,
+Place and prose; the HTTP stage still checked the complete Entity description. It
+remains strong partial evidence and is not relabelled by the later successful
+candidate.
 
 ### Completed resumed-action candidate
 

@@ -1,10 +1,14 @@
 # Discovery and World context
 
-> **Design record; grill paused; not an implementation contract.** This document
-> records the direction confirmed during the August 2026 grill. It supersedes conflicting
-> discovery exploration elsewhere in `docs/concept/`, but it does not expand the
-> executable MVP. Only `docs/game/` can do that. Open decisions are named explicitly
-> so later work does not silently complete the design.
+> **Design record; not an implementation contract.** This document records the
+> direction confirmed during the August 2026 grill. Its first Character-grounded
+> Interaction slice is now executable under [`docs/game/`](../game/README.md); its
+> investigation, ripple, broader observation and safety directions remain design.
+> It
+> supersedes conflicting discovery and knowledge-scope exploration elsewhere in
+> `docs/concept/`, but it does not expand the executable MVP. Only `docs/game/` can
+> do that. Open decisions are named explicitly so later work does not silently
+> complete the design.
 
 ## Intended game outcome
 
@@ -196,22 +200,25 @@ potentially immense context. Every stable reference it returns is typed and must
 resolvable through a published Agent-facing read capability. A reference without a
 read path is invalid output.
 
-The Agent may follow those references to inspect exact current state, relationships,
-change detail and provenance before authoring a candidate. Those reads are World
-inspection, not a new investigation: they consume no chance roll, grant no
-opportunity and change no state. Capability availability is part of the discovery
-feature itself; every required read ships through the `World` interface, HTTP and
-MCP with one semantic contract and appears in the complete Agent capability catalog.
+The Agent may follow those references only when they are inside the current
+Character's authorized knowledge scope. It can then inspect the exact known state,
+relationships, change detail and provenance before authoring a candidate. Those
+reads are World inspection, not a new investigation: they consume no chance roll,
+grant no opportunity and change no state. Capability availability is part of the
+discovery feature itself; every required read ships through the `World` interface,
+HTTP and MCP with one semantic contract and appears in the complete Agent capability
+catalog.
 
 `Inspection` is a working distinction for these read-only drill-downs, not yet a
 canonical operation name.
 
-Inspection permits broad World queries rather than only opening references or
-walking one relationship at a time. “Broad” describes what the Agent may research,
-not a programmable query language. The interface remains flat and typed: it exposes
-an allow-listed set of targets, filters, comparison operations, ordering and cursor
-pagination. Identical state and identical input produce identical matches in a
-stable order, and each result can state which explicit predicates it matched.
+Inspection permits broad queries across what this Character can know rather than
+only opening one reference or walking one relationship at a time. “Broad” describes
+composition inside that epistemic boundary, never global World access. The interface
+remains flat and typed: it exposes an allow-listed set of targets, filters,
+comparison operations, ordering and cursor pagination. Identical authorized state
+and identical input produce identical matches in a stable order, and each result can
+state which explicit predicates it matched.
 
 SQL, Cypher, GraphQL, recursive graph patterns, free-text query interpretation and
 semantic or vector search are outside this direction. The Agent composes deeper
@@ -220,25 +227,252 @@ research by making further ordinary bounded calls.
 Each query explicitly returns exactly one result kind, such as Entity, relationship,
 change or provenance. Filters may refer to exposed fields and relationships, but a
 response never mixes kinds or constructs joined result shapes. The Agent combines
-typed results across calls. Every kind of established shared World state that an
-Agent is allowed to know must have an explicit read and query path in the MCP tool
-catalog; the same semantic capability exists through `World` and HTTP. Exact
-operation names remain open.
+typed results across calls. Every kind of Character-knowable World state must have
+an explicit read and query path in the MCP tool catalog; the same semantic capability
+exists through `World` and HTTP. Exact operation names remain open.
 
-“Fully query the World” means complete composability over Agent-visible state, not
-one omnipotent query or one enormous response. All established shared World state,
-including its history, relationships, provenance and neutral meta-signals, is
-Agent-visible. Random seeds, hidden chance mechanics, authentication and rate-limit
-state, uncommitted Agent candidates and other operational internals are not World
-state and are not queryable through game capabilities.
+“Fully inspect” means complete composability over what this Character can currently
+know, not one omnipotent query, one enormous response or access to every accepted
+record. Shared persistence does not imply universal visibility. Random seeds,
+hidden chance mechanics, authentication and rate-limit state, uncommitted Agent
+candidates, User-control provenance and other operational internals remain outside
+player game queries.
+
+## Character-grounded knowledge and natural discovery
+
+The World may hold more truth than one Character can know. `Shared` means that
+accepted state belongs to one persistent World and can later affect other
+Characters; it does not mean that every Agent may immediately enumerate, retrieve
+or aggregate it.
+
+A player-mode Agent may receive a World fact only through a credible in-world
+knowledge path for its current Character. Candidate paths are:
+
+- direct observation from an applicable Place, encounter or sensory situation;
+- the Character's own accepted action, involvement or established personal state;
+- an earlier observation or encounter the Character can remember;
+- information deliberately conveyed through an accepted person, message, artifact
+  or other future transmission behavior; or
+- a later ripple whose causal path has plausibly reached the Character.
+
+These are source categories, not a decision to add one universal Character-knowledge
+table. The exact derivation, persistence and staleness rules remain open. In
+particular, knowing that a distant Entity once existed does not grant a live read of
+its current state. Later information needs its own path and provenance. A report or
+rumor may be known as a report or rumor without becoming direct observation or
+current physical truth.
+
+### Core Agent heuristics
+
+The knowledge boundary is enforced by `World` capabilities and authorization, not
+only by a cooperative prompt. A User cannot widen it through wording, an id, repeated
+questions, indirect instructions or a request for a summary. The Agent must not
+query globally and merely hide the raw result; it must never receive unauthorized
+facts in player mode.
+
+Within that boundary the Agent behaves naturally:
+
+1. orient from the Character's present situation, own history and information that
+   actually reached them;
+2. distinguish observation, memory, report, inference and unknown state instead of
+   flattening them into omniscient truth;
+3. answer through named people, places, things and events rather than permissions,
+   visibility flags, database scope or unavailable fields;
+4. preserve an honest unknown when no knowledge path exists, without inventing a
+   hidden answer;
+5. let discovery, travel, conversation, evidence and ripples expand knowledge in the
+   World instead of expanding it because the User asked harder; and
+6. never convert operational facts—User ownership, Agent identity, ids, record kinds
+   or control source—into facts a Character can perceive.
+
+Absolute World counts are therefore not ordinary player knowledge. An Agent cannot
+answer how many Users, Characters, buildings or Entities exist everywhere merely
+because the database could count them. A Character may still count a bounded visible
+group, remember whom they met, or later consult an accepted census or report if the
+World earns such behavior. The prohibition is omniscient aggregation, not numbers
+or careful observation themselves.
+
+### In-world identity may remain playfully ambiguous
+
+Player control is not an in-world species or detectable aura. Another Character
+encounters a named person, creature or other Entity through appearance and behavior;
+they do not automatically receive “player Character,” “NPC,” User ownership or model
+provenance. Aicadia currently has no NPC role, and player-facing narration should not
+invent one merely to classify a being.
+
+A User may therefore choose a Character who appears to be a tiny animal or an
+original small creature. If future co-presence and movement rules allow it, that
+Character may repeatedly cross another Character's path, linger near their feet and
+behave like an ordinary local creature. The other User may naturally infer that this
+is part of the surrounding World and later discover through interaction that the
+creature has surprising agency. The humor comes from situated ambiguity and another
+person's live choices, not from a server-authored punchline.
+
+The system does not lie by declaring the creature uncontrolled, and it does not spoil
+the interaction by exposing control metadata. It reports only observable facts. The
+creature's User may author its own movement, sounds, gestures and other accepted
+actions, but may not author what the other played Character thinks, feels, chooses or
+does. “The creature keeps appearing near Mara” can become shared history when the
+required actions and locality exist; “Mara believes it is only a rat” belongs to
+Mara's player unless Mara establishes that response.
+
+Stable Entity identity still matters. Ambiguity about appearance, intention or
+control does not authorize impersonating another established subject, changing
+identity through prose or contradicting accepted observations. Any future disguise,
+recognition, following, blocking or reveal mechanic must preserve one subject's one
+identity and the protected volition of every played Character.
+
+User-level operational facts and Character knowledge remain separate, but the
+current player experience does not need a control-reveal feature at all. Users
+interact with Entities in the World; they are not told whether another Entity has a
+User behind it. The rat's User therefore does not need to know whether Mara is
+another User's Character, just as Mara's User does not receive control metadata for
+the small creature. Control provenance never becomes Character knowledge, never
+appears in ordinary player reads and is never inferred from creative behavior.
+
+A later product decision could revisit private control disclosure, but it is not an
+open dependency of the first interaction slice and cannot arrive accidentally as a
+convenience field. Doing so would require a new explicit privacy and consent choice.
+
+## Entity interaction history and asymmetric participation
+
+A rich shared World needs to remember how Entities have affected one another, not
+only that they exist at a Place. That history is naturally many-to-many across time:
+
+- one Character action may involve one or several other Entities;
+- one Entity may participate in many accepted actions with many different Entities;
+- many Characters may separately act toward the same Entity;
+- two Entities may accumulate actions in both directions; and
+- different Characters may observe different subsets or aspects of the same accepted
+  action.
+
+Action and Interaction are now distinct capabilities. An Action's primary game
+meaning is a typed World-state consequence; an Interaction's primary meaning is an
+act from one existing Entity toward one or more other existing Entities. Interaction
+therefore earns its own `World` operation, directed-Entity validation, direction and
+safety contract. Both still leave immutable Activity and remain under the same
+`World` authority; this is not a second interaction service. A later Interaction may
+also carry independently validated typed state consequences in that same atomic
+Activity, but free prose never mutates state by itself.
+`Signal` is only a prose example—speaking, squeaking, gesturing and circling feet are
+possible Interaction expressions, not separate systems or flags.
+
+The accepted first cardinality is already one-to-many: one accountable acting
+Character and one or more explicit, distinct, co-present directed Entities of any
+Entity role. It does not require one omnipotent `interaction` record or an atomic
+many-actor command. A later reply is a new Activity in the opposite direction. Several
+Characters acting toward one Entity create many-to-one history through several
+accepted actions. A genuine joint action with multiple authors would require its own
+proposal, confirmation, concurrency and partial-decline contract and remains
+unearned.
+
+`Active` and `passive interaction` are rejected as canonical roles because they
+collapse different facts. For one accepted action an Entity may instead be:
+
+- the accountable actor who intentionally performed it;
+- an explicit Interaction target toward which the actor directed the behavior;
+- a co-present potential observer who was not part of the action;
+- an actual observer who acquired only the facts available from its situation; or
+- entirely unaware despite being mentioned, affected later or technically related.
+
+`actor`, `target` and `location` are the accepted first Interaction roles. Target is
+conventional server/game language; `counterpart` and `actee` are rejected. A target
+Character is guaranteed access to the Interaction's outward behavior and can retain
+it in personal history. This does not mean harm, consent, agreement, understanding
+or response. Non-Character targets gain no fictional knowledge merely from their
+role, and co-present non-targets receive nothing automatically in the first slice.
+
+The exact-current-Place Entity read is the one contextual target source: it includes
+ordinary placed Entities and Characters currently at that exact
+Place, returns no Entity-role or User-control metadata and supplies the same Place
+revision used for confirmation freshness. Same-Place equality is target eligibility
+for this first Interaction, not a universal sensory or visibility rule.
+
+No separate Observation table is earned for target delivery. The immutable Activity
+`target` role itself proves that a target Character could acquire the outward
+behavior. Personal history can therefore derive and retain it after movement. A
+later witness/sensory capability may earn explicit Observation evidence; non-targets
+receive nothing automatically now.
+
+The exact participation vocabulary must be earned by concrete actions. A universal
+bag of roles would merely relocate prose ambiguity into enums. Observation likewise
+must not generally be inferred from participation. The first Interaction makes one
+narrow exception deliberately: a target Character can know the outward behavior.
+Understanding and response remain unproven, while a future witness can observe
+without being a target.
+
+History, knowledge and relationship remain separate:
+
+1. **Activity** records what World accepted, with actor, Place, time, canonical prose
+   and explicit Entity participation.
+2. **Observation** states what a particular Character could acquire from a situated
+   event or state.
+3. **Knowledge** is the Character-grounded information later available through
+   observation, memory, own involvement, transmission or ripple.
+4. **Relationship** would be durable current state between Entities only when a
+   future behavior needs it; repeated interaction does not automatically create a
+   friendship, rivalry, trust level or score.
+5. **Recap and interaction history** are derived, Character-scoped lenses over those
+   authorities, never a second canon or global dossier.
+
+Applied to the rat case, one action may store the rat Character as actor and Mara as
+an addressed or affected Entity at their shared Place. The rat remembers its
+own intent. Mara may observe only a small creature darting around her feet. A third
+Character behind a closed door may learn nothing. If Mara later speaks, steps aside
+or leaves food, that is Mara's separately authored Activity. Neither direction
+automatically establishes what the other thought, and neither User can demand the
+other Character's private knowledge.
+
+The executable Activity model stores one optional actor, one context Place and many
+`activity_entity` rows. Interaction extends its existing `subject`, `destination`
+and `location` roles with `target`, without a new root: Activity's direct actor and
+Place foreign keys represent
+`actor` and `location`, and one or more `activity_entity` rows use `target`. Target
+Character access derives from that role; no universal Observation table is added. A
+generic `entity_interaction`, universal `observation` table or relationship graph is
+not earned by cardinality alone.
+
+## Tabletop-derived play heuristics
+
+The D&D and wider-tabletop research is incorporated as design direction, not as a
+borrowed ruleset. The complete traceability matrix lives in the active interaction
+plan; this record retains its cross-cutting product meaning:
+
+- split the familiar DM functions across User intent, Agent framing, World
+  resolution, Character knowledge and Activity recollection instead of recreating a
+  privileged narrator;
+- orient from credible local facts, frame an actionable situation and offer attempts
+  rather than authored endings;
+- keep expressive prose free while every durable consequence and participant remains
+  typed, attributable and explicitly confirmed;
+- make accepted consequences create future choices, callbacks and response
+  opportunities rather than XP, levels, relationship meters or escalating plots;
+- let recurring Entities and Activity create long-form texture while scenes, arcs,
+  rivals and campaigns remain derived lenses until one concrete behavior earns state;
+- preserve honest unknowns and require truth/evidence/reveal rules before a mystery
+  or secret exists;
+- treat oracle or roll results as constraints for later private interpretation, never
+  as self-authoring World facts;
+- derive recaps from canonical residue and distinguish occurrence, recognition and
+  confirmed incorporation when culture emerges;
+- let tone breathe through humor, hospitality, observation and ordinary acts without
+  background mutation or compulsory crisis; and
+- advance any future pressure only through explicit accepted causes, never hidden
+  clocks, faction turns or server inference.
+
+The non-import boundary is equally important: no omniscient Agent-GM, D&D
+attributes/classes/levels/XP, currencies or score economies, universal outcome
+engine, retroactive history, autonomous downtime, global plot, automatic culture or
+player omniscience enters through this direction.
 
 ## World and Character context
 
 The two initial reads serve different scopes:
 
-- The World overview is User-independent. It contains World identity, neutral time
-  metadata and only explicitly World-wide current state. It is not a complete World
-  snapshot, local feed or server-written AI summary.
+- The World overview is User-independent. It contains only universally available
+  orientation such as World identity and neutral time metadata. It is not a complete
+  World snapshot, global catalog, population count, local feed or server-written AI
+  summary.
 - The Character context is player-specific. Its minimum direction is the Character
   and its spatial-presence state. When a current Place has been established, it also
   contains that most-specific Place and established state directly attached to the
@@ -250,18 +484,20 @@ context. Agent input cannot override either one. Absence of a Place is a valid s
 not an Agent-supplied value or lookup failure. The exact operation names and response
 fields are not decided.
 
-Agent queryability has two explicit scopes:
+Agent queryability has two separately authorized scopes:
 
-- established shared World state, composed through the typed per-result-kind query
-  capabilities; and
+- Character-grounded World knowledge, composed through typed per-result-kind query
+  capabilities and limited by applicable observation, involvement, memory,
+  transmission and ripple paths; and
 - the current Character's complete personal state, through context-required read and
   query capabilities that derive the Character from the User request context.
 
 Personal state is not forced into the shared World projection merely to make it
 queryable. The Agent may analyse both scopes together, while the server continues to
 authorize them separately. An Agent can query the complete personal state of its own
-Character. It cannot query another Character's personal state; it sees that
-Character only through established shared World state.
+Character. It cannot query another Character's personal state and sees that Character
+only through shared facts that its own Character can know. Operator, moderation and
+public ledger access are separate products and never implicit player capabilities.
 
 ## Shared and personal scope
 
@@ -270,8 +506,10 @@ record, Agent, transport connection or conversation. A discovery roll result may
 therefore differ between two Characters in the same Place.
 
 Accepted results are nevertheless shared World state. There are no private World
-copies or private discoveries. A result created through one Character can affect
-what every later Character encounters.
+copies or private discoveries. A result created through one Character can later
+affect what another Character encounters, but it does not enter that Character's
+knowledge until an applicable observation, involvement, transmission or ripple path
+reaches them.
 
 The effects of multiple Characters investigating the same opportunity, alternate
 Characters and already-existing shared results are still open.
@@ -378,8 +616,54 @@ layer is not part of this direction.
 - scores, levels, progress meters, pity counters or discovery currency;
 - complete pre-generated geography;
 - universal locality or visibility rules;
+- universal player access to shared World records, global Entity catalogs or
+  absolute World aggregates;
+- automatic exposure of which beings are controlled by Users;
 - periodic World mutation merely to keep the World changing;
 - programmable database or graph query languages exposed to Agents.
+
+## Retained knowledge and encounter frontier
+
+The first executable Interaction closes target participation and player-read
+scoping. It leaves these later choices open:
+
+1. how an accepted causal ripple carrier travels, changes specificity and retains
+   provenance before its situated sign or report becomes knowable;
+2. how co-presence, sensory access and attention decide which nearby Characters and
+   Entities can be observed without equating one Place with universal visibility;
+3. how Character appearance, self-presentation and recognition work without
+   introducing a species ontology or exposing User control; and
+4. how a separately authorized administrative or operator view eventually gains
+   authenticated remote inspection without entering player mode.
+
+Interaction retains one later safety decision:
+
+5. before movement, notifications or broader reach, how a private attention control
+   prevents repeated unwanted targeting without exposing control provenance,
+   rewriting history or silently changing a confirmed multi-target Interaction.
+
+That attention control is explicitly deferred from the first Interaction build. A
+target User can decline to respond and Aicadia triggers no background Agent work or
+notification pressure, but repeated accepted Interactions can still appear in
+personal history. This known safety boundary must be revisited before reach expands.
+
+The executable player MCP catalog has no global Entity list or lookup. The two
+loopback HTTP reads remain operator-ledger access outside Character knowledge, as
+specified by `docs/game/`.
+
+Two adjacent directions are now confirmed without being implemented here:
+
+- a future administrative meta-Agent is always a separately authorized, out-of-world
+  operator. Its absolute reads never attach omniscience to an in-world Character;
+  any mutation still follows its own explicit confirmed World-action contract; and
+- a distant fact reaches a Character only through a later accepted causal carrier in
+  that Character's context, such as a traveller, letter, report, damaged object,
+  smoke or local change. The Character learns the carried sign or account, not the
+  remote source event directly.
+
+Structured, historical descriptive Entity state is developed separately in
+[`11-entity-traits-and-change.md`](11-entity-traits-and-change.md). Size, colour and
+leg count should not become disconnected systems or omniscient presentation fields.
 
 ## Open design frontier
 

@@ -45,7 +45,8 @@ behavior and the Agent contract are authoritative in `docs/game/README.md` and
 - one Agent-created request UUID, a World-derived fingerprint and an opaque
   exact-Place revision separate delivery retry identity from observed-state
   freshness;
-- HTTP and MCP remain thin adapters over the same thirteen-capability World behavior.
+- HTTP and MCP remain thin adapters over the same complete World behavior; later
+  capabilities must preserve that parity rather than freeze this slice's count.
 
 ## Current delivery boundary
 

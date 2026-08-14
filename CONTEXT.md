@@ -46,6 +46,12 @@ the Entity, not the acting Character: the target Place may differ from the Chara
 current Place and from Activity context Place.
 _Avoid_: Actor location, Activity context, ownership, discovery
 
+**Action**:
+An accepted Character-led operation whose primary game meaning is a typed World-
+state consequence. It is distinct from an Interaction, whose primary meaning is
+directed involvement between Entities, and from the Activity that remembers either.
+_Avoid_: Interaction, Activity, arbitrary command
+
 **Activity**:
 Immutable normalized history of one accepted state-changing game operation. Activity
 records operation, responsible User internally, optional actor Character, optional
@@ -53,6 +59,72 @@ context Place, occurrence time and involved Entity ids with server-owned roles. 
 does not replace current state or mean transport log, conversation, private Agent
 reasoning or generic event payload.
 _Avoid_: Event sourcing, transcript, audit blob, score
+
+**Participation**:
+The explicit, immutable way an Entity is involved in one accepted Activity.
+Participation is event-specific and directional; it does not by itself mean that the
+Entity observed, understood, consented to or formed a durable relationship through
+the action.
+_Avoid_: Passive interaction, generic link, relationship
+
+**Observation**:
+World information a Character acquires through one situated encounter, sensory
+situation or other accepted observation path. Observation is distinct from merely
+participating in an Activity and from everything the World knows.
+_Avoid_: Visibility flag, global state, participation
+
+**Knowledge**:
+World information a Character can justifiably use because it was observed,
+remembered, personally experienced or received through an accepted transmission or
+ripple. Knowledge can be partial, reported or stale and is never identical to all
+authoritative World state.
+_Avoid_: Agent memory, global query access, omniscience
+
+**Control provenance**:
+The private operational association between a User and their Character Entity. It
+is not an in-world trait, Character knowledge or an ordinary player-facing Entity
+fact.
+_Avoid_: Player aura, NPC label, control identity
+
+**Interaction**:
+A distinct accepted act from one Entity toward one or more existing Entities. It
+creates directional participation and a response opportunity, while Activity retains
+its history. It may carry independently validated typed World consequences, but
+directed involvement—not state mutation—is its defining meaning.
+_Avoid_: Action, passive interaction, conversation transcript
+
+**Interaction target**:
+An existing Entity toward which an actor explicitly directs an Interaction. Target
+does not imply harm, consent or response; for a Character it does guarantee access
+to the Interaction's outward behavior.
+_Avoid_: Counterpart, actee, recipient, observer
+
+**Entity interaction history**:
+A Character-knowable lens over immutable Activity showing how one Entity has acted
+toward, participated with or encountered other Entities over time. It is directional
+and may differ by Character; it is not a mutable social graph or omniscient dossier.
+_Avoid_: Relationship score, complete World graph, transcript
+
+**Property**:
+A structured descriptive fact about an Entity expressed as one key and one value,
+such as `size = small`, `hair colour = blond` or `leg count = 3`.
+_Avoid_: Characteristic, quality, Trait, RPG attribute
+
+**Property key**:
+The reusable World vocabulary identity and allowed value type shared by many
+Entity-owned Properties. It is not itself a Property or value; one Entity's Property
+has the natural identity `(Entity, Property key)`.
+_Avoid_: Property definition, Property value, Trait, per-Entity field
+
+**Trait**:
+A non-executable Entity-owned statement that characterizes the Entity, such as
+“jumps unusually high.” Establishment gives it one stable Trait identity and one
+immutable Activity-backed statement version; development appends a predecessor-
+linked version and advances its current pointer. It is not reducible to one Property
+key/value, Relationship state, observer-specific Knowledge or a mechanic. An Agent
+authors it through a confirmed Action or Interaction; a User has no direct Trait
+editor.
+_Avoid_: Property, status, score
 
 **Prose**:
 The immutable human- and Agent-readable narrative of one accepted World action. Later

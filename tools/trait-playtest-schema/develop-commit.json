@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "const": "committed"},
+    "marker": {"type": "string"},
+    "request_id": {"type": "string", "format": "uuid"},
+    "activity_id": {"type": "string", "format": "uuid"},
+    "trait_id": {"type": "string", "format": "uuid"},
+    "entity_id": {"type": "string", "format": "uuid"},
+    "target_entity_id": {"type": "string", "format": "uuid"},
+    "previous_statement": {"type": "string"},
+    "statement": {"type": "string"}
+  },
+  "required": ["status", "marker", "request_id", "activity_id", "trait_id", "entity_id", "target_entity_id", "previous_statement", "statement"]
+}

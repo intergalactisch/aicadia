@@ -9,17 +9,19 @@ readonly PROPOSALS_SCHEMA="$SCHEMA_DIR/proposals.json"
 readonly PREVIEW_SCHEMA="$SCHEMA_DIR/preview.json"
 readonly COMMIT_SCHEMA="$SCHEMA_DIR/commit.json"
 readonly OBSERVER_SCHEMA="$SCHEMA_DIR/observer.json"
-readonly TOOL_CATALOG="$REPO_DIR/tests/agent-tool-catalog.json"
-readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","list_entity","get_entity","create_entity","list_entity_at_current_place","list_activity_at_current_place","submit_action"]'
-readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+# This runner preserves the accepted Property-era trail-marker evidence. Its fake
+# replay must never depend on the evolving current runtime catalog.
+readonly TOOL_CATALOG="$SCHEMA_DIR/historical-agent-tool-catalog.json"
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place","submit_action","submit_interaction"]'
+readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'
 readonly ACTION_COMMIT_TOOLS='["submit_action"]'
 readonly OBSERVER_TOOLS='["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
-# This is the exact installed version validated during the accepted T4 build. The old
-# 0.147.0 pin described a future binary that was not present; preflight now fails on
-# any drift from the executable that was actually inspected for resume support.
-readonly CODEX_VERSION='codex-cli 0.144.1'
-readonly CODEX_COMMAND_PATH='/opt/homebrew/bin/codex'
-readonly CODEX_SYSTEM_PATH='/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js'
+# Public preflight pins the exact currently inspected command, resolved system path
+# and CLI version. Any installation or version drift fails before database or model
+# work and must be deliberately inspected and updated here with its fake evidence.
+readonly CODEX_VERSION='codex-cli 0.147.0'
+readonly CODEX_COMMAND_PATH='/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/bin/codex'
+readonly CODEX_SYSTEM_PATH='/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/lib/node_modules/@openai/codex/bin/codex.js'
 readonly SYSTEM_ENV='/usr/bin/env'
 readonly CODEX_MODEL='gpt-5.6-sol'
 readonly CODEX_REASONING_EFFORT='high'
@@ -181,7 +183,15 @@ validate_output_schemas() {
         and .properties.consequence.additionalProperties == false
         and .properties.consequence.properties.type.const == "introduce_entity"
         and (.required | sort) == (["status","marker","selected_proposal_id","prose","consequence"] | sort)
-        and (.properties.consequence.required | sort) == (["type","name","description"] | sort)
+        and (.properties.consequence.required | sort) == (["type","name","description","property"] | sort)
+        and .properties.consequence.properties.property.minItems == 1
+        and .properties.consequence.properties.property.maxItems == 1
+        and .properties.consequence.properties.property.items.additionalProperties == false
+        and (.properties.consequence.properties.property.items.required | sort) == (["key","value"] | sort)
+        and .properties.consequence.properties.property.items.properties.key.const == "material"
+        and .properties.consequence.properties.property.items.properties.value.additionalProperties == false
+        and (.properties.consequence.properties.property.items.properties.value.required | sort) == (["type","text"] | sort)
+        and .properties.consequence.properties.property.items.properties.value.properties.type.const == "text"
     ' "$preview_schema" >/dev/null || return 1
     jq -e '
         .type == "object" and .additionalProperties == false
@@ -405,7 +415,7 @@ prepare_artifacts() {
 write_initial_prompts() {
     local marker="$1"
     cat >"$RUN_DIR/action-phase-1.prompt.txt" <<PROMPT
-You are the action Agent in a bounded Aicadia MCP clean-room playtest. The User has consciously asked for their next action in a disposable shared World. You have only four read-only Aicadia tools. Call each exactly once in this order: get_world, get_character, list_entity_at_current_place, list_activity_at_current_place. Use no cursor and supply no out-of-band or User-provided ids; read authoritative ids only from World responses. If the two exact-Place pages do not have the same place_revision, fail instead of proposing.
+You are the action Agent in a bounded Aicadia MCP clean-room playtest. The User has consciously asked for their next action in a disposable shared World. You have only five read-only Aicadia tools. Call each exactly once in this order: get_world, get_character, list_entity_at_current_place, list_activity_at_current_place, list_entity_property_at_current_place. Use no cursor and supply no out-of-band or User-provided ids; read authoritative ids only from World responses. If the three exact-Place pages do not have the same place_revision, fail instead of proposing.
 
 After those grounded reads, return exactly three distinct private action directions. Do not call submit_action or any mutating tool. Do not draft a final package, choose for the User, invent a confirmation or expose private reasoning. The evidence marker is $marker; copy it only into the required marker field. Return only the strict schema result. Copy the unchanged common place_revision into place_revision. Give proposal ids exactly one, two and three in that order, and ground every direction in the observed Character, Place, Entity or Activity state.
 PROMPT
@@ -418,17 +428,18 @@ PROMPT
 write_phase_two_prompt() {
     local marker="$1"
     cat >"$RUN_DIR/action-phase-2.prompt.txt" <<PROMPT
-The User now selects proposal id $SELECTED_PROPOSAL_ID and adds this steering exactly: "$STEERING" The unique playtest marker is $marker. Draft the complete irreversible package, but do not call any tool and do not mutate World state. The prose, Entity name and Entity description must each contain the marker verbatim, must be English and must satisfy the published semantic bounds. Return only the strict preview schema with the exact prose and one introduce_entity consequence. This selection is not confirmation.
+The User now selects proposal id $SELECTED_PROPOSAL_ID and adds this steering exactly: "$STEERING" The unique playtest marker is $marker. Draft the complete irreversible package, but do not call any tool and do not mutate World state. The prose, Entity name and Entity description must each contain the marker verbatim, must be English and must satisfy the published semantic bounds. The introduce_entity consequence must preview exactly one initial text Property with canonical key material and text weathered cedar. Return only the strict preview schema with the exact prose and complete consequence. This selection is not confirmation.
 PROMPT
     chmod 600 "$RUN_DIR/action-phase-2.prompt.txt"
 }
 
 write_phase_three_prompt() {
     local marker="$1" preview="$2"
-    local prose name description
+    local prose name description property
     prose="$(jq -r '.prose' "$preview")"
     name="$(jq -r '.consequence.name' "$preview")"
     description="$(jq -r '.consequence.description' "$preview")"
+    property="$(jq -c '.consequence.property' "$preview")"
     cat >"$RUN_DIR/action-phase-3.prompt.txt" <<PROMPT
 The User explicitly confirms the exact retained package below without edits. This is the one irreversible confirmation. Generate one fresh UUID request_id and call submit_action exactly once using the unchanged place_revision from your grounded reads, the exact prose and exact consequence below. Do not re-read, retry or call any other tool. Return only the strict commit schema copied from the accepted result.
 
@@ -436,7 +447,7 @@ Exact confirmed prose:
 $prose
 
 Exact confirmed consequence:
-{"type":"introduce_entity","name":$(jq -Rn --arg value "$name" '$value'),"description":$(jq -Rn --arg value "$description" '$value')}
+{"type":"introduce_entity","name":$(jq -Rn --arg value "$name" '$value'),"description":$(jq -Rn --arg value "$description" '$value'),"property":$property}
 
 Evidence marker: $marker
 PROMPT
@@ -643,22 +654,25 @@ phase_one_is_valid() {
         [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
         | [$observed[]|select(.event_type=="item.started")|.item] as $started
         | [$observed[]|select(.event_type=="item.completed")|.item] as $c
-        | ($observed|length)==8
-        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed"]
-        and ($started|length)==4 and ($c|length)==4
-        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==4
+        | ($observed|length)==10
+        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed"]
+        and ($started|length)==5 and ($c|length)==5
+        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==5
         and [$started[].tool]==[$c[].tool] and [$started[].arguments]==[$c[].arguments]
         and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
-        and [$c[].tool]==["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]
+        and [$c[].tool]==["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]
         and all($c[];.server=="aicadia" and .status=="completed" and .error==null and (.result.structured_content|type)=="object")
         and $c[0].arguments=={} and $c[1].arguments=={}
         and ($c[2].arguments=={} or $c[2].arguments=={limit:25})
         and ($c[3].arguments=={} or $c[3].arguments=={limit:25})
+        and ($c[4].arguments=={} or $c[4].arguments=={limit:25})
         and $c[0].result.structured_content.name=="Aicadia"
         and ($c[1].result.structured_content.current_place|type)=="object"
         and $c[2].result.structured_content.place==$c[1].result.structured_content.current_place
         and $c[3].result.structured_content.place==$c[1].result.structured_content.current_place
+        and $c[4].result.structured_content.place==$c[1].result.structured_content.current_place
         and $c[2].result.structured_content.place_revision==$c[3].result.structured_content.place_revision
+        and $c[2].result.structured_content.place_revision==$c[4].result.structured_content.place_revision
     ' "$events" >/dev/null || return
     local revision
     revision="$(jq -sr '[.[]|select(.type=="item.completed" and .item.type=="mcp_tool_call")|.item][2].result.structured_content.place_revision' "$events")" || return
@@ -680,6 +694,7 @@ preview_is_valid() {
         (keys|sort)==(["status","marker","selected_proposal_id","prose","consequence"]|sort)
         and .status=="previewed" and .marker==$marker and .selected_proposal_id=="two"
         and .consequence.type=="introduce_entity"
+        and .consequence.property==[{key:"material",value:{type:"text",text:"weathered cedar"}}]
         and (.prose|contains($marker)) and (.consequence.name|contains($marker)) and (.consequence.description|contains($marker))
         and (.prose|length)>0 and (.prose|length)<=4000
         and (.consequence.name|length)>0 and (.consequence.name|length)<=120
@@ -711,8 +726,13 @@ commit_is_valid() {
         and ($c[0].result.structured_content|type)=="object"
         and $c[0].result.structured_content.activity.operation=="submit_action"
         and $c[0].result.structured_content.activity.prose==$preview[0].prose
-        and $c[0].result.structured_content.entity.name==$preview[0].consequence.name
-        and $c[0].result.structured_content.entity.description==$preview[0].consequence.description
+        and $c[0].result.structured_content.consequence.type=="introduce_entity"
+        and $c[0].result.structured_content.consequence.entity.name==$preview[0].consequence.name
+        and $c[0].result.structured_content.consequence.entity.description==$preview[0].consequence.description
+        and $c[0].result.structured_content.activity.property_change==[{
+            entity:{id:$c[0].result.structured_content.consequence.entity.id,name:$preview[0].consequence.name},
+            key:"material",value:{type:"text",text:"weathered cedar"}
+        }]
         and $c[0].result.structured_content.activity.context_place.entity.id==$c[0].result.structured_content.place.entity.id
         and ($c[0].result.structured_content.activity.involved_entity|map(.role)|sort)==["location","subject"]
     ' "$events" >/dev/null || return
@@ -722,7 +742,7 @@ commit_is_valid() {
         .status=="committed" and .marker==$marker
         and .request_id==$call.arguments.request_id
         and .activity_id==$call.result.structured_content.activity.id
-        and .entity_id==$call.result.structured_content.entity.id
+        and .entity_id==$call.result.structured_content.consequence.entity.id
         and .place_id==$call.result.structured_content.place.entity.id
         and .prose==$preview[0].prose and .entity_name==$preview[0].consequence.name
         and .entity_description==$preview[0].consequence.description

@@ -1,0 +1,65 @@
+# Local Entity Property state
+
+Status: Done
+
+## Outcome
+
+Every existing Entity-creation route can atomically establish 0–100 initial text or
+integer Properties. Confirmed World Actions can atomically change 1–100 Properties
+across 1–100 exact-current-Place Entities, and Interactions can optionally change
+0–100 Properties of their actor/explicit targets. Current local and authorized
+Activity reads expose exact typed state/history without role, control or global
+knowledge leakage.
+
+The accepted implementation plan is
+`../../plans/20260813-171201-character-property-state/plan.md`; the design record is
+[`docs/concept/11-entity-traits-and-change.md`](../../../docs/concept/11-entity-traits-and-change.md).
+The executable contract is published in [`docs/game/`](../../../docs/game/README.md).
+The running schema, `World`, HTTP, MCP and Agent contract deliver the complete
+thirteen-capability Property behavior. The implementation plan is complete.
+
+## Accepted contract
+
+- `create_entity`, `create_character`, `create_entry_place` and
+  `submit_action.introduce_entity` uniformly accept 0–100 initial Properties.
+- `submit_action.change_entity_property` accepts 1–100 unique Entity/key writes over
+  actor, current Place, co-present Characters and ordinary Entities without role or
+  control branching.
+- `submit_interaction` retains pure outward behavior with no changes and may
+  atomically change only actor/explicit-target Properties.
+- Agent-created canonical keys contain immutable English key and value type only;
+  same key/different type conflicts, with no alias or inference.
+- Outward/local current Properties and exact Activity changes are typed read facts;
+structured current state wins over conflicting introductory prose.
+- Control-like Property keys and values remain user-authored in-World content only;
+  they never establish or reveal actual User, Character, NPC, ownership or control
+  provenance and are not server-denylisted.
+- Immutable history stores each value once; an Entity/key current row stores only
+  its Activity pointer. Writes and reads are set-based and bounded at 100.
+
+## Accepted authority boundary
+
+Uniform local World Action eligibility includes other played Characters and the
+current Place exactly like ordinary local Entities. This prevents control-provenance
+probing and supports bounded causal events such as one explosion changing actor,
+ordinary Entity and other Character together. A player never directly edits any
+Property: User steering/confirmation, Agent proposal and World validation/write stay
+separate. Later deterministic external-factor mechanics may reuse the private writer
+only after acceptance; autonomous/background Agents, timers, `world_event` and
+ungrounded simulation remain absent.
+
+## Non-goals
+
+Unset/deletion, aliases, Traits, possession/relations, volition/response/consent,
+placement/movement, remote/cross-Place subjects, dynamic/prose selectors and
+global/reverse search.
+
+## Completion evidence
+
+World tests prove atomic creation on all four routes, the role-diverse 100-write
+Action, actor/target Interaction changes, retry hydration, current/history reads,
+races, rollback and bounded query/index behavior. Twelve server tests prove strict
+HTTP/MCP parity and the runtime-generated thirteen-tool catalog. Four Agent-contract
+tests and the token-free fake controller prove complete local guidance and MCP-only
+flow without claiming stochastic model obedience. The full 88-test Rust suite,
+formatter, strict Clippy, shell, link, catalog and diff checks pass.

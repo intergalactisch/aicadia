@@ -9,6 +9,10 @@ exploration history.
 
 | Research | Question |
 |---|---|
+| [D&D rules and durable campaign loops](dnd-rules-and-campaign-loops.md) | Which D&D play loops and rules make campaign play durable, and which underlying heuristics transfer to Aicadia without importing levels, scores or an omnipotent GM? |
+| [D&D campaign meta-layers and storytelling](dnd-campaign-meta-and-storytelling.md) | Which D&D campaign practices sustain agency, continuity, tension and callbacks, and how can their functions remain separated across Aicadia's User, Agent, World and Activity? |
+| [Tabletop narrative and meta patterns beyond D&D](tabletop-narrative-meta-beyond-dnd.md) | Which first-party tabletop techniques for authority, stakes, failure, oracles, pressure and recollection fit Aicadia, and what should not transfer unchanged? |
+| [ChatGPT access over stateless MCP](chatgpt-local-and-hosted-mcp-access.md) | How can local and later hosted Aicadia remain reachable from ChatGPT and other Agents while using only stateless MCP `2026-07-28`? |
 | [Current MCP Agent guidance](current-mcp-agent-guidance.md) | How can every current MCP Agent receive the same provider-neutral play methods while World remains deterministic and strict? |
 | [Codex agent graphs](ai-agent-graphs.md) | How could a graph-shaped Codex workflow improve Aicadia development without entering the game runtime? |
 | [Agent tool interface](agent-tool-interface.md) | What is the smallest correct MCP tool boundary for the Rust World interface? |

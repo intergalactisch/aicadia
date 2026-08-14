@@ -34,7 +34,7 @@ assert_live_attempt_shape() {
 make_fakes() {
     local root="$1"
     mkdir -p "$root/bin" "$root/state" "$root/output"
-    cp "$REPO_DIR/tests/agent-tool-catalog.json" "$root/state/catalog.json"
+    cp "$REPO_DIR/tools/agent-playtest-schema/historical-agent-tool-catalog.json" "$root/state/catalog.json"
 
     cat >"$root/bin/cargo" <<'FAKE'
 #!/usr/bin/env bash
@@ -120,7 +120,7 @@ character() {
 response='{}'; status=200
 case "$url" in
     */api/openapi.json)
-        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{get:{operationId:"list_entity"},post:{operationId:"create_entity"}},"/api/entity/{entity_id}":{get:{operationId:"get_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/action":{post:{operationId:"submit_action"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
+        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{post:{operationId:"create_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/place/current/entity/property":{get:{operationId:"list_entity_property_at_current_place"}},"/api/action":{post:{operationId:"submit_action"}},"/api/interaction":{post:{operationId:"submit_interaction"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
     */mcp)
         response="$(jq -nc --slurpfile tools "$state/catalog.json" '{jsonrpc:"2.0",id:1,result:{tools:$tools[0]}}')" ;;
     */api/world) response='{"name":"Aicadia"}' ;;
@@ -181,7 +181,7 @@ state="$(cd "$(dirname "$0")/../state" && pwd)"
 mode="$(<"$state/mode")"
 printf '%s\n' "$*" >>"$state/codex-commands"
 case "$*" in
-    --version) [[ "$mode" != cli-drift ]] && printf 'codex-cli 0.144.1\n' || printf 'codex-cli 0.145.0\n'; exit 0 ;;
+    --version) [[ "$mode" != cli-drift ]] && printf 'codex-cli 0.147.0\n' || printf 'codex-cli 0.148.0\n'; exit 0 ;;
     'login status') printf 'Logged in using ChatGPT\n'; exit 0 ;;
     'debug models') printf '%s\n' '{"models":[{"slug":"gpt-5.6-sol","supported_reasoning_levels":[{"effort":"high"}]}]}'; exit 0 ;;
     'features list') : ;;
@@ -199,7 +199,7 @@ if [[ "$*" == *'features list' ]]; then
 fi
 if [[ "$*" == *'mcp get aicadia --json' ]]; then
     arguments="$(printf '%s\n' "$@")"
-    if [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]';
+    if [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]';
     elif [[ "$*" == *'enabled_tools=["submit_action"]'* ]]; then tools='["submit_action"]';
     elif [[ "$*" == *'enabled_tools=["get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_character","list_entity_at_current_place","list_activity_at_current_place"]';
     else exit 96; fi
@@ -242,25 +242,27 @@ case "$count" in
         character="$(jq -nc --arg id "$character_id" --arg user "$action_user" --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$user,current_place:$place}')"
         entity_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"
         activity_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"
+        property_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",property:[],next:null}')"
         mcp get_world '{}' '{"name":"Aicadia"}'
         mcp get_character '{}' "$character"
         mcp list_entity_at_current_place '{"limit":25}' "$entity_page"
         mcp list_activity_at_current_place '{"limit":25}' "$activity_page"
+        mcp list_entity_property_at_current_place '{"limit":25}' "$property_page"
         if [[ "$mode" == premature-phase1 ]]; then mcp submit_action '{}' '{}'; fi
         if [[ "$mode" == malformed-proposals ]]; then printf '%s\n' '{"status":"proposed","marker":"wrong"}' >"$final";
         else jq -n --arg marker "$marker" '{status:"proposed",marker:$marker,place_revision:"v1.fake.before",proposals:[{id:"one",direction:"Inspect the quiet crossing",grounding:"The entered Character is at the empty entry Place"},{id:"two",direction:"Establish a trail marker",grounding:"The current Place has no placed Entities"},{id:"three",direction:"Record signs of passage",grounding:"Place Activity contains no prior action prose"}]}' >"$final"; fi ;;
     2)
         if [[ "$mode" == premature-phase2 ]]; then mcp submit_action '{}' '{}'; fi
         if [[ "$mode" == malformed-preview ]]; then printf '%s\n' '{"status":"previewed"}' >"$final";
-        else jq -n --arg marker "$marker" '{status:"previewed",marker:$marker,selected_proposal_id:"two",prose:("The Character braces a weathered cedar marker engraved "+$marker+" beside the crossing."),consequence:{type:"introduce_entity",name:("Cedar Marker "+$marker),description:("A weathered cedar trail marker bearing the carving "+$marker+".")}}' >"$final"; fi ;;
+        else jq -n --arg marker "$marker" '{status:"previewed",marker:$marker,selected_proposal_id:"two",prose:("The Character braces a weathered cedar marker engraved "+$marker+" beside the crossing."),consequence:{type:"introduce_entity",name:("Cedar Marker "+$marker),description:("A weathered cedar trail marker bearing the carving "+$marker+"."),property:[{key:"material",value:{type:"text",text:"weathered cedar"}}]}}' >"$final"; fi ;;
     3)
         preview="$(jq . "$state/../output"/run-*/action-phase-2.final.json 2>/dev/null | tail -n +1)"
-        if [[ -z "$preview" ]]; then preview="$(jq -nc --arg marker "$marker" '{prose:("The Character braces a weathered cedar marker engraved "+$marker+" beside the crossing."),consequence:{type:"introduce_entity",name:("Cedar Marker "+$marker),description:("A weathered cedar trail marker bearing the carving "+$marker+".")}}')"; fi
-        prose="$(jq -r '.prose' <<<"$preview")"; name="$(jq -r '.consequence.name' <<<"$preview")"; description="$(jq -r '.consequence.description' <<<"$preview")"
+        if [[ -z "$preview" ]]; then preview="$(jq -nc --arg marker "$marker" '{prose:("The Character braces a weathered cedar marker engraved "+$marker+" beside the crossing."),consequence:{type:"introduce_entity",name:("Cedar Marker "+$marker),description:("A weathered cedar trail marker bearing the carving "+$marker+"."),property:[{key:"material",value:{type:"text",text:"weathered cedar"}}]}}')"; fi
+        prose="$(jq -r '.prose' <<<"$preview")"; name="$(jq -r '.consequence.name' <<<"$preview")"; description="$(jq -r '.consequence.description' <<<"$preview")"; property="$(jq -c '.consequence.property' <<<"$preview")"
         entity="$(jq -nc --arg id "$entity_id" --arg user "$action_user" --arg name "$name" --arg description "$description" '{id:$id,name:$name,description:$description,introduced_by_user_id:$user,introduced_at:"2026-08-11T12:10:00Z"}')"
-        activity="$(jq -nc --arg id "$activity_id" --arg character "$character_id" --arg place "$place_id" --arg entity "$entity_id" --arg prose "$prose" --arg name "$name" --arg marker "$marker" '{id:$id,operation:"submit_action",actor_character:{id:$character,name:("Action Character "+$marker)},context_place:{entity:{id:$place,name:("Entry Place "+$marker)},is_entry:true},involved_entity:[{entity:{id:$entity,name:$name},role:"subject"},{entity:{id:$place,name:("Entry Place "+$marker)},role:"location"}],prose:$prose,occurred_at:"2026-08-11T12:10:00Z"}')"
-        result="$(jq -nc --argjson activity "$activity" --argjson entity "$entity" --argjson place "$place" '{activity:$activity,entity:$entity,place:$place}')"
-        arguments="$(jq -nc --arg request "$request_id" --arg prose "$prose" --arg name "$name" --arg description "$description" '{request_id:$request,expected_place_revision:"v1.fake.before",prose:$prose,consequence:{type:"introduce_entity",name:$name,description:$description}}')"
+        activity="$(jq -nc --arg id "$activity_id" --arg character "$character_id" --arg place "$place_id" --arg entity "$entity_id" --arg prose "$prose" --arg name "$name" --arg marker "$marker" '{id:$id,operation:"submit_action",actor_character:{id:$character,name:("Action Character "+$marker)},context_place:{entity:{id:$place,name:("Entry Place "+$marker)},is_entry:true},involved_entity:[{entity:{id:$entity,name:$name},role:"subject"},{entity:{id:$place,name:("Entry Place "+$marker)},role:"location"}],property_change:[{entity:{id:$entity,name:$name},key:"material",value:{type:"text",text:"weathered cedar"}}],prose:$prose,occurred_at:"2026-08-11T12:10:00Z"}')"
+        result="$(jq -nc --argjson activity "$activity" --argjson entity "$entity" --argjson place "$place" '{activity:$activity,consequence:{type:"introduce_entity",entity:$entity},place:$place}')"
+        arguments="$(jq -nc --arg request "$request_id" --arg prose "$prose" --arg name "$name" --arg description "$description" --argjson property "$property" '{request_id:$request,expected_place_revision:"v1.fake.before",prose:$prose,consequence:{type:"introduce_entity",name:$name,description:$description,property:$property}}')"
         if [[ "$mode" != no-commit ]]; then mcp submit_action "$arguments" "$result"; fi
         if [[ "$mode" == double-commit ]]; then mcp submit_action "$arguments" "$result"; fi
         if [[ "$mode" == incomplete-extra-commit ]]; then mcp_started item-extra-submit submit_action; fi
@@ -299,6 +301,33 @@ run_fake() {
 }
 
 latest_manifest() { find "$1/output" -name manifest.json -type f | sort | tail -1; }
+
+test_historical_property_catalog_snapshot() {
+    local catalog="$REPO_DIR/tools/agent-playtest-schema/historical-agent-tool-catalog.json"
+    jq -e '
+        length == 13
+        and [.[].name]==["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place","submit_action","submit_interaction"]
+        and ([.[].name] | index("list_entity_property_at_current_place")) != null
+        and all(.[];(.inputSchema|type)=="object" and (.outputSchema|type)=="object")
+        and (map(select(.name=="create_character"))[0].description | contains("zero through 100 initial"))
+        and (map(select(.name=="create_entry_place"))[0].description | contains("zero through 100 initial"))
+        and (map(select(.name=="create_entity"))[0].description | contains("zero through 100 initial"))
+        and (map(select(.name=="list_entity_property_at_current_place"))[0].description
+            | contains("Current structured Property is authoritative for the fictional current meaning"))
+        and (map(select(.name=="list_entity_property_at_current_place"))[0].description
+            | contains("user_controlled, npc or owner_user_id"))
+        and (map(select(.name=="list_entity_property_at_current_place"))[0].description
+            | contains("World has no control-word denylist"))
+        and (map(select(.name=="submit_action"))[0].description
+            | contains("every introduced or changed named subject/key/type/value"))
+        and (map(select(.name=="submit_action"))[0].description
+            | contains("control-like key or value"))
+        and (map(select(.name=="submit_interaction"))[0].description
+            | contains("never target-authored perception, consent, thought, volition, relationship or response"))
+        and (map(select(.name=="submit_interaction"))[0].description
+            | contains("control-like key or value"))
+    ' "$catalog" >/dev/null || fail 'frozen historical catalog lacks the exact Property-era contract'
+}
 
 test_no_token_preflight() {
     local root="$TEST_TMP/preflight"
@@ -363,7 +392,7 @@ test_cli_drift_fails_closed() {
     local root="$TEST_TMP/cli-drift"
     make_fakes "$root"
     if run_fake "$root" cli-drift preflight; then fail 'CLI drift passed'; fi
-    assert_contains "$root/cli-drift.stderr" 'must be exactly codex-cli 0.144.1'
+    assert_contains "$root/cli-drift.stderr" 'must be exactly codex-cli 0.147.0'
     [[ ! -e "$root/state/codex-exec-count" ]] || fail 'CLI drift invoked codex exec'
 }
 
@@ -376,7 +405,7 @@ test_happy_resumed_contract() {
         and .run_status!="completed" and .cleanup.status=="dropped"
         and (.phases|keys|sort)==(["proposals","preview","commit","http","observer"]|sort)
         and .validation.status=="passed" and all(.phases[];.status=="passed")
-        and .codex.version=="codex-cli 0.144.1" and .codex.model=="gpt-5.6-sol"
+        and .codex.version=="codex-cli 0.147.0" and .codex.model=="gpt-5.6-sol"
         and .codex.reasoning_effort=="high" and (.codex.path|endswith("/codex-fake"))
         and (.deployment.ownership_token|test("^[0-9a-f]{64}$"))' "$manifest" >/dev/null
     assert_eq "$(stat -f '%Lp' "$run_dir")" 700
@@ -386,6 +415,7 @@ test_happy_resumed_contract() {
     assert_not_contains "$root/state/call-1/prompt" 'explicitly confirms'
     assert_contains "$root/state/call-2/prompt" 'selects proposal id two'
     assert_contains "$root/state/call-2/prompt" 'weathered cedar trail marker'
+    assert_contains "$root/state/call-2/prompt" 'canonical key material'
     assert_not_contains "$root/state/call-2/prompt" 'explicitly confirms'
     assert_contains "$root/state/call-3/prompt" 'explicitly confirms the exact retained package'
     assert_not_contains "$root/state/call-1/argv" '--ephemeral'
@@ -399,7 +429,7 @@ test_happy_resumed_contract() {
     assert_not_contains "$root/state/call-4/prompt" 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
     assert_not_contains "$root/state/call-4/prompt" 'The Character braces a weathered cedar marker'
     jq -e 'has("entity_description") | not' "$run_dir/observer.final.json" >/dev/null
-    assert_live_attempt_shape "$run_dir/action-phase-1.events.jsonl" '["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+    assert_live_attempt_shape "$run_dir/action-phase-1.events.jsonl" '["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'
     assert_live_attempt_shape "$run_dir/action-phase-3.events.jsonl" '["submit_action"]'
     assert_live_attempt_shape "$run_dir/observer.events.jsonl" '["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
     commit_line="$(grep -nFx 'agent-3' "$root/state/timeline" | cut -d: -f1)"
@@ -467,6 +497,7 @@ test_failure_paths() {
     done
 }
 
+test_historical_property_catalog_snapshot
 test_no_token_preflight
 test_forbidden_schema_keyword_fails_before_codex
 test_cli_drift_fails_closed

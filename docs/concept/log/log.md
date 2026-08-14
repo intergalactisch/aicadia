@@ -1358,3 +1358,667 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   no P0-P3 issue, and no test database, player root, new listener or process remained.
   The pre-existing server on port 3000 was intentionally preserved and must be
   restarted before manual verification. No live Codex or model playtest occurred.
+
+## Character-grounded knowledge and natural identity — accepted build
+
+- corrected product direction, superseding full shared-state queryability for
+  player Agents: accepted World state is shared and persistent but not universally
+  knowable. A player-mode Agent may receive only World facts its current Character
+  can know through an applicable direct observation, own involvement or personal
+  state, memory, accepted transmission or later-arriving ripple. Knowing an Entity
+  once existed does not grant a live remote read of its current state.
+- accepted enforcement boundary: this epistemic scope belongs in contextual World,
+  HTTP and MCP capabilities, not only in Agent instructions. A User cannot widen it
+  with ids, repeated or indirect wording, requests for summaries or prompt
+  pressure. The Agent must not query global facts and merely conceal its source; it
+  must not receive those facts in player mode.
+- accepted presentation direction: the Agent orients and answers naturally through
+  what the Character observes, remembers, was told or can honestly regard as
+  unknown. It distinguishes direct observation, report, inference and absence
+  without exposing permissions, fields, record scope or protocol refusal.
+- accepted aggregate boundary: database-countable does not mean Character-knowable.
+  Total Users, Characters, buildings, Entities and equivalent absolute World
+  aggregates are not ordinary player knowledge. Bounded counting from direct
+  observation or a later accepted census remains possible; omniscient aggregation
+  is rejected.
+- accepted identity direction: User control is operational provenance, not an
+  in-world trait. Another Character encounters a person or creature through
+  observable appearance and behavior and is not automatically told “player
+  Character,” “NPC,” User owner or Agent source. Aicadia has no NPC role and should
+  not invent one for presentation.
+- accepted creativity case: a User may play a tiny animal-like or original small
+  creature that, once co-presence and movement exist, repeatedly crosses another
+  Character's path and is naturally mistaken by the other User for an ordinary
+  inhabitant. The system neither falsely labels it uncontrolled nor spoils the joke
+  with control metadata. The creature's User authors only its own accepted behavior;
+  the other played Character's beliefs, feelings, choices and response remain with
+  that Character's User.
+- retained identity and agency constraints: playful ambiguity cannot impersonate a
+  different established subject, rewrite stable identity or author another played
+  Character. Future recognition, disguise, following and reveal behavior must keep
+  one subject/one identity and protect independent Character volition.
+- identified current implementation gap: the executable thirteen-capability contract
+  still exposes global `list_entity` and `get_entity` player reads. `docs/game/`
+  remains accurate current truth; this design correction requires a separately
+  planned World/HTTP/MCP/test change and cannot be enforced by narration alone.
+- open: deterministic knowledge-path derivation, ripple propagation and information
+  loss, co-presence and sensory attention, Character appearance and recognition,
+  the safety boundary between playful following and unwanted pursuit, and the
+  replacement or reclassification of current global Entity reads.
+- researched: official D&D rules and campaign guidance show a durable loop of
+  grounded scene, Character intent, authoritative resolution, remembered consequence
+  and new decision; report at `docs/research/dnd-rules-and-campaign-loops.md`. The
+  transferable rule is to roll only meaningful uncertainty, offer attempts rather
+  than endings, preserve authorship and reward changed future play—not to import a
+  GM, levels, skills, encounter budgets or campaign schemas.
+- researched: D&D campaign meta-practice shows that recurring situations, rivals,
+  callbacks, selective recaps and consequences create campaign continuity while
+  hooks expose action without prescribing plot; report at
+  `docs/research/dnd-campaign-meta-and-storytelling.md`. For Aicadia, Agent framing,
+  User intent, World acceptance and Activity memory must remain separate DM
+  functions.
+- researched beyond D&D: Blades, Ironsworn, Fate, 13th Age, Dungeon World,
+  Brindlewood Bay, Kingdom, Microscope and The Quiet Year support authority by
+  question, stakes before resolution, fail-forward, oracle-as-prompt, causal pressure
+  and canonical residue with derived recap; report at
+  `docs/research/tabletop-narrative-meta-beyond-dnd.md`. Counters, hidden GM fronts,
+  autonomous faction turns, retroactive canon and generic action engines remain
+  rejected.
+- confirmed interaction cardinality: Entity interaction history is many-to-many
+  across accepted Activities. One accountable actor may involve several Entities;
+  one Entity may participate in many actions; and several Characters may separately
+  act toward the same Entity. A response in the opposite direction is a new Activity.
+  This does not silently authorize one atomic action with several acting authors.
+- corrected terminology: `active` and `passive interaction` are rejected because
+  they conflate actor, directed Entity, target, witness, observer and unaware Entity.
+  Activity participation, situated observation, Character knowledge, durable
+  relationship and derived interaction history remain distinct.
+- confirmed asymmetric-history direction: the same accepted action can yield
+  different justified knowledge. The rat may know its own intent; Mara may observe
+  only a small creature's movement; a distant Character may receive nothing; and a
+  later ripple may carry only a sourced, reduced report. Participation never proves
+  observation or understanding.
+- corrected control-awareness boundary: User-control provenance is not exposed in
+  player mode. The rat's User and Mara's User each interact with Entities without a
+  system answer about whether another User is behind them. This supersedes the
+  explored asymmetric private reveal for the current direction; any future reveal
+  requires a new explicit product decision.
+- rejected premature storage conclusion: the existing one-actor Activity plus
+  many `activity_entity` rows is the starting seam, not proof of a universal
+  `interaction`, `observation`, `knowledge` or relationship table. The first concrete
+  interaction behavior must earn its roles, observation evidence and query surface.
+- planned complete research alignment: the draft interaction plan now traces every
+  D&D rules/campaign-loop, D&D meta-storytelling and selected wider-tabletop finding
+  to `Now`, `Later`, `Lens` or `Reject`, then to a task and evidence obligation.
+  Current requirements include grounded orientation, attempts rather than endings,
+  free expression with typed consequence, selective canonical callbacks, honest
+  unknowns, tonal breathing room, asymmetric authority and changed future play.
+  Investigation, discovery, ripples, recurring actors, secrets, movement, downtime,
+  culture and derived arcs retain their research constraints without entering the
+  first interaction schema. Imported GM authority, scores, generic outcome engines,
+  hidden clocks, autonomous turns, retroactive canon and global player knowledge
+  remain explicitly rejected.
+- confirmed grill ordering: Character-grounded knowledge and first Entity
+  interaction remain the selected edge before investigation and discovery. The next
+  slice must make the shared World socially inhabitable before adding another solo
+  resolution loop.
+- confirmed no control reveal in player mode: a User interacts with Entities and is
+  not told whether another Entity is controlled by a User. Control provenance is
+  private operational data, not Character knowledge or a current User-facing meta
+  signal; any future reveal requires a new explicit product decision.
+- confirmed query boundary: global `list_entity` and `get_entity` semantics leave
+  player mode and become Character-grounded. Absolute World inspection may remain
+  for a separately authorized administrator, operator ledger or future admin
+  meta-Agent; this does not grant an in-world Character omniscience and current
+  `docs/game/` remains unchanged until the draft build plan is accepted.
+- initially proposed safety direction, superseded later in this same active record:
+  every User would get a hard private opt-out from repeated targeted attention. The
+  later Terry pass deferred that separate system from the first slice while keeping
+  it mandatory to revisit before movement, notifications or broader reach.
+- confirmed admin-meta boundary: a future meta-Agent with absolute World inspection
+  is a separately authorized, out-of-world operator. Its knowledge never attaches to
+  an in-world Character, and any World mutation still requires its separately
+  accepted explicit action flow.
+- confirmed ripple principle: remote source state is never delivered directly as
+  Character knowledge. A later accepted causal carrier—such as a traveller, letter,
+  report, damaged object, smoke or local change—must reach the Character's context;
+  the Character learns that situated sign or report with its source and possible
+  loss, not omniscient source-event truth.
+- refined Terry decision under grill: `signal` does not earn a separate system,
+  status or operation kind. The current recommendation is one additional closed
+  consequence in the existing confirmed-action workflow: freely worded actor
+  behavior directed at explicit co-present Entities, with Activity and directional
+  participation as its complete durable result. Speaking, squeaking, gesturing and
+  circling feet remain prose examples until the User confirms this seam.
+- corrected Entity-state language: **Property** means strictly one key/value fact,
+  such as `size = small`, `hair colour = blond` or `leg count = 3`; **Trait** means a
+  concise characterizing statement such as “jumps unusually high.” `Quality`,
+  `Characteristic` and RPG-style `Attribute` are rejected names. Both can be
+  established at Entity creation and changed or extended through later confirmed
+  actions with immutable Activity-backed history; whether they share one profile
+  capability and whether Traits ever receive mechanical authority remain open in
+  `docs/concept/11-entity-traits-and-change.md`.
+- confirmed Action/Interaction distinction: an Action's primary meaning is a typed
+  World-state consequence; an Interaction's primary meaning is an act from one
+  existing Entity toward one or more other existing Entities. The first Interaction
+  therefore earns a separate `World` operation with directed-Entity,
+  directional participation, knowledge and safety semantics. It is not a consequence
+  variant of `submit_action`, a parallel service or a generic mutation engine. Both
+  capabilities leave Activity through the same World authority. `Signal` remains
+  only an expressive Interaction example, never a system or status.
+- confirmed Property/Trait separation: Property and Trait are separate state models
+  and may use separate tables and interfaces; no shared Entity-profile abstraction
+  is required. Both retain Activity provenance. A Trait such as “jumps unusually
+  high” may ground Agent framing and proposals, but its natural-language statement
+  never becomes executable World logic without a separately accepted deterministic
+  mechanic.
+- confirmed powerful Terry boundary for first Interaction: one current Character is
+  the sole actor and may name one or more explicit, distinct, co-present directed
+  Entities of any Entity role. This earns one-to-many now and many-to-one/many-to-many
+  across Activity, while implicit witnesses, joint actors, movement, rolls and World-
+  state mutations remain out. Exact request-size protection is a technical bound,
+  never a score or fictional limit.
+- corrected Property/Trait authorship: a User never directly writes these records.
+  The User still supplies intent, steering and explicit natural-language confirmation;
+  the Agent authors the exact structured Action from authorized context and World
+  alone validates and writes current state plus Activity history. No server-side
+  inference is introduced.
+- expanded Trait lifecycle: Traits may develop, not merely appear or retire. A later
+  accepted Agent-authored, World-validated Action preserves the earlier expression
+  and Activity instead of editing it in place. Each development appends a linked
+  immutable successor version; the current lens selects the latest and no separate
+  mutable Trait-root record is introduced.
+- confirmed initial Property values: only bounded text and integer. Boolean, decimal,
+  units and Entity references remain absent until a concrete game behavior earns
+  them. Keys are canonical shared vocabulary; synonym policy remains a follow-on
+  content-authoring concern rather than a reason to duplicate per-Entity keys.
+- expanded World-authored Entity-state consequences: after User intent, steering and
+  confirmation, an Agent may author an Action affecting the acting Character or one
+  or more ordinary Entities without those Entities' intervention. World privately
+  protects every other played Character and never reveals that control status. A
+  deterministic bounded-area effect may later change all eligible Entities
+  atomically; exact selection cannot depend on prose or leak hidden Entities.
+- clarified crown example: removing a crown is an Entity-relation change when crown
+  and wearer are separate Entities, not automatically a Property update. One later
+  causal Action may carry multiple typed relation/Property consequences atomically;
+  this requires its own concrete mechanic rather than one universal mutation bag.
+- confirmed delivery order: Character-grounded Interaction and knowledge first,
+  Entity Properties second, Entity Traits third, then investigation and discovery.
+  Current name/description can prove the rat encounter, so Property/Trait complexity
+  is not smuggled into the selected Interaction build.
+- rejected Interaction role terms: `counterpart` is not Aicadia vocabulary and
+  `actee` is uncommon and opaque. `target` is confirmed for the explicit Entity
+  toward which an actor directs an Interaction; it implies no harm, observation,
+  consent or response.
+- confirmed Interaction roles: `actor`, `target` and `location`. Target is the
+  explicit existing Entity toward which the actor directs behavior; it implies no
+  harm, consent, agreement or response. A target Character is guaranteed access to
+  the outward behavior and may retain it in personal history. Non-Character targets
+  gain no knowledge, and non-target bystanders receive nothing automatically in the
+  first slice.
+- confirmed mixed Interaction consequence direction: later Interactions may include
+  independently validated typed relation, Property or other World consequences in
+  the same atomic Activity. Directed Entity involvement remains their defining
+  meaning; the first slice remains participation-only and free prose never mutates
+  state.
+- confirmed physical consequence authority: deterministic World mechanics may change
+  Properties of another played Character when World derives cause, bounded scope,
+  eligibility and consequence without free Agent invention. Volition/interiority
+  remain protected and Traits of other played Characters do not automatically change.
+- corrected Property ownership and vocabulary: every Property belongs to exactly one
+  Entity and its natural identity is `(entity_id, property_key_id)`. Many Entity
+  Properties may share one canonical typed Property key while keeping independent
+  values. The key is immutable mechanics vocabulary, not a central Property, Entity
+  value, Character knowledge or fixed content ontology; first use may introduce it
+  atomically with the first Entity-owned Property.
+- confirmed first target context and memory: the exact-current-Place Entity read is
+  deepened to include ordinary Entities and Characters eligible as targets without
+  exposing role or User-control metadata. Exact Place is first-slice target
+  eligibility, not universal visibility. A target Character's durable access to the
+  outward behavior derives from immutable Activity `target` participation, so no
+  separate Observation table is added; non-targets receive nothing automatically.
+- resolved Interaction relational direction: the first slice adds no `interaction`
+  root table. One Activity with `operation = submit_interaction` is the immutable
+  identity; its direct actor and context Place foreign keys carry conceptual `actor`
+  and `location`, while `activity_entity` stores 1–100 distinct `target` rows plus
+  the existing location row. World derives and validates the current Place Entity,
+  entered Characters and explicitly located ordinary Entities as one eligible set,
+  excluding the actor, and bulk-writes all roles atomically. Existing Place, actor
+  and involved-Entity indexes serve this path; no pair table or social graph grows
+  on every repeated encounter.
+- clarified Interaction migration inventory and corrected one performance detail:
+  `activity` changes only operation/provenance checks, `activity_entity` changes only
+  its role check, and no Interaction table is created. Existing
+  `entity_location(place_entity_id, entity_id)` serves ordinary Entity eligibility,
+  but entered-Character lookup earns one partial
+  `character(current_place_entity_id, entity_id)` index. Property and Trait tables
+  remain ordered follow-on migrations rather than hidden first-slice scope.
+- superseded safety timing: the previously proposed hard private opt-out is deferred
+  from the first Interaction slice because its hidden subject mapping, setting flow
+  and neutral multi-target rejection would add a separate system now. Targets still
+  own every response and no background Agent work or notification occurs, but
+  repeated targeting may enter history. Private attention control is required for a
+  later plan before movement, notifications or broader Interaction reach.
+- corrected and resolved Property relational direction: `property_key` is a compact
+  shared lookup with a unique normalized key, immutable description/value type and
+  source Activity. A concurrent first-use winner is reused only when its semantics
+  match. `entity_property(entity_id, property_key_id)` stores the direct current
+  Entity-owned value; `entity_property_history` appends the typed value and Activity
+  predecessor. The current row cites its exact history source through a composite
+  foreign key. This supersedes the earlier current-pointer sketch: it removes a join
+  from the dominant Entity read while retaining immutable Activity-backed history.
+  Property values are never centralized, JSONB, dynamic columns or a claim graph.
+- resolved Property change provenance: an Agent-proposed mutation becomes an
+  accepted Action Activity before Property state changes; a mechanically derived
+  mutation cites its accepted Action or later Interaction Activity. One
+  `source_activity_id` path therefore covers both origins without an actor/event
+  union, polymorphic foreign key or server inference.
+- resolved Trait relational direction: Trait is a separate statement-form model.
+  Development appends a predecessor-linked immutable Trait version; a compact
+  per-Entity current-pointer table selects active versions. Retirement must append
+  history rather than mutate an accepted Trait. Property and Trait share Activity
+  provenance and private World writers, not one public interface or storage table.
+- resolved performance direction: current Entity reads use one composite-primary-key
+  range scan with no history join; exact-key reads use the full key. Shared key rows
+  are immutable after creation and therefore never a central write bottleneck.
+  History follows the same Entity/key lineage and Activity chronology. Typed multi-
+  Entity consequences derive one bounded eligible set and use bulk
+  `INSERT ... SELECT` plus set-based current upserts in the same transaction. No N+1
+  writes, prose selectors, global Entity id lists, reverse-value index, graph
+  database, speculative partitioning or cache is introduced.
+- accepted plan and delegated execution: on 2026-08-13 the User explicitly accepted
+  the complete Character-grounded Interaction plan after reviewing its relational
+  table inventory, and directed the root Agent to orchestrate implementation through
+  Sol High subagents. The plan is now `active` and T1 is complete. This acceptance
+  activates the dependency-ordered Interaction tasks T2–T7; the Property and Trait
+  systems remain explicitly ordered follow-on builds requiring their own accepted
+  plans rather than entering this Interaction migration.
+- published accepted target contract, implementation pending: `docs/game/` now
+  defines `submit_interaction` with 1–100 distinct co-present targets, unordered-set
+  retry identity, one neutral unavailable-target result, canonical outward Activity
+  for actor and targets, and no automatic bystander delivery or authored response.
+  The exact-current-Place Entity read is specified to return safe descriptions of
+  other Characters and ordinary Entities while the Place remains separate and
+  targetable; scoped Place Activity preserves non-Interaction trail visibility but
+  exposes an Interaction only to its actor and explicit targets. Global
+  `list_entity`/`get_entity` are reclassified as loopback operator-ledger reads and
+  removed from the accepted twelve-capability player/MCP catalog. The running binary
+  still has the prior thirteen-tool catalog and no Interaction until later plan tasks
+  implement and prove parity; the backlog is therefore `Ready`, not `Active` or
+  `Done`.
+- implemented the minimum Interaction persistence seam: migration `0006` creates no
+  table or column. It admits `submit_interaction` Activity only with a non-null actor
+  Character, context Place, canonical prose, request id and 32-byte fingerprint;
+  keeps those confirmation fields null for every non-confirmed operation; admits the
+  explicit `target` participation role; and adds only the partial entered-Character
+  Place index earned by target lookup. Existing Activity and participation
+  immutability, foreign keys, delivery uniqueness and composite participation
+  identity remain the authority instead of a new Interaction or evidence table.
+- implemented set-based participation persistence: the one private Activity writer
+  now converts its typed `(EntityId, ActivityEntityRole)` slice to parallel typed
+  arrays and inserts all relations through one `UNNEST` statement. This replaces
+  relation-count N+1 writes without changing existing Activity transaction or
+  rollback semantics. Focused raw-database evidence proves one-to-many targets,
+  operation/provenance/context/role rejection, duplicate-key rejection,
+  update/delete immutability, all-or-nothing relation failure and exact index shape;
+  all 44 World tests retain prior behavior.
+- implemented the deep Character-grounded Interaction seam: `World` normalizes
+  canonical prose and the semantically unordered 1–100 target set, resolves accepted
+  request ids before current-state preconditions, distinguishes cross-operation and
+  changed-content delivery conflicts, derives actor and exact Place, checks the
+  complete target set with one set-based query and atomically appends one Activity,
+  all `target`/`location` participation and the new Place revision. Duplicate, self,
+  missing, remote and departed targets deliberately collapse to the same unavailable
+  result. Concurrent equal delivery returns one canonical result; competing writers
+  from one revision produce one winner; failures roll back history and revision.
+- implemented Character-authorized reads at the World boundary: the exact-current-
+  Place page now unions other entered Characters and explicitly placed ordinary
+  Entities, omits the acting Character, keeps the Place separate and targetable, and
+  returns only stable id, name and description without role, owner or control
+  provenance. Personal Activity uses the actor and participation indexes; Place
+  history retains ordinary trail history but filters `submit_interaction` to the
+  requesting Character's actor or explicit target participation. Focused rat,
+  one-to-many, reverse reply, many-to-one, target/bystander, freshness, retry,
+  conflict, concurrency and rollback evidence passes; all 48 World tests, formatter,
+  Clippy with warnings denied and diff checks pass against local PostgreSQL.
+- implemented strict player-adapter parity and natural Agent guidance: HTTP and MCP
+  now share one denied-unknown-fields Interaction request/result/error contract,
+  including idempotent retry, request conflict, stale Place and neutral unavailable-
+  target semantics. `POST /api/interaction` and the mutating, idempotent,
+  closed-world `submit_interaction` MCP tool expose the same World operation. The MCP
+  router and fixed catalog now contain exactly twelve player tools; global
+  `list_entity` and `get_entity` handlers are absent and direct calls are unknown,
+  while their loopback HTTP routes remain available to the read-only operator
+  ledger and absent from the player OpenAPI operation catalog. Exact-current-Place
+  reads and accepted Interaction Place output use only id, name and description;
+  they expose no introduction, ownership or control provenance. The one runtime
+  Agent contract and every tool description now distinguish Action from
+  Interaction, require Character-grounded orientation, exactly three non-exhaustive
+  proposals with steering/full preview/confirmation, honest unknowns and evidenced
+  recurrence, and forbid global counts, control labels, distant invention, authored
+  target responses and background notification. Adapter, catalog and full server
+  evidence passes without a model invocation.
+- completed the fresh adversarial Interaction evidence pass: existing T3–T5 tests
+  already proved directional actor/target views, same-Place bystander exclusion with
+  ordinary trail visibility, one-to-many, reverse reply, many-to-one, neutral
+  unavailable-target handling, unordered retry identity, changed-request conflict,
+  atomic rollback and direct rejection of removed global MCP tools. The bounded T6
+  additions prove Mara receives Pip the rat only as safe local `id`/`name`/
+  `description`, an unplaced distant Character receives no local Interaction, target
+  Character state remains unchanged, repeated confirmed targeting is still accepted
+  as the explicitly deferred attention-control boundary, and zero-target,
+  101-target and stale requests write no Interaction. Structural catalog tests pin
+  non-exhaustive three-proposal guidance, free steering, honest unknowns, causal
+  distant carriers, sole MCP authority and absence of target-Agent/background/
+  notification capabilities without pretending to prove stochastic model obedience.
+  All 48 World tests, 11 server tests, 7 remaining Rust tests, formatter, strict
+  all-target/all-feature Clippy, exact catalog fixture and diff integrity pass against
+  local PostgreSQL; no production code or paid model run was needed.
+- aligned the delivered Interaction authorities and Agent-operational boundary: the
+  governing MVP rule, `docs/game/`, capability map and current backlog item now state
+  the executable twelve-tool player catalog, Character-scoped Entity/Activity reads,
+  `submit_interaction`, and the separate loopback operator-ledger HTTP reads as
+  current fact rather than implementation-pending intent. The permanent runtime
+  Agent contract and compiler-generated tool descriptions remain the sole
+  provider-neutral MCP guidance for Action versus Interaction, exact local context,
+  honest distant/global unknowns, target/bystander asymmetry, control-provenance
+  silence, three non-exhaustive proposals, free steering, complete preview, explicit
+  confirmation and no background work. Historical paid `submit_action` evidence was
+  kept historical; the Pip/Mara outcome is deterministic World/HTTP/MCP evidence and
+  makes no stochastic model-compliance claim. The token-free fake controller now
+  pins the current twelve-tool catalog. Full Rust tests (66), formatter, strict
+  Clippy, fake controller, shell syntax, catalog, relative-link and diff checks pass.
+  The local launcher lifecycle could not run because this host lacks `psql` and
+  `dropdb`; public Agent preflight also failed closed before database or model work
+  because its deliberately pinned Codex path differs from the installed path. No
+  paid model was invoked and no persistent database was reset or deleted.
+- resolved the two final T7 host-evidence blockers without weakening safety. The
+  public playtest's explicit Codex pin had become stale; inspection established the
+  current command, resolved system path, `codex-cli 0.147.0`, login, required model,
+  high reasoning support and feature/flag surface, so the pin and fake drift evidence
+  were deliberately advanced together. Token-free public preflight then passed its
+  full real ownership create/tag/read/drop database probe without `codex exec`.
+  PostgreSQL 17 clients were installed in Homebrew's versioned Cellar but absent from
+  `PATH`; supplying that exact directory let the unchanged ownership-scoped local
+  lifecycle run. One inherited `AICADIA_USER_ID` exposed a harness isolation bug, so
+  the test now explicitly unsets it before adding scenario-owned context. The rerun
+  passed stable User restart, fail-closed profile/concurrency/port cases, isolated
+  Agent handoff and `codex_invoked=false`; its uniquely named database was absent
+  afterward. This completes T7 while retaining the overall plan as `active` for root
+  integration review and leaving all historical paid trail-marker evidence intact.
+- corrected final Agent-contract presentation without changing World or adapter
+  behavior: exact-current-Place Entity and Activity pages and accepted Interaction
+  already returned the flat `CurrentPlaceOutput { id, name, description }`, not the
+  complete `Place` shape. The authoritative wire documentation, compiler-generated
+  schema comments and MCP descriptions now name that safe shape and its omitted
+  Entity provenance/entry status explicitly. Activity participation guidance now
+  says `location` is where an Activity happened and `target` records only directed
+  outward behavior, never perception, consent or response. The historical paid
+  playtest still records that its then-current scoped Entity summary omitted
+  description, while making clear that today's `CurrentPlaceEntityOutput` includes
+  it. The exact twelve-tool catalog fixture and focused generated-catalog test pass;
+  no persistence, World, HTTP or MCP behavior changed.
+- completed the Character-grounded Interaction build: T1–T7, the full validation
+  ladder and final authority audit pass; the backlog item and living capability map
+  describe the executable outcome as Done/current truth. Independent review's two
+  presentation findings are resolved and focused re-review found no regression or
+  remaining in-scope issue. The accepted plan is complete as of
+  2026-08-13T16:52:51+02:00; no required Interaction-slice work remains, and this
+  closure does not start the separate Property or Trait follow-ons.
+
+## Character Property state — active grill
+
+- selected next edge: after completed Character-grounded Interaction, the smallest
+  Property slice is one confirmed `set_property` consequence inside existing
+  `submit_action`, acting on the derived Character, plus one flat Character-grounded
+  exact-current-Place Property read. This remains a proposed plan, not current game
+  behavior.
+- corrected the earlier relational proposal: immutable
+  `entity_property_history` is the sole value store;
+  `entity_property(entity_id, property_key_id, current_activity_id)` is only the
+  current pointer. This supersedes duplicated value/type columns in the current row.
+  Shared `property_key` rows retain canonical meaning/type and never centralize
+  Entity values.
+- proposed concrete Activity meaning: keep operation `submit_action`, add a stored
+  `introduce_entity | set_property` Action-consequence discriminator, backfill
+  existing Action rows as `introduce_entity` and reconstruct retries as a tagged
+  accepted result rather than infer consequence from `subject` roles.
+- proposed performance/concurrency direction: composite primary/foreign keys protect
+  one current pointer and same-lineage predecessors; a unique canonical key
+  arbitrates first use; a unique history `activity_id` makes the single v1 Property
+  result reconstructable; existing User/Place locks, pointer row locking and one
+  transaction prevent branches, orphan keys and partial Activity/state.
+- corrected premature Trait resolution: Property work requires no Trait table. Trait
+  development must retain immutable history, but its lineage, current-state and
+  retirement shape remain contested and are deferred to its own later plan.
+- draft-blocking choices: outward/local versus self-only Property presentation;
+  Agent-created first-use canonical keys versus finite World catalog;
+  acting-Character-only direct mutation versus broader ordinary-Entity targeting;
+  and current structured Property precedence versus conflicting introductory
+  description. The draft recommends outward/local, Agent-created exact keys,
+  acting-Character-only and current Property precedence respectively.
+- explicitly deferred: deletion, aliases/synonym inference, creation integration,
+  arbitrary or multi-Entity targeting, Interaction consequences, reverse/global
+  search and all Trait work. The formal draft is
+  `.agents/plans/20260813-171201-character-property-state/plan.md`; implementation
+  requires explicit answers and plan acceptance.
+- superseded the actor-only and creation-deferred Property draft after adversarial
+  reconciliation: all four existing Entity-creation routes now propose the same
+  optional 0–100 initial Properties because Character, Place and ordinary subjects
+  share one Entity identity. Their existing Activity is provenance and their entire
+  Entity/role/placement/Property bundle is atomic; routes without request ids retain
+  their current unique/concurrency semantics.
+- corrected Property-key nomenclature: a Property is deliberately compact
+  `key = value`, while an explanatory sentence belongs to Trait. The proposed
+  `property_key` therefore contains canonical lower-snake English key, immutable
+  text/integer type and first Activity provenance—no description, aliases or synonym
+  inference. Same key/type reuses; same key/different type conflicts.
+- replaced actor-only change with a bounded homogeneous
+  `submit_action.change_entity_property`: 1–100 unique Entity/key writes across
+  1–100 exact-local Entities. Actor, current Place, co-present Characters and placed
+  ordinary Entities use one role/control-agnostic eligibility rule and neutral
+  unavailable result. This supports an explosion changing actor, ordinary Entity
+  and another Character atomically without exposing which are User-controlled.
+- restored the earlier accepted Action-or-Interaction origin rule: existing
+  `submit_interaction` now proposes optional 0–100 typed Property changes whose
+  subjects must be actor or explicit targets. Empty retains outward-only behavior;
+  non-empty stores outward participation and Property consequence in the same
+  Activity without authoring a target response. Action and Interaction remain
+  separate public semantics with one private Property writer.
+- resolved visibility and presentation: current Properties are outward/local facts;
+  one flat exact-current-Place read covers the uniform local Entity set, and
+  authorized Activity output hydrates exact typed Property changes. Current
+  structured state wins over conflicting introductory prose for that key while the
+  introduction remains immutable history.
+- corrected persistence/cardinality: immutable history remains the sole value store
+  and the current row remains pointer-only. Because one Activity may change up to
+  100 Properties, history `activity_id` is indexed but not unique. Inputs are
+  semantic unordered, duplicate key or Entity/key pairs reject the whole bundle,
+  and stable-order key/pointer locks plus set-based history insert/current upsert
+  avoid branching, N+1 work and partial results.
+- narrowed the active draft to one material acceptance boundary: uniform local
+  Action mutation includes other played Characters and the current Place. The plan
+  recommends acceptance to avoid a control oracle and preserve causal multi-Entity
+  actions, while explicitly excluding volition, response, relations, placement,
+  remote subjects and dynamic/prose selectors. The plan remains draft with null
+  acceptance until the User explicitly accepts this complete boundary.
+- accepted the complete Local Entity Property plan on 2026-08-13: the User confirmed
+  that every Entity can carry zero or more Properties, including furniture, flora,
+  fauna, Characters and Places, and explicitly accepted uniform local World Action
+  mutation of other Characters and the current Place. The plan is active; T1 is
+  complete and T2 remains pending until the accepted `docs/game/` contract is
+  deliberately published.
+- clarified mutation authority: no player directly replaces their own or another
+  Entity's Property and Property is never a self-owned profile/storage edit. The User
+  steers and confirms, the Agent proposes an exact Action or Interaction, and World
+  alone validates and writes the Activity-backed consequence. This applies uniformly
+  without revealing Entity role or User control.
+- bounded external factors: a later explicitly accepted deterministic mechanic may
+  reuse the private Property validator/writer and Activity-backed consequence path.
+  The accepted current slice supports only User-steered, confirmed Agent-authored
+  Action/Interaction causes and introduces no autonomous or background Agent,
+  `world_event` table, timer, scheduler or ungrounded off-screen simulation.
+- published the accepted Local Entity Property contract before implementation:
+  `docs/game/` and the compact MVP rule now specify one uniform 0–100 initial
+  Property shape across all four Entity-creation routes, homogeneous 1–100 exact-
+  local Action changes, optional 0–100 actor/explicit-target Interaction changes,
+  typed authorized Activity history, one outward/local current read and the exact
+  thirteen-capability World/HTTP/MCP target. The backlog is `Ready`; the delivered
+  binary, schema and catalog remain explicitly the proved twelve-capability
+  pre-Property state until implementation and parity evidence complete.
+- completed the Local Entity Property implementation candidate and corrected its
+  current authorities after review: migration, `World`, HTTP, MCP and the runtime
+  Agent catalog now deliver all thirteen capabilities, while deterministic World,
+  server and Agent-contract/fake-controller evidence proves uniform creation, the
+  role-diverse 100-write Action, actor/target Interaction consequence, exact local
+  current/history reads, retries, races, rollback and bounded set-based behavior
+  without a paid-model claim. The backlog item is Done; the accepted plan stays
+  active only for root re-review and formal closure, and earlier twelve-tool/pending
+  entries above remain labeled development history. A Property key or value such as
+  `user_controlled`, `npc` or `owner_user_id` is accepted under ordinary validation
+  as user-authored in-World content, never actual User, Character, NPC, ownership or
+  control provenance; structured-current precedence governs only fictional current
+  meaning and no server denylist is added. Trait retains only the domain meaning that
+  it can develop—lineage, current, version and retirement storage are unselected and
+  deferred. Current external Property causes remain confirmed Agent-authored Actions
+  and Interactions; future deterministic writer reuse is still unbuilt, with no
+  background Agent, `world_event`, timer or autonomous simulation.
+- formally closed the Local Entity Property plan after independent final re-review
+  found no P0–P3 issue: final DB-backed evidence is 88/88 Rust tests (11 library,
+  2 playtest-database binary, 12 server and 63 World), plus 4/4 Agent-contract tests,
+  the token-free fake Agent controller, exact runtime-generated 13-tool catalog,
+  formatter, strict Clippy, shell, link/anchor, stale-authority and diff integrity.
+  Property remains Done with no Active backlog item; no Trait or next edge started.
+
+## Local Entity Trait development — deterministic delivery, review active
+
+- selected the next edge after delivered Property state: establish concise
+  Entity-owned characterizing statements contextually and let accepted Actions or
+  Interactions develop one stable Trait identity so later Agents can ground callbacks
+  in current state and immutable earlier expression. This is a Proposed design
+  outcome, not current behavior; the World still stores no Traits.
+- retained confirmed authority and meaning: Trait is a statement such as “jumps
+  unusually high,” separate from Property `key = value`, status and score. A User
+  steers and confirms, an Agent authors exact input and World validates/writes the
+  Activity-backed result. Statement prose never becomes executable mechanics.
+- corrected the round-1 relevance wording with the User's round-2 clarification:
+  every Entity owns its Property and Trait state, and whenever an Agent actually
+  fetches its own Character or another eligible Entity, that Entity comes with the
+  correct current associations. The Agent decides relevance; World stores no
+  observer-specific Knowledge/Observation, receipt state or copy. Property and Trait
+  are Entity-owned state, not Relationship domain.
+- rejected every initial-creation Trait. `create_entity`, `create_character`,
+  `create_entry_place` and `submit_action.introduce_entity` remain Trait-free; a
+  Trait is established contextually when play makes it interesting.
+- confirmed uniform exact-local Action authority over actor, current Place, ordinary
+  Entity and another Character; stable World Trait id with append-only predecessor
+  versions and one current pointer; establishment/development now with retirement
+  deferred; and strict non-executable statement prose.
+- corrected origin and package scope: both Action and Interaction may establish or
+  develop Traits through one private writer. Interaction Trait subjects are exactly
+  actor plus explicit targets; its optional `trait_change[0..100]` may mix lifecycle
+  items and coexist atomically with Property changes. Action uses one closed mixed
+  `trait_change[1..100]`. Interaction Trait change is an explicit World consequence
+  and never a target-authored response, thought, consent or volition.
+- resolved conflict and cause scope: exact normalized active duplicates and unchanged
+  development reject; semantic contradictions remain valid; a current lineage
+  supersedes only itself and gains no automatic precedence over another Trait,
+  Property or description. Only explicit confirmed Action/Interaction are executable
+  causes; no future external deterministic writer is present now.
+- resolved round 3: `list_entity_at_current_place` stays compact;
+  `get_character` and new exact-local `get_entity_at_current_place` return one
+  combined typed current Property/Trait association page with one opaque cursor,
+  default 25 and maximum 100. The cursor binds selected Entity and nullable current
+  Place revision so continuation pages cannot mix snapshots. Activity, creation and
+  mutation Entity/Place values remain compact references, not recursive fetches.
+  The new scoped read replaces `list_entity_property_at_current_place`, keeping the
+  player catalog at exactly thirteen.
+- resolved authorship/confirmation: the Agent authors the Trait consequence and
+  naturally previews every exact Entity/lifecycle item, Trait id plus current/new
+  statement where applicable and outward prose. The User accepts or rejects the
+  whole package, receives no direct Trait editor and never gets an undisclosed
+  post-confirmation Trait mutation.
+- resolved technical storage vocabulary and content bound: PostgreSQL uses `text`,
+  not `LONGTEXT`; every immutable statement is trimmed, non-NUL and 1–4,000 Unicode
+  characters. Richer causality belongs in Activity prose.
+- resolved exact duplicate scope: one mixed package rejects duplicate establish
+  `(entity_id, normalized statement)`, duplicate develop `trait_id`, exact-current
+  development and establishment of an exact statement already active on the Entity;
+  semantic near-duplicates and contradictions remain accepted.
+- proposed a scalable but unaccepted three-table persistence seam:
+  `entity_trait` owns immutable stable identity and Entity, `entity_trait_version`
+  stores append-only Activity-backed statements and predecessor links, and
+  `entity_trait_current` stores only the current version pointer. No creation route
+  touches it. Existing `submit_action` and `submit_interaction` deepen; no new
+  mutation tool or observer relation is proposed.
+- corrected the reviewed persistence/freshness seam: `entity_trait` carries no
+  duplicate establishing Activity pointer. The unique null-predecessor
+  `entity_trait_version` root is the sole establishing Activity provenance.
+  Development input remains only stable Trait id plus new statement; the request's
+  expected Place revision and locked current pointer select the authoritative
+  predecessor atomically, so no contradictory predecessor input is added.
+- created draft plan
+  `.agents/plans/20260813-200829-entity-trait-development/plan.md` and selected one
+  `Now / Proposed` backlog item. All material questions are resolved; T1 must obtain
+  explicit whole-plan acceptance before
+  any `docs/game/`, schema or runtime change. The dependency-ordered plan separates
+  deterministic delivery from a dedicated Trait live runner and historical marker
+  evidence.
+- revised the live boundary: it can no longer rely on an initial Trait or a frozen
+  three-plus-one call flow. After deterministic full review, T8 must design and
+  token-free audit the minimum exact sessions/calls/token claim for one contextual
+  Action establishment, later Interaction development of the same stable id and an
+  enriched authoritative Entity fetch by the separate Agent. Plan acceptance does
+  not authorize spend;
+  T9 still requires a fresh explicit User GO for exactly one frozen
+  `gpt-5.6-sol` high candidate, authoritative HTTP gates between phases, no unplanned
+  retry and cleanup authorized only by exact disposable database name plus private
+  ownership token. Failure never starts a second candidate automatically.
+- accepted and published the complete Trait target on 2026-08-13: the User accepted
+  the active plan as a whole while retaining a separate fresh T9 token-spend gate.
+  `docs/game/`, the compact MVP rule, vocabulary and forward planning now define the
+  exact thirteen-capability target: compact local orientation, paginated combined
+  Property/Trait state on `get_character`, scoped
+  `get_entity_at_current_place` replacing the standalone Property list, mixed
+  Action/Interaction Trait development, exact Activity history, complete natural
+  preview and deterministic error/boundary behavior. The backlog is Ready. This
+  publication is not executable evidence: the current binary/schema/generated
+  catalog remain the delivered pre-Trait thirteen-tool build until T3–T6 pass.
+- corrected the active Trait delivery boundary after T3–T6 completed: migration,
+  World behavior, HTTP/MCP parity, the exact generated thirteen-tool catalog,
+  permanent Agent contract and dedicated token-free fake flow now deliver the
+  deterministic Trait slice. T7 integration and independent review remain active;
+  T8 has not frozen or audited a real-model candidate, T9 has no fresh spend
+  authorization and no paid Trait run has occurred. Historical proposed/pending
+  entries above remain history rather than current status.
+- corrected natural preview presentation without changing stable wire identity: an
+  Agent privately retains the Trait id needed for development, but the User-facing
+  preview names the affected Entity, establish/develop lifecycle and exact current/
+  new characterization naturally, preserving lineage continuity without exposing a
+  UUID. Whole-package confirmation and re-preview on any meaning change remain
+  required.
+- closed final deterministic Trait review gaps: exact statement uniqueness now names
+  each Entity's simultaneous post-package active set, rejecting
+  develop-to-other-active, two-develop-to-same and establish-plus-develop-to-same
+  while allowing reuse of a statement vacated within that package; either Action or
+  Interaction rolls back completely on rejection. Deferred bounded per-Trait commit
+  checks require exactly one root, one current pointer and that pointer at the
+  lineage tip, rejecting incomplete roots, current deletion/backtracking and a
+  successor without pointer advance. The token-free fake controller has fourteen,
+  not eleven, fail-closed injections; this correction changes no live-evidence or
+  paid-run claim.
+- corrected the T7/T8 evidence frontier: deterministic T7 review is complete with no
+  P0–P3 finding; its last all-target run was 107/107 before the final vacated-reuse
+  regression, followed by a passing focused regression and full 75/75 World suite.
+  T8 now has one frozen two-Agent/two-session/seven-call/zero-retry candidate and a
+  running token-free preflight path, but independent audit remains open, so no T8 GO,
+  T9 authorization, paid Trait evidence or model call is claimed.
+- superseded that provisional T8 status after the final independent authority check:
+  T8 is complete and returns GO with no P0–P3 finding for the frozen two-Agent,
+  two-session, seven-call, zero-retry candidate at digest
+  `3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`.
+  Token-free preflight records `codex_invoked=false`, `model_calls=0` and
+  ownership-verified cleanup `dropped`, and sixteen fake failure injections pass.
+  No paid candidate or Trait model run occurred; T9 remains pending one fresh
+  explicit User authorization of the exact digest-bound command in the dedicated
+  Trait playtest contract.

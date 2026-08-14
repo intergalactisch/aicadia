@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "const": "committed"},
+    "marker": {"type": "string"},
+    "request_id": {"type": "string", "format": "uuid"},
+    "activity_id": {"type": "string", "format": "uuid"},
+    "trait_id": {"type": "string", "format": "uuid"},
+    "entity_id": {"type": "string", "format": "uuid"},
+    "statement": {"type": "string"}
+  },
+  "required": ["status", "marker", "request_id", "activity_id", "trait_id", "entity_id", "statement"]
+}

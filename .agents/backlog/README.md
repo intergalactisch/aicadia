@@ -3,10 +3,15 @@
 This directory keeps the forward development route visible to every builder. It is
 not a game contract, decision log or research archive:
 
-- `docs/game/` defines accepted executable behavior.
+- `docs/game/` defines the accepted contract and explicitly separates published
+  implementation-pending targets from executable delivery.
 - `docs/concept/log/log.md` records why material choices changed.
 - `docs/research/` preserves sourced findings.
 - this backlog orders concrete outcomes and records their current delivery boundary.
+
+The living [player capability map](capability-map.md) shows what Users can do now,
+what is selected or queued next and which concepts remain exploratory. It links to
+the authorities below rather than replacing them.
 
 If a backlog item conflicts with an authority, the authority wins and the backlog
 must be corrected in the same change.
@@ -20,6 +25,9 @@ must be corrected in the same change.
 | Done | [Agent world-entry handoff](items/agent-world-entry-handoff.md) | Done | A clean-room Agent can understand and execute World entry and Activity reads from the published MCP contract; two Agents prove shared Place state. |
 | Done | [World entry with activity history](items/world-entry-history.md) | Done | A Character may remain unplaced, later enter the shared World, and receive a durable queryable history from the first accepted game actions onward. |
 | Done | [Agent-mediated World action](items/agent-mediated-world-action.md) | Done | A User selects and steers one of three Agent proposals; the Agent submits one readable and structured action package that World accepts or rejects atomically. |
+| Done | [Character-grounded interaction and knowledge](items/character-grounded-interaction-knowledge.md) | Done | One concrete co-present interaction produces directional Entity history and Character-specific knowledge without global World access, authored responses or control-identity leakage. |
+| Done | [Local Entity Property state](items/character-property-state.md) | Done | All Entity creation routes establish initial Properties; bounded local Actions and Interactions change typed Entity-owned state atomically with current and Activity-backed reads. |
+| Now | [Local Entity Trait development](items/entity-trait-development.md) | Active | Deterministic schema, World, HTTP/MCP, exact thirteen-tool catalog, Agent contract and token-free fake flow deliver contextual Trait development; T7 review and separately gated live readiness remain open. |
 | Later | First investigation roll | Queued | World admits an Agent request, derives Character and Place, rolls first and returns a retry-stable zero or volatile positive result with neutral context. |
 | Later | First discovery commit | Queued | One Agent-authored candidate becomes one validated concrete shared result plus provenance and activity history. |
 | Later | Place-neighborhood context | Queued | An Agent can inspect a bounded set of explicit containing and adjacent Places through composable typed reads, without geometry or a monolithic context response. |

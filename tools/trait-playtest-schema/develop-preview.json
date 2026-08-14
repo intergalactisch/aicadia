@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "const": "previewed"},
+    "marker": {"type": "string"},
+    "selected_proposal_id": {"type": "string", "const": "two"},
+    "prose": {"type": "string"},
+    "actor_name": {"type": "string"},
+    "target_name": {"type": "string"},
+    "lifecycle": {"type": "string", "const": "develop"},
+    "current_characterization": {"type": "string"},
+    "proposed_characterization": {"type": "string"}
+  },
+  "required": ["status", "marker", "selected_proposal_id", "prose", "actor_name", "target_name", "lifecycle", "current_characterization", "proposed_characterization"]
+}

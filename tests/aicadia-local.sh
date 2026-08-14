@@ -89,6 +89,7 @@ readonly CODEX_MARKER="$TEST_ROOT/codex-invoked"
 
 launcher_env=(
     env
+    -u AICADIA_USER_ID
     "PATH=$FAKE_BIN:$PATH"
     "CODEX_HOME=$SOURCE_CODEX_HOME"
     "AICADIA_LOCAL_CODEX_MARKER=$CODEX_MARKER"

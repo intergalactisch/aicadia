@@ -30,6 +30,7 @@ Status vocabulary used throughout:
 | `07-open-questions.md` | Everything still needing a call |
 | `08-server-shape.md` | Server architecture: identity, briefing, ontology, storage |
 | `09-world-graph.md` | The world-graph: nodes, claims, lenses, inbox, performance |
-| `10-discovery-and-world-context.md` | Paused design record for World context, spatial direction and stochastic discovery |
+| `10-discovery-and-world-context.md` | Active design record for Character-grounded knowledge, natural identity, World context, spatial direction and stochastic discovery |
+| `11-entity-traits-and-change.md` | Delivered deterministic Property/Trait direction plus the still-gated live-evidence boundary |
 | `discovery-roll-prototype.html` | Throwaway interactive lab for parallel scope-bound discovery rolls; not a game contract |
 | `log/log.md` | The development log: one running file, one line per development, grouped by date — the trail, not the truth |

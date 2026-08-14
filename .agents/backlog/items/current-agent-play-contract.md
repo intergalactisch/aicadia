@@ -5,7 +5,7 @@ Status: Done
 ## Outcome
 
 Every conforming interactive Agent host receives one current, provider- and
-model-neutral Aicadia player contract plus the complete thirteen-tool catalog. The
+model-neutral Aicadia player contract plus the complete current tool catalog. The
 Agent keeps the entire conversation in player mode, renders internal World structure
 as concrete facts about named people, locations, things and events, and fails closed
 without Aicadia MCP rather than substituting repository, source, HTTP, database or
@@ -22,7 +22,7 @@ evidence and limitations are recorded in
 
 - support only stateless MCP `2026-07-28`; remove Aicadia-owned older session modes,
   compatibility branches, tests and stale current documentation;
-- publish one global Agent contract and thirteen aligned tool descriptions from one
+- publish one global Agent contract and one complete aligned set of tool descriptions from one
   runtime module;
 - use open semantic capabilities, never provider, model, client or tool allowlists;
 - keep all player-facing language grounded, inviting and free of internal record
@@ -44,14 +44,14 @@ evidence and limitations are recorded in
 
 ## Dependencies
 
-- completed thirteen-capability World/HTTP/MCP contract;
+- completed then-current World/HTTP/MCP contract;
 - completed Agent-mediated action and cross-User observer evidence;
 - pinned current `rmcp` implementation with MCP `2026-07-28` support.
 
 ## Completion evidence
 
 - current discovery advertises only `2026-07-28`, one exact permanent player
-  contract and the complete thirteen-tool catalog without a transport session;
+  contract and the complete catalog without a transport session;
 - the global contract treats every World value as potentially player-authored game
   data rather than instructions, without a content enum, scanner, allowlist, linter
   or model call;
@@ -84,3 +84,9 @@ remained; the pre-existing server on port 3000 was deliberately untouched.
 
 This proves deterministic delivery and boundaries, not arbitrary model wording. The
 next real conversation is a separate explicit User action.
+
+The later Character-grounded Interaction build evolved this same delivery contract
+to twelve player tools: it added `submit_interaction` and removed global
+`list_entity`/`get_entity` from MCP while retaining them as loopback operator-ledger
+HTTP reads. The historical thirteen-tool completion evidence above remains accurate
+for the build at that time; current truth is in `docs/game/agent-interface.md`.

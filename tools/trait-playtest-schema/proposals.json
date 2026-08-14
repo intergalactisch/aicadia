@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "const": "proposed"},
+    "marker": {"type": "string"},
+    "place_revision": {"type": "string"},
+    "proposals": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "enum": ["one", "two", "three"]},
+          "direction": {"type": "string"},
+          "grounding": {"type": "string"}
+        },
+        "required": ["id", "direction", "grounding"]
+      }
+    }
+  },
+  "required": ["status", "marker", "place_revision", "proposals"]
+}

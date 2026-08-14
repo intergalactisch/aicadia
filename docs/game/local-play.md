@@ -60,8 +60,11 @@ proposals, drafts and confirmation remain private.
 
 ## Ledger boundary
 
-The page reads only `GET /api/world`, `GET /api/entity`,
-`GET /api/entity/{entity_id}` and contextual `GET /api/activity`. It can refresh,
+The page reads only `GET /api/world`, loopback operator
+`GET /api/entity`/`GET /api/entity/{entity_id}` and contextual
+`GET /api/activity`. The two global Entity reads exist for this trusted local ledger;
+they are out-of-world inspection, not player knowledge and not accepted MCP tools.
+The Agent may never use them as a fallback authority. The page can refresh,
 page and expand records but contains no chat, form, proposal control, confirmation,
 game mutation or model surface. Before Character creation, personal Activity is
 honestly unavailable or empty; onboarding never moves into the browser. The hidden

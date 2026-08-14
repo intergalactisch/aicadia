@@ -1,0 +1,130 @@
+# Aicadia player capability map
+
+Status: living planning index
+
+This map lets a reader see which experiences Aicadia currently gives a User through
+their Agent and which game capabilities are still being designed. It is not an
+implementation contract: [current game docs](../../docs/game/README.md) govern
+executable behavior, the [ordered backlog](README.md) governs forward state and the
+[concept log](../../docs/concept/log/log.md) records why direction changed.
+
+The delivered Interaction tasks in the [interaction plan](../plans/20260813-114241-character-grounded-interaction-history/plan.md)
+contains the complete D&D and wider-tabletop traceability matrix from research
+finding to current requirement, future capability, editorial lens or explicit
+non-import.
+
+Update this map whenever a current capability, selected edge or ordered horizon
+changes. Do not mark a capability executable from documentation or research alone.
+
+## Current executable experience
+
+| User experience | What the User can do now | Boundary | Authority |
+| --- | --- | --- | --- |
+| Enter player mode | Start an isolated Agent conversation that requires live Aicadia MCP and stays in natural in-world language | No browser chat, fallback authority or server-side model | [Agent interface](../../docs/game/agent-interface.md) |
+| Establish one Character | Choose or steer one of three Agent proposals, preview the full meaning and explicitly confirm one Character | At most one Character; creation leaves it unplaced | [Character workshop](../../docs/game/agent-interface.md#required-character-workshop-and-world-entry-flow) |
+| Enter the shared World | Arrive with that Character at the one World-derived entry Place | No destination choice, movement or further Place | [Current build contract](../../docs/game/README.md#place-and-world-entry) |
+| Orient at the exact Place | Read compact local descriptions, then fetch the actor or one selected exact-local Entity with bounded current Property/Trait associations, plus only Activity authorized for this Character at that Place | Exact Place equality is eligibility, not general visibility, sensory access or neighborhood; Property/Trait content is not control provenance | [Exact current Place reads](../../docs/game/README.md#exact-current-place-reads) |
+| Recall personal history | Read immutable accepted Activity in which the current Character acted or was explicitly involved | No private conversation, rejected attempt or inferred knowledge history | [Personal history](../../docs/game/README.md#personal-history-read) |
+| Establish or change local state | Choose and steer one of three grounded directions, completely preview and confirm one homogeneous Action that introduces a placed Entity with initial Properties, changes 1–100 exact-local Entity/key pairs or establishes/develops 1–100 Entity Traits | No mixed Action consequence kind, generic patch, remote selector, direct storage edit or executable Trait prose | [Character-grounded Action](../../docs/game/README.md#character-grounded-action) |
+| Observe another marker | A second Character at the same Place can find the same Entity and canonical prose | This proves shared state, not complete co-presence or Character observation | [Required evidence](../../docs/game/README.md#required-evidence) |
+| Interact with present Entities | Direct one confirmed outward behavior toward 1–100 distinct co-present Entities, optionally changing actor/explicit-target Properties and establishing/developing their Traits | No target-authored response, thought, consent, relationship, placement, implicit witness or Trait mechanics | [Character-grounded Interaction](../../docs/game/README.md#character-grounded-interaction) |
+| Recall directed interaction | Actor and explicit target Character can later read the same canonical outward behavior and complete target set; a reverse response is a new Interaction | Non-target bystanders and distant Characters receive no Interaction automatically | [Personal and Place history](../../docs/game/README.md#personal-history-read) |
+| Encounter without control labels | Meet a locally described Entity such as Pip the rat without being told whether it is User-controlled, an NPC or an ordinary subject | Control provenance, global counts and distant facts are unavailable in player mode | [Agent knowledge boundary](../../docs/game/agent-interface.md#agent-guidance-and-player-facing-communication) |
+| Inspect the local ledger | In development, view World, Entity and personal Activity records in a read-only browser page | The ledger is not gameplay and exposes no mutation | [Local play](../../docs/game/local-play.md#ledger-boundary) |
+
+## Delivered player boundary
+
+The executable thirteen-capability player contract includes scoped
+`get_entity_at_current_place`, `submit_action` and `submit_interaction`, and excludes
+`list_entity` and `get_entity`; the scoped Entity read replaces the standalone local
+Property read. PostgreSQL, World, HTTP/MCP, the generated catalog and Agent contract
+now deliver current Trait state and change. Loopback global Entity HTTP handlers
+remain out-of-world local-ledger reads. Character-grounded Entity, Activity and
+current-state reads enforce the boundary before Agent inference.
+
+## Future experience
+
+| Capability | Intended User experience | Planning state | Next step or unresolved edge |
+| --- | --- | --- | --- |
+| Private attention control | Privately stop repeated unwanted targeting without rewriting co-presence or shared history | Deferred | Revisit before movement, notifications or broader Interaction reach |
+| Ripple knowledge | Learn a reduced, sourced consequence of a distant event only after it plausibly travels to the Character | Explored | Define propagation, information loss, provenance and arrival behavior |
+| Investigation roll | Have the Agent choose a grounded investigation that World resolves first as retry-stable zero or positive context | Later / Queued | Define meaningful zero, eligibility and context-dependent table |
+| Discovery commit | Turn a positive investigation result into one confirmed concrete shared change with provenance | Later / Queued | Define candidate results, duplicates, contradictions and transaction |
+| Place neighborhood | Inspect explicit containing and adjacent Places around the exact current Place | Later / Queued | Select first relationship behavior without implying visibility |
+| Movement and expansion | Establish additional Places and connections and move through validated transitions | Later / Queued | Define route, action, time and historical location semantics |
+| Rich World subjects | Establish flora, fauna, materials, boundaries and temporal processes when play needs them | Later / Queued | Introduce one concrete domain behavior at a time |
+
+## Cross-cutting rules
+
+- The User acts through one Character and their own Agent; World alone accepts state.
+- Every accepted mutation leaves immutable, attributable Activity in the same
+  transaction.
+- Shared persistence never grants omniscient player access.
+- Agent proposals, steering and rejected drafts remain private until exact
+  confirmation and World acceptance.
+- One Entity keeps one stable identity; appearance and recognition may be
+  asymmetric, while player mode exposes no User-control provenance.
+- The first Interaction has no block/ignore state, notification or background Agent
+  activation. A target owns every response; private attention controls must be
+  designed before Interaction reach expands.
+- Participation, observation, knowledge, relationship and recap are different
+  meanings and may never be collapsed into one generic interaction flag.
+- Entity Properties are key/value facts and Traits are characterizing statements
+  that can develop. Both are state owned by the Entity—not Relationship or
+  observer-knowledge state—but remain separate meanings, not per-key systems, RPG
+  statistics or incidental prose.
+- Property keys provide canonical meaning and value types. Many Entity-owned
+  Properties may reference the same key while retaining their own values; a key is
+  mechanics vocabulary, not Character knowledge or a central Property.
+- The accepted Property slice treats all Entity creation routes uniformly, reuses
+  `submit_action` for bounded World changes and permits typed Property consequences
+  inside `submit_interaction` for its actor/targets. Each value is stored once in
+  immutable Activity-backed history with only a current pointer per Entity/key.
+- Agent-created canonical keys contain only immutable English key and value type;
+  current Properties are outward/local facts and override conflicting introductory
+  prose for that exact fictional meaning. World infers no aliases or synonyms.
+  Control-like Property keys and values remain user-authored in-World content, never
+  actual control, ownership, User, Character or NPC provenance.
+- Trait is the single Active current edge after Property. Rounds 1–3 reject every
+  initial-creation Trait and observer-specific Knowledge/Observation; confirm that an
+  actual Entity fetch carries current Property/Trait associations, with relevance
+  decided by the Agent; confirm uniform exact-local Action scope, actor/target
+  Interaction scope, stable immutable establishment/development with retirement
+  deferred, mixed typed atomic packages, exact-only conflict rules, explicit
+  Action/Interaction causes and non-executable prose. Compact orientation plus
+  combined paginated current state on `get_character` and scoped
+  `get_entity_at_current_place` replaces the flat Property tool for a net thirteen;
+  Activity/mutation references stay compact. Full natural preview, whole-package
+  confirmation, 1–4,000-character statements and precise exact duplicate rejection
+  are delivered through the schema, World, HTTP/MCP, exact catalog and permanent
+  Agent contract. T7 review and separately gated T8/T9 live evidence remain open.
+- Users steer and confirm natural-language meaning but never write Property or Trait
+  state directly; Agents author exact Actions and World alone validates and writes.
+- Uniform local Property consequences do not branch on Entity role or User control,
+  including for Characters and Places. Current executable causes are only confirmed
+  Agent-authored Actions and Interactions. External-factor mechanics may later reuse
+  the private writer only after explicit acceptance; no such writer, background
+  Agent, timer, `world_event` or ungrounded simulation is delivered now.
+- No capability adds scores, levels, currencies, background inference or a hidden
+  server narrator.
+
+## Living play-experience heuristics
+
+These apply across current and planned capabilities without becoming new domain
+objects:
+
+- orient from Character-knowable current Place, recent change, grounded callback and
+  open affordance;
+- offer concrete attempts rather than endings, with three proposals as assistance
+  rather than an exhaustive menu;
+- keep expression free while World consequences remain typed, attributable and
+  explicitly confirmed;
+- let success, failure and accepted interaction change future play rather than award
+  points;
+- use Entity and Activity recurrence for continuity while recaps remain derived
+  Character-scoped lenses;
+- preserve honest unknowns, delayed evidence and causal ripples instead of hidden
+  Agent-authored truth or global feeds;
+- allow humor, ordinary days and small acts without compulsory escalation; and
+- keep User intent, Agent framing, World resolution, Character knowledge and shared
+  recollection visibly separate.

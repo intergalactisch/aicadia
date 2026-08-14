@@ -29,7 +29,7 @@ contract is [the current build contract](../../../docs/game/README.md),
 - Character and Place may appear as typed references in Activity, but receive no
   dedicated panel, page or map;
 - the local database and User survive normal stop/restart;
-- existing World, PostgreSQL, HTTP and thirteen-tool MCP behavior is reused without a
+- existing World, PostgreSQL, HTTP and then-current MCP behavior is reused without a
   new game capability;
 - no build or validation step automatically spends model tokens.
 
@@ -44,7 +44,7 @@ slice and requires a separately accepted read-only exposure and deployment bound
 
 ## Dependencies
 
-- completed Agent-mediated World action and its thirteen-capability World/HTTP/MCP
+- completed Agent-mediated World action and its then-current World/HTTP/MCP
   contract;
 - local PostgreSQL and the existing server/provisioning binaries;
 - the existing project-scoped Codex MCP configuration.
@@ -68,8 +68,8 @@ slice and requires a separately accepted read-only exposure and deployment bound
   Entity records, four Activity records and canonical prose across restart, both in
   canonical HTTP JSON and a fresh browser page;
 - browser network and source boundaries are GET-only and contain no gameplay input;
-- MCP initialization and exact catalog publish the Character workshop while retaining
-  thirteen operations and the existing action workshop;
+- MCP initialization and the exact catalog publish the Character workshop while
+  retaining the existing action workshop;
 - desktop, mobile, pagination, keyboard disclosure and pre-Character browser checks
   pass without exposed User UUID, viewport overflow or browser errors;
 - Bash syntax and lifecycle, formatting, strict Clippy, all 59 Rust tests,

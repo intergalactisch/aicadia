@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "const": "observed"},
+    "marker": {"type": "string"},
+    "entity_id": {"type": "string", "format": "uuid"},
+    "trait_id": {"type": "string", "format": "uuid"},
+    "current_statement": {"type": "string"},
+    "previous_statement": {"type": "string"},
+    "interaction_prose": {"type": "string"}
+  },
+  "required": ["status", "marker", "entity_id", "trait_id", "current_statement", "previous_statement", "interaction_prose"]
+}
