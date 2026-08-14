@@ -1,5 +1,9 @@
 # Local play
 
+> **Role / side:** Supported local launcher, isolated Agent adapter and read-only ledger contract / runtime side.
+> **Authority:** Local development operation at the game-contract boundary.
+> **Excludes:** Remote deployment, browser gameplay, authentication and delivery evidence.
+
 Aicadia's supported local loop is one persistent World, one stable hidden
 development User, one User-owned Agent conversation and one read-only browser
 ledger. The Agent is the only conversational game interface. The ledger only
@@ -52,7 +56,7 @@ User action. The UUID is untrusted request context, not a login, account or
 authorization token.
 
 When no Character exists, the Agent follows the private workshop in
-[Agent interface](agent-interface.md): exactly three candidates, selection and
+[Agent play contract](agent.md): exactly three candidates, selection and
 optional steering, a complete natural preview in the User's language, explicit
 confirmation and then one existing creation call. Gameplay continues in permanent
 player mode through Aicadia MCP. Only accepted World changes become durable;
@@ -97,4 +101,4 @@ as test-owned. Normal stop and restart never reset Aicadia.
 Authentication, multiple profiles, User switching, browser gameplay, durable Agent
 sessions and automatic token spend remain outside this local-play contract. A host
 other than the bundled local adapter is conforming only when it satisfies the
-provider-neutral host requirements in [Agent interface](agent-interface.md).
+provider-neutral host requirements in [Agent play contract](agent.md).
