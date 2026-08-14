@@ -1,3 +1,5 @@
+> **Archived:** July-2026 generation whose scene/claim vocabulary predates the 2026-08-07 game reframe; the concept log records which decisions were superseded; individual ideas may still inform future direction.
+
 # Architecture notes
 
 > **Concept log** — we're still discovering. Exploration, not specification.
