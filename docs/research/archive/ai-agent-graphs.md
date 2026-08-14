@@ -1,3 +1,5 @@
+> **Superseded — August Activity-Property-Trait era:** root `AGENTS.md` and `.agents/skills/build-aicadia/SKILL.md` are the current development-governance successors.
+
 # Codex agent graphs as an Aicadia build method
 
 Status: research, checked 2026-08-08; development-method recommendation, not an

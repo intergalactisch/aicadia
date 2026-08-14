@@ -1,3 +1,5 @@
+> **Superseded — July scene-claim era:** `docs/research/stable-identity-and-sparse-location.md` is the successor for the current-location contract.
+
 # Hierarchical spatial placement
 
 Date: 2026-07-26

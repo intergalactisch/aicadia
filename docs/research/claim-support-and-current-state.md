@@ -1,3 +1,5 @@
+> **Era:** July scene-claim research; its scene/claim vocabulary predates the 2026-08-07 game reframe.
+
 # Claim support and current state
 
 Date: 2026-07-26
