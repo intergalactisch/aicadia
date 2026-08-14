@@ -2179,3 +2179,24 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   with no active edge. The User chose unchanged draft
   `.agents/plans/20260814-130554-documentation-architecture/plan.md` next; this
   closure does not edit or activate it.
+
+# 2026-08-14
+
+## Documentation architecture — accepted build
+
+- decided / adopted: accepted the binding “one home per truth” architecture and
+  [active plan](../../../.agents/plans/20260814-130554-documentation-architecture/plan.md):
+  repository truth is placed by a runtime-side/development-side constitution at
+  `docs/README.md`, with `docs/evidence/` as the sole delivery/evidence-history
+  bridge; current contract, concept, research, planning, Agent-facing text and code
+  each retain one role-pure home. This retires concrete stale-authority,
+  seven-site status-duplication, embedded Agent-text and multi-thousand-line
+  navigation risks without changing game behavior or published Agent bytes. The
+  first independent review returned six P1, eight P2 and six P3 findings, all folded
+  into the plan. The second returned five P1 findings and six corrections; all were
+  adopted except moving runner operation contracts outside `docs/evidence/`
+  (rejected because it would split one evidence home) and requiring explicit Cargo
+  test targets (rejected after directory-test auto-discovery was identified as the
+  current conventional behavior). Later rebases resolved the live-validation,
+  sweep-scope and move-map execution details without changing this accepted
+  architecture.

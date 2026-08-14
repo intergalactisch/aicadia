@@ -81,24 +81,19 @@ ordering or uniqueness rule.
 
 ### The MVP Is The Filter
 
-The current accepted MVP contract contains exactly one `World`, durable `User` records,
-shared `Entity` records, at most one owned `Character` Entity role per User, at most
-one entry `Place` Entity role, nullable current Character placement, normalized
-`activity` history, zero or more compact text/integer Properties per Entity and
-zero or more developing non-executable Traits per Entity, with Character-grounded
-Action and directed Interaction Property/Trait consequences at one exact current
-Place. Its complete player-facing use-case surface is `get_world`, `get_user`,
-`get_character`, `create_character`, `create_entry_place`, `enter_world`,
-`list_activity`, `create_entity`, `list_entity_at_current_place`,
-`list_activity_at_current_place`, `get_entity_at_current_place`,
-`submit_action` and `submit_interaction`. Code may not exceed this surface until a
-next player or World behavior is explicitly accepted in `docs/game/`.
-Next-work selection is not limited to this surface: once its value is sufficiently
-proved, choose the next missing game outcome, decide its concrete contract, then
-implement it. These thirteen player capabilities ship through both HTTP and MCP.
-`create_user` is provisioning; global `list_entity` and `get_entity` are loopback
-operator-ledger reads and never MCP player tools. Authentication, OAuth and every
-other game capability remain deferred until deliberately selected.
+The complete current MVP contract—including domain shape, capability surface,
+provisioning and operator boundaries, and explicit deferrals—lives only in
+`docs/game/`. Code may not exceed that contract until a next player or World behavior
+is explicitly accepted there. Next-work selection is not limited to the current
+surface: once its value is sufficiently proved, choose the next missing game
+outcome, decide its concrete contract, update `docs/game/`, then implement it.
+
+### One Home Per Truth
+
+`docs/README.md` is the binding placement constitution. Put each current fact in
+exactly one owning authority and link to it from every other surface; never maintain
+the same truth in parallel homes. Follow its side, evidence, reference, sweep,
+role-header and bounded-size rules.
 
 ### Singular Domain Names
 
@@ -213,10 +208,12 @@ direction from open decisions instead of waiting for implementation or final
 agreement. In the same change, update, correct or remove every affected authority so
 known-stale documentation is never left behind: current behavior and implementation
 in `docs/game/`, sourced research plus its index in `docs/research/`, canonical
-vocabulary in `CONTEXT.md`, and development history in the concept log. Write the
-full choice once in its authority and link to it elsewhere. `docs/concept/` cannot
-override `docs/game/` or this file. Amend this file only for an explicitly accepted,
-compact rule that should govern work across tasks.
+vocabulary in `CONTEXT.md`, delivery and evidence history plus evidence-machinery
+operation contracts in `docs/evidence/`, development history in the concept log,
+and placement roles and boundaries in `docs/README.md`. Write the full choice once
+in its authority and link to it elsewhere. `docs/concept/` cannot override
+`docs/game/` or this file. Amend this file only for an explicitly accepted, compact
+rule that should govern work across tasks.
 
 ### Every World Action Leaves History
 
@@ -257,6 +254,8 @@ story to smuggle in an unchosen concept or speculative infrastructure.
 
 ## Reference Docs
 
+- Documentation constitution: `docs/README.md`
 - Current build contract: `docs/game/`
+- Delivery and evidence history: `docs/evidence/`
 - Exploration history: `docs/concept/`
 - Research: `docs/research/`
