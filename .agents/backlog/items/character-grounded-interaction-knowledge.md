@@ -124,18 +124,4 @@ Interaction/knowledge, Property, Trait, then investigation/discovery.
 
 ## Completion evidence
 
-- migration `0006_entity_interaction.sql` extends Activity operation and target-role
-  constraints and adds the entered-Character Place index without creating a table;
-- deterministic World tests prove Pip/Mara, one-to-many, reverse reply,
-  target/bystander/distant asymmetry, neutral rejection, retry, concurrency and
-  atomic rollback;
-- adapter tests prove matching HTTP/MCP success and error semantics, exact safe
-  output and the twelve-tool catalog with no global Entity MCP reads; and
-- the runtime Agent contract and compiler-generated tool descriptions define the
-  same proposal, steering, preview, confirmation, knowledge and no-background-work
-  boundaries for every conforming MCP Agent.
-
-The executable outcome, Rust/database suite, adapter parity, token-free fake Agent
-controller, token-free public preflight and isolated local launcher lifecycle all
-pass. The lifecycle reused one stable User across restart, invoked no model and
-ownership-verified cleanup removed only its uniquely named disposable database.
+Delivery history and current status: see [Interaction evidence](../../../docs/evidence/interaction.md).

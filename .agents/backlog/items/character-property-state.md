@@ -15,8 +15,6 @@ The accepted implementation plan is
 `../../plans/20260813-171201-character-property-state/plan.md`; the design record is
 [`docs/concept/11-entity-traits-and-change.md`](../../../docs/concept/11-entity-traits-and-change.md).
 The executable contract is published in [`docs/game/`](../../../docs/game/README.md).
-The running schema, `World`, HTTP, MCP and Agent contract deliver the complete
-thirteen-capability Property behavior. The implementation plan is complete.
 
 ## Accepted contract
 
@@ -56,10 +54,4 @@ global/reverse search.
 
 ## Completion evidence
 
-World tests prove atomic creation on all four routes, the role-diverse 100-write
-Action, actor/target Interaction changes, retry hydration, current/history reads,
-races, rollback and bounded query/index behavior. Twelve server tests prove strict
-HTTP/MCP parity and the runtime-generated thirteen-tool catalog. Four Agent-contract
-tests and the token-free fake controller prove complete local guidance and MCP-only
-flow without claiming stochastic model obedience. The full 88-test Rust suite,
-formatter, strict Clippy, shell, link, catalog and diff checks pass.
+Delivery history and current status: see [Property evidence](../../../docs/evidence/property.md).

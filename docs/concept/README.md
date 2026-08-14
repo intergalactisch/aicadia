@@ -31,6 +31,6 @@ Status vocabulary used throughout:
 | `08-server-shape.md` | Server architecture: identity, briefing, ontology, storage |
 | `09-world-graph.md` | The world-graph: nodes, claims, lenses, inbox, performance |
 | `10-discovery-and-world-context.md` | Active design record for Character-grounded knowledge, natural identity, World context, spatial direction and stochastic discovery |
-| `11-entity-traits-and-change.md` | Delivered deterministic Property/Trait direction plus the still-gated live-evidence boundary |
+| `11-entity-traits-and-change.md` | Property/Trait rationale; delivery history and current status: see [`docs/evidence/trait.md`](../evidence/trait.md) |
 | `discovery-roll-prototype.html` | Throwaway interactive lab for parallel scope-bound discovery rolls; not a game contract |
 | `log/log.md` | The development log: one running file, one line per development, grouped by date — the trail, not the truth |

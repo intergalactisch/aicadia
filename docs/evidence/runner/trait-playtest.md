@@ -1,10 +1,16 @@
-# Trait playtest
+# Trait playtest runner
+
+> **Role / side:** Trait-playtest operation contract / evidence bridge.
+> **Authority:** defines token-free scenarios, candidate freezing, spend gates, validation and recovery.
+> **Excludes:** game-contract rules and delivery status; see `docs/game/` and `docs/evidence/trait.md`.
 
 This is the token-free controller contract for the accepted Trait capability. It is
 separate from the historical trail-marker Agent runner and never relabels that
 runner or its evidence as Trait evidence.
 
-## Current token-free evidence
+Delivery history and current status: see [Trait evidence](../trait.md).
+
+## Token-free controller contract
 
 Run the dedicated deterministic check from the repository root:
 
@@ -50,10 +56,10 @@ and ambiguous cleanup. Every retained manifest declares
 `evidence_kind: fake_controller_test`, `codex_invoked: false`, `model_calls: 0` and
 `paid_candidate: false`.
 
-## Frozen live candidate
+## Live candidate boundary
 
-T8 freezes one candidate in this same dedicated runner; there is no parallel live
-system. Its exact boundary is two Agents, two sessions, seven paid Codex process
+The live path uses this same dedicated runner; there is no parallel live system. Its
+exact boundary is two Agents, two sessions, seven paid Codex process
 calls and zero retries:
 
 1. Pip starts one resumable session for a grounded Action proposal call. Selection
@@ -112,69 +118,7 @@ the exact database name plus its unguessable token before dropping it. Its JSON
 result declares `codex_invoked:false`, `model_calls:0`, the frozen call/token claim,
 GO/NO-GO and cleanup result.
 
-Independent T8 review covered the superseded path-bound digest
-`3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`.
-The a564 replacement candidate digest was
-`a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`.
-Candidate `candidate-MmwRmcBv` used the immediately preceding digest
-`f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`,
-consumed its authorization and invoked Codex for exactly one model process call. It
-failed before any Agent MCP read or post-setup Agent submit/Trait mutation because MCP revision `2026-07-28` was
-not enabled. Ownership-verified cleanup dropped its database and retained the
-evidence. After T9R GO, the User explicitly authorized one paid a564 replacement
-using only MCP `2026-07-28`. `candidate-ydttdFfc` consumed that authorization and
-one model process call (`68117` input, `50176` cached input, `798` output and `419`
-reasoning tokens). Exactly `get_world`, `get_character`,
-`list_entity_at_current_place` and `list_activity_at_current_place` completed, and
-the strict final contained three valid grounded proposals. The controller then
-falsely rejected valid fractional RFC3339 timestamps from the latter affected
-outputs. No preview, post-setup Agent submit, Trait mutation or candidate HTTP gate ran. Ownership-verified
-cleanup dropped the database; independent audit returned GO for this exact failed
-claim with one P1 at `validate_tool_output` and no other finding. Archive
-`.aicadia-trait-playtest/archive-original-f38-MmwRmcBv` preserves all 68 original
-files with private permissions and unchanged content/permission fingerprints.
-Token-free `preflight-cEeVelIZ` returns GO for a564 with
-`candidate_started=false`, `authorization_consumed=false`, `codex_invoked=false`,
-`model_calls=0`, thirteen equal runtime tools, six passed schemas and an
-ownership-verified dropped database. Independent audit found only the stale-status
-P3 corrected here; focused independent re-review returns GO with no P0–P3 finding
-and completes T9R. T10 accepts the real UTC fractional-second Chrono form while
-requiring exact normalized parse/format roundtrip. The current post-failure runner
-digest is `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`;
-the later T4 candidate is the exact two-call failure recorded below. Initial final
-review's sole P1/P2
-were corrected; second independent Terry/ownership review returned GO with no P0–P3
-finding. No retry or Trait live gameplay outcome was earned by that correction.
-
-The accepted
-[Trait live-validation plan](../../.agents/plans/20260814-111749-trait-live-validation/plan.md)
-is complete and leaves no `Now / Active` edge. T2 completed: private
-`archive-replacement-a564-ydttdFfc` contains all 64 unchanged a564 historical files
-plus its private algorithm index, and the original 68-file f38 archive remains
-unchanged. Public token-free `preflight-HMxwGPCF` returned GO for digest
-`6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`:
-`candidate_started=false`, `authorization_consumed=false`,
-`codex_invoked=false`, `model_calls=0`, current-only MCP `2026-07-28`, 13
-live-equal tools, 6 schemas and cleanup `ownership_verified_and_dropped`. The initial
-T3 review found exactly two P3 findings—the index lacked an explicit serialization
-recipe and current authorities were still prospective—and both are corrected.
-Independent re-review returned GO with no P0–P3 finding, completing T3 readiness.
-Exact-digest `candidate-63hjH4HW` then consumed its authorization and two model
-calls. The Action proposal passed after the four current-MCP reads `get_world`,
-`get_character`, `list_entity_at_current_place` and
-`list_activity_at_current_place`. Its zero-tool Action preview exited 0 with strict
-valid JSON and exact `entity_name: "Pip"`, then failed solely because live
-`validate_action_preview` required `startswith("Pip ")` while the prompt and
-permanent fake contract require exact `Pip`. No Action commit, candidate HTTP gate,
-Interaction or Mara phase ran; submits, post-setup Trait mutation and live success
-are zero. Total usage was 148068 input, 100352 cached input, 1722 output and 867
-reasoning-output tokens. Cleanup was `ownership_verified_and_dropped`, evidence is
-private, no process remains and no retry or new authorization exists. Final
-independent review returned GO with P0/P2/P3=0. The known deferred P1 is this Action
-live-name drift plus analogous unreached Interaction `startswith("Pip ")`/
-`startswith("Mara ")` drift against prompt/fake exact names. No fix, retry, live
-success or new authorization was added. The User chose the unchanged draft
-documentation-architecture plan next; it is not activated here.
+Delivery history and current status: see [Trait evidence](../trait.md).
 
 It hashes canonical repository path-and-byte material for `Cargo.toml`, `Cargo.lock`,
 every Rust source and SQL migration; the exact runtime catalog and six schemas; and
@@ -182,10 +126,7 @@ the runner constants and function bodies that generate prompts, configure Codex,
 start/clean the database and server, validate every phase and enforce the spend gate.
 The locally resolved executable path is deliberately excluded. The digest file
 itself is excluded, avoiding self-reference. Any bound material drift fails
-preflight; the supplied a564 digest was frozen for the now-consumed replacement
-command, and any differing digest failed before candidate consumption or model
-invocation. The post-failure digest passed public token-free
-`preflight-HMxwGPCF`; it has no paid authorization.
+preflight before candidate consumption or model invocation.
 
 Preflight and candidate evidence live beneath `.aicadia-trait-playtest/`. The root
 and each evidence directory are mode 700; every retained artifact is mode 600. A
@@ -193,17 +134,16 @@ candidate create ambiguity retains recovery instructions and forbids automatic
 drop without ownership proof. A `candidate-consumed` sentinel and prior candidate
 directory both forbid a second attempt.
 
-The frozen paid command that produced failed `candidate-ydttdFfc` was:
+The paid command shape is:
 
 ```sh
 DATABASE_URL='postgres://localhost/postgres' tools/trait-playtest run \
   --confirm-token-spend \
-  --candidate-digest a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302
+  --candidate-digest '<accepted-digest>'
 ```
 
-That authorization is consumed and the sentinel forbids another candidate. The
-post-failure runner has no preflight or execution authorization. No retry, other
-candidate or protocol fallback is authorized.
+The command is valid only after a separate exact authorization. The sentinel forbids
+a second candidate, and failure never authorizes a retry or protocol fallback.
 
 ## Historical runner boundary
 

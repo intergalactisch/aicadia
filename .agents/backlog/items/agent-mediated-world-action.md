@@ -13,8 +13,8 @@ result.
 The completed build plan is
 `.agents/plans/20260811-124550-first-agent-mediated-world-action/plan.md`. Current
 behavior and the Agent contract are authoritative in `docs/game/README.md` and
-`docs/game/agent-interface.md`; bounded live evidence is recorded in
-`docs/game/agent-playtest.md`.
+`docs/game/agent-interface.md`; delivery history uses the static pointer under
+Completion evidence.
 
 ## Confirmed direction
 
@@ -59,12 +59,6 @@ bounded containment and adjacency are the next spatial edge, not hidden scope in
 this build. The bundle must remain a domain action rather than an unrestricted
 database-patch language.
 
-The accepted evidence order keeps the minimal three-read observer, assigns full
-Entity-description validation only to the
-authoritative HTTP layer, and runs that HTTP validation immediately after commit so
-its result is retained before Agent interpretation. Both HTTP and observer must still
-pass in one candidate. Candidate `run-gE8iED5m` passed that exact order.
-
 The selected first evidence scenario is one trail-marker action: World derives the
 entered Character's current Place, accepts one package containing readable prose and
 one Entity consequence, atomically creates and places the marker with one Activity,
@@ -72,22 +66,4 @@ and exposes marker and prose to another Character at that Place.
 
 ## Completion evidence
 
-The deterministic ladder passes 57 Rust tests. The fail-closed runner passes 27 fake
-invocations and 19 failure modes, including duplicate or incomplete submission,
-wrong actor, observer disagreement and unsafe cleanup. Public preflight pins the
-exact CLI/model/reasoning, schemas, catalog, least-privilege roles and owned database
-lifecycle.
-
-Separately authorized `run-gE8iED5m` then proved one complete live loop: four
-grounding reads, three private proposals, withheld selection and steering, a no-tool
-preview, separately withheld confirmation and exactly one `submit_action`. World
-accepted one marker Entity and one immutable Activity/prose at the derived Place.
-Authoritative HTTP proved exact actor, Place, roles, description, prose and counts;
-only then did a separate Agent find the same Entity id/name, Place and prose through
-exactly three MCP reads.
-
-Independent T4R4 review found no P0-P3 issue or evidence drift. All forty retained
-artifacts are private, ownership-verified cleanup dropped the disposable database,
-and zero database, process, listener or isolated-config leftovers remain. Exact run
-ids, bounded claim and the two earlier non-passing candidates are recorded once in
-[Agent playtest](../../../docs/game/agent-playtest.md#live-evidence-history).
+Delivery history and current status: see [Action evidence](../../../docs/evidence/action.md).

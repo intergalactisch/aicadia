@@ -14,86 +14,7 @@ co-present Entities may carry optional actor/target Property changes and 0–100
 Trait establishments/developments without authoring their responses. Accepted game mutations append
 immutable normalized `activity` in the same PostgreSQL transaction as current state.
 
-**Delivered deterministic capability:** Trait establishment/development and bounded
-Entity-associated current state now execute under the completed
-[Trait plan](../../.agents/plans/20260813-200829-entity-trait-development/plan.md).
-The player catalog remains exactly thirteen capabilities: scoped
-`get_entity_at_current_place` replaces
-`list_entity_property_at_current_place`; `get_character` and the scoped read return
-paginated current Property/Trait associations; Action and Interaction carry Trait
-consequences through their existing mutation operations.
-
-**Delivery status:** PostgreSQL, World, HTTP, MCP, the exact generated thirteen-tool
-catalog, Agent contract and dedicated token-free fake controller deliver and prove
-the deterministic Trait contract. T7 integration and independent review are
-complete with no P0–P3 finding. The dedicated
-[Trait playtest](trait-playtest.md) completes T8 with independent GO and no P0–P3
-finding for the exact two-Agent, two-session, seven-call, zero-retry candidate bound
-to digest
-`3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`.
-Its token-free preflight records `codex_invoked=false`, `model_calls=0` and
-ownership-verified cleanup `dropped`. No paid Trait live-gameplay result was earned.
-Original candidate `candidate-MmwRmcBv` for digest
-`f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`
-consumed its authorization, invoked Codex for exactly one model process call and
-failed before any Agent MCP read or post-setup Agent submit/Trait mutation because MCP revision `2026-07-28` was
-not enabled. Its database cleanup was ownership-verified and dropped. Evidence is
-retained. After T9R GO, the User explicitly authorized one MCP `2026-07-28` a564
-replacement. `candidate-ydttdFfc` consumed that authorization and one model process
-call (`68117` input, `50176` cached input, `798` output and `419` reasoning tokens).
-Four required reads and a strict valid three-proposal final completed before the
-controller falsely rejected valid fractional RFC3339 timestamps from
-`get_character` and `list_activity_at_current_place`. No preview, post-setup Agent
-submit, Trait mutation or candidate HTTP gate ran; ownership-verified cleanup dropped the database.
-Independent audit returned GO for this exact failed claim with one validator P1 and
-no other finding. Archive
-`.aicadia-trait-playtest/archive-original-f38-MmwRmcBv` now preserves all 68 original
-files with private permissions and unchanged content/permission fingerprints.
-Token-free `preflight-cEeVelIZ` returns GO for a564 with no candidate start,
-authorization consumption or Codex invocation, zero model calls, exact thirteen-tool
-runtime equality, six passed schemas and ownership-verified dropped database. The
-independent audit found only the stale-status P3 corrected here; focused independent
-re-review returned GO with no P0–P3 finding, completing T9R. T10 now accepts valid
-UTC fractional seconds and requires exact normalized parse/format roundtrip;
-seventeen token-free fake
-failure injections pass. Its post-failure runner digest is
-`6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`.
-The later T4 candidate is the exact two-call failure recorded below. Initial final
-review's sole P1/P2 were
-corrected; second independent Terry/ownership review returned GO with no P0–P3
-finding. No live Trait success or retry was earned by that correction. Global
-`list_entity` and `get_entity` remain loopback operator/ledger reads outside player
-knowledge and MCP.
-
-**Completed validation result:** the
-[Trait live-validation plan](../../.agents/plans/20260814-111749-trait-live-validation/plan.md)
-is complete and no `Now / Active` edge remains. T2 completed by preserving 64 a564
-historical files byte- and permission-identically in private
-`archive-replacement-a564-ydttdFfc`, plus one private algorithm index; the original
-68-file f38 archive is unchanged. Public token-free `preflight-HMxwGPCF` returned GO
-for digest `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
-with `candidate_started=false`, `authorization_consumed=false`,
-`codex_invoked=false`, `model_calls=0`, current-only MCP `2026-07-28`, 13
-live-equal tools, 6 schemas and cleanup `ownership_verified_and_dropped`. The initial
-T3 review found exactly two P3 findings—an underspecified private-index serialization
-and stale current status—and both are corrected. Independent re-review returned GO
-with no P0–P3 finding, completing T3 readiness. Exact-digest
-`candidate-63hjH4HW` then consumed its authorization and two model calls. The Action
-proposal passed after the four current-MCP reads `get_world`, `get_character`,
-`list_entity_at_current_place` and `list_activity_at_current_place`. Its Action
-preview exited 0 with zero tools and strict valid JSON containing exact
-`entity_name: "Pip"`, but live `validate_action_preview` alone required
-`startswith("Pip ")`; the prompt and permanent fake contract require exact `Pip`.
-No Action commit, candidate HTTP gate, Interaction or Mara phase ran; submits,
-post-setup Trait mutation and live success are zero. Total usage was 148068 input,
-100352 cached input, 1722 output and 867 reasoning-output tokens. Cleanup was
-`ownership_verified_and_dropped`, evidence is private, no process remains and no
-retry or new authorization exists. Final independent review returned GO with
-P0/P2/P3=0. The known deferred P1 is this Action live-name drift plus analogous
-unreached Interaction `startswith("Pip ")`/`startswith("Mara ")` drift against
-prompt/fake exact names. No fix, retry, live success or new authorization was added.
-The User chose the unchanged draft documentation-architecture plan next; it is not
-activated here.
+Delivery history and current status: see [Trait evidence](../evidence/trait.md).
 
 ## World interface
 
@@ -971,11 +892,6 @@ Tests retain all prior evidence and prove:
 - the browser ledger uses only the four accepted GET reads, hides User UUIDs, remains
   responsive and keyboard-operable, and renders identical accepted ids and prose
   before and after restart; and
-- the retained authorized paid clean-room trail-marker run demonstrates grounded
-  reads, exactly three proposals, withheld selection and steering, exact preview,
-  explicit confirmation, one `submit_action` and independent observation after
-  token-free preflight. It remains evidence for that historical slice only; current
-  Interaction behavior is proved deterministically without a paid model invocation.
 
 ## Explicitly deferred
 

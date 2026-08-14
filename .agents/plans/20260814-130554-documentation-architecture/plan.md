@@ -296,7 +296,7 @@ concept log, so relocation diffs must not entangle with delivery diffs.
 | ID | State | Depends | Parallel-safe | Objective | Owned surfaces | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | completed | — | no | Constitution + root rule alignment | `docs/README.md`, `AGENTS.md`, `CLAUDE.md`, log entry | Constitution exists; AGENTS.md diff limited to the three named sections |
-| T2 | pending | T1 | no | Evidence home extraction | `docs/evidence/**`, static-pointer replacements in every live delivery site its sweep finds (known: game README, agent-interface, both playtest docs, capability-map, backlog README horizon row, backlog item, concept 11), `move-map/t2.md` | Each narrative greps to exactly one home; pointers restate no status |
+| T2 | completed | T1 | no | Evidence home extraction | `docs/evidence/**`, static-pointer replacements in every live delivery site its sweep finds (known: game README, agent-interface, both playtest docs, capability-map, backlog README horizon row, backlog item, concept 11), `move-map/t2.md` | Each narrative greps to exactly one home; pointers restate no status |
 | T3 | pending | T2 | no | Game contract decomposition + anchor map | `docs/game/**`, `move-map/t3.md` | Fact-coverage review; in-tree links resolve; no game doc > 400 lines |
 | T4 | pending | T1, T2 | no | Concept archive, doc 10 themed split, doc 11 trim | `docs/concept/**` except `log/`, `move-map/t4.md` | Banners present; archived content verbatim; every doc-10 fact has one themed home |
 | T5 | pending | T1 | yes | Log restore + split | `docs/concept/log/**`, `move-map/t5.md` | Heading/entry mapping table complete; entry text unchanged |

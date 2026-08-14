@@ -1,13 +1,6 @@
 # Entity properties, traits and change
 
-> **Delivered deterministic Property/Trait direction** — Property and Trait
-> establishment/development are accepted and implemented, with T1–T10 complete under
-> the completed
-> [Trait plan](../../.agents/plans/20260813-200829-entity-trait-development/plan.md)
-> and published in `docs/game/`. This concept record does not govern implementation;
-> neither paid candidate reached a post-setup Agent submit or Trait mutation, and
-> second independent Terry/ownership review returned GO with no P0–P3 finding. No
-> live Trait success, retry, new authorization or other candidate was earned.
+> Delivery history and current status: see [Trait evidence](../evidence/trait.md).
 
 ## Domain distinction
 
@@ -29,11 +22,10 @@ natural meaning, an Agent submits typed input, and World alone validates and wri
 it without inference. Synonyms remain different keys; World does not infer aliases.
 A User never receives a direct own-profile, other-profile or storage-edit command.
 
-Trait is the selected active build edge and remains a separate capability. The
-direction below is implemented through the current `docs/game/` contract, schema,
-runtime, adapters, Agent contract and token-free fake evidence.
+Trait remains a separate capability. This record owns its design rationale;
+`docs/game/` owns current behavior.
 
-## Delivered deterministic Trait capability
+## Trait capability rationale
 
 The desired player outcome is that an Entity can retain one recognizable
 characterizing statement and later develop it through accepted play. Pip might begin
@@ -95,74 +87,11 @@ narrator or prose interpreter.
   statement and establishment of an exact statement already active on the Entity.
   Semantic near-duplicates and contradictions remain accepted.
 
-### Accepted complete slice
+### Persistence rationale
 
-The complete plan is accepted. Its full bounded page/cursor shapes, thirteen-tool
-catalog, Action/Interaction packages, schema, atomicity, retry and performance are
-delivered and proved through T3–T8. Original candidate `candidate-MmwRmcBv`, digest
-`f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`,
-consumed its authorization and invoked Codex for exactly one model process call. It
-failed before any Agent MCP read or post-setup Agent submit/Trait mutation because Codex had not explicitly
-enabled the sole current MCP `2026-07-28` wire protocol. Ownership-verified cleanup
-dropped its database; evidence and sentinel remain preserved.
+Delivery history is owned by the static evidence pointer above.
 
-On 2026-08-14 the User accepted exactly one replacement candidate using only MCP
-`2026-07-28`. This accepts token-free replacement readiness/audit, not spend. The
-corrected candidate is bound to digest
-`a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`.
-Archive `.aicadia-trait-playtest/archive-original-f38-MmwRmcBv` now preserves all 68
-original files with private permissions and unchanged content/permission
-fingerprints. Token-free `preflight-cEeVelIZ` returns GO for a564 with no candidate
-start, authorization consumption or Codex invocation, zero model calls, thirteen
-equal runtime tools, six passed schemas and ownership-verified dropped database.
-Independent audit found only the stale-status P3 corrected by this authority update;
-focused independent re-review returned GO with no P0–P3 finding, completing T9R.
-The User then explicitly authorized exactly one paid a564 replacement.
-`candidate-ydttdFfc` consumed that authorization and one model process call (`68117`
-input, `50176` cached input, `798` output and `419` reasoning tokens). Exactly four
-current-MCP reads and a strict valid three-proposal final completed before the local
-validator falsely rejected valid fractional RFC3339 timestamps from
-`get_character` and `list_activity_at_current_place`. No preview, post-setup Agent
-submit, Trait mutation or candidate HTTP gate ran; ownership-verified cleanup dropped the database.
-Independent audit returned GO for this exact failed claim, with one P1 at the
-date-time validator and no other finding. T10 accepts valid UTC fractional seconds
-while requiring exact normalized parse/format roundtrip. Its post-failure runner
-digest is `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`;
-the later T4 candidate is the exact two-call failure recorded below. Initial final
-review returned NO-GO only
-for missing calendar roundtrip P1 and setup-obscuring wording P2; both were corrected
-and second independent Terry/ownership review returned GO with no P0–P3 finding. No
-Trait live gameplay outcome or retry was earned by that correction; no older
-initialize/initialized path, protocol revision, downgrade, fallback, compatibility
-shim, retry or other candidate is accepted. The accepted live-validation plan's T2
-now preserves the 64 a564 historical files unchanged in a private archive plus one
-private algorithm index. Token-free `preflight-HMxwGPCF` returned GO for this digest
-with `candidate_started=false`, `authorization_consumed=false`,
-`codex_invoked=false`, `model_calls=0`, current-only MCP `2026-07-28`, 13
-live-equal tools, 6 schemas and cleanup `ownership_verified_and_dropped`. The initial
-T3 review's exact two P3 findings are corrected; independent re-review returned GO
-with no P0–P3 finding, completing T3 readiness. Exact-digest
-`candidate-63hjH4HW` then consumed its authorization and two model calls. The Action
-proposal passed after the four current-MCP reads `get_world`, `get_character`,
-`list_entity_at_current_place` and `list_activity_at_current_place`. Its zero-tool
-Action preview exited 0 with strict valid JSON and exact `entity_name: "Pip"`, then
-failed solely because live `validate_action_preview` required `startswith("Pip ")`
-while the prompt and permanent fake contract require exact `Pip`. No Action commit,
-candidate HTTP gate, Interaction or Mara phase ran; submits, post-setup Trait
-mutation and live success are zero. Total usage was 148068 input, 100352 cached
-input, 1722 output and 867 reasoning-output tokens. Cleanup was
-`ownership_verified_and_dropped`, evidence is private, no process remains and no
-retry or new authorization exists.
-
-Final independent T5 review returned GO for the exact completed-as-failed alignment
-with P0/P2/P3=0. The known deferred P1 is live Action `startswith("Pip ")` and
-analogous unreached Interaction `startswith("Pip ")`/`startswith("Mara ")` drift
-against prompt/fake exact names. No fix, retry, live success or new authorization
-was added. Trait validation is complete with no active edge. The User chose unchanged
-draft `.agents/plans/20260814-130554-documentation-architecture/plan.md` next; this
-closure does not edit, start or activate that plan.
-
-The delivered persistence uses three relations—immutable `entity_trait`
+The accepted persistence rationale uses three relations—immutable `entity_trait`
 identity/owner, append-only `entity_trait_version` statement/history whose unique
 root is the sole establishing Activity provenance, and pointer-only
 `entity_trait_current`—with stable-order set-based writes. Development input names
@@ -170,13 +99,9 @@ stable Trait id plus new statement; expected Place revision and the locked curre
 pointer choose the predecessor atomically rather than accepting a predecessor id.
 No Entity creation touches them and no observer relation exists. The replacement
 design retains confirmed Action establishment, later Interaction development of the
-same stable id and correct enriched Entity retrieval. Its token-free readiness audit
-is complete; its separate paid authorization was consumed by the exact failed
-replacement and never authorizes a retry. The two-Agent, two-session, seven-call,
-zero-retry boundary remains exact; the superseded initial-Trait/four-call candidate
-and any legacy MCP path are not reused.
+same stable id and correct enriched Entity retrieval.
 
-## Delivered Property slice
+## Property rationale
 
 ### Initial Properties on every Entity creation route
 
@@ -225,7 +150,7 @@ would contradict that direction.
 
 ### Reads and presentation
 
-Current Properties are Entity-owned state. The delivered scoped
+Current Properties are Entity-owned state. The accepted scoped
 `get_entity_at_current_place` read returns one exact-local Entity with a bounded
 combined current Property/Trait page, while `get_character` returns the same
 association shape for the actor and compact local orientation remains compact. The
@@ -338,7 +263,4 @@ timer, scheduler or ungrounded simulation.
 Property unset/deletion; key rename/aliases/inference; possession/relations;
 volition/thought/response/consent; placement/movement; remote/cross-Place subjects;
 dynamic, prose or area selectors; and global/reverse Property search remain
-deferred. The deterministic Trait slice above now exists in schema, runtime,
-adapter/catalog behavior and token-free Agent evidence. T7/T8 are complete; the
-original and replacement paid candidates are completed-as-failed, and completed T10
-retains the exact incomplete live-gameplay claim after final review.
+deferred. Delivery history is owned by the static evidence pointer above.
