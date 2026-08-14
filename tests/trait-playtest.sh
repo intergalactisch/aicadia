@@ -16,6 +16,45 @@ latest_manifest() {
     find "$1" -name manifest.json -type f | sort | tail -1
 }
 
+candidate_state_snapshot() {
+    local root="$1" path
+    if [[ ! -e "$root" ]]; then
+        printf 'absent\n'
+        return
+    fi
+    {
+        stat -f 'ROOT %HT %Lp %z %m %N' "$root"
+        find "$root" -mindepth 1 \
+            \( -name candidate-consumed -o -path "$root/candidate-*" \) -print \
+            | LC_ALL=C sort \
+            | while IFS= read -r path; do
+                if [[ -L "$path" ]]; then
+                    stat -f 'LINK %Lp %z %m %N' "$path"
+                    readlink "$path"
+                elif [[ -d "$path" ]]; then
+                    stat -f 'DIR %Lp %z %m %N' "$path"
+                elif [[ -f "$path" ]]; then
+                    stat -f 'FILE %Lp %z %m %N' "$path"
+                    shasum -a 256 "$path"
+                else
+                    stat -f 'OTHER %HT %Lp %z %m %N' "$path"
+                fi
+            done
+    } | shasum -a 256 | awk '{print $1}'
+}
+
+copy_candidate_material() {
+    local copy="$1"
+    mkdir -p "$copy/tools/trait-playtest-schema" "$copy/tests" "$copy/src" "$copy/migration"
+    cp "$RUNNER" "$copy/tools/trait-playtest"
+    cp "$REPO_DIR/Cargo.toml" "$REPO_DIR/Cargo.lock" "$copy/"
+    cp "$REPO_DIR/tests/agent-tool-catalog.json" "$copy/tests/"
+    cp -R "$REPO_DIR/src/." "$copy/src/"
+    cp -R "$REPO_DIR/migration/." "$copy/migration/"
+    cp "$REPO_DIR/tools/trait-playtest-schema/"* "$copy/tools/trait-playtest-schema/"
+    chmod +x "$copy/tools/trait-playtest"
+}
+
 run_mode() {
     local mode="$1" root
     root="$TEST_ROOT/$mode"
@@ -130,12 +169,14 @@ test_schema_policy_fails_before_evidence() {
 }
 
 test_live_gate_and_freeze() {
-    local root="$TEST_ROOT/live-gate" digest
+    local root="$TEST_ROOT/live-gate" digest before after
     mkdir -p "$root"
     digest="$(<"$REPO_DIR/tools/trait-playtest-schema/live-candidate.sha256")"
+    before="$(candidate_state_snapshot "$REPO_DIR/.aicadia-trait-playtest")"
     if "$RUNNER" run --confirm-token-spend --confirm-exactly-one-seven-call-paid-candidate >"$root/stdout" 2>"$root/stderr"; then
         fail 'wrong live authorization unexpectedly passed'
     fi
+    after="$(candidate_state_snapshot "$REPO_DIR/.aicadia-trait-playtest")"
     grep -F -- '--candidate-digest <audited-sha256>' "$root/stderr" >/dev/null \
         || fail 'obsolete live gate did not fail closed'
     grep -En "MAX_MODEL_CALLS=7|MAX_RETRIES=0|CODEX_MODEL='gpt-5.6-sol'|CODEX_REASONING_EFFORT='high'" "$RUNNER" >/dev/null \
@@ -145,35 +186,27 @@ test_live_gate_and_freeze() {
         || fail 'token boundary is not honest and explicit'
     [[ "$(grep -Ec -- '--enable mcp_2026_07_28' "$RUNNER")" -ge 2 ]] \
         || fail 'Trait Codex validation and live commands do not both pin MCP 2026-07-28'
-    [[ ! -e "$REPO_DIR/.aicadia-trait-playtest/candidate-consumed" ]] \
-        || fail 'rejected authorization consumed a candidate'
+    [[ "$after" == "$before" ]] || fail 'rejected authorization changed private candidate state'
     [[ "$digest" =~ ^[0-9a-f]{64}$ ]] || fail 'audited digest is malformed'
 }
 
 test_candidate_digest_binds_runtime_build_and_validator() {
-    local copy="$TEST_ROOT/candidate-copy" original mutated
-    mkdir -p "$copy/tools/trait-playtest-schema" "$copy/tests" "$copy/src" "$copy/migration"
-    cp "$RUNNER" "$copy/tools/trait-playtest"
-    cp "$REPO_DIR/Cargo.toml" "$REPO_DIR/Cargo.lock" "$copy/"
-    cp "$REPO_DIR/tests/agent-tool-catalog.json" "$copy/tests/"
-    cp -R "$REPO_DIR/src/." "$copy/src/"
-    cp -R "$REPO_DIR/migration/." "$copy/migration/"
-    cp "$REPO_DIR/tools/trait-playtest-schema/"* "$copy/tools/trait-playtest-schema/"
-    chmod +x "$copy/tools/trait-playtest"
+    local copy="$TEST_ROOT/candidate-copy" original mutated before after
+    copy_candidate_material "$copy"
     original="$("$copy/tools/trait-playtest" test-internal-candidate-digest --confirm-fake-controller-test)"
-    [[ "$original" == "$(<"$REPO_DIR/tools/trait-playtest-schema/live-candidate.sha256")" ]] \
-        || fail 'isolated canonical candidate does not reproduce audited digest'
-    printf '\n// isolated digest drift\n' >>"$copy/src/world.rs"
+    printf '%s\n' "$original" >"$copy/tools/trait-playtest-schema/live-candidate.sha256"
+    printf '\n// isolated digest drift\n' >>"$copy/src/world/mutation.rs"
     mutated="$("$copy/tools/trait-playtest" test-internal-candidate-digest --confirm-fake-controller-test)"
     [[ "$mutated" != "$original" ]] || fail 'bound World build-input mutation did not change candidate digest'
+    before="$(candidate_state_snapshot "$copy/.aicadia-trait-playtest")"
     if (cd "$copy" && tools/trait-playtest run --confirm-token-spend --candidate-digest "$original") \
         >"$copy/old.stdout" 2>"$copy/old.stderr"; then
         fail 'old supplied digest passed after bound build-input drift'
     fi
+    after="$(candidate_state_snapshot "$copy/.aicadia-trait-playtest")"
     grep -F 'Trait candidate drift:' "$copy/old.stderr" >/dev/null \
         || fail 'old digest did not fail at token-free drift gate'
-    [[ ! -e "$copy/.aicadia-trait-playtest/candidate-consumed" ]] \
-        || fail 'digest drift consumed candidate before model gate'
+    [[ "$after" == "$before" ]] || fail 'digest drift changed private candidate state before model gate'
 }
 
 test_owned_preflight_cleanup_after_catalog_failure() {
@@ -205,20 +238,23 @@ test_owned_preflight_cleanup_after_catalog_failure() {
 }
 
 test_public_cli_version_drift_fails_before_candidate() {
-    local root="$TEST_ROOT/cli-drift"
+    local root="$TEST_ROOT/cli-drift" copy baseline before after
+    copy="$root/candidate-copy"
+    copy_candidate_material "$copy"
+    baseline="$("$copy/tools/trait-playtest" test-internal-candidate-digest --confirm-fake-controller-test)"
+    printf '%s\n' "$baseline" >"$copy/tools/trait-playtest-schema/live-candidate.sha256"
     mkdir -p "$root/bin"
     printf '%s\n' '#!/bin/bash' 'printf "codex-cli 0.148.0\\n"' >"$root/bin/codex"
     chmod +x "$root/bin/codex"
-    if PATH="$root/bin:$PATH" DATABASE_URL='postgres://must-not-be-used.invalid/postgres' \
-        "$RUNNER" preflight >"$root/stdout" 2>"$root/stderr"; then
+    before="$(candidate_state_snapshot "$copy/.aicadia-trait-playtest")"
+    if (cd "$copy" && PATH="$root/bin:$PATH" DATABASE_URL='postgres://must-not-be-used.invalid/postgres' \
+        tools/trait-playtest preflight) >"$root/stdout" 2>"$root/stderr"; then
         fail 'public CLI version drift unexpectedly passed'
     fi
+    after="$(candidate_state_snapshot "$copy/.aicadia-trait-playtest")"
     grep -F 'Codex must be exactly codex-cli 0.147.0; found codex-cli 0.148.0.' "$root/stderr" >/dev/null \
         || fail 'CLI version drift did not fail at the semantic version boundary'
-    [[ ! -e "$REPO_DIR/.aicadia-trait-playtest/candidate-consumed" ]] \
-        || fail 'CLI drift consumed the one candidate'
-    [[ -z "$(find "$REPO_DIR/.aicadia-trait-playtest" -maxdepth 1 -type d -name 'candidate-*' -print -quit 2>/dev/null)" ]] \
-        || fail 'CLI drift created candidate evidence'
+    [[ "$after" == "$before" ]] || fail 'CLI drift changed private candidate state'
 }
 
 test_preflight_and_happy_path

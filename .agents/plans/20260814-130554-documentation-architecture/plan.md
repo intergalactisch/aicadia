@@ -302,7 +302,7 @@ concept log, so relocation diffs must not entangle with delivery diffs.
 | T5 | completed | T1 | yes | Log restore + split | `docs/concept/log/**`, `move-map/t5.md` | Heading/entry mapping table complete; entry text unchanged |
 | T6 | completed | T1 | yes | Research status index + archive | `docs/research/**` (index/banners/moves only, no link edits), `move-map/t6.md` | Index rows cover every live and archived file; 3 files archived |
 | T7 | completed | T1 | yes | Agent-text relocation: tool split + contract move | `src/agent_contract.rs`, `src/agent_contract/**`, `src/agent-play-contract.txt`, `tests/server.rs` (include path), `tests/world.rs` (one baseline planner assertion), `tests/aicadia-local.sh` (path), `tools/aicadia-agent` (`CONTRACT=`), `tools/trait-playtest` (predicate line), `move-map/t7.md` | `cargo test` green incl. discover assertions; fixture diff empty; no description ends with `\n`; `tests/aicadia-local.sh` passes |
-| T10 | pending | T7 | no | Code decomposition by pure moves | `src/world.rs` → `src/world/**`, `src/wire.rs` → `src/wire/**`, `tests/world.rs` → `tests/world/**`, `tests/server.rs` → `tests/server/**`, `src/lib.rs`, `tests/trait-playtest.sh` (drift line), `move-map/t10.md` | One-to-one test mapping with equal counts, all green; fixture diff empty; drift line targets a real file |
+| T10 | completed | T7 | no | Code decomposition by pure moves | `src/world.rs` → `src/world/**`, `src/wire.rs` → `src/wire/**`, `tests/world.rs` → `tests/world/**`, `tests/server.rs` → `tests/server/**`, `src/lib.rs`, `tests/trait-playtest.sh` (drift line + hermetic candidate-state gates), `move-map/t10.md` | One-to-one test mapping with equal counts, all green; fixture diff empty; drift line targets a real file |
 | T9 | pending | T3,T4,T5,T6,T7,T10 | no | Cross-tree link pass + integrity sweep + alignment | whole tree, `.agents/backlog/*`, `.agents/skills/build-aicadia/SKILL.md` | Validation ladder passes |
 
 The former T8 (adapter discover-fetch) was removed by resolved OQ3; the id is
@@ -695,7 +695,14 @@ provably unchanged behavior.
 6. Repoint the digest-drift injection `tests/trait-playtest.sh:167`
    (`printf … >> "$copy/src/world.rs"`) at a real post-split World source such
    as `$copy/src/world/mutation.rs` — otherwise the check appends to a
-   nonexistent-then-new file and goes silently vacuous.
+   nonexistent-then-new file and goes silently vacuous. Make the surrounding
+   public-gate tests hermetic for the already-closed live-validation state:
+   rejected authorization proves candidate state is unchanged before/after
+   rather than assuming no historical sentinel exists; CLI-version and digest
+   binding use a disposable candidate-material copy whose current computed
+   digest is written only as that copy's temporary baseline. The repository's
+   intentionally stale closed-candidate digest and all private evidence remain
+   untouched.
 7. Append the four old-path → new-module mappings (`src/world.rs`,
    `src/wire.rs`, `tests/world.rs`, `tests/server.rs`) to `move-map/t10.md` —
    live flat references to these paths exist (e.g.
@@ -711,6 +718,8 @@ provably unchanged behavior.
   file-private helpers is allowed — it is what makes pure moves possible —
   while the `pub` surface stays unchanged.
 - Source-module guideline after the split: no module over ~1,500 lines.
+- The Trait test refinement changes only test isolation and before/after proof;
+  it never updates the live digest, runner, sentinel or private evidence.
 
 **Evidence:**
 
