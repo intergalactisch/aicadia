@@ -209,7 +209,7 @@ jq -e --arg url "mcp_servers.aicadia.url=\"http://127.0.0.1:$PORT/mcp\"" '
 ' "$agent_record_dir/args.json" >/dev/null || fail 'Agent received an unexpected current MCP command'
 contract_argument="$(jq -r '.[] | select(startswith("developer_instructions="))' "$agent_record_dir/args.json")"
 [[ -n "$contract_argument" ]] || fail 'Agent did not receive the player contract as developer instructions'
-[[ "${contract_argument#developer_instructions=}" == "$(jq -Rs . "$REPO_DIR/src/agent-play-contract.txt")" ]] \
+[[ "${contract_argument#developer_instructions=}" == "$(jq -Rs . "$REPO_DIR/src/agent_contract/instruction.md")" ]] \
     || fail 'Agent developer instructions differ from the runtime player contract'
 
 if "${launcher_env[@]}" "AICADIA_USER_ID=$first_user_id" "AICADIA_PORT=$SECOND_PORT" \

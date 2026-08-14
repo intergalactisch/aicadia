@@ -6380,7 +6380,8 @@ async fn trait_indexes_are_exact_and_support_current_predecessor_and_activity_pa
     .join("\n");
     assert!(
         exact_plan.contains("entity_trait_pkey")
-            || exact_plan.contains("entity_trait_id_entity_id_key"),
+            || exact_plan.contains("entity_trait_id_entity_id_key")
+            || exact_plan.contains("entity_trait_entity_id_id_index"),
         "stable Trait lookup must use an identity index: {exact_plan}"
     );
     let predecessor_plan = sqlx::query_scalar::<_, String>(
@@ -6394,7 +6395,8 @@ async fn trait_indexes_are_exact_and_support_current_predecessor_and_activity_pa
     .join("\n");
     assert!(
         predecessor_plan.contains("entity_trait_version_pkey")
-            || predecessor_plan.contains("entity_trait_version_trait_id_entity_id_activity_id_key"),
+            || predecessor_plan.contains("entity_trait_version_trait_id_entity_id_activity_id_key")
+            || predecessor_plan.contains("entity_trait_version_activity_entity_trait_index"),
         "predecessor validation must use a lineage identity index: {predecessor_plan}"
     );
     let hydration_plan = sqlx::query_scalar::<_, String>(

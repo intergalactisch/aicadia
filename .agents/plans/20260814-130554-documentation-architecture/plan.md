@@ -301,7 +301,7 @@ concept log, so relocation diffs must not entangle with delivery diffs.
 | T4 | completed | T1, T2 | no | Concept archive, doc 10 themed split, doc 11 trim | `docs/concept/**` except `log/`, `move-map/t4.md` | Banners present; archived content verbatim; every doc-10 fact has one themed home |
 | T5 | completed | T1 | yes | Log restore + split | `docs/concept/log/**`, `move-map/t5.md` | Heading/entry mapping table complete; entry text unchanged |
 | T6 | completed | T1 | yes | Research status index + archive | `docs/research/**` (index/banners/moves only, no link edits), `move-map/t6.md` | Index rows cover every live and archived file; 3 files archived |
-| T7 | pending | T1 | yes | Agent-text relocation: tool split + contract move | `src/agent_contract.rs`, `src/agent_contract/**`, `src/agent-play-contract.txt`, `tests/server.rs` (include path), `tests/aicadia-local.sh` (path), `tools/aicadia-agent` (`CONTRACT=`), `tools/trait-playtest` (predicate line), `move-map/t7.md` | `cargo test` green incl. discover assertions; fixture diff empty; no description ends with `\n`; `tests/aicadia-local.sh` passes |
+| T7 | completed | T1 | yes | Agent-text relocation: tool split + contract move | `src/agent_contract.rs`, `src/agent_contract/**`, `src/agent-play-contract.txt`, `tests/server.rs` (include path), `tests/world.rs` (one baseline planner assertion), `tests/aicadia-local.sh` (path), `tools/aicadia-agent` (`CONTRACT=`), `tools/trait-playtest` (predicate line), `move-map/t7.md` | `cargo test` green incl. discover assertions; fixture diff empty; no description ends with `\n`; `tests/aicadia-local.sh` passes |
 | T10 | pending | T7 | no | Code decomposition by pure moves | `src/world.rs` → `src/world/**`, `src/wire.rs` → `src/wire/**`, `tests/world.rs` → `tests/world/**`, `tests/server.rs` → `tests/server/**`, `src/lib.rs`, `tests/trait-playtest.sh` (drift line), `move-map/t10.md` | One-to-one test mapping with equal counts, all green; fixture diff empty; drift line targets a real file |
 | T9 | pending | T3,T4,T5,T6,T7,T10 | no | Cross-tree link pass + integrity sweep + alignment | whole tree, `.agents/backlog/*`, `.agents/skills/build-aicadia/SKILL.md` | Validation ladder passes |
 
@@ -628,6 +628,14 @@ bytes are unchanged.
    (`find … -name '*.sql' -o -name '*.rs'`, line ~1348) with `*.md`/`*.txt`
    under `src/`, so published Agent text remains paid-run freeze material for
    any future live plan. Append the moves to `move-map/t7.md`.
+5. Restore the pre-existing full-suite evidence gate in `tests/world.rs`: the
+   stable-Trait lookup assertion also accepts the declared
+   `entity_trait_entity_id_id_index`, and the predecessor lookup assertion also
+   accepts the declared `entity_trait_version_activity_entity_trait_index`, when
+   PostgreSQL selects those exact identity-covering indexes. Change no query,
+   schema or runtime behavior. A clean pre-T7 HEAD worktree reproduces the first
+   planner choice and failure; after admitting it, the same test exposes the
+   second equivalent declared-index choice.
 
 **Invariants:**
 
@@ -636,6 +644,7 @@ bytes are unchanged.
 - Published description bytes carry no trailing newline; instruction bytes
   unchanged.
 - No build script, codegen, assembly join or new dependency.
+- The planner-evidence correction changes no SQL query, schema or runtime code.
 
 **Evidence:**
 

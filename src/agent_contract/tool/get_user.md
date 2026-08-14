@@ -1,0 +1,1 @@
+Get the durable User represented by this request's Aicadia-User-Id context. This tool accepts no User id and does not authenticate the caller. Use the result privately and never present its id, fields or provisioning record in player conversation.

@@ -24,7 +24,7 @@ const CAPABILITY: [&str; 13] = [
     "submit_interaction",
 ];
 
-const MCP_INSTRUCTIONS: &str = include_str!("../src/agent-play-contract.txt");
+const MCP_INSTRUCTIONS: &str = include_str!("../src/agent_contract/instruction.md");
 const MCP_TOOL_CATALOG: &str = include_str!("agent-tool-catalog.json");
 
 struct TestServer {

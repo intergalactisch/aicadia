@@ -1,0 +1,1 @@
+Get the identity of the one persistent shared Aicadia World. No User context is required. Use the result privately to ground play; if its name matters, speak of the World by name without mentioning this tool or an identity record.
