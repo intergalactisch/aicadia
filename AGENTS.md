@@ -206,7 +206,8 @@ Every Aicadia choice that changes or constrains product direction, domain model,
 behavior, architecture, implementation, evidence or operation is incomplete until
 recorded when it crystallizes. Record accepted, rejected, deferred, corrected and
 superseded choices with their material reason, current status and affected scope in
-`docs/concept/log/README.md`; omit shell-command trivia. During an unfinished grill or
+the current period file of `docs/concept/log/` (per its README); omit
+shell-command trivia. During an unfinished grill or
 design session, maintain one active concept record that separates confirmed
 direction from open decisions instead of waiting for implementation or final
 agreement. In the same change, update, correct or remove every affected authority so

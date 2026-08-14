@@ -33,9 +33,9 @@ implementation authority.
 
 Archival status does not reject these still-unbuilt product ideas:
 
-- [World steward](archive/03-time-and-turns.md#the-world-steward-user-direction-2026-07-26) — an administrator consciously invokes bounded proposals rather than background simulation.
-- [Ripples and catch-up](archive/03-time-and-turns.md#realtime-not-turns-user-direction-2026-07-25) — causal information arriving when a Character returns, without a daily ceremony.
-- [Naming economy](archive/02-canon-model.md#naming-economy-idea-from-the-debate-possibly-the-highest-leverage-rule) — ration costly new names while citation remains cheap.
-- [Player-sealed envelopes](archive/05-influence-and-retention.md#mystery-supply-idea-from-the-debate) — player-authored conditional secrets as mystery supply.
-- [Safe tension sources](archive/05-influence-and-retention.md#safe-tension-sources-ranked-from-the-debate) — pressure without scores, compulsory crisis or stolen volition.
-- [Anti-patterns](archive/05-influence-and-retention.md#anti-patterns-never-build) — explicit rejected product shapes that remain useful guardrails.
+- [World steward](archive/03-time-and-turns.md#the-world-steward--user-direction-2026-07-26) — an administrator consciously invokes bounded proposals rather than background simulation.
+- [Ripples and catch-up](archive/03-time-and-turns.md#realtime-not-turns--user-direction-2026-07-25) — causal information arriving when a Character returns, without a daily ceremony.
+- [Naming economy](archive/02-canon-model.md#naming-economy--idea-from-the-debate-possibly-the-highest-leverage-rule) — ration costly new names while citation remains cheap.
+- [Player-sealed envelopes](archive/05-influence-and-retention.md#mystery-supply--idea-from-the-debate) — player-authored conditional secrets as mystery supply.
+- [Safe tension sources](archive/05-influence-and-retention.md#safe-tension-sources-ranked--from-the-debate) — pressure without scores, compulsory crisis or stolen volition.
+- [Anti-patterns](archive/05-influence-and-retention.md#anti-patterns--never-build) — explicit rejected product shapes that remain useful guardrails.
