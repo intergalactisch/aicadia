@@ -1,5 +1,9 @@
 # Local Entity Property state
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Status: Done
 
 ## Outcome
@@ -13,7 +17,7 @@ knowledge leakage.
 
 The accepted implementation plan is
 `../../plans/20260813-171201-character-property-state/plan.md`; the design record is
-[`docs/concept/11-entity-traits-and-change.md`](../../../docs/concept/11-entity-traits-and-change.md).
+[`docs/concept/entity-state.md`](../../../docs/concept/entity-state.md).
 The executable contract is published in [`docs/game/`](../../../docs/game/README.md).
 
 ## Accepted contract

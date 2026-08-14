@@ -2,11 +2,15 @@
 
 # Mutable place geometry in a persistent world
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-07-26
 
 Status: research and `5jaar` recommendation, not concept direction
 
-Follow-up: [Hierarchical spatial placement](hierarchical-spatial-model.md) challenges
+Follow-up: [Hierarchical spatial placement](archive/hierarchical-spatial-model.md) challenges
 the dedicated `place_coverage` candidate. Its revised recommendation is one containing
 place per physical entity, optional exact geometry, and no core coverage table. A
 derived hull or union may exist later as a labelled map query or cache.

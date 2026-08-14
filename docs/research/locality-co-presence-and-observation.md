@@ -1,5 +1,9 @@
 # Locality, co-presence and observation in shared worlds
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-08
 
 Status: generic research; no Aicadia game behavior or implementation decision
@@ -8,7 +12,7 @@ Related Aicadia research:
 
 - [Persistent-game spatial models](persistent-game-spatial-model.md) compares
   Place identity, geometry, engine partitions and current location.
-- [Hierarchical spatial placement](hierarchical-spatial-model.md) explores
+- [Hierarchical spatial placement](archive/hierarchical-spatial-model.md) explores
   containment and optional exact geometry.
 - [Stable identity and sparse location](stable-identity-and-sparse-location.md)
   explores identity and deliberately imprecise location.

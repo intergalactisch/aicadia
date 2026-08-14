@@ -2,6 +2,10 @@
 
 # Claim support and current state
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-07-26
 
 Status: research completed; recommendation confirmed on 2026-07-26
@@ -57,7 +61,7 @@ Neither should mean “true”.
 
 ### Evidence
 
-`docs/concept/02-canon-model.md` describes it as support from a qualifying independent
+`docs/concept/archive/02-canon-model.md` describes it as support from a qualifying independent
 witness or citation.
 
 Problem: a witness and a citation are not the same evidence.

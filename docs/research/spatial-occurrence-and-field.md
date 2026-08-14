@@ -2,6 +2,10 @@
 
 # Spatial occurrence and field
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-07-26
 
 Status: research; emergent nature/material direction confirmed, revised location

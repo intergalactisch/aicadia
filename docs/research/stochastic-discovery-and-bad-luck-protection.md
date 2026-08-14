@@ -1,5 +1,9 @@
 # Stochastic discovery and bad-luck protection
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-09
 
 Status: research; no Aicadia game-behaviour or implementation decision

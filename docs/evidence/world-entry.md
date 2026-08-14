@@ -4,6 +4,17 @@
 > **Authority:** owns the retained deterministic and live proof for Agent World entry.
 > **Excludes:** current entry behavior and runner operations; see `docs/game/` and `runner/agent-playtest.md`.
 
+## Deterministic completion record
+
+- `migration/0004_world_entry_activity.sql`, `src/world/`, `src/wire/` and
+  `src/server.rs` implement the accepted state, transaction and adapter contract.
+- `tests/world/` proves concurrency, retry safety, rollback, immutability, the
+  exact migration boundary, historical Place retention, authorization and stable
+  pagination; `tests/server/` proves HTTP concurrency, HTTP/MCP semantic parity
+  and the complete ten-capability catalog fixture.
+- `docs/game/`, `CONTEXT.md`, `docs/concept/log/README.md`, `AGENTS.md` and the Agent
+  playtest contract agreed on the current behavior and nomenclature at completion.
+
 ## Retained live result
 
 Generated MCP descriptions, server instructions and output schemas carried the

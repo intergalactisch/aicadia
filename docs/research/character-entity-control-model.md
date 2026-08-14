@@ -1,5 +1,9 @@
 # Character identity and control in persistent worlds
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-07
 
 Status: research complete; evidence-backed recommendation, not confirmed concept
@@ -508,7 +512,7 @@ The smallest shape is one Rust package and one deployable server:
 ```text
 src/main.rs       process wiring
 src/lib.rs        public application entry points
-src/world.rs      ids, commands, validation and transitions
+src/world/        ids, commands, validation and transitions
 src/postgres.rs   SQL transactions and projection writes
 ```
 

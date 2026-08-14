@@ -1,5 +1,9 @@
 # Idempotent action delivery and Place freshness
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-11
 
 Status: research recommendation accepted in the active design grill; not current

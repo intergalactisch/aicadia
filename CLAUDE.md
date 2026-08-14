@@ -1,12 +1,11 @@
 # CLAUDE.md
 
-Claude Code reads this file first. The always-on build rules for this repo live in
-**[AGENTS.md](./AGENTS.md)** — read that before writing any code or docs here, and
-treat it as the source of truth. Absolute basics: technical names are always
-singular; flat over clever; the complexity belongs to the world, not the tech.
+> **Role / side:** thin Agent entry pointer / development side.
+> **Authority:** identifies the governing repository context Claude Code must read.
+> **Excludes:** independent build rules, product facts and delivery status; those remain in their owning authorities.
 
-The binding documentation placement constitution lives in
-**[docs/README.md](./docs/README.md)**.
-
-The product concept lives in `docs/concept/` — a concept log (exploration, not
-specification), still being discovered conversation by conversation.
+Claude Code reads this file first. Read the always-on build constitution in
+**[AGENTS.md](./AGENTS.md)** before writing code or documentation. Use the
+**[documentation constitution](./docs/README.md)** to place repository truth, the
+**[canonical vocabulary](./CONTEXT.md)** for domain terms and the
+**[current game contract](./docs/game/README.md)** for executable behavior.

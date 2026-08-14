@@ -2,6 +2,10 @@
 
 # Persistent world-state in other systems
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-07-25
 
 Status: research, not concept direction

@@ -1,13 +1,17 @@
 # Aicadia development backlog
 
+> **Role / side:** ordered forward-planning index / development side.
+> **Authority:** governs the backlog horizon, item states and maintenance rules.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 This directory keeps the forward development route visible to every builder. It is
 not a game contract, decision log or research archive:
 
 - `docs/game/` defines the accepted contract and explicitly separates published
   implementation-pending targets from executable delivery.
-- `docs/concept/log/log.md` records why material choices changed.
+- `docs/concept/log/README.md` indexes why material choices changed.
 - `docs/research/` preserves sourced findings.
-- this backlog orders concrete outcomes and records their current delivery boundary.
+- this backlog orders concrete outcomes and records their current planning state.
 
 The living [player capability map](capability-map.md) shows what Users can do now,
 what is selected or queued next and which concepts remain exploratory. It links to

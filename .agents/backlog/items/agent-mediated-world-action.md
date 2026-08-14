@@ -1,5 +1,9 @@
 # Agent-mediated World action
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Status: Done
 
 ## Outcome
@@ -13,8 +17,7 @@ result.
 The completed build plan is
 `.agents/plans/20260811-124550-first-agent-mediated-world-action/plan.md`. Current
 behavior and the Agent contract are authoritative in `docs/game/README.md` and
-`docs/game/agent-interface.md`; delivery history uses the static pointer under
-Completion evidence.
+`docs/game/agent.md`; the static evidence pointer is under Completion evidence.
 
 ## Confirmed direction
 

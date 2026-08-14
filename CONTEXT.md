@@ -1,5 +1,9 @@
 # Aicadia
 
+> **Role / side:** canonical vocabulary / development side.
+> **Authority:** defines current project and domain terminology.
+> **Excludes:** behavior contracts, decision history and delivery status; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Aicadia is one persistent shared game world that Users inspect and extend through
 their own AI Agents.
 

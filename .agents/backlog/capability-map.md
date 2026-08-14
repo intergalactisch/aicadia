@@ -1,12 +1,16 @@
 # Aicadia player capability map
 
+> **Role / side:** player-experience planning map / development side.
+> **Authority:** maps current and future User experiences to their owning authorities and backlog state.
+> **Excludes:** executable game contracts and delivery evidence; see `docs/game/` and `docs/evidence/`.
+
 Status: living planning index
 
 This map lets a reader see which experiences Aicadia currently gives a User through
 their Agent and which game capabilities are still being designed. It is not an
 implementation contract: [current game docs](../../docs/game/README.md) govern
 executable behavior, the [ordered backlog](README.md) governs forward state and the
-[concept log](../../docs/concept/log/log.md) records why direction changed.
+[concept log](../../docs/concept/log/README.md) records why direction changed.
 
 The delivered Interaction tasks in the [interaction plan](../plans/20260813-114241-character-grounded-interaction-history/plan.md)
 contains the complete D&D and wider-tabletop traceability matrix from research
@@ -20,27 +24,23 @@ changes. Do not mark a capability executable from documentation or research alon
 
 | User experience | What the User can do now | Boundary | Authority |
 | --- | --- | --- | --- |
-| Enter player mode | Start an isolated Agent conversation that requires live Aicadia MCP and stays in natural in-world language | No browser chat, fallback authority or server-side model | [Agent interface](../../docs/game/agent-interface.md) |
-| Establish one Character | Choose or steer one of three Agent proposals, preview the full meaning and explicitly confirm one Character | At most one Character; creation leaves it unplaced | [Character workshop](../../docs/game/agent-interface.md#required-character-workshop-and-world-entry-flow) |
-| Enter the shared World | Arrive with that Character at the one World-derived entry Place | No destination choice, movement or further Place | [Current build contract](../../docs/game/README.md#place-and-world-entry) |
-| Orient at the exact Place | Read compact local descriptions, then fetch the actor or one selected exact-local Entity with bounded current Property/Trait associations, plus only Activity authorized for this Character at that Place | Exact Place equality is eligibility, not general visibility, sensory access or neighborhood; Property/Trait content is not control provenance | [Exact current Place reads](../../docs/game/README.md#exact-current-place-reads) |
-| Recall personal history | Read immutable accepted Activity in which the current Character acted or was explicitly involved | No private conversation, rejected attempt or inferred knowledge history | [Personal history](../../docs/game/README.md#personal-history-read) |
-| Establish or change local state | Choose and steer one of three grounded directions, completely preview and confirm one homogeneous Action that introduces a placed Entity with initial Properties, changes 1–100 exact-local Entity/key pairs or establishes/develops 1–100 Entity Traits | No mixed Action consequence kind, generic patch, remote selector, direct storage edit or executable Trait prose | [Character-grounded Action](../../docs/game/README.md#character-grounded-action) |
-| Observe another marker | A second Character at the same Place can find the same Entity and canonical prose | This proves shared state, not complete co-presence or Character observation | [Required evidence](../../docs/game/README.md#required-evidence) |
-| Interact with present Entities | Direct one confirmed outward behavior toward 1–100 distinct co-present Entities, optionally changing actor/explicit-target Properties and establishing/developing their Traits | No target-authored response, thought, consent, relationship, placement, implicit witness or Trait mechanics | [Character-grounded Interaction](../../docs/game/README.md#character-grounded-interaction) |
-| Recall directed interaction | Actor and explicit target Character can later read the same canonical outward behavior and complete target set; a reverse response is a new Interaction | Non-target bystanders and distant Characters receive no Interaction automatically | [Personal and Place history](../../docs/game/README.md#personal-history-read) |
-| Encounter without control labels | Meet a locally described Entity such as Pip the rat without being told whether it is User-controlled, an NPC or an ordinary subject | Control provenance, global counts and distant facts are unavailable in player mode | [Agent knowledge boundary](../../docs/game/agent-interface.md#agent-guidance-and-player-facing-communication) |
+| Enter player mode | Start an isolated Agent conversation that requires live Aicadia MCP and stays in natural in-world language | No browser chat, fallback authority or server-side model | [Agent play contract](../../docs/game/agent.md) |
+| Establish one Character | Choose or steer one of three Agent proposals, preview the full meaning and explicitly confirm one Character | At most one Character; creation leaves it unplaced | [Character workshop](../../docs/game/agent.md#required-character-workshop-and-world-entry-flow) |
+| Enter the shared World | Arrive with that Character at the one World-derived entry Place | No destination choice, movement or further Place | [Place and World entry](../../docs/game/domain.md#place-and-world-entry) |
+| Orient at the exact Place | Read compact local descriptions, then fetch the actor or one selected exact-local Entity with bounded current Property/Trait associations, plus only Activity authorized for this Character at that Place | Exact Place equality is eligibility, not general visibility, sensory access or neighborhood; Property/Trait content is not control provenance | [Local Entity list](../../docs/game/capability/list_entity_at_current_place.md) · [local Activity](../../docs/game/capability/list_activity_at_current_place.md) · [scoped Entity state](../../docs/game/capability/get_entity_at_current_place.md) |
+| Recall personal history | Read immutable accepted Activity in which the current Character acted or was explicitly involved | No private conversation, rejected attempt or inferred knowledge history | [Personal history](../../docs/game/capability/list_activity.md) |
+| Establish or change local state | Choose and steer one of three grounded directions, completely preview and confirm one homogeneous Action that introduces a placed Entity with initial Properties, changes 1–100 exact-local Entity/key pairs or establishes/develops 1–100 Entity Traits | No mixed Action consequence kind, generic patch, remote selector, direct storage edit or executable Trait prose | [Character-grounded Action](../../docs/game/capability/submit_action.md#contract) |
+| Observe another marker | A second Character at the same Place can find the same Entity and canonical prose | This proves shared state, not complete co-presence or Character observation | [Cross-contract evidence obligations](../../docs/game/protocol.md#cross-contract-evidence-obligations) |
+| Interact with present Entities | Direct one confirmed outward behavior toward 1–100 distinct co-present Entities, optionally changing actor/explicit-target Properties and establishing/developing their Traits | No target-authored response, thought, consent, relationship, placement, implicit witness or Trait mechanics | [Character-grounded Interaction](../../docs/game/capability/submit_interaction.md#contract) |
+| Recall directed interaction | Actor and explicit target Character can later read the same canonical outward behavior and complete target set; a reverse response is a new Interaction | Non-target bystanders and distant Characters receive no Interaction automatically | [Personal history](../../docs/game/capability/list_activity.md) · [Place history](../../docs/game/capability/list_activity_at_current_place.md) |
+| Encounter without control labels | Meet a locally described Entity such as Pip the rat without being told whether it is User-controlled, an NPC or an ordinary subject | Control provenance, global counts and distant facts are unavailable in player mode | [Agent knowledge boundary](../../docs/game/agent.md#agent-guidance-and-player-facing-communication) |
 | Inspect the local ledger | In development, view World, Entity and personal Activity records in a read-only browser page | The ledger is not gameplay and exposes no mutation | [Local play](../../docs/game/local-play.md#ledger-boundary) |
 
-## Delivered player boundary
+## Current player boundary
 
-The executable thirteen-capability player contract includes scoped
-`get_entity_at_current_place`, `submit_action` and `submit_interaction`, and excludes
-`list_entity` and `get_entity`; the scoped Entity read replaces the standalone local
-Property read. PostgreSQL, World, HTTP/MCP, the generated catalog and Agent contract
-now deliver current Trait state and change. Loopback global Entity HTTP handlers
-remain out-of-world local-ledger reads. Character-grounded Entity, Activity and
-current-state reads enforce the boundary before Agent inference.
+The [capability catalog](../../docs/game/README.md#capability-catalog) owns the exact
+current player surface. This planning map groups that surface by User experience and
+does not restate its protocol or implementation boundary.
 
 ## Future experience
 

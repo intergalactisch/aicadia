@@ -1,5 +1,9 @@
 # D&D rules and durable campaign loops
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-13
 
 Status: research findings and candidate heuristics, not Aicadia product direction
@@ -26,7 +30,7 @@ World reads, presents exactly three private proposals, incorporates steering, sh
 the complete consequence and requires explicit User confirmation. The server is
 deterministic and never interprets prose with an LLM.
 ([current build contract](../game/README.md),
-[Agent interface](../game/agent-interface.md))
+[Agent play contract](../game/agent.md))
 
 Movement, further Places, discovery, investigation rolls, scores, clocks, generic
 actions, combat, nonplayer characters and autonomous World narration are absent or

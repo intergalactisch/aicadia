@@ -1,7 +1,11 @@
 # Current MCP Agent guidance
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Status: complete research; accepted implications are recorded in
-[`docs/game/agent-interface.md`](../game/agent-interface.md)
+[`docs/game/agent.md`](../game/agent.md)
 
 ## Question
 

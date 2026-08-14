@@ -1,5 +1,9 @@
 # ChatGPT access to local and hosted Aicadia over stateless MCP
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-12
 
 Status: research corrected after User direction; it does not change the current
@@ -76,7 +80,7 @@ depend on it.
 - The server binds only to loopback and rejects foreign browser origins.
 
 These facts come from [Local play](../game/local-play.md),
-[Agent interface](../game/agent-interface.md),
+[Agent play contract](../game/agent.md),
 [the local player adapter](../../tools/aicadia-agent),
 [the MCP server implementation](../../src/server.rs) and
 [Current MCP Agent guidance](current-mcp-agent-guidance.md).
@@ -317,7 +321,7 @@ legacy facade; add a thin skill only after evidence shows a real workflow gap.
 
 ## Primary sources
 
-- [Aicadia Agent interface](../game/agent-interface.md)
+- [Aicadia Agent play contract](../game/agent.md)
 - [Aicadia local play](../game/local-play.md)
 - [Aicadia local Codex adapter](../../tools/aicadia-agent)
 - [Aicadia current MCP Agent guidance](current-mcp-agent-guidance.md)

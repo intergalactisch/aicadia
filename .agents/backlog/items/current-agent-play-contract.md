@@ -1,5 +1,9 @@
 # Current immersive Agent play contract
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Status: Done
 
 ## Outcome
@@ -14,7 +18,7 @@ and visible to every User at the same location.
 
 The completed accepted build plan is
 `.agents/plans/20260812-161148-current-agent-play-contract/plan.md`. Current behavior
-is governed by [Agent interface](../../../docs/game/agent-interface.md); the protocol
+is governed by [Agent play contract](../../../docs/game/agent.md); the protocol
 evidence and limitations are recorded in
 [Current MCP Agent guidance](../../../docs/research/current-mcp-agent-guidance.md).
 

@@ -1,5 +1,9 @@
 # D&D campaign meta-layers and storytelling for Aicadia
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-13
 
 Status: research implications and candidate heuristics, not accepted Aicadia
@@ -65,9 +69,9 @@ The current player experience deliberately splits powers that D&D gives to one D
   are private and transient.
 
 These boundaries are specified in the
-[Agent interface](../game/agent-interface.md#agent-guidance-and-player-facing-communication)
+[Agent play contract](../game/agent.md#agent-guidance-and-player-facing-communication)
 and its
-[private-workshop action flow](../game/agent-interface.md#required-private-workshop-action-flow).
+[private-workshop action flow](../game/agent.md#required-private-workshop-action-flow).
 Every request stands alone; there is no durable domain or transport session and no
 server-side narrator. Separate Agents can nevertheless encounter the same accepted
 Entity and Activity at a Place, making the World persistent and operationally

@@ -1,5 +1,9 @@
 # Tabletop narrative and meta patterns beyond D&D
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-13
 
 Status: research; no Aicadia product, game-behaviour or implementation decision
@@ -24,7 +28,7 @@ one placed Entity at the Character's exact current Place. World is dumb and
 deterministic: it interprets no prose, calls no model and performs no background
 Agent work.
 
-The [Agent interface](../game/agent-interface.md) adds a separate private layer.
+The [Agent play contract](../game/agent.md) adds a separate private layer.
 The User chooses and steers; the Agent reads live typed state, offers exactly three
 grounded directions, previews the complete meaning, waits for explicit
 confirmation, and only then submits the unchanged package. Shared World facts and

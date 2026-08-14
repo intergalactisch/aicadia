@@ -1,5 +1,9 @@
 # Aicadia
 
+> **Role / side:** always-loaded build constitution / development side.
+> **Authority:** governs compact cross-task build rules.
+> **Excludes:** volatile game scope and delivery status; see `docs/game/` and `docs/evidence/`.
+
 Aicadia is an MMO-like shared-world discovery and settlement game. Human users
 connect their own AI agents over MCP to inspect and extend one persistent shared
 world. The game server is dumb and strict; all inference spends the user's own
@@ -202,7 +206,7 @@ Every Aicadia choice that changes or constrains product direction, domain model,
 behavior, architecture, implementation, evidence or operation is incomplete until
 recorded when it crystallizes. Record accepted, rejected, deferred, corrected and
 superseded choices with their material reason, current status and affected scope in
-`docs/concept/log/log.md`; omit shell-command trivia. During an unfinished grill or
+`docs/concept/log/README.md`; omit shell-command trivia. During an unfinished grill or
 design session, maintain one active concept record that separates confirmed
 direction from open decisions instead of waiting for implementation or final
 agreement. In the same change, update, correct or remove every affected authority so

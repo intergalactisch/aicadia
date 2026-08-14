@@ -1,5 +1,9 @@
 # World time and sparse simulation in persistent worlds
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-08
 
 Status: research, not an Aicadia product or domain decision

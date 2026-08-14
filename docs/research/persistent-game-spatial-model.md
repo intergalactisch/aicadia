@@ -1,5 +1,9 @@
 # Spatial models for a very large persistent game world
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-08-08
 
 Status: research and recommendation for discussion; not accepted game behavior or
@@ -362,11 +366,11 @@ not replace the still-open parts of those reports.
   mutable geometry could represent every meaning and time of one Place. This report
   therefore does not put a `geometry` column on the first `place` role or invent a
   single `size`.
-- [Hierarchical spatial placement](hierarchical-spatial-model.md) distinguishes
+- [Hierarchical spatial placement](archive/hierarchical-spatial-model.md) distinguishes
   containment from exact geometry and warns against exposing storage cells as
   Places. This report adopts that distinction but follows the later relaxation below
   instead of requiring a containing Place for every possible Entity.
-- [Open spatial world systems](open-spatial-world-system.md) already compared
+- [Open spatial world systems](archive/open-spatial-world-system.md) already compared
   city-builder grids, geographic identity and delivery indexes. Its central finding
   remains: grids and map tiles are not canon. This report adds MMO location examples
   and turns that finding into a first-slice schema.
@@ -388,7 +392,7 @@ not replace the still-open parts of those reports.
   law.
 
 One tension is explicit. [Hierarchical spatial
-placement](hierarchical-spatial-model.md) originally recommends a containing Place
+placement](archive/hierarchical-spatial-model.md) originally recommends a containing Place
 for every physical Entity; [Stable identity and sparse
 location](stable-identity-and-sparse-location.md) later permits exact geometry
 without a Place, and [Spatial occurrence and

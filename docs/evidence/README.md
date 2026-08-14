@@ -11,6 +11,7 @@ candidate ids or audit findings.
 | Slice | Current status | Proof |
 | --- | --- | --- |
 | World entry | Complete, including retained live proof | [World-entry evidence](world-entry.md) · [Agent runner contract](runner/agent-playtest.md) |
+| Local play and ledger | Deterministic launcher, handoff, persistence and browser proof complete | [Local-play evidence](local-play.md) |
 | Character-grounded Action | Deterministic delivery and bounded live proof complete | [Action evidence](action.md) · [Agent runner contract](runner/agent-playtest.md) |
 | Character-grounded Interaction | Deterministic evidence complete; no paid-model Interaction claim | [Interaction evidence](interaction.md) · [Agent runner contract](runner/agent-playtest.md) |
 | Entity Property | Deterministic evidence complete; no paid-model Property claim | [Property evidence](property.md) · [Agent runner contract](runner/agent-playtest.md) |
@@ -43,18 +44,11 @@ Completion proved contract delivery, host isolation and deterministic World
 behavior. It did not prove identical wording or universal instruction-following by
 arbitrary LLMs. No live model run was part of this build.
 
-The 2026-08-12 completion passed current discovery and catalog tests for the then
-thirteen unchanged capability schemas and annotations, formatter, all-target and
-all-feature Clippy with warnings denied, all 58 Rust tests, the disposable local
-launcher/adapter lifecycle and diff integrity. The lifecycle preserved one stable
-User, started fake Codex in an empty external workspace with isolated home and
-configuration, injected the exact player contract, required current Aicadia MCP,
-removed its owned root and reported `codex_invoked=false`. Independent review found
-no P0-P3 issue. No test database, temporary player root, new listener or process
-remained; the pre-existing server on port 3000 was deliberately untouched.
+The shared 2026-08-12 launcher, Agent-handoff and catalog proof is retained once in
+[local-play evidence](local-play.md).
 
 The later Character-grounded Interaction build evolved this same delivery contract
 to twelve player tools: it added `submit_interaction` and removed global
 `list_entity`/`get_entity` from MCP while retaining them as loopback operator-ledger
 HTTP reads. That historical thirteen-tool completion evidence remains accurate for
-the build at that time; current truth is in `docs/game/agent-interface.md`.
+the build at that time; current truth is in `docs/game/README.md#capability-catalog`.

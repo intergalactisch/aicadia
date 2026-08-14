@@ -2,6 +2,10 @@
 
 # Spatial state and discovery during travel
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-07-26
 
 Status: research and `5jaar` recommendation, not concept direction

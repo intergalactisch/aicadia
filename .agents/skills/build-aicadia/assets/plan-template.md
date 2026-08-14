@@ -8,6 +8,10 @@ completed_at: null
 
 # <Concrete build outcome>
 
+> **Role / side:** proportional build-plan template / development side.
+> **Authority:** defines the required structure for a consequential Aicadia build plan.
+> **Excludes:** actual execution state, product contracts and global build rules; those belong to the created plan, `docs/game/` and `AGENTS.md`.
+
 Replace every angle-bracket instruction. Keep required meanings, but scale detail
 with risk: a small build may use one task and short sections. Record current forward
 state, not a diary.

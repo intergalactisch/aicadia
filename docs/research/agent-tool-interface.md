@@ -1,5 +1,9 @@
 # Agent tool interface
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Status: research, checked 2026-08-07
 
 ## Question

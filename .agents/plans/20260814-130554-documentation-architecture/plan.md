@@ -1,9 +1,9 @@
 ---
-status: active
+status: complete
 created_at: "2026-08-14T13:05:54+02:00"
-updated_at: "2026-08-14T16:20:00+02:00"
+updated_at: "2026-08-14T18:23:18+02:00"
 accepted_at: "2026-08-14T15:00:07+02:00"
-completed_at: null
+completed_at: "2026-08-14T18:23:18+02:00"
 ---
 
 # One home per truth: documentation, Agent-text and code architecture
@@ -303,7 +303,7 @@ concept log, so relocation diffs must not entangle with delivery diffs.
 | T6 | completed | T1 | yes | Research status index + archive | `docs/research/**` (index/banners/moves only, no link edits), `move-map/t6.md` | Index rows cover every live and archived file; 3 files archived |
 | T7 | completed | T1 | yes | Agent-text relocation: tool split + contract move | `src/agent_contract.rs`, `src/agent_contract/**`, `src/agent-play-contract.txt`, `tests/server.rs` (include path), `tests/world.rs` (one baseline planner assertion), `tests/aicadia-local.sh` (path), `tools/aicadia-agent` (`CONTRACT=`), `tools/trait-playtest` (predicate line), `move-map/t7.md` | `cargo test` green incl. discover assertions; fixture diff empty; no description ends with `\n`; `tests/aicadia-local.sh` passes |
 | T10 | completed | T7 | no | Code decomposition by pure moves | `src/world.rs` → `src/world/**`, `src/wire.rs` → `src/wire/**`, `tests/world.rs` → `tests/world/**`, `tests/server.rs` → `tests/server/**`, `src/lib.rs`, `tests/trait-playtest.sh` (drift line + hermetic candidate-state gates), `move-map/t10.md` | One-to-one test mapping with equal counts, all green; fixture diff empty; drift line targets a real file |
-| T9 | pending | T3,T4,T5,T6,T7,T10 | no | Cross-tree link pass + integrity sweep + alignment | whole tree, `.agents/backlog/*`, `.agents/skills/build-aicadia/SKILL.md` | Validation ladder passes |
+| T9 | completed | T3,T4,T5,T6,T7,T10 | no | Cross-tree link pass + integrity sweep + alignment | whole tree, `.agents/backlog/*`, `.agents/skills/build-aicadia/SKILL.md` | Validation ladder passes |
 
 The former T8 (adapter discover-fetch) was removed by resolved OQ3; the id is
 retired, not reused.
@@ -811,6 +811,39 @@ remains.
 4. **Integrity:** `git diff --check`; focused diff review; unrelated user
    changes and all governing authorities intact; the concept log records the
    acceptance and completion.
+
+## Completion evidence
+
+- All seven move-map fragments pass: 273 mapping entries, three research-successor
+  entries, 330 destination tokens and five transitive destinations resolve, with no
+  duplicate qualified source or destination failure. T9 corrected one stale mapped
+  anchor from `#aicadia-current-build-contract` to `#domain-contract`.
+- The final root link-and-anchor pass checked 102 live/in-scope Markdown files and
+  227 relative Markdown links, including multiline links, with zero failures. The
+  71-token move-map scan has zero live old-token hits outside the explicit frozen and
+  planning exemptions. Delivery-signature and malformed-static-pointer scans are
+  empty; 13 live static evidence pointers remain.
+- Reference direction and placement pass: runtime-to-concept/research/planning
+  references are zero, the sole runtime-to-development reference is the permitted
+  static evidence pointer, and no checked authority lacks its role/side header.
+  No source module exceeds 1,500 lines (largest: `tests/world/action.rs`, 1,249);
+  no bounded game authority exceeds 400 (largest: `docs/game/protocol.md`, 399).
+- `cargo fmt --check`, `cargo check` and `cargo test --all-targets` pass: 18 library,
+  two playtest-database, 13 server and 75 World tests, 108 total. The server and World
+  integration inventories remain one-to-one at 13 and 75 tests. The catalog fixture
+  remains byte-identical with exactly 13 descriptions and zero trailing newlines.
+- `tests/aicadia-local.sh`, `tests/agent-playtest.sh` and
+  `tests/trait-playtest.sh` pass. A disposable locally started server returned 13
+  `tools/list` entries byte-equivalent to the fixture and `server/discover` returned
+  only protocol `2026-07-28`, empty advertised capabilities and the exact relocated
+  instructions. Source and live instruction SHA-256 are both
+  `1657be03726a4622b31e6df68fb95281715e58d69f8bb69483935cd7f1177f54`;
+  the owned database was verified and dropped.
+- Disposable outcome rehearsals prove a Trait-status edit touches only
+  `docs/evidence/trait.md`, a `submit_action.md` description edit touches no Rust,
+  the Property write path is navigable from `src/world/property.rs`, and
+  `docs/README.md` alone locates every truth home. The closed live Trait digest,
+  private candidate state and published Agent bytes remain untouched.
 
 ## Change control
 

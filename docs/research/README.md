@@ -1,5 +1,9 @@
 # Research
 
+> **Role / side:** research standing index / development side.
+> **Authority:** indexes each research report's status, era and question.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Durable research supporting Aicadia concept development.
 
 Research records the question, observations, sources and possible implications. It

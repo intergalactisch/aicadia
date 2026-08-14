@@ -147,7 +147,7 @@ a second candidate, and failure never authorizes a retry or protocol fallback.
 
 ## Historical runner boundary
 
-[`tools/agent-playtest`](../../tools/agent-playtest) and its recorded Action evidence
+[`tools/agent-playtest`](../../../tools/agent-playtest) and its recorded Action evidence
 remain historical. Its token-free replay uses a frozen Property-era catalog fixture,
 not the current runtime catalog or current Agent contract. The old prompts, schemas,
 candidate history and evidence claims are not relabelled or reused by this

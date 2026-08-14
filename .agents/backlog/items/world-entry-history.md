@@ -6,6 +6,10 @@ updated: 2026-08-09
 
 # World entry with activity history
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 ## Outcome
 
 A User may introduce a Character without placing it. At a later Agent-chosen moment,
@@ -15,7 +19,7 @@ answer where a Character was, what it did, and which Characters, Places and othe
 Entities were involved.
 
 This vertical slice is complete. Its executable authority is recorded in
-`docs/game/README.md` and `docs/game/agent-interface.md`.
+`docs/game/domain.md` and `docs/game/agent.md`.
 
 ## Why now
 
@@ -142,18 +146,7 @@ The slice is done only when:
 
 ## Completion evidence
 
-- `migration/0004_world_entry_activity.sql`, `src/world.rs`, `src/wire.rs` and
-  `src/server.rs` implement the accepted state, transaction and adapter contract.
-- `tests/world.rs` proves concurrency, retry safety, rollback, immutability, the
-  exact migration boundary, historical Place retention, authorization and stable
-  pagination; `tests/server.rs` proves HTTP concurrency, HTTP/MCP semantic parity
-  and the complete ten-capability catalog fixture.
-- `DATABASE_URL=postgresql:///postgres cargo test` passes all 38 unit and integration
-  tests; `cargo fmt --check` and `git diff --check` pass.
-- `bash tests/agent-playtest.sh`, Bash syntax checks and the no-spend
-  `DATABASE_URL=postgresql:///postgres tools/agent-playtest preflight` pass.
-- `docs/game/`, `CONTEXT.md`, `docs/concept/log/log.md`, `AGENTS.md` and the Agent
-  playtest contract agree on the current behavior and nomenclature.
+Delivery history and current status: see [World-entry evidence](../../../docs/evidence/world-entry.md).
 
 ## Accepted delivery choices
 

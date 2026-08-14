@@ -1,5 +1,9 @@
 # Local Entity Trait development
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Status: Done
 
 ## Outcome
@@ -55,7 +59,7 @@ Delivery history and current status: see [Trait evidence](../../../docs/evidence
 
 ## Delivery boundary
 
-Delivery history is owned by the static evidence pointer above.
+The static evidence pointer above owns this record.
 
 ## Dependencies
 
@@ -71,4 +75,4 @@ historical live-evidence byte content.
 
 ## Completion evidence
 
-Completion evidence is owned by the static evidence pointer above.
+The static evidence pointer above owns this record.

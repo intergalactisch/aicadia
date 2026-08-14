@@ -1,5 +1,9 @@
 # Character-grounded interaction and knowledge
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Status: Done
 
 ## Outcome
@@ -15,8 +19,8 @@ provenance does not accidentally become in-world knowledge.
 The accepted build plan is
 `.agents/plans/20260813-114241-character-grounded-interaction-history/plan.md`.
 The executable contract is in `docs/game/README.md` and
-`docs/game/agent-interface.md`. Confirmed design history is recorded in
-`docs/concept/10-discovery-and-world-context.md`.
+`docs/game/agent.md`. Confirmed design rationale is recorded in
+`docs/concept/interaction.md` and `docs/concept/knowledge.md`.
 
 The plan contains the complete research alignment for D&D rules/campaign loops,
 D&D meta-storytelling and relevant non-D&D tabletop patterns. Each result is marked
@@ -81,8 +85,8 @@ later recognition.
   Character, whose exact ripple mechanics remain a future plan.
 
 The User has additionally selected structured, historical Entity Properties and
-Traits as separate required living-plan capabilities. Their active design record is
-`docs/concept/11-entity-traits-and-change.md`. They may use separate tables and
+Traits as separate required living-plan capabilities. Their retained rationale is
+`docs/concept/entity-state.md`. They may use separate tables and
 interfaces while sharing Activity provenance. Terry treats both as follow-ons rather
 than silently expanding this social-interaction build. The accepted sequence is
 Interaction/knowledge, Property, Trait, then investigation/discovery.

@@ -2,6 +2,10 @@
 
 # Player–agent interaction for an irreversible shared world
 
+> **Role / side:** sourced research report / development side.
+> **Authority:** records this report's question, sources, findings and implications.
+> **Excludes:** product decisions and current implementation contracts; see `docs/game/`.
+
 Date: 2026-07-25
 
 Status: research and `5jaar` recommendation, not concept direction

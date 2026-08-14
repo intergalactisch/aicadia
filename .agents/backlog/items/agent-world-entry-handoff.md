@@ -6,6 +6,10 @@ updated: 2026-08-10
 
 # Agent world-entry handoff
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 ## Outcome
 
 A newly connected Agent can understand and execute the complete current World-entry

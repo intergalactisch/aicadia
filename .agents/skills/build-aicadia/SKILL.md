@@ -5,6 +5,10 @@ description: Guide Aicadia development by selecting, classifying, planning, exec
 
 # Build Aicadia
 
+> **Role / side:** reusable Aicadia build workflow / development side.
+> **Authority:** governs this skill's routing, planning, execution and recording procedure.
+> **Excludes:** project contracts and global build rules; see `docs/game/` and `AGENTS.md`.
+
 Keep the build moving without turning the process into a project of its own. Apply Terry and preserve unrelated user changes.
 
 ## Find the current edge
@@ -60,7 +64,7 @@ Do not write files or delegate work yet. Wait for the user to accept, reject, or
 Recording is part of making a choice, not end-of-task cleanup. As soon as a product,
 domain, behavior, architecture, implementation, evidence or operational choice
 crystallizes, record its accepted, rejected, deferred, corrected or superseded
-status, material reason and affected scope in `docs/concept/log/log.md`. During an
+status, material reason and affected scope in `docs/concept/log/README.md`. During an
 unfinished grill or design session, update one active concept record after each
 answer and keep confirmed direction separate from open decisions. Record development
 history, not shell commands. In the same change, update, correct or remove every

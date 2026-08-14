@@ -1,5 +1,9 @@
 # Local Agent play and World ledger
 
+> **Role / side:** forward-planning item / development side.
+> **Authority:** records this outcome's backlog state, dependencies and completion pointers.
+> **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
+
 Status: Done
 
 ## Outcome
@@ -13,7 +17,7 @@ and prose.
 The completed accepted plan is
 `.agents/plans/20260812-091744-agent-only-local-play-ledger/plan.md`. The governing
 contract is [the current build contract](../../../docs/game/README.md),
-[Agent interface](../../../docs/game/agent-interface.md) and
+[Agent play contract](../../../docs/game/agent.md) and
 [Local play](../../../docs/game/local-play.md).
 
 ## Confirmed direction
@@ -33,14 +37,9 @@ contract is [the current build contract](../../../docs/game/README.md),
   new game capability;
 - no build or validation step automatically spends model tokens.
 
-## Delivered boundary
+## Current boundary
 
-The delivered slice is one non-destructive launcher, one private ignored profile,
-one self-contained same-origin ledger, revised Character-onboarding Agent
-instructions and persistence/browser evidence. The first real User conversation is
-the next qualitative experiment; deterministic completion evidence proves readiness
-and persistence, not model output quality. Public hosting remains outside this local
-slice and requires a separately accepted read-only exposure and deployment boundary.
+Delivery history and current status: see [Local-play evidence](../../../docs/evidence/local-play.md).
 
 ## Dependencies
 
@@ -61,19 +60,4 @@ slice and requires a separately accepted read-only exposure and deployment bound
 
 ## Completion evidence
 
-- the lifecycle suite provisions one User and reuses that same UUID after restart;
-  missing-profile, concurrent-launch, corrupt/stale-profile and occupied-port cases
-  all fail closed without a second User or listener;
-- disposable integration state retained the identical User, Character, Place, three
-  Entity records, four Activity records and canonical prose across restart, both in
-  canonical HTTP JSON and a fresh browser page;
-- browser network and source boundaries are GET-only and contain no gameplay input;
-- MCP initialization and the exact catalog publish the Character workshop while
-  retaining the existing action workshop;
-- desktop, mobile, pagination, keyboard disclosure and pre-Character browser checks
-  pass without exposed User UUID, viewport overflow or browser errors;
-- Bash syntax and lifecycle, formatting, strict Clippy, all 59 Rust tests,
-  `git diff --check` and independent risky-seam review pass; and
-- current contract, concept log, backlog item and accepted plan agree. The explicitly
-  disposable evidence database, state directory, listener and browser tabs were
-  removed after ownership checks; unrelated working-tree changes were preserved.
+The static evidence pointer above owns this record.
