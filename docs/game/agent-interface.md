@@ -4,7 +4,7 @@ This is the accepted player-facing wire contract. `World` owns semantics; local 
 and MCP must expose the same thirteen capabilities. PostgreSQL, migrations,
 provisioning and operational controls remain behind that seam.
 
-**Delivered deterministic capability:** the active
+**Delivered deterministic capability:** the completed
 [Trait plan](../../.agents/plans/20260813-200829-entity-trait-development/plan.md)
 replaces the standalone local Property list with one scoped full Entity read, enriches
 `get_character` with the same bounded combined Property/Trait association page and
@@ -19,11 +19,61 @@ T7 integration/review is complete with no P0–P3 finding. The dedicated
 finding for two Agents, two sessions, seven calls and zero retries under digest
 `3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`.
 Token-free preflight records `codex_invoked=false`, `model_calls=0` and
-ownership-verified cleanup `dropped`; all sixteen fake failure injections pass. No
-paid candidate or Trait model run exists. T9 requires fresh explicit User
-authorization of the exact digest-bound command in the linked contract. Global
-`list_entity` and `get_entity` remain out-of-world loopback operator/ledger
-operations.
+ownership-verified cleanup `dropped`. No paid Trait live-gameplay result was earned.
+Original candidate `candidate-MmwRmcBv` for digest
+`f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`
+consumed its authorization, invoked Codex for exactly one model process call and
+failed before any Agent MCP read or post-setup Agent submit/Trait mutation because MCP revision
+`2026-07-28` was not enabled. Ownership-verified database cleanup dropped the
+database and retained the evidence. After T9R GO, the User explicitly authorized one
+MCP `2026-07-28` a564 replacement. `candidate-ydttdFfc` consumed it and one model
+process call (`68117` input, `50176` cached input, `798` output and `419` reasoning
+tokens). Four required reads and a strict valid three-proposal final completed before
+the controller falsely rejected valid fractional RFC3339 timestamps from
+`get_character` and `list_activity_at_current_place`. No preview, post-setup Agent
+submit, Trait mutation or candidate HTTP gate ran; ownership-verified cleanup dropped the database, and an
+independent audit returned GO for this exact failed claim with one validator P1 and
+no other finding. Archive
+`.aicadia-trait-playtest/archive-original-f38-MmwRmcBv` preserves 68 files with
+private permissions and unchanged content/permission fingerprints. Token-free
+`preflight-cEeVelIZ` returns GO for a564 with `candidate_started=false`,
+`authorization_consumed=false`, `codex_invoked=false`, `model_calls=0`, thirteen
+equal runtime tools, six passed schemas and ownership-verified dropped database. The
+independent audit found only the stale-status P3 corrected here; focused independent
+re-review returned GO with no P0–P3 finding, completing T9R. T10 accepts valid UTC
+fractional seconds, requires exact normalized roundtrip and binds the post-failure
+runner to `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`.
+The later T4 candidate is the exact two-call failure recorded below.
+Initial final review's sole P1/P2 were corrected; second independent Terry/ownership
+review returned GO with no P0–P3 finding. No live Trait success or retry was earned
+by that correction. Global `list_entity` and `get_entity` remain out-of-world
+loopback operator/ledger operations.
+
+**Completed validation result:** the
+[Trait live-validation plan](../../.agents/plans/20260814-111749-trait-live-validation/plan.md)
+is complete and no `Now / Active` edge remains. T2 privately archived the 64 a564 historical files
+without byte or permission drift and left the 68-file f38 archive unchanged. Public
+token-free `preflight-HMxwGPCF` returned GO for current digest
+`6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`:
+no candidate, authorization, Codex or model activity; current-only MCP `2026-07-28`;
+13 live-equal tools, 6 schemas and ownership-verified database drop. The initial T3
+review's exact two P3 findings are corrected; independent re-review returned GO with
+no P0–P3 finding, completing T3 readiness. Exact-digest
+`candidate-63hjH4HW` then consumed its authorization and two model calls. The Action
+proposal passed after the four current-MCP reads `get_world`, `get_character`,
+`list_entity_at_current_place` and `list_activity_at_current_place`. Its tool-free
+Action preview exited 0 with strict valid JSON and exact `entity_name: "Pip"`, then
+failed solely because live `validate_action_preview` required `startswith("Pip ")`
+while its prompt and fake contract require exact `Pip`. No Action commit, candidate
+HTTP gate, Interaction or Mara phase ran; submits, post-setup Trait mutation and live
+success are zero. Usage was 148068 input/100352 cached/1722 output/867 reasoning;
+cleanup was `ownership_verified_and_dropped`, evidence is private, no process remains
+and no retry or new authorization exists. Final independent review returned GO with
+P0/P2/P3=0. The known deferred P1 is this Action live-name drift plus analogous
+unreached Interaction `startswith("Pip ")`/`startswith("Mara ")` drift against
+prompt/fake exact names. No fix, retry, live success or new authorization was added.
+The User chose the unchanged draft documentation-architecture plan next; it is not
+activated here.
 
 ## Capability catalog
 
@@ -748,11 +798,14 @@ independent reverse reply, bystander and distant exclusion, one-to-many
 participation, neutral rejection and zero partial writes. No model-compliance claim
 is inferred from those deterministic results.
 
-Trait has no paid-model evidence yet. T8 has completed independent GO review for the
-dedicated candidate that
-establishes one Trait through confirmed Action, later develops the same stable id
-through confirmed Interaction and retrieves the enriched Entity through a separate
-Agent. The exact frozen boundary and digest-bound command remain canonical in the
-[Trait playtest](trait-playtest.md). T8 GO does not authorize spend; exactly one paid
-candidate requires a fresh explicit User authorization of that command and never
-automatically retries.
+Trait candidate `candidate-MmwRmcBv` consumed one authorization and one model
+process call but failed before any Agent MCP read or post-setup Agent submit/Trait mutation, so it supplies no Trait game
+outcome evidence. T8 had completed independent GO review for the dedicated candidate
+that establishes one Trait through confirmed Action, later develops the same stable
+id through confirmed Interaction and retrieves the enriched Entity through a
+separate Agent. The exact frozen boundary and digest-bound command remain canonical
+in the [Trait playtest](trait-playtest.md). Replacement `candidate-ydttdFfc` completed
+four reads and a valid proposal final, then failed at the local fractional-date
+validator before preview and without a post-setup Agent submit or Trait mutation. It supplies no Trait live gameplay outcome.
+The post-failure runner passed token-free `preflight-HMxwGPCF`; its one later T4
+candidate is the exact failed result above and permits no retry or other candidate.

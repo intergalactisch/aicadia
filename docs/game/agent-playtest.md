@@ -2,9 +2,47 @@
 
 Status: current Property, Interaction and Trait behavior is proved deterministically
 without model spend; T7 and T8 independent review completed with no P0–P3 finding
-and T8 returns GO for the exact frozen Trait candidate. No paid Trait candidate or
-Trait model run has occurred. The resumed-action live acceptance remains historical
-candidate `run-gE8iED5m`.
+and T8 returns GO for the exact frozen Trait candidate. Paid Trait candidate
+`candidate-MmwRmcBv` earned no game outcome: it invoked Codex for exactly one model
+process call, then failed before any Agent MCP read or post-setup Agent submit/Trait mutation because MCP revision
+`2026-07-28` was not enabled. Replacement `candidate-ydttdFfc` also earned no Trait
+live gameplay outcome: after one model process, four current-MCP reads and a strict
+valid three-proposal final, the local validator falsely rejected valid fractional
+RFC3339 before preview and without a post-setup Agent submit or Trait mutation. Both databases were ownership-verified and
+dropped, both authorizations are consumed and no retry is authorized. The
+post-failure runner is corrected and token-free preflight-ready; its one later T4
+candidate is the exact two-call failure recorded below. The
+resumed-action live acceptance remains historical candidate `run-gE8iED5m`.
+
+The completed
+[Trait live-validation plan](../../.agents/plans/20260814-111749-trait-live-validation/plan.md)
+leaves no `Now / Active` edge. T2 completed by moving the four a564 entries
+into private `archive-replacement-a564-ydttdFfc`: 64 historical files retain their
+bytes and permissions, a private algorithm index records their identity, and the
+original 68-file f38 archive remains unchanged. Public token-free
+`preflight-HMxwGPCF` returned GO for digest
+`6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+with `candidate_started=false`, `authorization_consumed=false`,
+`codex_invoked=false`, `model_calls=0`, current-only MCP `2026-07-28`, 13
+live-equal tools, 6 schemas and ownership-verified database drop. The initial T3
+review's exact two P3 findings are corrected; independent re-review returned GO with
+no P0–P3 finding, completing T3 readiness. Exact-digest
+`candidate-63hjH4HW` then consumed its authorization and two model calls. The Action
+proposal passed after the four current-MCP reads `get_world`, `get_character`,
+`list_entity_at_current_place` and `list_activity_at_current_place`. Its zero-tool
+Action preview exited 0 with strict valid JSON and exact `entity_name: "Pip"`, then
+failed solely because live `validate_action_preview` required `startswith("Pip ")`
+while the prompt and permanent fake contract require exact `Pip`. No Action commit,
+candidate HTTP gate, Interaction or Mara phase ran; submits, post-setup Trait
+mutation and live success are zero. Total usage was 148068 input, 100352 cached
+input, 1722 output and 867 reasoning-output tokens. Cleanup was
+`ownership_verified_and_dropped`, evidence is private, no process remains and no
+retry or new authorization exists. Final independent review returned GO with
+P0/P2/P3=0. The known deferred P1 is this Action live-name drift plus analogous
+unreached Interaction `startswith("Pip ")`/`startswith("Mara ")` drift against
+prompt/fake exact names. No fix, retry, live success or new authorization was added.
+The User chose the unchanged draft documentation-architecture plan next; it is not
+activated here.
 
 The guarded live runner retains one bounded clean-room trail-marker claim: a real Agent can
 ground itself in separate Aicadia MCP reads, offer exactly three private directions,
@@ -31,7 +69,7 @@ retry, rollback, bounded query behavior and adapter parity. Five permanent
 Agent-contract tests pin the current global/tool guidance and exact generated
 catalog. The dedicated [Trait fake playtest](trait-playtest.md) proves contextual
 Action establishment, later Interaction development of the same stable lineage and
-enriched Entity retrieval, including sixteen fail-closed injections, with
+enriched Entity retrieval, including seventeen fail-closed injections, with
 `model_calls: 0` and `paid_candidate: false`. T7 integration and independent review
 completed with no P0–P3 finding. The last all-target run before the final
 vacated-statement regression was 107/107; the subsequent focused regression and full
@@ -48,9 +86,33 @@ passing against that frozen boundary with `codex_invoked=false`, `model_calls=0`
 ownership-verified cleanup `dropped`. Independent review returns T8 GO with no
 P0–P3 finding for digest
 `3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`.
-No paid candidate started and no Trait model call occurred. T9 may begin only after
-one fresh explicit User authorization of the exact digest-bound command published
-in the linked dedicated contract; failure never retries automatically.
+Paid candidate `candidate-MmwRmcBv` for digest
+`f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`
+consumed its authorization and invoked Codex for exactly one model process call. It
+failed before any Agent MCP read or post-setup Agent submit/Trait mutation because the runner had not enabled MCP
+revision `2026-07-28`; ownership-verified cleanup dropped its database and retained
+the evidence. Archive
+`.aicadia-trait-playtest/archive-original-f38-MmwRmcBv` preserves all 68 original
+files with private permissions and unchanged content/permission fingerprints.
+Token-free `preflight-cEeVelIZ` returns GO for a564 with no candidate start,
+authorization consumption or Codex invocation, zero model calls, thirteen equal
+runtime tools, six passed schemas and ownership-verified dropped database. The
+independent audit found only the stale-status P3 corrected here; focused independent
+re-review returned GO with no P0–P3 finding and completed T9R. Replacement
+`candidate-ydttdFfc`, digest a564, consumed that authorization and exactly one model
+process call (`68117` input, `50176` cached input, `798` output and `419` reasoning
+tokens). Exactly four MCP `2026-07-28` reads and a strict valid three-proposal final
+completed. The runner then falsely rejected fractional timestamps from
+`get_character` and `list_activity_at_current_place`; no preview, post-setup Agent
+submit, Trait mutation or candidate HTTP gate followed. Cleanup was ownership-verified and dropped. Independent
+audit returned GO for that exact failed claim with one P1 and no other finding. T10
+corrects the validator; digest
+`6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+passed token-free `preflight-HMxwGPCF`; its one later T4 candidate is the exact
+failed result above. It requires exact normalized date-time
+roundtrip. Initial final review's sole P1/P2 were corrected; second independent
+Terry/ownership review returned GO with no P0–P3 finding. No Trait live gameplay
+outcome or retry was earned by that correction.
 
 ## Isolation and authority
 
@@ -91,17 +153,16 @@ Entity or Activity, and never invokes `codex exec`. Its database helper performs
 real disposable database create, ownership tag, ownership read-back and verified
 drop. It fails closed unless all of these facts agree:
 
-- the executable is exactly `codex-cli 0.147.0`, the installed version inspected
-  during the current delivery audit; any later path or version drift fails before
-  database or model work;
-- the exact resolved system executable path
-  `/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/lib/node_modules/@openai/codex/bin/codex.js`
-  is pinned and retained
+- `codex` is discovered through `PATH`, canonicalized once for the run and is exactly
+  `codex-cli 0.147.0`, the installed version inspected during the current delivery
+  audit; installation location may differ per machine, while later version or
+  capability drift fails before database or model work;
+- the locally resolved executable path is retained only in ignored private evidence
   together with its inspected version, model and reasoning effort; public preflight
-  and run reject `CODEX_BIN`, PATH substitution, fake-mode and test-output overrides
-  before any Codex command; environment inspection is Bash-native and every server
-  or Agent child is launched through exact `/usr/bin/env`, never a PATH-resolved
-  `env` or `printenv`;
+  and run reject `CODEX_BIN`, fake-mode and test-output overrides before any Codex
+  command, so repository configuration cannot redirect the executable; environment
+  inspection is Bash-native and every server or Agent child is launched through
+  exact `/usr/bin/env`, never a PATH-resolved `env` or `printenv`;
 - `gpt-5.6-sol` exists with exactly pinned `high` reasoning and Codex is logged in;
 - initial exec and explicit-session `exec resume` expose every required strict
   output, configuration and JSONL flag;
@@ -116,13 +177,17 @@ drop. It fails closed unless all of these facts agree:
 - the commit role contains only `submit_action`;
 - the observer role contains only `get_character`,
   `list_entity_at_current_place` and `list_activity_at_current_place`;
-- Code Mode exists only as local direct MCP routing for `mcp__aicadia`, while shell,
-  web, application, plugin, skill, elicitation and delegation features are disabled;
+- Code Mode exists only as local direct MCP routing for `mcp__aicadia`; Codex
+  explicitly enables the sole supported MCP wire protocol revision `2026-07-28`
+  and fails closed without it—there is no older initialize flow, downgrade,
+  fallback or compatibility shim—while shell, web, application, plugin, skill,
+  elicitation and delegation features are disabled;
 - operator binaries build and PostgreSQL completes the same name-plus-token
   ownership route required by live cleanup.
 
-The exact version and feature checks intentionally make local Agent-host drift a
-pre-spend blocker.
+The exact version and feature checks intentionally make semantic Agent-host drift a
+pre-spend blocker without making one developer's installation directory part of
+the repository contract.
 
 ## Paid run protocol
 
@@ -265,8 +330,8 @@ logs remain private inside the mode-`700` directory. Credentials are never recor
 The fake integration suite uses an explicit internal-only command path, spends no
 tokens and writes `evidence_kind: fake_controller_test` plus
 `run_status: fake_completed`; it can never produce `completed` live evidence. It
-proves public fake/executable override rejection before Codex invocation, the
-controller's happy path,
+proves public fake/executable override rejection, portable PATH discovery and
+semantic CLI drift rejection before Codex execution, the controller's happy path,
 withheld selection and confirmation, exact explicit-session resume, environment and
 allowlist isolation, premature phase-one and phase-two mutation rejection, absent
 and double commit rejection, incomplete extra commit-attempt rejection, malformed

@@ -190,9 +190,10 @@ case "$*" in
     --help) printf '%s\n' '--ask-for-approval --sandbox --model'; exit 0 ;;
 esac
 if [[ "$*" == *'features list' ]]; then
-    for feature in apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access code_mode code_mode_host computer_use goals hooks image_generation in_app_browser multi_agent multi_agent_v2 plugins remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install tool_call_mcp_elicitation tool_suggest unified_exec workspace_dependencies; do
+    for feature in apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access code_mode code_mode_host computer_use goals hooks image_generation in_app_browser mcp_2026_07_28 multi_agent multi_agent_v2 plugins remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install tool_call_mcp_elicitation tool_suggest unified_exec workspace_dependencies; do
         enabled=true; [[ "$*" != *"--disable $feature"* ]] || enabled=false
         [[ "$feature" != code_mode && "$feature" != code_mode_host ]] || enabled=true
+        [[ "$feature" != mcp_2026_07_28 || "$*" == *"--enable mcp_2026_07_28"* ]] || enabled=false
         printf '%-40s stable %s\n' "$feature" "$enabled"
     done
     exit 0
@@ -362,7 +363,7 @@ test_forbidden_schema_keyword_fails_before_codex() {
     [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'forbidden schema created evidence'
 }
 
-test_public_paths_reject_fake_and_codex_overrides() {
+test_public_overrides_and_portable_path() {
     local root="$TEST_TMP/public-guard"
     make_fakes "$root"
     printf '%s\n' happy >"$root/state/mode"
@@ -376,16 +377,29 @@ test_public_paths_reject_fake_and_codex_overrides() {
     done
     [[ ! -e "$root/state/codex-commands" ]] || fail 'public override guard invoked Codex'
     [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'public override guard created evidence'
-    for operation in preflight 'run --confirm-token-spend'; do
-        if PATH="$root/bin:$PATH" DATABASE_URL=postgres://fake/admin \
-            "$RUNNER" $operation >"$root/path.stdout" 2>"$root/path.stderr"; then
-            fail "public $operation accepted PATH-injected tools"
-        fi
-        assert_contains "$root/path.stderr" 'public playtest requires exact cargo command'
-    done
-    [[ ! -e "$root/state/codex-commands" ]] || fail 'PATH guard invoked injected Codex'
+    ln -s codex-fake "$root/bin/codex"
+    PATH="$root/bin:$PATH" DATABASE_URL=postgres://fake/admin \
+        "$RUNNER" preflight >"$root/path.stdout" 2>"$root/path.stderr"
+    assert_contains "$root/path.stdout" 'Preflight passed without codex exec'
+    assert_contains "$root/path.stdout" "$root/bin/codex-fake"
+    [[ ! -e "$root/state/codex-exec-count" ]] || fail 'portable public preflight invoked codex exec'
     [[ ! -e "$root/state/fake-env-invoked" ]] || fail 'public guard invoked PATH-injected env'
     [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'PATH guard created evidence'
+}
+
+test_missing_prerequisite_fails_before_codex() {
+    local root="$TEST_TMP/missing-prerequisite"
+    make_fakes "$root"
+    printf '%s\n' happy >"$root/state/mode"
+    ln -s codex-fake "$root/bin/codex"
+    mv "$root/bin/cargo" "$root/bin/cargo-missing"
+    if PATH="$root/bin:/usr/bin:/bin" DATABASE_URL=postgres://must-not-be-used.invalid/admin \
+        "$RUNNER" preflight >"$root/stdout" 2>"$root/stderr"; then
+        fail 'missing cargo prerequisite unexpectedly passed'
+    fi
+    assert_contains "$root/stderr" 'missing prerequisite: cargo'
+    [[ ! -e "$root/state/codex-commands" ]] || fail 'missing prerequisite invoked Codex'
+    [[ ! -e "$root/state/database-actions" ]] || fail 'missing prerequisite reached the database'
 }
 
 test_cli_drift_fails_closed() {
@@ -394,6 +408,7 @@ test_cli_drift_fails_closed() {
     if run_fake "$root" cli-drift preflight; then fail 'CLI drift passed'; fi
     assert_contains "$root/cli-drift.stderr" 'must be exactly codex-cli 0.147.0'
     [[ ! -e "$root/state/codex-exec-count" ]] || fail 'CLI drift invoked codex exec'
+    [[ -z "$(find "$root/output" -mindepth 1 -print -quit)" ]] || fail 'CLI drift created candidate evidence'
 }
 
 test_happy_resumed_contract() {
@@ -419,10 +434,12 @@ test_happy_resumed_contract() {
     assert_not_contains "$root/state/call-2/prompt" 'explicitly confirms'
     assert_contains "$root/state/call-3/prompt" 'explicitly confirms the exact retained package'
     assert_not_contains "$root/state/call-1/argv" '--ephemeral'
+    assert_contains "$root/state/call-1/argv" 'mcp_2026_07_28'
     assert_contains "$root/state/call-2/argv" 'resume'
     assert_contains "$root/state/call-2/argv" '33333333-3333-4333-8333-333333333333'
     assert_contains "$root/state/call-3/argv" 'resume'
     assert_contains "$root/state/call-4/argv" '--ephemeral'
+    assert_contains "$root/state/call-4/argv" 'mcp_2026_07_28'
     assert_contains "$root/state/call-4/argv" 'enabled_tools=["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
     assert_not_contains "$root/state/call-4/argv" 'get_entity'
     assert_not_contains "$root/state/call-4/prompt" 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
@@ -501,7 +518,8 @@ test_historical_property_catalog_snapshot
 test_no_token_preflight
 test_forbidden_schema_keyword_fails_before_codex
 test_cli_drift_fails_closed
-test_public_paths_reject_fake_and_codex_overrides
+test_public_overrides_and_portable_path
+test_missing_prerequisite_fails_before_codex
 test_happy_resumed_contract
 test_failure_paths
 if [[ "${KEEP_AGENT_PLAYTEST_TMP:-0}" == 1 ]]; then

@@ -86,13 +86,13 @@ test_preflight_and_happy_path() {
       and $c[2].result.structured_content.current_state.association[0].type=="trait"
       and $c[3].result.structured_content.activity[0].trait_change[0].type=="develop"
     ' "$run/observer.events.jsonl" >/dev/null || fail 'observer did not derive Pip and current Trait through accepted reads'
-    ! rg -n 'codex|gpt-5|openai' "$run" --glob '*.events.jsonl' --glob '*.prompt.txt' >/dev/null \
+    ! find "$run" -type f \( -name '*.events.jsonl' -o -name '*.prompt.txt' \) -exec grep -Ein 'codex|gpt-5|openai' {} + >/dev/null \
         || fail 'fake evidence invoked or prompted a model host'
 }
 
 test_failure_gates() {
     local mode root manifest
-    for mode in malformed-character-result malformed-action-result malformed-activity-page-result \
+    for mode in malformed-character-result malformed-date-time-result malformed-action-result malformed-activity-page-result \
         premature-action invented-mechanic altered-action-prose changed-action-preview double-action \
         premature-interaction wrong-trait-id target-authored-interaction-prose changed-interaction-preview incomplete-interaction \
         wrong-current-state invented-observer-state ambiguous-cleanup; do
@@ -106,7 +106,7 @@ test_failure_gates() {
             and .model_calls==0 and .run_status=="failed"' "$manifest" >/dev/null \
             || fail "$mode did not retain failed token-free evidence"
         case "$mode" in
-            malformed-character-result|malformed-action-result|malformed-activity-page-result)
+            malformed-character-result|malformed-date-time-result|malformed-action-result|malformed-activity-page-result)
                 grep -F 'violates its runtime outputSchema' "$root/stderr" >/dev/null \
                     || fail "$mode did not fail at the exact runtime output-schema gate"
                 ;;
@@ -138,11 +138,13 @@ test_live_gate_and_freeze() {
     fi
     grep -F -- '--candidate-digest <audited-sha256>' "$root/stderr" >/dev/null \
         || fail 'obsolete live gate did not fail closed'
-    rg -n "MAX_MODEL_CALLS=7|MAX_RETRIES=0|CODEX_MODEL='gpt-5.6-sol'|CODEX_REASONING_EFFORT='high'" "$RUNNER" >/dev/null \
+    grep -En "MAX_MODEL_CALLS=7|MAX_RETRIES=0|CODEX_MODEL='gpt-5.6-sol'|CODEX_REASONING_EFFORT='high'" "$RUNNER" >/dev/null \
         || fail 'live freeze lost exact calls, retries, model or effort'
-    rg -n 'ZERO_TOOL_TOOLS=' "$RUNNER" >/dev/null || fail 'preview phases lost their empty MCP allowlist'
-    rg -n 'Codex CLI 0.147.0 exposes no enforceable per-run token ceiling' "$RUNNER" >/dev/null \
+    grep -En 'ZERO_TOOL_TOOLS=' "$RUNNER" >/dev/null || fail 'preview phases lost their empty MCP allowlist'
+    grep -En 'Codex CLI 0.147.0 exposes no enforceable per-run token ceiling' "$RUNNER" >/dev/null \
         || fail 'token boundary is not honest and explicit'
+    [[ "$(grep -Ec -- '--enable mcp_2026_07_28' "$RUNNER")" -ge 2 ]] \
+        || fail 'Trait Codex validation and live commands do not both pin MCP 2026-07-28'
     [[ ! -e "$REPO_DIR/.aicadia-trait-playtest/candidate-consumed" ]] \
         || fail 'rejected authorization consumed a candidate'
     [[ "$digest" =~ ^[0-9a-f]{64}$ ]] || fail 'audited digest is malformed'
@@ -176,9 +178,14 @@ test_candidate_digest_binds_runtime_build_and_validator() {
 
 test_owned_preflight_cleanup_after_catalog_failure() {
     local before="$TEST_ROOT/preflight-before" after="$TEST_ROOT/preflight-after" manifest db token
+    local portable_bin="$TEST_ROOT/portable-bin" actual_codex
     [[ -n "${DATABASE_URL:-}" ]] || return 0
+    actual_codex="$(command -v codex)" || fail 'Codex is unavailable for the live token-free regression'
+    mkdir -p "$portable_bin"
+    printf '#!/bin/bash\nexec %q "$@"\n' "$actual_codex" >"$portable_bin/portable-codex"
+    chmod +x "$portable_bin/portable-codex"
     find "$REPO_DIR/.aicadia-trait-playtest" -maxdepth 2 -name manifest.json -path '*/preflight-*/*' -print 2>/dev/null | sort >"$before"
-    if CODEX_BIN=codex AICADIA_INTERNAL_TRAIT_PREFLIGHT_MODE=fail-after-catalog \
+    if PATH="$portable_bin:$PATH" CODEX_BIN=portable-codex AICADIA_INTERNAL_TRAIT_PREFLIGHT_MODE=fail-after-catalog \
         "$RUNNER" test-internal-live-preflight --confirm-fake-controller-test \
         >"$TEST_ROOT/injected-preflight.stdout" 2>"$TEST_ROOT/injected-preflight.stderr"; then
         fail 'injected post-catalog preflight failure unexpectedly passed'
@@ -186,9 +193,10 @@ test_owned_preflight_cleanup_after_catalog_failure() {
     find "$REPO_DIR/.aicadia-trait-playtest" -maxdepth 2 -name manifest.json -path '*/preflight-*/*' -print | sort >"$after"
     manifest="$(comm -13 "$before" "$after" | head -1)"
     [[ -n "$manifest" ]] || fail 'injected preflight retained no new manifest'
-    jq -e '.go==false and .codex_invoked==false and .model_calls==0
+    jq -e --arg path "$portable_bin/portable-codex" '.go==false and .codex_invoked==false and .model_calls==0
       and .catalog.status=="live_runtime_equal" and .deployment.status=="dropped"
-      and .cleanup.status=="ownership_verified_and_dropped"' "$manifest" >/dev/null \
+      and .cleanup.status=="ownership_verified_and_dropped"
+      and .codex.path==$path' "$manifest" >/dev/null \
         || fail 'post-catalog failure did not end in ownership-safe terminal cleanup'
     db="$(jq -r '.deployment.database' "$manifest")"; token="$(jq -r '.deployment.ownership_token' "$manifest")"
     if (cd "$REPO_DIR" && cargo run --quiet --bin aicadia-playtest-database -- verify "$db" "$token") >/dev/null 2>&1; then
@@ -196,25 +204,28 @@ test_owned_preflight_cleanup_after_catalog_failure() {
     fi
 }
 
-test_public_cli_path_drift_fails_before_database() {
+test_public_cli_version_drift_fails_before_candidate() {
     local root="$TEST_ROOT/cli-drift"
     mkdir -p "$root/bin"
-    ln -s /usr/bin/false "$root/bin/codex"
+    printf '%s\n' '#!/bin/bash' 'printf "codex-cli 0.148.0\\n"' >"$root/bin/codex"
+    chmod +x "$root/bin/codex"
     if PATH="$root/bin:$PATH" DATABASE_URL='postgres://must-not-be-used.invalid/postgres' \
         "$RUNNER" preflight >"$root/stdout" 2>"$root/stderr"; then
-        fail 'public CLI path drift unexpectedly passed'
+        fail 'public CLI version drift unexpectedly passed'
     fi
-    grep -F 'public Trait candidate requires Codex command at' "$root/stderr" >/dev/null \
-        || fail 'CLI path drift did not fail at the exact executable boundary'
+    grep -F 'Codex must be exactly codex-cli 0.147.0; found codex-cli 0.148.0.' "$root/stderr" >/dev/null \
+        || fail 'CLI version drift did not fail at the semantic version boundary'
     [[ ! -e "$REPO_DIR/.aicadia-trait-playtest/candidate-consumed" ]] \
         || fail 'CLI drift consumed the one candidate'
+    [[ -z "$(find "$REPO_DIR/.aicadia-trait-playtest" -maxdepth 1 -type d -name 'candidate-*' -print -quit 2>/dev/null)" ]] \
+        || fail 'CLI drift created candidate evidence'
 }
 
 test_preflight_and_happy_path
 test_failure_gates
 test_schema_policy_fails_before_evidence
 test_live_gate_and_freeze
-test_public_cli_path_drift_fails_before_database
+test_public_cli_version_drift_fails_before_candidate
 test_candidate_digest_binds_runtime_build_and_validator
 test_owned_preflight_cleanup_after_catalog_failure
 if [[ -n "${DATABASE_URL:-}" ]]; then

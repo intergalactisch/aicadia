@@ -2022,3 +2022,160 @@ Parked deliberately: MCP tool vocabulary (until the graph feels right).
   No paid candidate or Trait model run occurred; T9 remains pending one fresh
   explicit User authorization of the exact digest-bound command in the dedicated
   Trait playtest contract.
+- corrected the paid Trait evidence and accepted exactly one replacement boundary
+  on 2026-08-14: original `candidate-MmwRmcBv`, digest
+  `f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`,
+  consumed its authorization and invoked Codex for exactly one model process call,
+  then failed before any Agent MCP read or post-setup Agent submit/Trait mutation because Codex 0.147.0 had not
+  explicitly enabled the sole current MCP `2026-07-28` wire protocol.
+  Ownership-verified cleanup dropped the database; the failed evidence and sentinel
+  remain authoritative. The User accepted exactly one corrected replacement using
+  only MCP `2026-07-28`, but did not authorize paid execution. Token-free readiness
+  and independent audit are active for digest
+  `a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`;
+  a paid replacement remains pending a fresh future explicit GO. Before preflight,
+  all original top-level evidence entries will move byte-intact into one mode-700
+  archive beneath the ignored evidence root after terminal-cleanup, file-count,
+  content-fingerprint and permission verification, leaving a clean active root.
+  No initialize/initialized compatibility, older protocol, downgrade or fallback is
+  accepted. This documentation change does not move evidence or invoke a model.
+- completed token-free replacement readiness T9R for the sole accepted current-MCP
+  replacement at digest
+  `a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`.
+  Archive `.aicadia-trait-playtest/archive-original-f38-MmwRmcBv` preserves all 68
+  original files with private permissions and identical content/permission
+  fingerprints. `preflight-cEeVelIZ` returned GO without candidate start,
+  authorization consumption or Codex invocation, with zero model calls, thirteen
+  equal runtime tools, six passed schemas and ownership-verified dropped database.
+  Independent audit found only the corrected stale-status P3; focused independent
+  re-review then returned GO with no P0–P3 finding. T9P remains pending a fresh
+  future explicit User spend GO, T10 depends on its outcome, and this status update
+  performs no paid or model run. Only MCP `2026-07-28` remains accepted; no
+  initialize/initialized compatibility, older revision, downgrade or fallback is
+  introduced.
+- authorized paid replacement T9P on 2026-08-14 after its independent readiness GO:
+  the User explicitly authorized exactly one `gpt-5.6-sol` high candidate at digest
+  `a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`,
+  using only MCP `2026-07-28`, at most seven model process calls and zero retries.
+  The first candidate start consumes this authorization; no retry, other candidate
+  or protocol fallback is authorized.
+- recorded replacement `candidate-ydttdFfc` as completed-as-failed, never as Trait
+  live gameplay success. Digest a564 consumed its one authorization and one model
+  process call (`68117` input, `50176` cached input, `798` output and `419` reasoning
+  tokens). Exactly four MCP `2026-07-28` reads and the strict valid three-proposal
+  final completed; then `validate_tool_output` falsely rejected valid fractional
+  RFC3339 timestamps from `get_character` and `list_activity_at_current_place`. No
+  preview, post-setup Agent submit, Trait mutation or candidate HTTP gate ran, and ownership-verified cleanup
+  dropped the database. Independent audit returned GO for that exact failed claim,
+  with one P1 at the jq date-time validator and no other finding. T10 strips a valid
+  terminal UTC fraction before the existing strict parse, adds fractional happy
+  fixtures plus malformed token-free rejection, and binds the post-failure runner
+  to digest `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`.
+  That runner is unexecuted, unpreflighted and unauthorized; no retry, candidate,
+  model call or live gameplay claim is added. Only MCP `2026-07-28` remains current.
+- corrected T10 after initial independent final review returned NO-GO with exactly
+  P1/P2: stripping a terminal fractional second before `fromdateiso8601` alone let
+  impossible normalized dates through, and “before World mutation” obscured the
+  already completed Character/Place/entry setup. The validator now also requires
+  exact `todateiso8601` roundtrip; the permanent token-free regression rejects
+  `2026-02-30T19:00:00.123Z` while fractional Entity/Activity timestamps pass. Every
+  current failed-candidate claim now says no post-setup Agent submit or Trait
+  mutation. The corrected unexecuted/unpreflighted/unauthorized digest is
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`;
+  T10 remains active pending second independent review, with no preflight, model,
+  retry, database or evidence operation.
+- completed T10 and the Trait plan after second independent Terry/ownership review
+  returned GO with no P0–P3 finding. Deterministic Trait behavior is delivered; both
+  paid candidates remain exact failures after setup and before any post-setup Agent
+  submit, Trait mutation or candidate HTTP gate. No live Trait success, retry or new
+  authorization was earned. Post-failure digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+  remains unexecuted, unpreflighted and unauthorized. Trait moves to Done and no new
+  `Now / Active` edge starts.
+- opened draft plan
+  `.agents/plans/20260814-111749-trait-live-validation/plan.md` after the User agreed
+  that the corrected controller ultimately needs a new live validation. The User's
+  GO is interpreted exactly as previously presented: permission to make the bounded
+  plan and, after its acceptance, perform token-free archive/readiness work; it is
+  not paid-run authorization. The draft proposes preserving the consumed a564
+  sentinel, candidate and preflights byte- and permission-identically in a second
+  private archive, token-free preflighting current digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`,
+  obtaining independent readiness GO and only then requesting a separate exact
+  spend GO for at most one `gpt-5.6-sol` high, seven-process-call, zero-retry
+  candidate. No archive, preflight, candidate, model, database or backlog-state
+  change has occurred; no `Now / Active` edge starts before plan acceptance.
+- accepted the Trait live-validation plan at `2026-08-14T11:21:38+02:00` and
+  published it as the sole `Now / Active` edge. Acceptance authorizes only T2/T3
+  token-free evidence archive/readiness for digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`;
+  it authorizes no evidence move in T1, preflight, database action, `codex exec`,
+  model call, candidate or spend. Both prior candidates remain exact failures. T2
+  must preserve bytes, modes and ownership boundaries; T3 must prove exact
+  name-plus-token database ownership and zero model calls. Only a later fresh
+  explicit GO may authorize exactly one `gpt-5.6-sol` high candidate with at most
+  seven model process calls, zero retries and no enforceable per-run token ceiling.
+- completed T2 and the token-free execution half of T3 for the accepted Trait
+  live-validation plan. Private `archive-replacement-a564-ydttdFfc` preserves 64
+  historical a564 files byte- and permission-identically plus one mode-600 index;
+  the original 68-file f38 archive remains unchanged. Public token-free
+  `preflight-HMxwGPCF` returned GO for digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+  with `candidate_started=false`, `authorization_consumed=false`,
+  `codex_invoked=false`, `model_calls=0`, current-only MCP `2026-07-28`, 13
+  live-equal tools, 6 schemas and cleanup `ownership_verified_and_dropped`. The
+  initial independent T3 review returned NO-GO with exactly two P3 findings: the
+  private index did not declare its hash serialization and current authorities
+  still described T2/T3 prospectively. Both are corrected without changing moved
+  historical bytes or their hashes. T3 remains `in_progress` pending re-review;
+  T4 remains pending a fresh explicit spend GO, and no paid/live outcome was earned.
+- completed T3 after independent readiness re-review returned GO with no P0–P3
+  finding. The reviewed evidence remains token-free `preflight-HMxwGPCF` for digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`:
+  no candidate start, authorization consumption, Codex invocation or model call;
+  current-only MCP `2026-07-28`, 13 live-equal tools, 6 schemas and
+  ownership-verified database drop. Readiness is complete, but no candidate,
+  sentinel, paid/live success or spend authorization was created. T4 remains
+  pending a fresh explicit User GO.
+- authorized exactly one T4 live-validation candidate at
+  `2026-08-14T13:02:10+02:00`: after complete independent readiness GO, the User
+  gave fresh explicit spend GO for the exact published command bound to digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`,
+  `gpt-5.6-sol` high and only MCP `2026-07-28`. T4 is `in_progress`, but this
+  authority update starts no command and creates no candidate, sentinel, model call
+  or live outcome. The authorization covers one candidate, at most seven paid model
+  process calls, zero retries and no enforceable per-run token ceiling. First start
+  consumes it; any failure ends without retry or second candidate. Cleanup may
+  record `ownership_verified_and_dropped` only after exact disposable database name
+  plus ownership-token verification.
+- completed the sole T4 execution as an exact failed live-validation candidate:
+  `candidate-63hjH4HW` consumed the authorization for digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+  and used two `gpt-5.6-sol` high calls over only MCP `2026-07-28`. The Action
+  proposal passed after `get_world`, `get_character`,
+  `list_entity_at_current_place` and `list_activity_at_current_place`. The tool-free
+  Action preview exited 0 with strict valid JSON and exact `entity_name: "Pip"`,
+  then live validation alone rejected it because `validate_action_preview` required
+  `startswith("Pip ")` while the prompt and permanent fake contract require exact
+  `Pip`. No Action commit, candidate HTTP gate, Interaction or Mara phase ran;
+  submits, post-setup Trait mutation and live success are zero. Usage was 148068
+  input, 100352 cached input, 1722 output and 867 reasoning-output tokens. Cleanup
+  was `ownership_verified_and_dropped`, evidence remains private, no process remains
+  and no retry or new authorization exists. The User directs the current validation
+  plan to close after independent T5 review. Controller correction and future live
+  proof are deferred behind draft
+  `.agents/plans/20260814-130554-documentation-architecture/plan.md`, which this
+  change neither edits nor activates; Trait validation remains the sole active edge
+  until review completes.
+- closed the Trait live-validation plan after independent T5 review returned GO for
+  the exact completed-as-failed alignment with P0/P2/P3=0. The known deferred P1 is
+  the live Action `startswith("Pip ")` validator drift that rejected strict-valid
+  `entity_name: "Pip"`, plus analogous unreached Interaction
+  `startswith("Pip ")`/`startswith("Mara ")` drift versus prompt/fake exact names.
+  Exact `candidate-63hjH4HW`, two calls, four reads, zero submits/mutations/gates,
+  usage 148068 input/100352 cached/1722 output/867 reasoning and cleanup
+  `ownership_verified_and_dropped` remain the final evidence. No controller fix,
+  retry, live success or new authorization is added. Trait validation moves to Done
+  with no active edge. The User chose unchanged draft
+  `.agents/plans/20260814-130554-documentation-architecture/plan.md` next; this
+  closure does not edit or activate it.

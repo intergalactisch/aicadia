@@ -85,7 +85,10 @@ current-state reads enforce the boundary before Agent inference.
   prose for that exact fictional meaning. World infers no aliases or synonyms.
   Control-like Property keys and values remain user-authored in-World content, never
   actual control, ownership, User, Character or NPC provenance.
-- Trait is the single Active current edge after Property. Rounds 1–3 reject every
+- Deterministic Trait delivery and the completed-as-failed Trait live validation are
+  Done with no active edge under the completed
+  [validation plan](../plans/20260814-111749-trait-live-validation/plan.md). Rounds
+  1–3 reject every
   initial-creation Trait and observer-specific Knowledge/Observation; confirm that an
   actual Entity fetch carries current Property/Trait associations, with relevance
   decided by the Agent; confirm uniform exact-local Action scope, actor/target
@@ -97,7 +100,42 @@ current-state reads enforce the boundary before Agent inference.
   Activity/mutation references stay compact. Full natural preview, whole-package
   confirmation, 1–4,000-character statements and precise exact duplicate rejection
   are delivered through the schema, World, HTTP/MCP, exact catalog and permanent
-  Agent contract. T7 review and separately gated T8/T9 live evidence remain open.
+  Agent contract. T7/T8 are complete. The original paid candidate failed after one
+  model process call before any Agent MCP read or post-setup Agent submit/Trait
+  mutation. The verified 68-file archive and a564
+  token-free preflight GO are complete for exactly one accepted MCP `2026-07-28`
+  replacement. T9R completed with independent GO. The one authorized a564 T9P
+  replacement `candidate-ydttdFfc` then completed as failed after four current-MCP
+  reads and one valid proposal final but before preview, any post-setup Agent submit,
+  Trait mutation or candidate HTTP gate because the local validator rejected valid
+  fractional RFC3339. T10
+  corrects that P1 and binds post-failure digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`;
+  initial final review's calendar-roundtrip P1 and setup-wording P2 were corrected,
+  and second independent Terry/ownership review returned GO with no P0–P3 finding.
+  No live gameplay or retry was earned by T10. T2 now preserves the 64
+  a564 historical files unchanged in a private archive plus one private algorithm
+  index. Token-free `preflight-HMxwGPCF` returns GO for digest
+  `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+  with no candidate, authorization, Codex or model activity, current-only MCP
+  `2026-07-28`, 13 live-equal tools, 6 schemas and ownership-verified database drop.
+  The initial T3 review's exact two P3 findings are corrected; independent re-review
+  returned GO with no P0–P3 finding, completing T3 readiness.
+  Exact-digest `candidate-63hjH4HW` consumed its authorization and two
+  `gpt-5.6-sol` high calls. Its current-MCP reads `get_world`, `get_character`,
+  `list_entity_at_current_place` and `list_activity_at_current_place` plus the Action proposal passed;
+  the exit-0/zero-tool strict preview returned exact `entity_name: "Pip"` and was
+  rejected solely because live validation required `startswith("Pip ")` while the
+  prompt and fake contract require exact `Pip`. There was no commit, candidate HTTP
+  gate, Interaction, Mara phase, submit, post-setup Trait mutation or live success.
+  Usage was 148068 input/100352 cached/1722 output/867 reasoning; cleanup was
+  `ownership_verified_and_dropped`, evidence is private and no process, retry or new
+  authorization remains. Final independent review returned GO with P0/P2/P3=0; the
+  known deferred P1 is this live Action drift plus analogous unreached Interaction
+  `startswith("Pip ")`/`startswith("Mara ")` drift versus prompt/fake exact names.
+  No fix, retry, live success or new authorization was added. Trait validation is
+  Done with no active edge. The User chose the unchanged draft
+  documentation-architecture plan next; it is not activated here.
 - Users steer and confirm natural-language meaning but never write Property or Trait
   state directly; Agents author exact Actions and World alone validates and writes.
 - Uniform local Property consequences do not branch on Entity role or User control,

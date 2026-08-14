@@ -1,12 +1,19 @@
 ---
-status: active
+status: complete
 created_at: "2026-08-13T20:08:29+02:00"
-updated_at: "2026-08-14T00:52:45+02:00"
+updated_at: "2026-08-14T11:06:55+02:00"
 accepted_at: "2026-08-13T21:53:54+02:00"
-completed_at: null
+amended_at: "2026-08-14T10:24:19+02:00"
+replacement_spend_authorized_at: "2026-08-14T10:29:59+02:00"
+completed_at: "2026-08-14T11:06:55+02:00"
 ---
 
 # Local Entity Trait development
+
+Amendment accepted 2026-08-14: preserve the completed-as-failed original candidate
+and authorize token-free readiness work for exactly one current-protocol replacement.
+After T9R returned independent GO, the User explicitly authorized exactly that one
+paid a564 replacement on 2026-08-14; no retry or other candidate is authorized.
 
 ## Outcome
 
@@ -35,7 +42,37 @@ candidate. T3–T6 deliver the deterministic behavior and token-free fake eviden
 T7 deterministic review is complete with no P0–P3 finding. T8 has frozen and
 token-free audited the exact two-Agent, two-session, seven-call, zero-retry candidate;
 the independent audit returns GO with no P0–P3 finding. This only makes the candidate
-ready to present: no plan task authorizes T9 model spend.
+ready to present. The original paid f38 candidate completed as failed after exactly
+one model process call and before any Agent MCP read or post-setup Agent submit/Trait
+mutation because Codex did not have the sole current MCP `2026-07-28` feature enabled; its authorization is
+consumed and its ownership-verified database cleanup dropped the database. The User
+accepted and later explicitly authorized exactly one replacement candidate on
+2026-08-14, using only MCP `2026-07-28`. T9R readiness for its digest
+`a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302` is complete.
+The verified archive preserves 68 original files with private permissions and
+unchanged content/permission fingerprints; token-free `preflight-cEeVelIZ` returns
+GO with no candidate start, authorization consumption, Codex invocation or model
+call, exact thirteen-tool/six-schema equality and ownership-verified dropped
+database. Independent audit found only the stale-status P3 corrected by this
+amendment; focused independent re-review returned GO with no P0–P3 finding.
+Replacement `candidate-ydttdFfc` then consumed that one authorization and exactly
+one model process call (`68117` input, `50176` cached input, `798` output and `419`
+reasoning tokens). Its four required current-MCP reads and strict three-proposal
+final completed, but `validate_tool_output` falsely rejected valid fractional
+RFC3339 timestamps from `get_character` and `list_activity_at_current_place`. It
+stopped before preview with no post-setup Agent submit or Trait mutation, and before
+every candidate HTTP gate; cleanup
+ownership was verified and the database dropped. The exact failed claim passed
+independent audit with one P1 at the date-time validator and no other finding. T10
+now accepts valid UTC fractional seconds and requires an exact normalized
+parse/format roundtrip, rejecting impossible calendar values and malformed input; the
+post-failure runner digest is
+`6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`,
+unexecuted, unpreflighted and unauthorized. Initial final review returned NO-GO only
+for the missing calendar roundtrip P1 and setup-obscuring wording P2; both were
+corrected, and second independent Terry/ownership review returned GO with no P0–P3
+finding. T10 and this plan are complete. No retry, new authorization or Trait live
+gameplay outcome is earned.
 
 ## Non-goals
 
@@ -62,7 +99,8 @@ ready to present: no plan task authorizes T9 model spend.
   profile abstraction or generic mutation bag;
 - changing the historical trail-marker live runner or relabelling its evidence as
   Trait evidence;
-- more than one paid live candidate without a later new plan decision and separate
+- any paid live candidate beyond the completed-as-failed original plus the one
+  explicitly accepted replacement, or any replacement spend without a later fresh
   explicit authorization.
 
 ## Evidence and authorities
@@ -73,10 +111,10 @@ ready to present: no plan task authorizes T9 model spend.
 | `docs/game/README.md` | Current executable truth includes contextual Property/Trait Action and Interaction, exact-local Entity state and asymmetric Activity authorization | Review these grounded mutation/history seams without adding a mutation tool |
 | `docs/game/agent-interface.md` | The Agent must orient, retain User steering, preview the exact package and wait for explicit confirmation | Contextual Trait establishment/development uses the same authority split and exact preview discipline |
 | `CONTEXT.md` | Trait is a concise established Entity characterization that can develop and is not a Property, status or score | Preserve the statement-form model and reject key/value or mechanics leakage |
-| `docs/concept/11-entity-traits-and-change.md` | Property/Trait direction and all three Trait decision rounds are recorded; deterministic Trait delivery is current | Preserve the accepted direction and pending live-evidence gate |
+| `docs/concept/11-entity-traits-and-change.md` | Property/Trait direction, all three decision rounds, deterministic delivery and both failed paid outcomes are recorded | Preserve the accepted direction and exact incomplete live-gameplay claim |
 | `.agents/plans/20260813-171201-character-property-state/plan.md` | Property proved exact-local multi-Entity Action/Interaction, neutral errors, retry reconstruction and bounded set-based persistence | Reuse private writer discipline where meanings agree; do not inherit automatic local visibility, initial creation or Property precedence into Trait |
 | `.agents/plans/20260813-114241-character-grounded-interaction-history/plan.md` | Interaction has actor/explicit-target scope and no target-authored response; Activity authorization is asymmetric | Allow contextual Trait consequences through Interaction without treating them as target response, while keeping current Activity authorization distinct from current Entity state |
-| `.agents/backlog/capability-map.md` | Entity Trait development is the single Active edge after Properties and before investigation/discovery | Keep it Active through T8 while leaving later capabilities queued |
+| `.agents/backlog/capability-map.md` | Entity Trait development is the single Active edge after Properties and before investigation/discovery | Keep it Active through replacement readiness, paid outcome and final alignment while leaving later capabilities queued |
 | `docs/research/dnd-rules-and-campaign-loops.md` | Durable play comes from an accepted changed situation and changed future meaning, not a numeric progression ladder | Prove that one current characterization develops and becomes grounded material for another Agent |
 | `docs/research/dnd-campaign-meta-and-storytelling.md` | Recurrence, canonical residue and selective callback create continuity; Agent invention cannot replace World authority | Stable Trait identity and Activity versions support callbacks while current reads remain World-owned |
 | `docs/research/tabletop-narrative-meta-beyond-dnd.md` | Authority layers must remain distinct; private interpretation and committed consequence cannot silently impersonate each other | Trait prose is committed characterization only, never a hidden resolution signal or executable mechanic |
@@ -587,16 +625,16 @@ without recursively attaching current state. Mutation remains inside existing
 
 | Surface | Current state | Intended change after acceptance | Invariants |
 | --- | --- | --- | --- |
-| `docs/concept/11-entity-traits-and-change.md`, concept log | Rounds 1–3 and deterministic delivery are recorded | Preserve accepted/rejected/deferred reasons and the pending live-evidence gate | Concept never overrides current game docs |
-| `.agents/backlog/`, capability map, this plan | Trait is the single `Now / Active` edge with T3–T6 delivered | Keep Active through review/readiness; move to Done only with final matching evidence | At most one Now/Active edge; no premature live claim |
-| `docs/game/README.md`, `agent-interface.md`, `agent-playtest.md`, `AGENTS.md`, `CONTEXT.md` | Current thirteen-tool Trait contract is executable; paid evidence is absent | Keep deterministic delivery and live status exact through T7/T8 | Current means current at every stage |
+| `docs/concept/11-entity-traits-and-change.md`, concept log | Rounds 1–3, deterministic delivery and both exact failed live outcomes are recorded | Preserve accepted/rejected/deferred reasons and the incomplete live-gameplay claim | Concept never overrides current game docs |
+| `.agents/backlog/`, capability map, this plan | Trait is Done with T1–T10 completed and no next edge selected | Keep no `Now / Active` edge until the User selects one | No automatic next edge; no premature live claim |
+| `docs/game/README.md`, `agent-interface.md`, `agent-playtest.md`, `AGENTS.md`, `CONTEXT.md` | Current thirteen-tool Trait contract is executable; neither paid candidate reached a post-setup Agent submit or Trait mutation, and no live gameplay outcome was earned | Keep deterministic delivery, failed evidence and post-failure runner status exact through closure | Current means current at every stage |
 | `migration/0008_entity_trait.sql` | Three Trait tables, Action/Interaction admission and append-only guards are delivered; no knowledge relation | Retain schema through review | Singular names, stable Entity ownership, no JSON/event/profile/Relationship abstraction |
 | `src/world.rs`, `src/lib.rs` | Contextual Action/Interaction, Activity authorization and flat local Property read | Shared Trait writer, stable versions/current pointers, full Entity-state hydration under the accepted bounded projection and exact retry | One deep World seam, atomicity, no inference, no role/control branch |
 | `src/wire.rs` | Strict thirteen-capability Trait-free wire | Mixed Action/Interaction Trait consequences, combined bounded state page, enriched `get_character`, scoped Entity fetch and Activity changes | Creation inputs unchanged; compact references stay compact; unknown fields denied; internal provenance absent |
 | `src/server.rs`, catalog/OpenAPI fixtures | HTTP/MCP parity and exact thirteen tools | Replace standalone Property list with scoped Entity fetch while deepening existing reads/mutations; retain exact thirteen | Thin adapters, identical semantics and count fixed by accepted surface |
 | `src/agent_contract.rs`, `src/agent-play-contract.txt` | Property/Interaction guidance only | Teach contextual Trait establishment/development, Entity fetch/relevance discipline, accepted preview and non-mechanics | MCP sole authority; no observer-specific knowledge fiction |
 | `tests/world.rs`, `tests/server.rs`, library tests | Delivered Property/Interaction evidence | Prove every acceptance scenario, query counts, plans, concurrency and parity | Preserve all existing tests and claims |
-| dedicated Trait fake/live surfaces | Historical marker runner only | New isolated runner, schemas, fake suite, evidence root and Trait-specific documentation | Historical runner/evidence byte-meaning preserved; no shared manifest or cleanup target |
+| dedicated Trait fake/live surfaces | Original f38 and replacement a564 failures are retained; the latter exposed fractional RFC3339 rejection | Accept valid UTC fractional seconds, require exact normalized roundtrip and bind the unexecuted post-failure runner to 6649 | Historical and failed evidence byte-meaning preserved; no retry, shared manifest or cleanup target |
 
 ## Execution contract
 
@@ -607,10 +645,12 @@ and returns raw results. Root alone updates shared plan state. Run tasks in para
 only where the graph says yes, write surfaces do not overlap and evidence verifies
 independently.
 
-The accepted plan authorizes dependency-ordered T2–T8/T10. T9 additionally requires its
-own fresh explicit User authorization after T8's token-free audit returns GO; plan
-acceptance, implementation acceptance, T8 completion or an earlier historical live
-authorization never substitutes for that gate.
+The accepted plan plus the 2026-08-14 amendment authorized deterministic T2–T8, the
+completed original T9 attempt, token-free replacement readiness T9R and final T10.
+The User separately authorized exactly one MCP `2026-07-28` replacement; T9P
+consumed it and completed as failed. No retry, other candidate or post-failure
+runner execution is authorized. T10 may correct the token-free validator and align
+authorities, but never upgrades the failed evidence into live gameplay success.
 
 ## Task graph
 
@@ -626,8 +666,10 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T6 | completed | T5 | no | Teach Agents and prove the token-free contextual continuity/controller contract | Agent contract, dedicated fake runner/schemas/tests | 5/5 contract tests, runtime-generated thirteen-tool equality and dedicated Trait fake flow plus sixteen failure injections pass with zero model calls |
 | T7 | completed | T5,T6 | no | Run deterministic integration, performance, integrity and independent full review | all implementation/docs/planning surfaces except paid evidence | 107/107 DB-backed tests passed before the final focused regression; the added vacated-statement public World test, 12/12 focused Trait World tests and 75/75 World tests pass; formatter, strict Clippy, shell/link/catalog/diff checks and independent re-review pass with no P0–P3 finding |
 | T8 | completed | T7 | no | Design, freeze and audit the exact token-free live candidate, returning GO or NO-GO | dedicated Trait runner, preflight, private-manifest format, audit record | Two Agents, two sessions, seven calls and zero retries are frozen under digest `3eb10e6ec1d375048dc96fb415ecad8c77b81f177c65138c315711d248d0f449`; live token-free preflight records `codex_invoked=false`, `model_calls=0`, verified cleanup and independent GO with no P0–P3 finding |
-| T9 | pending | T8 + fresh explicit User GO | no | Run exactly one frozen paid Trait candidate and validate authoritative result/cleanup | one new private candidate directory and bounded evidence summary | Contextual Action establishment, later Interaction development, enriched Entity fetch, HTTP gates, no unplanned retry and ownership-safe cleanup pass or exact failure is retained |
-| T10 | pending | T9 | no | Align final authorities and close only the evidence actually earned | plan, game docs, Agent/playtest docs, backlog/map, concept log | Delivered behavior and exact live outcome agree; final review finds no stale or overstated claim |
+| T9 | completed | T8 + explicit User GO | no | Run the original frozen paid Trait candidate and retain its exact outcome | private `candidate-MmwRmcBv` evidence and bounded summary | Digest `f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3` consumed one authorization and one model process call, then failed before Agent MCP reads and without a post-setup Agent submit or Trait mutation; ownership-verified cleanup dropped the database and evidence/sentinel remain |
+| T9R | completed | T9 + accepted replacement decision | no | Freeze and token-free audit exactly one corrected replacement candidate using only MCP `2026-07-28` | current runner/digest, private preflight evidence, audit record, verified failed-evidence archive | Archive preserves 68 files/fingerprints/private permissions, `preflight-cEeVelIZ` returns GO for a564 with zero model calls, thirteen tools, six schemas and verified drop, and focused independent re-review returns GO with no P0–P3 finding |
+| T9P | completed | T9R + explicit User GO received 2026-08-14 | no | Run at most one corrected paid replacement and validate authoritative outcome/cleanup | private `candidate-ydttdFfc` evidence and bounded summary | Digest a564 consumed the replacement authorization and one model process call; four required MCP reads and a valid proposal completed, then the controller falsely rejected valid fractional RFC3339 timestamps before preview; no post-setup Agent submit or Trait mutation occurred, ownership-verified cleanup and exact failure are retained with no retry |
+| T10 | completed | T9P | no | Correct the false fractional-date rejection, align final authorities and close only the evidence actually earned | Trait runner/fake test/digest, plan, game docs, Agent/playtest docs, backlog/map, concept log | Valid fractional seconds pass, impossible calendar fails token-free, 6649 reproduces, setup-aware failed claims agree; second independent Terry/ownership review returns GO with no P0–P3 finding |
 
 ## Task details
 
@@ -900,9 +942,10 @@ independent audit returns GO with no P0–P3 finding.
    only through `get_entity_at_current_place`. The minimum frozen boundary is two
    Agents, two sessions, seven model process calls and zero retries; it does not
    inherit the superseded four-call/initial-Trait candidate.
-2. Pin the exact installed Codex CLI path/version, `gpt-5.6-sol`, high reasoning,
-   login/config/feature surface, strict output schemas and direct-only Aicadia MCP
-   allowlists for every chosen phase.
+2. Discover Codex through `PATH`, canonicalize its local executable only into private
+   evidence, and pin exact `codex-cli 0.147.0`, `gpt-5.6-sol`, high reasoning,
+   login/config/feature surface, the sole current MCP `2026-07-28` wire protocol,
+   strict output schemas and direct-only Aicadia MCP allowlists for every phase.
 3. Preflight the exact thirteen-tool runtime catalog, resume/session support, server/operator
    builds and PostgreSQL ownership create/tag/read/drop using a disposable database
    without `codex exec`.
@@ -936,72 +979,138 @@ independent audit returns GO with no P0–P3 finding.
 - Return NO-GO on any CLI/model/config/schema drift, missing login, catalog mismatch,
   database ownership ambiguity, prior candidate residue or deterministic failure.
 
-### T9 — Run exactly one paid Trait candidate
+### T9 — Run the original paid Trait candidate (completed as failed)
 
-**Objective:** Under one fresh explicit User authorization, exactly one frozen real
-candidate proves contextual Trait continuity and enriched Entity retrieval or leaves
-one exact failed candidate without automatic rerun.
+**Objective:** Retain exactly what the original authorized candidate proved and
+failed to prove, without retrying or reclassifying deterministic evidence.
+
+**Outcome:** Candidate `candidate-MmwRmcBv`, bound to digest
+`f38ed39b7a100ee09cca46743b3b9398f46ccb3d4999f4591f478113fb2b4fa3`,
+consumed its authorization and invoked Codex for exactly one model process call. It
+failed before any Agent MCP read or post-setup Agent submit/Trait mutation because Codex 0.147.0 had not been
+explicitly configured for the sole current MCP `2026-07-28` wire protocol. No legacy
+initialize path, downgrade or fallback is accepted. Ownership-verified cleanup
+dropped the disposable database. The failed evidence and consumed sentinel remain
+authoritative and are preserved as 68 files inside mode-700 archive
+`.aicadia-trait-playtest/archive-original-f38-MmwRmcBv`, with private permissions and
+unchanged content/permission fingerprints.
+
+### T9R — Audit token-free replacement readiness
+
+**Objective:** Freeze and independently audit exactly one corrected replacement
+candidate without model spend, returning GO or exact NO-GO for a future spend
+decision.
 
 **Actions:**
 
-1. After T8 GO, present the exact command, model/reasoning, maximum one candidate,
-   expected token spend boundary and claim; wait for a fresh explicit User GO.
-2. Create and ownership-tag one disposable database and provision/enter the frozen
-   scenario's Characters and ordinary Entities without direct game-row insertion;
-   no Entity begins with a Trait.
-3. Run the frozen privately steered/confirmed Action phase to establish one uniquely
-   marked Trait in context and validate its generated stable id, first version,
-   Activity, Place, participation and current pointer through authoritative HTTP.
-4. Run the frozen later Interaction phase to develop that same stable id, preserving
-   outward participation and no-response semantics; validate predecessor/current,
-   exact prose/targets and zero partial rows through authoritative HTTP before the
-   separate fetch phase.
-5. Run the frozen separate Agent/Entity-fetch phase. Require Mara's Agent to fetch
-   Pip through `get_entity_at_current_place` and receive the correct current
-   Property/Trait associations without ids or statements out of band. Prove any
-   compact orientation versus full-fetch distinction without inventing an
-   observer-specific receipt or knowledge record.
-6. Stop the server and drop only after exact name-plus-token re-verification. Retain
-   private evidence and exact recovery instructions on any ambiguity or cleanup
-   failure.
+1. Bound the corrected portable runner and all candidate material to digest
+   `a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`.
+2. Proved Codex 0.147.0 explicitly enables and parses MCP `2026-07-28` as true in
+   configuration validation and every real command; reject missing/current-protocol
+   drift before any candidate or model call. Add no older initialize/initialized,
+   protocol revision, downgrade, fallback, compatibility shim or dead legacy path.
+3. Preserved the same two Agents, two sessions, seven model process calls, zero
+   retries, strict schemas, direct-only phase allowlists, HTTP gates, database
+   ownership and cleanup boundaries.
+4. Validated terminal cleanup, private permissions, sorted file count and
+   content/permission fingerprints, then moved every original top-level entry into
+   mode-700 archive `.aicadia-trait-playtest/archive-original-f38-MmwRmcBv`.
+   Reverification proves 68 files plus identical content/permission fingerprints;
+   byte content is preserved while paths intentionally changed, leaving a clean
+   active root.
+5. Token-free `preflight-cEeVelIZ` returned GO for a564 with
+   `candidate_started=false`, `authorization_consumed=false`,
+   `codex_invoked=false`, `model_calls=0`, thirteen equal runtime tools, six passed
+   schemas and ownership-verified dropped database. Independent audit found only the
+   stale-status P3 corrected here; focused independent re-review then returned GO
+   with no P0–P3 finding and completed T9R.
 
 **Invariants:**
 
-- Plan acceptance and T8 GO are not token authorization; only the fresh T9 User GO
-  permits the one command.
-- There is exactly one candidate and only the call/session/retry count frozen by T8.
-  Failure consumes authorization and never auto-retries.
-- Authoritative HTTP validation separates establishment, development and Entity-fetch
-  phases; stochastic output never replaces World evidence.
+- The User accepted exactly one replacement candidate, not its paid execution.
+- Preflight records `codex_invoked=false` and `model_calls=0`; the original sentinel
+  and evidence remain intact.
+- Only MCP `2026-07-28` is supported. Missing feature/config, archive ambiguity,
+  catalog mismatch, database ambiguity or any deterministic drift returns NO-GO.
 
 **Evidence:**
 
-- One private candidate manifest and bounded public summary — frozen calls/token
-  claim, contextual Action establishment, Interaction development, stable Trait id,
-  versions/current pointer, Activity/prose/Place/targets, enriched Entity retrieval,
-  authoritative HTTP gates and ownership-safe cleanup all pass; or the exact failed
-  boundary and cleanup are reported without overstating proof.
+- Reproduced digest, token-free fake suites, current-protocol feature assertions,
+  verified archive and private `preflight-cEeVelIZ` manifest prove readiness with
+  zero model calls. Independent audit found only the corrected stale-status P3;
+  focused independent re-review returned GO with no P0–P3 finding.
 
-**Stop conditions:**
+### T9P — Run at most one paid replacement candidate
 
-- Stop immediately on any unexpected call, malformed result, wrong id/statement,
-  retry, authoritative mismatch, Mara leakage, timeout, token-gate mismatch or
-  ownership ambiguity. Never start a second candidate.
+**Objective:** Under the fresh explicit User spend GO received after T9R GO, run the
+one corrected replacement that either proves contextual Trait continuity and
+enriched Entity retrieval or retains one exact failure without automatic retry.
+
+**Outcome:** Candidate `candidate-ydttdFfc`, bound to digest
+`a564ddedd49094dd70b02aad3eefdb39e6334b482d94859d6f61dea720fb1302`,
+consumed the replacement authorization and exactly one model process call. Codex
+usage was `68117` input tokens, `50176` cached input tokens, `798` output tokens and
+`419` reasoning tokens. The Agent completed exactly `get_world`, `get_character`,
+`list_entity_at_current_place` and `list_activity_at_current_place` over MCP
+`2026-07-28`, then returned three valid grounded proposals. The local evidence
+validator rejected valid fractional RFC3339 timestamps emitted by `get_character`
+and `list_activity_at_current_place`. The run stopped before preview with no
+post-setup Agent submit or Trait mutation and before every candidate HTTP gate; no
+retry is authorized.
+Ownership-verified cleanup dropped the disposable database and retained the exact
+failed evidence. Independent audit returned GO for this exact failed claim, with one
+P1 at the date-time validator and no other finding. T10 owns the token-free
+validator correction and honest final authority alignment; it never reclassifies
+this candidate as live success.
+
+**Actions:**
+
+1. Present the exact a564 digest-bound command, model/reasoning, seven-call maximum,
+   zero retries, current-only MCP protocol and replacement claim; wait for a fresh
+   explicit User GO.
+2. Retain the T9R-verified archive untouched and use the clean active evidence root
+   for one distinct private replacement directory, without deleting or weakening
+   the archived consumed-original record.
+3. Run the frozen Action establishment, authoritative HTTP gate, later Interaction
+   development, second HTTP gate and separate Mara Entity-fetch phases.
+4. Stop immediately on any unexpected call or mismatch; verify exact database
+   name-plus-token ownership before drop and retain exact recovery evidence on
+   ambiguity.
+
+**Invariants:**
+
+- The User's explicit 2026-08-14 GO authorizes only this exact a564 T9P candidate;
+  it authorizes no retry, other candidate or protocol fallback.
+- There is at most one replacement candidate. Failure consumes that gate and never
+  retries or falls back to another MCP protocol.
+- Stochastic output never replaces authoritative World/HTTP evidence.
+
+**Evidence:**
+
+- One replacement manifest and bounded summary retain the frozen call/token claim,
+  exact Action/Interaction/Entity-fetch outcome and ownership-safe cleanup, whether
+  success or exact failure.
 
 ### T10 — Align and close the delivered outcome
 
 **Objective:** Every authority and evidence surface states exactly what deterministic
-delivery and the single live candidate proved, with no stale Proposed/Ready language.
+delivery, the failed original and the one replacement outcome proved, with no stale
+Proposed/Ready language.
 
 **Actions:**
 
-1. Update current game/Agent/playtest documentation, capability map, backlog item,
-   concept log and this plan to the exact delivered result.
-2. If T9 failed, retain the failed candidate honestly and leave the live claim
-   incomplete; do not convert deterministic evidence into a stochastic success.
-3. Run final link, stale-term, operation-count, evidence-path and unrelated-diff
+1. Accept the valid UTC fractional-second Chrono form through the existing jq
+   date-time gate, then require exact `todateiso8601` roundtrip; exercise both
+   affected happy outputs and one token-free impossible-calendar failure injection.
+2. Bind the corrected post-failure runner to digest
+   `6649959c7f230f2240f8d1b7e67081c20c473c00654ef36409fa439a8d85a824`
+   without preflight, candidate or model execution.
+3. Update current game/Agent/playtest documentation, capability map, backlog item,
+   concept log and this plan to both exact failed outcomes and the unearned live
+   gameplay claim.
+4. Run final link, stale-term, operation-count, evidence-path and unrelated-diff
    audits plus independent focused re-review.
-4. Mark all tasks and plan complete only when the full Outcome claim is true.
+5. Mark T10 and the plan complete only after that final independent review.
 
 **Invariants:**
 
@@ -1012,7 +1121,7 @@ delivery and the single live candidate proved, with no stale Proposed/Ready lang
 
 - Final authority matrix and validation ladder — accepted complete catalog,
   deterministic evidence, live candidate status and cleanup agree everywhere with
-  no P0–P3 finding.
+  no P0–P3 finding; second independent Terry/ownership review returns GO.
 
 **Stop conditions:**
 
@@ -1061,20 +1170,22 @@ actor/Entity scope, stable identity, lifecycle, public wire behavior, irreversib
 schema, non-mechanics, live claim, external authority, material cost or evidence
 scope.
 
-T9 has an additional immutable gate: any candidate prompt, model, reasoning effort,
-call count, token boundary, database cleanup contract or live claim change after T8
-GO requires a new token-free audit and a new explicit User authorization. A failed
-candidate never authorizes a rerun.
+T9P has an additional immutable gate: any replacement prompt, model, reasoning
+effort, call count, token boundary, current MCP protocol, archive/database cleanup
+contract or live claim change after T9R GO requires a new token-free audit and a new
+explicit User authorization. The failed original never authorizes a rerun, and the
+accepted replacement decision never authorizes spend.
 
 ## Completion conditions
 
 - all three decision rounds and complete acceptance boundary are recorded and the
   accepted plan is implemented without an unapproved scope change;
-- T1–T10 are `completed` and every validation rung passes;
+- T1–T10, including T9R and T9P, are `completed` and every validation rung passes;
 - Trait-free creation, contextual Action establishment, Interaction development,
   accepted Entity projection/history, concurrency, retries, rollback, set-based
   performance and exact thirteen-tool catalog parity are demonstrated;
-- the separately authorized one-candidate live claim and ownership-safe cleanup pass;
+- the original failed candidate remains exact, and the separately authorized
+  replacement outcome plus ownership-safe cleanup are recorded without overclaim;
 - current behavior, concept choices, vocabulary, Agent guidance, playtest evidence
   and backlog agree without stale Trait-deferred or premature executable claims;
 - no known material question, P0–P3 finding or unrelated damage remains;

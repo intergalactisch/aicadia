@@ -16,12 +16,10 @@ readonly CAPABILITIES='["get_world","get_user","get_character","create_character
 readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'
 readonly ACTION_COMMIT_TOOLS='["submit_action"]'
 readonly OBSERVER_TOOLS='["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
-# Public preflight pins the exact currently inspected command, resolved system path
-# and CLI version. Any installation or version drift fails before database or model
-# work and must be deliberately inspected and updated here with its fake evidence.
+# Public preflight discovers Codex through PATH, canonicalizes that executable once
+# for the run and pins its semantic CLI contract. Installation location may differ
+# per machine; version or capability drift still fails before database or model work.
 readonly CODEX_VERSION='codex-cli 0.147.0'
-readonly CODEX_COMMAND_PATH='/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/bin/codex'
-readonly CODEX_SYSTEM_PATH='/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/lib/node_modules/@openai/codex/bin/codex.js'
 readonly SYSTEM_ENV='/usr/bin/env'
 readonly CODEX_MODEL='gpt-5.6-sol'
 readonly CODEX_REASONING_EFFORT='high'
@@ -61,35 +59,15 @@ fail() {
 }
 
 resolve_codex_bin() {
-    local binary
+    local command_name binary
     if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
         [[ -n "${CODEX_BIN:-}" ]] || return 1
-        command -v "$CODEX_BIN" 2>/dev/null || return 1
+        command_name="$CODEX_BIN"
     else
-        binary="$(command -v codex 2>/dev/null)" || return 1
-        [[ "$binary" == "$CODEX_COMMAND_PATH" ]] \
-            || fail "public playtest requires Codex command at $CODEX_COMMAND_PATH; found $binary" || return
-        binary="$(/usr/bin/perl -MCwd=abs_path -e 'my $path=abs_path(shift); defined $path or exit 1; print "$path\n"' "$binary")" || return 1
-        [[ "$binary" == "$CODEX_SYSTEM_PATH" ]] \
-            || fail "public playtest requires Codex at exact inspected path $CODEX_SYSTEM_PATH; found $binary" || return
-        printf '%s\n' "$binary"
+        command_name='codex'
     fi
-}
-
-validate_public_prerequisite_paths() {
-    local name expected actual
-    [[ $INTERNAL_TEST_MODE -eq 0 ]] || return 0
-    while read -r name expected; do
-        actual="$(command -v "$name" 2>/dev/null)" || return 1
-        [[ "$actual" == "$expected" ]] \
-            || fail "public playtest requires exact $name command at $expected; found $actual" || return
-    done <<'PATHS'
-cargo /Users/sanderjansma/.cargo/bin/cargo
-curl /usr/bin/curl
-jq /usr/bin/jq
-openssl /opt/homebrew/bin/openssl
-perl /usr/bin/perl
-PATHS
+    binary="$(command -v "$command_name" 2>/dev/null)" || return 1
+    /usr/bin/perl -MCwd=abs_path -e 'my $path=abs_path(shift); defined $path or exit 1; print "$path\n"' "$binary"
 }
 
 reject_public_overrides() {
@@ -242,7 +220,7 @@ validate_codex_role_config() {
     local -a command
     parse_home="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-codex-parse-XXXXXXXX")" || return 1
     command=(
-        "$codex_bin" --enable code_mode_host
+        "$codex_bin" --enable code_mode_host --enable mcp_2026_07_28
         --config 'suppress_unstable_features_warning=true'
         --config 'features.code_mode.enabled=true'
         --config "features.code_mode.direct_only_tool_namespaces=$CODE_MODE_DIRECT_ONLY_NAMESPACES"
@@ -261,7 +239,7 @@ validate_codex_role_config() {
     features="$(CODEX_HOME="$parse_home" "${command[@]}" features list)" || status=$?
     rm -rf "$parse_home"
     [[ $status -eq 0 ]] || fail 'Codex rejected the pinned Agent configuration.' || return
-    for feature in code_mode code_mode_host; do
+    for feature in code_mode code_mode_host mcp_2026_07_28; do
         awk -v expected="$feature" '$1 == expected && $NF == "true" { found = 1 } END { exit !found }' <<<"$features" \
             || fail "Codex parsed required MCP execution plumbing as disabled: $feature" || return
     done
@@ -293,7 +271,7 @@ validate_codex() {
         and any($entry[0].supported_reasoning_levels[]; .effort == $effort)
     ' <<<"$models" >/dev/null || fail "$CODEX_MODEL with $CODEX_REASONING_EFFORT reasoning is unavailable." || return
     features="$("$codex_bin" features list)" || fail 'Codex feature catalog is unavailable.' || return
-    for feature in "${DISABLED_CODEX_FEATURES[@]}" code_mode code_mode_host; do
+    for feature in "${DISABLED_CODEX_FEATURES[@]}" code_mode code_mode_host mcp_2026_07_28; do
         awk -v expected="$feature" '$1 == expected && $2 != "removed" { found = 1 } END { exit !found }' <<<"$features" \
             || fail "Codex $CODEX_VERSION no longer exposes required feature control: $feature" || return
     done
@@ -321,18 +299,17 @@ preflight() {
         command -v "$prerequisite" >/dev/null 2>&1 || fail "missing prerequisite: $prerequisite" || return
     done
     [[ -x "$SYSTEM_ENV" ]] || fail "required exact environment launcher is unavailable: $SYSTEM_ENV" || return
-    validate_public_prerequisite_paths || return
     codex_bin="$(resolve_codex_bin)" \
-        || fail 'required exact Codex CLI path is unavailable for this playtest mode.' || return
+        || fail 'required Codex CLI is unavailable through PATH for this playtest mode.' || return
     [[ -x "$codex_bin" ]] || fail "Codex binary is not executable: $codex_bin" || return
     [[ -f "$REPO_DIR/Cargo.toml" && -f "$REPO_DIR/src/bin/aicadia-provision-user.rs" && -f "$REPO_DIR/src/bin/aicadia-playtest-database.rs" ]] \
         || fail 'Agent playtest operator binaries are missing.' || return
     validate_output_schemas || fail 'strict action playtest schemas are invalid.' || return
     validate_catalog_fixture || fail 'the checked-in complete Agent tool catalog is invalid.' || return
     validate_allowlists || fail 'least-privilege Agent role allowlists are invalid.' || return
+    validate_codex "$codex_bin" || return
     (cd "$REPO_DIR" && cargo build --quiet --bin aicadia --bin aicadia-provision-user --bin aicadia-playtest-database) \
         || fail 'required Aicadia operator binaries do not build.' || return
-    validate_codex "$codex_bin" || return
     probe_token="$(new_ownership_token)" || fail 'could not generate an unguessable database ownership token.' || return
     [[ "$probe_token" =~ ^[0-9a-f]{64}$ ]] || fail 'generated database ownership token is malformed.' || return
     database_helper probe "$probe_token" >/dev/null \
@@ -554,7 +531,7 @@ build_common_codex_command() {
     local codex_bin="$1" enabled_tools="$2" feature
     CODEX_COMMAND=(
         "$codex_bin" --ask-for-approval never --sandbox read-only --model "$CODEX_MODEL"
-        --enable code_mode_host --config 'suppress_unstable_features_warning=true'
+        --enable code_mode_host --enable mcp_2026_07_28 --config 'suppress_unstable_features_warning=true'
         --config 'features.code_mode.enabled=true'
         --config "features.code_mode.direct_only_tool_namespaces=$CODE_MODE_DIRECT_ONLY_NAMESPACES"
     )
@@ -899,7 +876,8 @@ run_playtest() {
     local codex_bin marker user_a_json user_b_json user_a user_b session_id revision
     local phase1_exit phase2_exit phase3_exit observer_exit entity_id place_id cleanup_failed=0
     preflight || return 1
-    codex_bin="$(resolve_codex_bin)" || return 1
+    codex_bin="$INSPECTED_CODEX_BIN"
+    [[ -x "$codex_bin" ]] || fail 'the Codex executable inspected by preflight is no longer executable.' || return
     prepare_artifacts || return 1
     trap 'on_exit $?' EXIT
     trap 'on_signal INT 130' INT
