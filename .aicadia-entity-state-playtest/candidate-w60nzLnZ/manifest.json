@@ -1,0 +1,60 @@
+{
+  "run_id": "candidate-w60nzLnZ",
+  "started_at": "2026-08-15T07:47:01Z",
+  "evidence_kind": "live_combined_state_candidate",
+  "candidate_started": true,
+  "authorization_consumed": true,
+  "codex_invoked": true,
+  "model_calls": 1,
+  "actual_usage_events": [
+    {
+      "input_tokens": 68676,
+      "cached_input_tokens": 52224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 801,
+      "reasoning_output_tokens": 498
+    }
+  ],
+  "candidate_digest": "832b4a7456ebfb8912094ac812040b10f7b5e6f6867fcc3c4237e4e387d14282",
+  "frozen": {
+    "agents": 1,
+    "sessions": 1,
+    "process_calls": 3,
+    "retries": 0,
+    "token_boundary": "three paid model process calls; Codex CLI 0.147.0 exposes no enforceable per-run token ceiling",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "medium",
+    "timeout_seconds_per_call": 600
+  },
+  "codex": {
+    "path": "/Users/sanderjansma/Library/Application Support/Herd/config/nvm/versions/node/v22.21.1/lib/node_modules/@openai/codex/bin/codex.js",
+    "version": "codex-cli 0.147.0"
+  },
+  "deployment": {
+    "database": "aicadia_playtest_statelive_882b9bb36af5cfeff3a7b",
+    "ownership_token": "882b9bb36af5cfeff3a7b0ffbf447ad2ca7b0d37d48c3b7526c0b155235cfe8a",
+    "server_address": null,
+    "status": "dropped"
+  },
+  "provisioning": {
+    "pip_user": "a61654b0-c139-4e44-8e11-98011f14e80c"
+  },
+  "setup": {
+    "status": "passed",
+    "pip_entity_id": "c455348b-26f0-4512-a0fb-5e12f947ddfa",
+    "place_id": "e611297e-ad42-4924-ba1e-1b63a42d120b"
+  },
+  "phases": {
+    "propose": "pending",
+    "preview": "pending",
+    "commit": "pending",
+    "http_gate": "pending"
+  },
+  "validation": "failed",
+  "run_status": "failed",
+  "cleanup": {
+    "intent": "exact_name_plus_unguessable_token",
+    "status": "ownership_verified_and_dropped",
+    "recovery": null
+  }
+}

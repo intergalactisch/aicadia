@@ -206,3 +206,36 @@ fn error_codes_have_one_compiler_checked_wire_spelling() {
         );
     }
 }
+
+#[test]
+fn action_wire_accepts_only_the_current_combined_state_variant() {
+    let request_id = Uuid::new_v4();
+    let current = serde_json::json!({
+        "request_id": request_id,
+        "expected_place_revision": "opaque-unparsed-here",
+        "prose": "One state package changes.",
+        "consequence": {
+            "type": "change_entity_state",
+            "property_change": [],
+            "trait_change": []
+        }
+    });
+    assert!(serde_json::from_value::<SubmitActionInput>(current).is_ok());
+
+    for old_type in ["change_entity_property", "change_entity_trait"] {
+        let old = serde_json::json!({
+            "request_id": request_id,
+            "expected_place_revision": "opaque-unparsed-here",
+            "prose": "An obsolete state package is rejected.",
+            "consequence": {
+                "type": old_type,
+                "property_change": [],
+                "trait_change": []
+            }
+        });
+        assert!(
+            serde_json::from_value::<SubmitActionInput>(old).is_err(),
+            "the superseded {old_type} public input must stay absent"
+        );
+    }
+}

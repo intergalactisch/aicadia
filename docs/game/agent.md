@@ -115,11 +115,12 @@ The Agent asks for no User, Character or Place id. It must:
 1. Call `get_character`.
 2. Only when it returns `character_not_found`, privately present exactly three
    concrete candidates in the User's language. Each candidate conveys the complete
-   meaning of the English name, description and any 0–100 initial Properties that
-   World would receive.
+   meaning of the English name, description and any independent 0–100 initial
+   Properties and 0–100 initial Traits that World would receive.
 3. Receive the User's selection and optional steering. Then introduce the resulting
    person naturally and completely in the User's language, while privately retaining
-   semantically identical English content and canonical Property keys for World, and
+   semantically identical English content, canonical Property keys and exact Trait
+   statements for World, and
    wait for explicit confirmation. Selection alone is not confirmation. Never expose JSON, field
    labels, untranslated payload text or transport preparation.
 4. Only after confirmation, call `create_character` once with that privately retained
@@ -133,9 +134,9 @@ The Agent asks for no User, Character or Place id. It must:
    and the one entry Place.
 7. Only when `enter_world` returns `entry_place_not_found`, call
    `create_entry_place` once with the semantic name and description for World
-   genesis, then call `enter_world` again. The default Property list is empty. If the
-   Agent proposes initial Place Properties, it presents their complete meaning and
-   obtains confirmation before creation. This genesis branch adds no second
+   genesis, then call `enter_world` again. Both state lists default to empty. If the
+   Agent proposes initial Place Properties or Traits, it presents their complete
+   meaning and obtains confirmation before creation. This genesis branch adds no second
    three-choice ceremony.
 8. If `create_entry_place` returns `entry_place_already_exists`, another concurrent
    Agent won genesis. Do not propose another Place; call `enter_world` again.
@@ -152,11 +153,11 @@ This first-use error path is deliberate because zero entry Places is valid befor
 genesis. `create_entry_place` never creates later Places, and no current tool performs
 movement, discovery or arbitrary placement.
 
-Any Agent use of `create_entity` with initial Properties follows the same authority
-boundary: the User steers and confirms the complete Entity and Property meaning, the
-Agent retains canonical English structured input privately, and World validates and
-writes the atomic bundle. A User never supplies a direct storage patch. Empty
-`property` preserves the existing creation behavior.
+Any Agent use of `create_entity` with initial Properties and Traits follows the same
+authority boundary: the User steers and confirms the complete Entity and state
+meaning, the Agent retains canonical English structured input privately, and World
+validates and writes the atomic bundle. A User never supplies a direct storage patch.
+Empty state lists preserve the existing creation behavior.
 
 ## Required private-workshop action flow
 
@@ -173,8 +174,8 @@ the Agent must:
 4. present exactly three grounded directions in private conversation;
 5. receive one selection and optional free steering from the User;
 6. present the complete intended passage and either the newly established in-world
-   subject with its initial Properties, every exact local Property change or every
-   typed Trait establishment/development
+   subject with all initial Properties and Traits, or every exact local Property
+   change and typed Trait establishment/development in the one state package,
    naturally in the User's language, while privately retaining semantically
    identical English prose and canonical structured values for World. A Trait
    preview names the exact Entity/lifecycle and current/new characterization where

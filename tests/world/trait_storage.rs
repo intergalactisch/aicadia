@@ -101,7 +101,7 @@ async fn trait_migration_preserves_actions_and_admits_only_action_or_interaction
             .any(|(_, tag)| tag == "change_entity_property")
     );
 
-    let action_activity_id = insert_trait_action_activity(&pool, user_id).await;
+    let action_activity_id = insert_historical_trait_action_activity(&pool, user_id).await;
     let action_trait_id = Uuid::new_v4();
     insert_complete_trait_root(
         &pool,
@@ -678,7 +678,7 @@ async fn trait_bulk_failure_rolls_back_activity_root_version_and_current(pool: P
             request_id, request_fingerprint, action_consequence
         ) VALUES (
             $1, 'submit_action', $2, 'A whole Trait bundle changes.',
-            $3, $4, 'change_entity_trait'
+            $3, $4, 'change_entity_state'
         )
         "#,
     )

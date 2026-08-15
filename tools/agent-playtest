@@ -9,13 +9,13 @@ readonly PROPOSALS_SCHEMA="$SCHEMA_DIR/proposals.json"
 readonly PREVIEW_SCHEMA="$SCHEMA_DIR/preview.json"
 readonly COMMIT_SCHEMA="$SCHEMA_DIR/commit.json"
 readonly OBSERVER_SCHEMA="$SCHEMA_DIR/observer.json"
-# This runner preserves the accepted Property-era trail-marker evidence. Its fake
-# replay must never depend on the evolving current runtime catalog.
-readonly TOOL_CATALOG="$SCHEMA_DIR/historical-agent-tool-catalog.json"
-readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place","submit_action","submit_interaction"]'
-readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'
+# Public preflight and live execution bind to the compiler-generated current
+# catalog. The Property-era catalog remains a test-only historical snapshot.
+readonly TOOL_CATALOG="$REPO_DIR/tests/agent-tool-catalog.json"
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","get_entity_at_current_place","submit_action","submit_interaction"]'
+readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
 readonly ACTION_COMMIT_TOOLS='["submit_action"]'
-readonly OBSERVER_TOOLS='["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+readonly OBSERVER_TOOLS='["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'
 # Public preflight discovers Codex through PATH, canonicalizes that executable once
 # for the run and pins its semantic CLI contract. Installation location may differ
 # per machine; version or capability drift still fails before database or model work.
@@ -25,6 +25,9 @@ readonly CODEX_MODEL='gpt-5.6-sol'
 readonly CODEX_REASONING_EFFORT='high'
 readonly CODE_MODE_DIRECT_ONLY_NAMESPACES='["mcp__aicadia"]'
 readonly DEFAULT_AGENT_TIMEOUT_SECONDS=600
+readonly MAX_MODEL_CALLS=4
+readonly MAX_RETRIES=0
+readonly TOKEN_BOUNDARY='four paid model process calls; Codex CLI 0.147.0 exposes no enforceable per-run token ceiling'
 readonly SELECTED_PROPOSAL_ID='two'
 readonly STEERING='Make it a weathered cedar trail marker whose carving includes the unique playtest marker verbatim.'
 readonly DISABLED_CODEX_FEATURES=(
@@ -183,9 +186,11 @@ validate_output_schemas() {
     jq -e '
         .type == "object" and .additionalProperties == false
         and .properties.status.const == "observed"
-        and (.required | sort) == (["status","marker","entity_id","place_id","prose","entity_name"] | sort)
+        and (.required | sort) == (["status","marker","entity_id","place_id","prose","entity_name","entity_description","property_key","property_text"] | sort)
         and .properties.entity_id.format == "uuid"
         and .properties.place_id.format == "uuid"
+        and .properties.property_key.const == "material"
+        and .properties.property_text.const == "weathered cedar"
     ' "$observer_schema" >/dev/null
 }
 
@@ -369,9 +374,14 @@ prepare_artifacts() {
         --arg evidence_kind "$([[ $INTERNAL_TEST_MODE -eq 1 ]] && printf fake_controller_test || printf live_candidate)" \
         --arg codex_path "$INSPECTED_CODEX_BIN" --arg codex_version "$INSPECTED_CODEX_VERSION" \
         --arg model "$CODEX_MODEL" --arg effort "$CODEX_REASONING_EFFORT" \
-        --arg ownership_token "$OWNERSHIP_TOKEN" --arg recovery "$recovery" \
+        --arg ownership_token "$OWNERSHIP_TOKEN" --arg recovery "$recovery" --arg boundary "$TOKEN_BOUNDARY" \
         --argjson timeout "$timeout" '
         {run_id:$run_id,started_at:$started_at,evidence_kind:$evidence_kind,
+         candidate_started:($evidence_kind=="live_candidate"),
+         authorization_consumed:($evidence_kind=="live_candidate"),
+         codex_invoked:false,model_calls:0,actual_usage_events:null,
+         paid_candidate:($evidence_kind=="live_candidate"),
+         frozen:{agents:2,sessions:2,process_calls:4,retries:0,token_boundary:$boundary},
          codex:{path:$codex_path,version:$codex_version,model:$model,reasoning_effort:$effort},
          agent_timeout_seconds:$timeout,
          deployment:{database:$database,ownership_token:$ownership_token,server_address:null,status:"not_created"},
@@ -392,12 +402,12 @@ prepare_artifacts() {
 write_initial_prompts() {
     local marker="$1"
     cat >"$RUN_DIR/action-phase-1.prompt.txt" <<PROMPT
-You are the action Agent in a bounded Aicadia MCP clean-room playtest. The User has consciously asked for their next action in a disposable shared World. You have only five read-only Aicadia tools. Call each exactly once in this order: get_world, get_character, list_entity_at_current_place, list_activity_at_current_place, list_entity_property_at_current_place. Use no cursor and supply no out-of-band or User-provided ids; read authoritative ids only from World responses. If the three exact-Place pages do not have the same place_revision, fail instead of proposing.
+You are the action Agent in a bounded Aicadia MCP clean-room playtest. The User has consciously asked for their next action in a disposable shared World. You have only four read-only Aicadia tools. Call each exactly once in this order: get_world, get_character, list_entity_at_current_place, list_activity_at_current_place. Use no cursor and supply no out-of-band or User-provided ids; read authoritative ids only from World responses. If the three exact-Place results do not have the same place_revision, fail instead of proposing. Confirm from get_character that the actor's combined current Property/Trait page is empty.
 
 After those grounded reads, return exactly three distinct private action directions. Do not call submit_action or any mutating tool. Do not draft a final package, choose for the User, invent a confirmation or expose private reasoning. The evidence marker is $marker; copy it only into the required marker field. Return only the strict schema result. Copy the unchanged common place_revision into place_revision. Give proposal ids exactly one, two and three in that order, and ground every direction in the observed Character, Place, Entity or Activity state.
 PROMPT
     cat >"$RUN_DIR/observer.prompt.txt" <<PROMPT
-You are an independent observer Agent in a bounded Aicadia MCP clean-room playtest. A different Character has already committed one action at your exact current Place. The evidence marker is $marker. Use only direct Aicadia MCP reads. Call get_character, list_entity_at_current_place and list_activity_at_current_place exactly once each in that order, with no cursor and no out-of-band or User-provided ids. Read authoritative ids from World responses. Find exactly one placed Entity whose name contains the marker and exactly one submit_action Activity whose canonical prose contains it. Return only the strict schema result, copying authoritative ids, the exact Entity name and exact prose. Never mutate, delegate, use another tool or fabricate missing evidence.
+You are an independent observer Agent in a bounded Aicadia MCP clean-room playtest. A different Character has already committed one action at your exact current Place. The evidence marker is $marker. Use only direct Aicadia MCP reads. Call get_character, list_entity_at_current_place, get_entity_at_current_place for the marker Entity id derived from compact orientation, and list_activity_at_current_place exactly once each in that order, with no cursors and no out-of-band or User-provided ids. Require one shared place_revision. Find exactly one placed Entity whose name contains the marker, fetch its complete current state, require exactly material = weathered cedar, and find exactly one submit_action Activity whose canonical prose and Property change match it. Return only the strict schema result, copying authoritative ids, exact Entity name and description, exact prose, Property key and text. Never mutate, delegate, use another tool or fabricate missing evidence.
 PROMPT
     chmod 600 "$RUN_DIR/action-phase-1.prompt.txt" "$RUN_DIR/observer.prompt.txt"
 }
@@ -560,11 +570,14 @@ build_sanitized_env() {
 }
 
 run_codex_process() {
-    local cwd="$1" user_id="$2" events="$3" stderr="$4" timeout status timeout_marker agent_pgid
+    local cwd="$1" user_id="$2" events="$3" stderr="$4" timeout status timeout_marker agent_pgid actual_usage
     shift 4
     timeout="$(agent_timeout_seconds)" || return
     build_sanitized_env
     timeout_marker="${events%.events.jsonl}.timeout"
+    if [[ $INTERNAL_TEST_MODE -eq 0 ]]; then
+        manifest_set '.codex_invoked=true | .model_calls += 1' || return
+    fi
     perl -e 'chdir shift or exit 125; setpgrp 0,0; exec @ARGV' "$cwd" \
         "$SYSTEM_ENV" "${SANITIZED_ENV[@]}" AICADIA_USER_ID="$user_id" "$@" >"$events" 2>"$stderr" &
     AGENT_PID=$!
@@ -577,6 +590,10 @@ run_codex_process() {
     AGENT_WATCHDOG_PID=''
     terminate_agent_group "$agent_pgid"
     AGENT_PID=''
+    if [[ $INTERNAL_TEST_MODE -eq 0 ]]; then
+        actual_usage="$(jq -s '[..|objects|.usage? // empty]|if length==0 then null else . end' "$RUN_DIR"/*.events.jsonl)" || return
+        manifest_set '.actual_usage_events=$usage' --argjson usage "$actual_usage" || return
+    fi
     [[ ! -f "$timeout_marker" ]] || return 142
     return "$status"
 }
@@ -628,28 +645,33 @@ phase_one_is_valid() {
     local events="$1" final="$2" marker="$3"
     events_are_clean "$events" || return
     jq -s -e '
+        def valid_optional_limit:
+            . == {} or ((keys == ["limit"])
+                and (.limit|type)=="number" and (.limit|floor)==.limit
+                and .limit>=1 and .limit<=100);
         [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
         | [$observed[]|select(.event_type=="item.started")|.item] as $started
         | [$observed[]|select(.event_type=="item.completed")|.item] as $c
-        | ($observed|length)==10
-        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed"]
-        and ($started|length)==5 and ($c|length)==5
-        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==5
+        | ($observed|length)==8
+        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed"]
+        and ($started|length)==4 and ($c|length)==4
+        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==4
         and [$started[].tool]==[$c[].tool] and [$started[].arguments]==[$c[].arguments]
         and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
-        and [$c[].tool]==["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]
+        and [$c[].tool]==["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]
         and all($c[];.server=="aicadia" and .status=="completed" and .error==null and (.result.structured_content|type)=="object")
         and $c[0].arguments=={} and $c[1].arguments=={}
-        and ($c[2].arguments=={} or $c[2].arguments=={limit:25})
-        and ($c[3].arguments=={} or $c[3].arguments=={limit:25})
-        and ($c[4].arguments=={} or $c[4].arguments=={limit:25})
+        and ($c[2].arguments|valid_optional_limit)
+        and ($c[3].arguments|valid_optional_limit)
         and $c[0].result.structured_content.name=="Aicadia"
-        and ($c[1].result.structured_content.current_place|type)=="object"
-        and $c[2].result.structured_content.place==$c[1].result.structured_content.current_place
-        and $c[3].result.structured_content.place==$c[1].result.structured_content.current_place
-        and $c[4].result.structured_content.place==$c[1].result.structured_content.current_place
+        and ($c[1].result.structured_content.character.current_place|type)=="object"
+        and $c[1].result.structured_content.current_state.association==[]
+        and $c[1].result.structured_content.current_state.next==null
+        and $c[2].result.structured_content.place.id==$c[1].result.structured_content.character.current_place.entity.id
+        and $c[3].result.structured_content.place.id==$c[1].result.structured_content.character.current_place.entity.id
+        and $c[1].result.structured_content.place_revision==$c[2].result.structured_content.place_revision
+        and $c[1].result.structured_content.place_revision==$c[3].result.structured_content.place_revision
         and $c[2].result.structured_content.place_revision==$c[3].result.structured_content.place_revision
-        and $c[2].result.structured_content.place_revision==$c[4].result.structured_content.place_revision
     ' "$events" >/dev/null || return
     local revision
     revision="$(jq -sr '[.[]|select(.type=="item.completed" and .item.type=="mcp_tool_call")|.item][2].result.structured_content.place_revision' "$events")" || return
@@ -730,32 +752,55 @@ observer_is_valid() {
     local events="$1" final="$2" marker="$3" preview="$4" entity_id="$5" place_id="$6"
     events_are_clean "$events" || return
     jq -s -e --arg marker "$marker" --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" '
+        def valid_optional_limit:
+            . == {} or ((keys == ["limit"])
+                and (.limit|type)=="number" and (.limit|floor)==.limit
+                and .limit>=1 and .limit<=100);
+        def valid_entity_args($entity):
+            . == {entity_id:$entity} or (((keys|sort) == ["entity_id","limit"])
+                and .entity_id==$entity and (.limit|type)=="number"
+                and (.limit|floor)==.limit and .limit>=1 and .limit<=100);
         [.[]|select(.item?.type=="mcp_tool_call")|{event_type:.type,item:.item}] as $observed
         | [$observed[]|select(.event_type=="item.started")|.item] as $started
         | [$observed[]|select(.event_type=="item.completed")|.item] as $c
-        | ($observed|length)==6
-        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed"]
-        and ($started|length)==3 and ($c|length)==3
-        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==3
+        | ($observed|length)==8
+        and [$observed[].event_type]==["item.started","item.completed","item.started","item.completed","item.started","item.completed","item.started","item.completed"]
+        and ($started|length)==4 and ($c|length)==4
+        and [$started[].id]==[$c[].id] and ([$c[].id]|unique|length)==4
         and [$started[].tool]==[$c[].tool] and [$started[].arguments]==[$c[].arguments]
         and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
-        and [$c[].tool]==["get_character","list_entity_at_current_place","list_activity_at_current_place"]
+        and [$c[].tool]==["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]
         and all($c[];.server=="aicadia" and .status=="completed" and .error==null)
         and $c[0].arguments=={}
-        and ($c[1].arguments=={} or $c[1].arguments=={limit:25})
-        and ($c[2].arguments=={} or $c[2].arguments=={limit:25})
-        and $c[0].result.structured_content.current_place.entity.id==$place
-        and $c[1].result.structured_content.place.entity.id==$place
-        and any($c[1].result.structured_content.entity[];.id==$entity and .name==$preview[0].consequence.name)
-        and $c[2].result.structured_content.place.entity.id==$place
-        and any($c[2].result.structured_content.activity[];
+        and ($c[1].arguments|valid_optional_limit)
+        and ($c[2].arguments|valid_entity_args($entity))
+        and ($c[3].arguments|valid_optional_limit)
+        and $c[0].result.structured_content.character.current_place.entity.id==$place
+        and $c[1].result.structured_content.place.id==$place
+        and any($c[1].result.structured_content.entity[];
+            .id==$entity and .name==$preview[0].consequence.name
+            and .description==$preview[0].consequence.description and (has("current_state")|not))
+        and $c[2].result.structured_content.place.id==$place
+        and $c[2].result.structured_content.entity=={
+            id:$entity,name:$preview[0].consequence.name,description:$preview[0].consequence.description}
+        and $c[2].result.structured_content.current_state.association==[{
+            type:"property",property:{key:"material",value:{type:"text",text:"weathered cedar"}}}]
+        and $c[2].result.structured_content.current_state.next==null
+        and $c[3].result.structured_content.place.id==$place
+        and $c[0].result.structured_content.place_revision==$c[1].result.structured_content.place_revision
+        and $c[0].result.structured_content.place_revision==$c[2].result.structured_content.place_revision
+        and $c[0].result.structured_content.place_revision==$c[3].result.structured_content.place_revision
+        and any($c[3].result.structured_content.activity[];
             .operation=="submit_action" and .prose==$preview[0].prose
             and .context_place.entity.id==$place
+            and .property_change==[{entity:{id:$entity,name:$preview[0].consequence.name},key:"material",value:{type:"text",text:"weathered cedar"}}]
             and any(.involved_entity[];.entity.id==$entity and .role=="subject"))
     ' "$events" >/dev/null || return
     jq -e --arg marker "$marker" --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" '
         .status=="observed" and .marker==$marker and .entity_id==$entity and .place_id==$place
         and .prose==$preview[0].prose and .entity_name==$preview[0].consequence.name
+        and .entity_description==$preview[0].consequence.description
+        and .property_key=="material" and .property_text=="weathered cedar"
     ' "$final" >/dev/null
 }
 
@@ -765,29 +810,39 @@ validate_authoritative_http() {
     place_id="$(jq -r '.place_id' "$commit")"
     activity_id="$(jq -r '.activity_id' "$commit")"
     http_request GET '/api/place/current/entity?limit=100' "$user_b" '' 200 "$RUN_DIR/http-observer-entity.json" || return
+    http_request GET "/api/place/current/entity/$entity_id?limit=100" "$user_b" '' 200 "$RUN_DIR/http-observer-entity-state.json" || return
     http_request GET '/api/place/current/activity?limit=100' "$user_b" '' 200 "$RUN_DIR/http-observer-activity.json" || return
-    http_request GET "/api/entity/$entity_id" '' '' 200 "$RUN_DIR/http-entity.json" || return
     http_request GET /api/character "$user_a" '' 200 "$RUN_DIR/http-action-character.json" || return
     http_request GET /api/character "$user_b" '' 200 "$RUN_DIR/http-observer-character.json" || return
     jq -e --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" \
-        '.place.entity.id==$place and (.entity|length)==1 and .entity[0].id==$entity and .entity[0].name==$preview[0].consequence.name' \
+        '.place.id==$place
+        and ([.entity[]|select(.id==$entity
+          and .name==$preview[0].consequence.name
+          and .description==$preview[0].consequence.description)]|length)==1' \
         "$RUN_DIR/http-observer-entity.json" >/dev/null || return
+    jq -e --arg entity "$entity_id" --arg place "$place_id" --slurpfile preview "$preview" '
+        .place.id==$place and .entity.id==$entity
+        and .entity.name==$preview[0].consequence.name
+        and .entity.description==$preview[0].consequence.description
+        and .current_state.association==[{
+          type:"property",property:{key:"material",value:{type:"text",text:"weathered cedar"}}}]
+        and .current_state.next==null
+    ' "$RUN_DIR/http-observer-entity-state.json" >/dev/null || return
     jq -e --arg activity "$activity_id" --arg entity "$entity_id" --arg place "$place_id" \
         --slurpfile preview "$preview" --slurpfile action_character "$RUN_DIR/http-action-character.json" '
-        .place.entity.id==$place
+        .place.id==$place
         and ([.activity[]|select(.operation=="submit_action")]|length)==1
         and ([.activity[]|select(.id==$activity and .operation=="submit_action" and .prose==$preview[0].prose
-            and .actor_character.id==$action_character[0].entity.id
+            and .actor_character.id==$action_character[0].character.entity.id
             and .context_place.entity.id==$place
+            and .property_change==[{
+              entity:{id:$entity,name:$preview[0].consequence.name},
+              key:"material",value:{type:"text",text:"weathered cedar"}}]
             and any(.involved_entity[];.entity.id==$entity and .role=="subject")
             and any(.involved_entity[];.entity.id==$place and .role=="location"))]|length)==1
     ' "$RUN_DIR/http-observer-activity.json" >/dev/null || return
-    jq -e --arg entity "$entity_id" --arg user "$user_a" --slurpfile preview "$preview" '
-        .id==$entity and .introduced_by_user_id==$user
-        and .name==$preview[0].consequence.name and .description==$preview[0].consequence.description
-    ' "$RUN_DIR/http-entity.json" >/dev/null || return
-    jq -e --arg place "$place_id" '.current_place.entity.id==$place' "$RUN_DIR/http-action-character.json" >/dev/null || return
-    jq -e --arg place "$place_id" '.current_place.entity.id==$place' "$RUN_DIR/http-observer-character.json" >/dev/null
+    jq -e --arg place "$place_id" '.character.current_place.entity.id==$place' "$RUN_DIR/http-action-character.json" >/dev/null || return
+    jq -e --arg place "$place_id" '.character.current_place.entity.id==$place' "$RUN_DIR/http-observer-character.json" >/dev/null
 }
 
 stop_server() {
@@ -827,7 +882,8 @@ cleanup_deployment() {
     if [[ $CLEANUP_REQUIRED -eq 1 ]]; then
         if database_helper drop "$DATABASE_NAME" "$OWNERSHIP_TOKEN" >"$RUN_DIR/database-drop.log" 2>&1; then
             CLEANUP_REQUIRED=0
-            manifest_set '.cleanup.status="dropped" | .cleanup.recovery=null' || true
+            manifest_set '.deployment.status="dropped" | .deployment.server_address=null
+                | .cleanup.status="dropped" | .cleanup.recovery=null' || true
         else
             recovery="DATABASE_URL=<PostgreSQL administration URL> cargo run --quiet --bin aicadia-playtest-database -- drop $DATABASE_NAME $OWNERSHIP_TOKEN"
             manifest_set '.cleanup.status="failed" | .cleanup.recovery=$recovery' --arg recovery "$recovery" || true
@@ -959,6 +1015,10 @@ run_playtest() {
         return
     fi
     manifest_set '.phases.observer={status:"passed"}' || return
+    if [[ $INTERNAL_TEST_MODE -eq 0 ]]; then
+        [[ "$(jq -r '.model_calls' "$MANIFEST")" == "$MAX_MODEL_CALLS" ]] \
+            || fail 'candidate did not consume exactly four frozen calls.' || return
+    fi
     cleanup_deployment || cleanup_failed=1
     if [[ $cleanup_failed -ne 0 ]]; then
         cleanup_local_directories
@@ -975,7 +1035,7 @@ run_playtest() {
     if [[ $INTERNAL_TEST_MODE -eq 1 ]]; then
         printf 'Fake controller test passed; this is not live Agent evidence. Artifacts: %s\n' "$RUN_DIR"
     else
-        printf 'Action playtest passed: one resumed Agent produced three proposals, retained one confirmed package and submitted exactly once; an independent Agent and HTTP observed it; disposable World dropped. Artifacts: %s\n' "$RUN_DIR"
+        printf 'Property live candidate passed exactly four calls with zero retries: one resumed Agent produced three proposals, retained one confirmed initial-Property package and submitted exactly once; an independent Agent and HTTP observed current Property state; disposable World dropped. Artifacts: %s\n' "$RUN_DIR"
     fi
 }
 

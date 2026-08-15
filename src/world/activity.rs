@@ -19,17 +19,239 @@ pub(super) fn action_fingerprint(input: &SubmitAction) -> Vec<u8> {
                 fingerprint_field(&mut hash, field);
             }
             fingerprint_property_input(&mut hash, &consequence.property);
+            if !consequence.r#trait.is_empty() {
+                fingerprint_field(&mut hash, b"initial_trait_v1");
+                fingerprint_trait_input(&mut hash, &consequence.r#trait);
+            }
         }
-        ActionConsequence::ChangeEntityProperty(consequence) => {
-            fingerprint_field(&mut hash, b"change_entity_property");
-            fingerprint_property_change(&mut hash, &consequence.property_change);
-        }
-        ActionConsequence::ChangeEntityTrait(consequence) => {
-            fingerprint_field(&mut hash, b"change_entity_trait");
-            fingerprint_trait_change(&mut hash, &consequence.trait_change);
+        ActionConsequence::ChangeEntityState(consequence) => {
+            match (
+                consequence.property_change.is_empty(),
+                consequence.trait_change.is_empty(),
+            ) {
+                (false, true) => {
+                    fingerprint_field(&mut hash, b"change_entity_property");
+                    fingerprint_property_change(&mut hash, &consequence.property_change);
+                }
+                (true, false) => {
+                    fingerprint_field(&mut hash, b"change_entity_trait");
+                    fingerprint_trait_change(&mut hash, &consequence.trait_change);
+                }
+                (false, false) => {
+                    fingerprint_field(&mut hash, b"change_entity_state");
+                    fingerprint_property_change(&mut hash, &consequence.property_change);
+                    fingerprint_trait_change(&mut hash, &consequence.trait_change);
+                }
+                (true, true) => unreachable!("empty state change is rejected during normalization"),
+            }
         }
     }
     hash.finalize().to_vec()
+}
+
+#[cfg(test)]
+mod fingerprint_test {
+    use super::*;
+
+    fn revision() -> PlaceRevision {
+        PlaceRevision::from_parts(
+            EntityId(Uuid::from_u128(1)),
+            DateTime::<Utc>::from_timestamp(1_723_689_600, 123_000_000).unwrap(),
+            ActivityId(Uuid::from_u128(2)),
+        )
+    }
+
+    fn base_hash(prose: &str) -> Sha256 {
+        let revision = revision();
+        let mut hash = Sha256::new();
+        for field in [
+            b"aicadia-submit-action-fingerprint-v1".as_slice(),
+            revision.fingerprint_bytes().as_slice(),
+            prose.as_bytes(),
+        ] {
+            fingerprint_field(&mut hash, field);
+        }
+        hash
+    }
+
+    #[test]
+    fn single_kind_state_fingerprints_remain_exactly_legacy_compatible() {
+        let entity_id = EntityId(Uuid::from_u128(3));
+        let property = SubmitAction {
+            request_id: Uuid::from_u128(4),
+            expected_place_revision: revision(),
+            prose: "Mara records one fact.".to_owned(),
+            consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                property_change: vec![EntityPropertyChangeInput {
+                    entity_id,
+                    key: "leg_count".to_owned(),
+                    value: PropertyValue::Integer(3),
+                }],
+                trait_change: Vec::new(),
+            }),
+        }
+        .normalize()
+        .unwrap();
+        let mut expected_property = base_hash("Mara records one fact.");
+        fingerprint_field(&mut expected_property, b"change_entity_property");
+        fingerprint_property_change(
+            &mut expected_property,
+            &[EntityPropertyChangeInput {
+                entity_id,
+                key: "leg_count".to_owned(),
+                value: PropertyValue::Integer(3),
+            }],
+        );
+        assert_eq!(
+            action_fingerprint(&property),
+            expected_property.finalize().as_slice()
+        );
+
+        let r#trait = SubmitAction {
+            request_id: Uuid::from_u128(5),
+            expected_place_revision: revision(),
+            prose: "Mara records one characterization.".to_owned(),
+            consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                property_change: Vec::new(),
+                trait_change: vec![EntityTraitChangeInput::Establish {
+                    entity_id,
+                    statement: "Jumps unusually high.".to_owned(),
+                }],
+            }),
+        }
+        .normalize()
+        .unwrap();
+        let mut expected_trait = base_hash("Mara records one characterization.");
+        fingerprint_field(&mut expected_trait, b"change_entity_trait");
+        fingerprint_trait_change(
+            &mut expected_trait,
+            &[EntityTraitChangeInput::Establish {
+                entity_id,
+                statement: "Jumps unusually high.".to_owned(),
+            }],
+        );
+        assert_eq!(
+            action_fingerprint(&r#trait),
+            expected_trait.finalize().as_slice()
+        );
+    }
+
+    #[test]
+    fn combined_state_and_initial_trait_use_new_order_independent_components() {
+        let entity_id = EntityId(Uuid::from_u128(6));
+        let state = |reverse: bool| {
+            let mut property_change = vec![
+                EntityPropertyChangeInput {
+                    entity_id,
+                    key: "leg_count".to_owned(),
+                    value: PropertyValue::Integer(3),
+                },
+                EntityPropertyChangeInput {
+                    entity_id,
+                    key: "temper".to_owned(),
+                    value: PropertyValue::Text("hot".to_owned()),
+                },
+            ];
+            let mut trait_change = vec![
+                EntityTraitChangeInput::Establish {
+                    entity_id,
+                    statement: "Jumps unusually high.".to_owned(),
+                },
+                EntityTraitChangeInput::Establish {
+                    entity_id,
+                    statement: "Startles easily.".to_owned(),
+                },
+            ];
+            if reverse {
+                property_change.reverse();
+                trait_change.reverse();
+            }
+            SubmitAction {
+                request_id: Uuid::from_u128(7),
+                expected_place_revision: revision(),
+                prose: "Mara records the whole change.".to_owned(),
+                consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                    property_change,
+                    trait_change,
+                }),
+            }
+            .normalize()
+            .unwrap()
+        };
+        let first = state(false);
+        let reordered = state(true);
+        assert_eq!(action_fingerprint(&first), action_fingerprint(&reordered));
+
+        let mut expected = base_hash("Mara records the whole change.");
+        fingerprint_field(&mut expected, b"change_entity_state");
+        let ActionConsequence::ChangeEntityState(change) = &first.consequence else {
+            unreachable!()
+        };
+        fingerprint_property_change(&mut expected, &change.property_change);
+        fingerprint_trait_change(&mut expected, &change.trait_change);
+        assert_eq!(action_fingerprint(&first), expected.finalize().as_slice());
+
+        let introduction = |reverse: bool| {
+            let mut r#trait = vec![
+                TraitInput {
+                    statement: "Jumps unusually high.".to_owned(),
+                },
+                TraitInput {
+                    statement: "Startles easily.".to_owned(),
+                },
+            ];
+            if reverse {
+                r#trait.reverse();
+            }
+            SubmitAction {
+                request_id: Uuid::from_u128(8),
+                expected_place_revision: revision(),
+                prose: "Mara introduces the frog.".to_owned(),
+                consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
+                    name: "Three-legged Frog".to_owned(),
+                    description: "A heat-scorched frog.".to_owned(),
+                    property: Vec::new(),
+                    r#trait,
+                }),
+            }
+            .normalize()
+            .unwrap()
+        };
+        assert_eq!(
+            action_fingerprint(&introduction(false)),
+            action_fingerprint(&introduction(true))
+        );
+
+        let without_trait = SubmitAction {
+            request_id: Uuid::from_u128(8),
+            expected_place_revision: revision(),
+            prose: "Mara introduces the frog.".to_owned(),
+            consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
+                name: "Three-legged Frog".to_owned(),
+                description: "A heat-scorched frog.".to_owned(),
+                property: Vec::new(),
+                r#trait: Vec::new(),
+            }),
+        }
+        .normalize()
+        .unwrap();
+        let mut legacy = base_hash("Mara introduces the frog.");
+        for field in [
+            b"introduce_entity".as_slice(),
+            b"Three-legged Frog".as_slice(),
+            b"A heat-scorched frog.".as_slice(),
+        ] {
+            fingerprint_field(&mut legacy, field);
+        }
+        assert_eq!(
+            action_fingerprint(&without_trait),
+            legacy.finalize().as_slice()
+        );
+        assert_ne!(
+            action_fingerprint(&without_trait),
+            action_fingerprint(&introduction(false))
+        );
+    }
 }
 
 pub(super) fn interaction_fingerprint(input: &NormalizedSubmitInteraction) -> Vec<u8> {
@@ -68,6 +290,12 @@ fn fingerprint_property_input(hash: &mut Sha256, property: &[PropertyInput]) {
     for property in property {
         fingerprint_field(hash, property.key.as_bytes());
         fingerprint_property_value(hash, &property.value);
+    }
+}
+
+fn fingerprint_trait_input(hash: &mut Sha256, r#trait: &[TraitInput]) {
+    for r#trait in r#trait {
+        fingerprint_field(hash, r#trait.statement.as_bytes());
     }
 }
 
@@ -361,10 +589,24 @@ pub(super) async fn find_accepted_action(
             AcceptedActionConsequence::IntroduceEntity(entity)
         }
         Some("change_entity_property") if !activity.property_change.is_empty() => {
-            AcceptedActionConsequence::ChangeEntityProperty(activity.property_change.clone())
+            AcceptedActionConsequence::ChangeEntityState {
+                property_change: activity.property_change.clone(),
+                trait_change: Vec::new(),
+            }
         }
         Some("change_entity_trait") if !activity.trait_change.is_empty() => {
-            AcceptedActionConsequence::ChangeEntityTrait(activity.trait_change.clone())
+            AcceptedActionConsequence::ChangeEntityState {
+                property_change: Vec::new(),
+                trait_change: activity.trait_change.clone(),
+            }
+        }
+        Some("change_entity_state")
+            if !activity.property_change.is_empty() || !activity.trait_change.is_empty() =>
+        {
+            AcceptedActionConsequence::ChangeEntityState {
+                property_change: activity.property_change.clone(),
+                trait_change: activity.trait_change.clone(),
+            }
         }
         _ => return Err(invalid_stored_relation()),
     };

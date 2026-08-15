@@ -62,7 +62,20 @@ Read-only explanation, status, orientation and diagnosis are not builds.
 Build the smallest system that satisfies the confirmed behavior now. When two
 designs both work, choose the one with fewer concepts, tables, states, branches and
 moving parts. Add complexity only after a concrete current scenario shows why the
-smaller design fails; predicted future scale alone is not enough.
+smaller design fails; predicted future scale alone never justifies prebuilt
+infrastructure, although no design may preclude it (see Built For Massive
+Concurrency).
+
+### Built For Massive Concurrency
+
+Design and implement every component as if millions of Characters act concurrently
+in one shared World and any World instance may serve any request. Scope every lock,
+transaction, revision, query and admission rule to the smallest subject it
+protects—User, Character, Place, Entity or attempt—and keep every read bounded.
+Never introduce process-local correctness state, server affinity, a global lock,
+revision or counter, or a hot shared row every player must touch. This does not
+license prebuilding scale infrastructure: keep KISS, but reject any design whose
+correctness or contention would break at scale even though it works locally.
 
 ### Current Means Current
 
@@ -166,6 +179,16 @@ complete Agent-facing tool description and a capability-parity test. The publish
 catalog must be complete, actions are validated deterministically by `World`, and a
 capability is never UI-only. Provisioning, administration and operational controls
 are never Agent tools.
+
+### Direct MCP Smoke Tests
+
+For a bounded question about whether an Agent understands one MCP capability, start
+with the smallest direct end-to-end smoke: one pinned Agent call when sufficient,
+one owned disposable World, the exact MCP operation under test, independent
+authoritative readback and verified cleanup. Do not build a permanent runner,
+multi-phase harness or broad fake matrix unless repeated evidence or one concrete
+risk requires it. Prompt, output schema and validator must demand the same observable
+result; a controller mismatch is inconclusive and may never be blamed on the model.
 
 ### Deferred Means Absent
 

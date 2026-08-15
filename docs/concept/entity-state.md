@@ -4,7 +4,8 @@
 > **Authority:** the Property/Trait domain distinction and uniform local authority rationale.
 > **Excludes:** Current behavior and storage, which belong in `docs/game/`; delivery detail, which belongs in `docs/evidence/`.
 
-> Delivery history and current status: see [Trait evidence](../evidence/trait.md).
+> Delivery history and current status: see
+> [Uniform Entity-state evidence](../evidence/entity-state.md).
 
 ## Domain distinction
 
@@ -43,6 +44,28 @@ narrator or prose interpreter.
 ## Current behavior boundary
 
 Current Property/Trait behavior, validation and persistence are defined by the [game domain](../game/domain.md), [capability contracts](../game/README.md#capability-contracts) and [storage contract](../game/storage.md). This concept record does not duplicate their delivery detail.
+
+## Accepted uniform state edge
+
+The User rejected the current asymmetry as a general Entity-state limitation rather
+than a discovery-only concern. One newly created subject may already have several
+factual Properties and several characterizing Traits; one later event may also
+change both meanings together. Forcing those facts into sequential Actions would
+fabricate causal order and multiple Activities for one fictional event.
+
+The confirmed direction is uniform across `create_character`, `create_entry_place`,
+`create_entity` and `submit_action.introduce_entity`: creation may accept multiple
+initial Properties and Traits atomically. The creation Activity is the first shared
+establishment provenance for each Trait; it does not assert that the fictional
+subject learned or acquired that characterization at creation time. A later Action
+may combine Property and Trait changes in one package, just as Interaction already
+can, while both state models retain separate meaning, validation and storage.
+
+The completed [uniform-state plan](../../.agents/plans/20260814-232147-uniform-entity-state-packages/plan.md)
+reuses independent 0–100 Property/Trait bounds and replaces the two homogeneous
+Action change variants with one `change_entity_state` package. It adds no generic
+patch tool or Trait mechanic. Delivery and its narrow historical retry proof are
+recorded in [uniform Entity-state evidence](../evidence/entity-state.md).
 
 ## Accepted uniform authority boundary
 

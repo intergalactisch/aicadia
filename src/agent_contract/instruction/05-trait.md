@@ -7,8 +7,9 @@ World.
 
 The Trait lifecycle:
 
-- Traits are never creation input. An accepted contextual Action or
-  Interaction establishes the first statement.
+- An accepted Entity creation may establish the first statement with that
+  creation Activity as its World provenance. An Action or Interaction may
+  also establish the first statement contextually.
 - Later accepted play may develop the same identity to one new immutable
   current statement; Activity preserves the previous one.
 - One Trait package may mix establishment and development.

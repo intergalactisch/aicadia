@@ -68,6 +68,11 @@ pub struct PropertyInput {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TraitInput {
+    pub statement: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EntityPropertyChangeInput {
     pub entity_id: EntityId,
     pub key: String,
@@ -117,6 +122,7 @@ pub struct CreateEntity {
     pub name: String,
     pub description: String,
     pub property: Vec<PropertyInput>,
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl CreateEntity {
@@ -126,10 +132,12 @@ impl CreateEntity {
                 WorldError::InvalidEntity { field, reason }
             })?;
         let property = normalize_property_input(self.property, PropertyField::Property)?;
+        let r#trait = normalize_trait_input(self.r#trait)?;
         Ok(Self {
             name,
             description,
             property,
+            r#trait,
         })
     }
 }
@@ -139,6 +147,7 @@ pub struct CreateCharacter {
     pub name: String,
     pub description: String,
     pub property: Vec<PropertyInput>,
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl CreateCharacter {
@@ -148,10 +157,12 @@ impl CreateCharacter {
                 WorldError::InvalidCharacter { field, reason }
             })?;
         let property = normalize_property_input(self.property, PropertyField::Property)?;
+        let r#trait = normalize_trait_input(self.r#trait)?;
         Ok(Self {
             name,
             description,
             property,
+            r#trait,
         })
     }
 }
@@ -161,6 +172,7 @@ pub struct CreateEntryPlace {
     pub name: String,
     pub description: String,
     pub property: Vec<PropertyInput>,
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl CreateEntryPlace {
@@ -170,10 +182,12 @@ impl CreateEntryPlace {
                 WorldError::InvalidPlace { field, reason }
             })?;
         let property = normalize_property_input(self.property, PropertyField::Property)?;
+        let r#trait = normalize_trait_input(self.r#trait)?;
         Ok(Self {
             name,
             description,
             property,
+            r#trait,
         })
     }
 }
@@ -219,6 +233,7 @@ pub struct IntroduceEntity {
     pub name: String,
     pub description: String,
     pub property: Vec<PropertyInput>,
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl IntroduceEntity {
@@ -234,36 +249,33 @@ impl IntroduceEntity {
                 }
             })?;
         let property = normalize_property_input(self.property, PropertyField::Property)?;
+        let r#trait = normalize_trait_input(self.r#trait)?;
         Ok(Self {
             name,
             description,
             property,
+            r#trait,
         })
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ChangeEntityProperty {
+pub struct ChangeEntityState {
     pub property_change: Vec<EntityPropertyChangeInput>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ChangeEntityTrait {
     pub trait_change: Vec<EntityTraitChangeInput>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActionConsequence {
     IntroduceEntity(IntroduceEntity),
-    ChangeEntityProperty(ChangeEntityProperty),
-    ChangeEntityTrait(ChangeEntityTrait),
+    ChangeEntityState(ChangeEntityState),
 }
 
 impl ActionConsequence {
     fn normalize(self) -> Result<Self, WorldError> {
         match self {
             Self::IntroduceEntity(input) => input.normalize().map(Self::IntroduceEntity),
-            Self::ChangeEntityProperty(input) => {
+            Self::ChangeEntityState(input) => {
                 let writes = input
                     .property_change
                     .into_iter()
@@ -273,10 +285,17 @@ impl ActionConsequence {
                         value: change.value,
                     })
                     .collect();
-                let writes = normalize_property_writes(writes, false).map_err(|error| {
+                let writes = normalize_property_writes(writes, true).map_err(|error| {
                     map_property_normalization_error(error, PropertyField::PropertyChange)
                 })?;
-                Ok(Self::ChangeEntityProperty(ChangeEntityProperty {
+                let trait_change = normalize_trait_change_input(input.trait_change, true)?;
+                if writes.is_empty() && trait_change.is_empty() {
+                    return Err(WorldError::InvalidAction {
+                        field: ActionField::Consequence,
+                        reason: InvalidReason::Empty,
+                    });
+                }
+                Ok(Self::ChangeEntityState(ChangeEntityState {
                     property_change: writes
                         .into_iter()
                         .map(|write| EntityPropertyChangeInput {
@@ -285,12 +304,7 @@ impl ActionConsequence {
                             value: write.value,
                         })
                         .collect(),
-                }))
-            }
-            Self::ChangeEntityTrait(input) => {
-                let writes = normalize_trait_change_input(input.trait_change, false)?;
-                Ok(Self::ChangeEntityTrait(ChangeEntityTrait {
-                    trait_change: trait_input_from_writes(writes),
+                    trait_change: trait_input_from_writes(trait_change),
                 }))
             }
         }
@@ -349,8 +363,10 @@ pub struct AcceptedAction {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AcceptedActionConsequence {
     IntroduceEntity(Entity),
-    ChangeEntityProperty(Vec<EntityPropertyChange>),
-    ChangeEntityTrait(Vec<ActivityTraitChange>),
+    ChangeEntityState {
+        property_change: Vec<EntityPropertyChange>,
+        trait_change: Vec<ActivityTraitChange>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -19,7 +19,7 @@ fail() {
 }
 
 usage() {
-    printf 'Usage: ./tools/aicadia-local [--no-open]\n'
+    printf 'Usage: cargo dev [--no-open]\n'
 }
 
 cleanup() {
@@ -67,6 +67,27 @@ readonly LOCK_DIR="$STATE_DIR/launcher.lock"
 [[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) \
     || { fail 'AICADIA_PORT must be an integer from 1 through 65535'; exit 1; }
 [[ -n "$DATABASE_URL" ]] || { fail 'DATABASE_URL must not be empty'; exit 1; }
+
+add_homebrew_postgresql_to_path() {
+    local formula prefix
+    command -v brew >/dev/null 2>&1 || return 0
+    while IFS= read -r formula; do
+        case "$formula" in
+            postgresql|postgresql@*) ;;
+            *) continue ;;
+        esac
+        prefix="$(brew --prefix "$formula" 2>/dev/null)" || continue
+        if [[ -x "$prefix/bin/psql" && -x "$prefix/bin/createdb" ]]; then
+            PATH="$prefix/bin:$PATH"
+            export PATH
+            return 0
+        fi
+    done < <(brew list --formula 2>/dev/null)
+}
+
+if ! command -v psql >/dev/null 2>&1 || ! command -v createdb >/dev/null 2>&1; then
+    add_homebrew_postgresql_to_path
+fi
 
 dependencies=(cargo psql createdb curl jq lsof)
 (( OPEN_LEDGER == 0 )) || dependencies+=(open)

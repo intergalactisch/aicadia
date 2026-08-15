@@ -8,9 +8,13 @@
     "entity_id": { "type": "string", "format": "uuid" },
     "place_id": { "type": "string", "format": "uuid" },
     "prose": { "type": "string" },
-    "entity_name": { "type": "string" }
+    "entity_name": { "type": "string" },
+    "entity_description": { "type": "string" },
+    "property_key": { "type": "string", "const": "material" },
+    "property_text": { "type": "string", "const": "weathered cedar" }
   },
   "required": [
-    "status", "marker", "entity_id", "place_id", "prose", "entity_name"
+    "status", "marker", "entity_id", "place_id", "prose", "entity_name",
+    "entity_description", "property_key", "property_text"
   ]
 }

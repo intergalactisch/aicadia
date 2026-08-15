@@ -57,8 +57,9 @@ The Property relations above are the delivered schema. `entity_property_history`
 the sole value store and is
 append-only. `entity_property` contains only the current Activity pointer, protected
 by a same-lineage composite foreign key. `activity.action_consequence` is null for
-non-Action operations, stores `introduce_entity` or `change_entity_property` for
-Actions and backfills existing Actions as `introduce_entity`. One Activity may own
+non-Action operations and stores `introduce_entity` or `change_entity_state` for new
+Actions. Immutable historical `change_entity_property` and `change_entity_trait`
+rows remain readable and retry-compatible. One Activity may own
 up to 100 history rows, so `activity_id` in history is indexed but not unique.
 
 Indexes exist only for current behavior:
@@ -97,9 +98,11 @@ version. An incomplete identity or root, current-row deletion, pointer backtrack
 or successor insertion without the matching pointer advance therefore cannot
 commit. Each check is bounded to the affected Trait id through the primary, partial
 unique and predecessor indexes; it never scans every Trait.
-The migration extends the closed Action discriminator with `change_entity_trait` and
-admits typed Trait changes on Interaction without adding a universal consequence
-payload or separate mutation operation.
+Migration `0009_uniform_entity_state.sql` extends the closed Action discriminator
+with `change_entity_state` while retaining immutable historical tags, and admits
+Trait roots from all Entity creation routes plus typed state changes on Action and
+Interaction. It adds no relation, index, universal payload or separate mutation
+operation.
 
 Short contextual mutations lock their responsible User row. Place-relevant writers
 also lock the affected Place as specified above, serializing state changes at one

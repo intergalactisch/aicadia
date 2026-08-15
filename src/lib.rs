@@ -6,8 +6,8 @@ mod world;
 pub use world::{
     AcceptedAction, AcceptedActionConsequence, AcceptedInteraction, ActionConsequence, ActionField,
     Activity, ActivityCursor, ActivityEntityReference, ActivityEntityRole, ActivityId,
-    ActivityOperation, ActivityPage, ActivityTraitChange, ChangeEntityProperty, ChangeEntityTrait,
-    Character, CharacterEntityStatePage, CreateCharacter, CreateEntity, CreateEntryPlace,
+    ActivityOperation, ActivityPage, ActivityTraitChange, ChangeEntityState, Character,
+    CharacterEntityStatePage, CreateCharacter, CreateEntity, CreateEntryPlace,
     CurrentPlaceActivityPage, CurrentPlaceEntity, CurrentPlaceEntityPage,
     CurrentPlaceEntityStatePage, Entity, EntityCurrentAssociation, EntityCurrentStateCursor,
     EntityCurrentStatePage, EntityCursor, EntityField, EntityId, EntityPage, EntityPropertyChange,
@@ -15,5 +15,5 @@ pub use world::{
     GetEntityAtCurrentPlace, GetEntityCurrentState, InteractionField, IntroduceEntity,
     InvalidReason, ListActivity, ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace,
     Place, PlaceRevision, PlaceSummary, PropertyField, PropertyInput, PropertyValue, SubmitAction,
-    SubmitInteraction, User, UserId, World, WorldError, WorldView,
+    SubmitInteraction, TraitInput, User, UserId, World, WorldError, WorldView,
 };

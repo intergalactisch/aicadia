@@ -252,7 +252,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
         "expected_place_revision": property_revision,
         "prose": "A sudden blast blackens everyone and everything around the landing.",
         "consequence": {
-            "type": "change_entity_property",
+            "type": "change_entity_state",
             "property_change": explosion_change
         }
     });
@@ -271,7 +271,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
         .expect("accepted Property explosion should be JSON");
     assert_eq!(
         accepted_explosion["consequence"]["type"],
-        "change_entity_property"
+        "change_entity_state"
     );
     assert_eq!(
         accepted_explosion["consequence"]["property_change"]
@@ -374,7 +374,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
         "expected_place_revision": special_revision,
         "prose": "Mara paints three deliberately misleading catalogue labels on the cedar post; they classify no person or controller.",
         "consequence": {
-            "type": "change_entity_property",
+            "type": "change_entity_state",
             "property_change": provenance_like_change
         }
     });
@@ -560,7 +560,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
             "expected_place_revision": fresh_revision,
             "prose": "A malformed Entity id must fail at the wire boundary.",
             "consequence": {
-                "type": "change_entity_property",
+                "type": "change_entity_state",
                 "property_change": [
                     {"entity_id": "not-a-uuid", "key": "wire", "value": {"type": "text", "text": "no"}}
                 ]
@@ -571,7 +571,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
             "expected_place_revision": fresh_revision,
             "prose": "An unsupported Property value tag must fail at the wire boundary.",
             "consequence": {
-                "type": "change_entity_property",
+                "type": "change_entity_state",
                 "property_change": [
                     {"entity_id": actor_entity_id, "key": "wire", "value": {"type": "boolean", "boolean": true}}
                 ]
@@ -582,7 +582,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
             "expected_place_revision": fresh_revision,
             "prose": "An unknown nested Property field must fail at the wire boundary.",
             "consequence": {
-                "type": "change_entity_property",
+                "type": "change_entity_state",
                 "property_change": [
                     {"entity_id": actor_entity_id, "key": "wire", "value": {"type": "text", "text": "no"}, "unexpected": true}
                 ]
@@ -614,7 +614,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
         "expected_place_revision": fresh_revision,
         "prose": "This cannot reach the remote herbarium.",
         "consequence": {
-            "type": "change_entity_property",
+            "type": "change_entity_state",
             "property_change": [
                 {"entity_id": remote_entity_id, "key": "leaked", "value": {"type": "text", "text": "no"}}
             ]
@@ -677,7 +677,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
             "expected_place_revision": fresh_revision,
             "prose": prose,
             "consequence": {
-                "type": "change_entity_property",
+                "type": "change_entity_state",
                 "property_change": property_change
             }
         })
@@ -685,7 +685,8 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
     let invalid = [
         (
             invalid_action(Vec::new(), "An empty Property consequence must fail."),
-            "out_of_range",
+            "invalid_action",
+            "empty",
         ),
         (
             invalid_action(
@@ -695,6 +696,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
                 ],
                 "A duplicate Entity and key pair must fail.",
             ),
+            "invalid_property",
             "duplicate",
         ),
         (
@@ -704,10 +706,11 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
                 ],
                 "An invalid canonical key must fail.",
             ),
+            "invalid_property",
             "invalid_format",
         ),
     ];
-    for (input, reason) in invalid {
+    for (input, code, reason) in invalid {
         let response = server
             .client
             .post(format!("{}/api/action", server.base_url))
@@ -726,7 +729,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
         let mcp = server
             .tool("submit_action", mcp_input, Some(actor.id.0))
             .await;
-        assert_eq!(error_code(&http_error), "invalid_property");
+        assert_eq!(error_code(&http_error), code);
         assert_eq!(http_error["error"]["reason"], reason);
         assert_eq!(mcp_error(&mcp), http_error);
     }
@@ -798,7 +801,7 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
         "expected_place_revision": first_property_page["place_revision"],
         "prose": "A stale Property consequence must not be accepted.",
         "consequence": {
-            "type": "change_entity_property",
+            "type": "change_entity_state",
             "property_change": [
                 {"entity_id": actor_entity_id, "key": "stale", "value": {"type": "text", "text": "no"}}
             ]

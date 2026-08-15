@@ -244,6 +244,24 @@ impl From<PropertyInput> for WorldPropertyInput {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
+pub struct TraitInput {
+    /// Exact English statement for one new World-assigned Trait lineage.
+    #[schemars(length(min = 1, max = 4000))]
+    #[schema(min_length = 1, max_length = 4000)]
+    pub statement: String,
+}
+
+impl From<TraitInput> for WorldTraitInput {
+    fn from(value: TraitInput) -> Self {
+        Self {
+            statement: value.statement,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
 pub struct EntityPropertyChangeInput {
     /// Exact local Entity selected from current grounded context.
     pub entity_id: Uuid,
@@ -774,10 +792,8 @@ pub enum AcceptedActionConsequenceOutput {
     IntroduceEntity {
         entity: EntityOutput,
     },
-    ChangeEntityProperty {
+    ChangeEntityState {
         property_change: Vec<EntityPropertyOutput>,
-    },
-    ChangeEntityTrait {
         trait_change: Vec<ActivityTraitChangeOutput>,
     },
 }
@@ -788,12 +804,11 @@ impl From<AcceptedActionConsequence> for AcceptedActionConsequenceOutput {
             AcceptedActionConsequence::IntroduceEntity(entity) => Self::IntroduceEntity {
                 entity: entity.into(),
             },
-            AcceptedActionConsequence::ChangeEntityProperty(property_change) => {
-                Self::ChangeEntityProperty {
-                    property_change: property_change.into_iter().map(Into::into).collect(),
-                }
-            }
-            AcceptedActionConsequence::ChangeEntityTrait(trait_change) => Self::ChangeEntityTrait {
+            AcceptedActionConsequence::ChangeEntityState {
+                property_change,
+                trait_change,
+            } => Self::ChangeEntityState {
+                property_change: property_change.into_iter().map(Into::into).collect(),
                 trait_change: trait_change.into_iter().map(Into::into).collect(),
             },
         }

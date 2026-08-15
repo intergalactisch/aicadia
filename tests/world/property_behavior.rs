@@ -17,6 +17,7 @@ async fn every_entity_creation_route_atomically_establishes_one_hundred_properti
                 name: "Unplaced Herbarium".to_owned(),
                 description: "One hundred measured specimens.".to_owned(),
                 property: hundred(),
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -28,6 +29,7 @@ async fn every_entity_creation_route_atomically_establishes_one_hundred_properti
                 name: "Mara Venn".to_owned(),
                 description: "A patient surveyor.".to_owned(),
                 property: hundred(),
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -39,6 +41,7 @@ async fn every_entity_creation_route_atomically_establishes_one_hundred_properti
                 name: "North Gate".to_owned(),
                 description: "The shared threshold.".to_owned(),
                 property: hundred(),
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -60,6 +63,7 @@ async fn every_entity_creation_route_atomically_establishes_one_hundred_properti
                     name: "Measured Cairn".to_owned(),
                     description: "A cairn with one hundred recorded measures.".to_owned(),
                     property: hundred(),
+                    r#trait: Vec::new(),
                 }),
             },
         )
@@ -114,6 +118,7 @@ async fn invalid_initial_properties_roll_back_each_creation_route_without_orphan
                     name: "Rejected Entity".to_owned(),
                     description: "Must not persist.".to_owned(),
                     property: over_bound(),
+                    r#trait: Vec::new(),
                 },
             )
             .await,
@@ -130,6 +135,7 @@ async fn invalid_initial_properties_roll_back_each_creation_route_without_orphan
                     name: "Rejected Character".to_owned(),
                     description: "Must not persist.".to_owned(),
                     property: over_bound(),
+                    r#trait: Vec::new(),
                 },
             )
             .await,
@@ -153,6 +159,7 @@ async fn invalid_initial_properties_roll_back_each_creation_route_without_orphan
                         text_property("colour", "grey"),
                         text_property("colour", "red")
                     ],
+                    r#trait: Vec::new(),
                 },
             )
             .await,
@@ -183,6 +190,7 @@ async fn invalid_initial_properties_roll_back_each_creation_route_without_orphan
                         name: "Rejected Marker".to_owned(),
                         description: "Must not persist.".to_owned(),
                         property: over_bound(),
+                        r#trait: Vec::new(),
                     }),
                 },
             )
@@ -251,9 +259,10 @@ async fn property_action_changes_actor_place_ordinary_and_other_character_unifor
         .await
         .unwrap();
     let change = match &accepted.consequence {
-        AcceptedActionConsequence::ChangeEntityProperty(change) => change,
+        AcceptedActionConsequence::ChangeEntityState {
+            property_change, ..
+        } => property_change,
         AcceptedActionConsequence::IntroduceEntity(_) => panic!("expected Property change"),
-        AcceptedActionConsequence::ChangeEntityTrait(_) => panic!("expected Property change"),
     };
     assert_eq!(change, &accepted.activity.property_change);
     assert_eq!(change.len(), 5);
@@ -341,6 +350,7 @@ async fn property_action_rejects_unavailable_mixed_subjects_and_retries_sorted_h
                 name: "Unplaced Remote Stone".to_owned(),
                 description: "It has no current Place.".to_owned(),
                 property: vec![text_property("colour", "grey")],
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -493,12 +503,24 @@ async fn property_world_validation_rejects_keys_values_duplicates_and_change_bou
         .unwrap()
         .place_revision;
 
+    assert_eq!(
+        world
+            .submit_action(
+                user_id,
+                property_action(
+                    Uuid::new_v4(),
+                    revision,
+                    "This empty state change must not be accepted.",
+                    Vec::new(),
+                ),
+            )
+            .await,
+        Err(WorldError::InvalidAction {
+            field: ActionField::Consequence,
+            reason: InvalidReason::Empty,
+        })
+    );
     let invalid = vec![
-        (
-            Vec::new(),
-            PropertyField::PropertyChange,
-            InvalidReason::OutOfRange,
-        ),
         (
             vec![property_change(
                 actor.entity.id,
@@ -713,6 +735,7 @@ async fn current_property_read_paginates_local_facts_and_excludes_unplaced_entit
                 name: "Mara Venn".to_owned(),
                 description: "Blond hair is introductory history.".to_owned(),
                 property: Vec::new(),
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -724,6 +747,7 @@ async fn current_property_read_paginates_local_facts_and_excludes_unplaced_entit
                 name: "North Gate".to_owned(),
                 description: "The threshold.".to_owned(),
                 property: vec![text_property("weather", "clear")],
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -768,6 +792,7 @@ async fn current_property_read_paginates_local_facts_and_excludes_unplaced_entit
                 name: "Unplaced Almanac".to_owned(),
                 description: "Not locally observable.".to_owned(),
                 property: vec![text_property("secret_mark", "remote")],
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -874,6 +899,7 @@ async fn concurrent_world_first_key_use_reuses_type_and_rolls_back_type_conflict
                         name: "First Grey Stone".to_owned(),
                         description: "A concurrent first use.".to_owned(),
                         property: vec![text_property("surface", "rough")],
+                        r#trait: Vec::new(),
                     },
                 )
                 .await
@@ -889,6 +915,7 @@ async fn concurrent_world_first_key_use_reuses_type_and_rolls_back_type_conflict
                         name: "Second Grey Stone".to_owned(),
                         description: "Another concurrent first use.".to_owned(),
                         property: vec![text_property("surface", "smooth")],
+                        r#trait: Vec::new(),
                     },
                 )
                 .await
@@ -922,6 +949,7 @@ async fn concurrent_world_first_key_use_reuses_type_and_rolls_back_type_conflict
                         name: "Text Weight".to_owned(),
                         description: "One type must win.".to_owned(),
                         property: vec![text_property("weight", "heavy")],
+                        r#trait: Vec::new(),
                     },
                 )
                 .await
@@ -937,6 +965,7 @@ async fn concurrent_world_first_key_use_reuses_type_and_rolls_back_type_conflict
                         name: "Integer Weight".to_owned(),
                         description: "The other type must roll back.".to_owned(),
                         property: vec![integer_property("weight", 12)],
+                        r#trait: Vec::new(),
                     },
                 )
                 .await
@@ -971,7 +1000,9 @@ async fn concurrent_world_first_key_use_reuses_type_and_rolls_back_type_conflict
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn reversed_multi_key_actions_at_distinct_places_complete_without_deadlock(pool: PgPool) {
+async fn reversed_combined_state_actions_at_distinct_places_complete_without_deadlock(
+    pool: PgPool,
+) {
     let world = World::new(pool.clone());
     let first_user = create_user(&world).await;
     let first_character = world
@@ -1079,23 +1110,29 @@ async fn reversed_multi_key_actions_at_distinct_places_complete_without_deadlock
             world
                 .submit_action(
                     first_user,
-                    property_action(
-                        Uuid::new_v4(),
-                        first_revision,
-                        "The northern surveyor fixes both calibration marks.",
-                        vec![
-                            property_change(
-                                first_character.entity.id,
-                                "lock_alpha",
-                                PropertyValue::Integer(1),
-                            ),
-                            property_change(
-                                first_character.entity.id,
-                                "lock_beta",
-                                PropertyValue::Integer(2),
-                            ),
-                        ],
-                    ),
+                    SubmitAction {
+                        request_id: Uuid::new_v4(),
+                        expected_place_revision: first_revision,
+                        prose: "The northern surveyor fixes both calibration marks.".to_owned(),
+                        consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                            property_change: vec![
+                                property_change(
+                                    first_character.entity.id,
+                                    "lock_alpha",
+                                    PropertyValue::Integer(1),
+                                ),
+                                property_change(
+                                    first_character.entity.id,
+                                    "lock_beta",
+                                    PropertyValue::Integer(2),
+                                ),
+                            ],
+                            trait_change: vec![
+                                establish_trait(first_character.entity.id, "Alpha lock observed."),
+                                establish_trait(first_character.entity.id, "Beta lock observed."),
+                            ],
+                        }),
+                    },
                 )
                 .await
         })
@@ -1108,23 +1145,29 @@ async fn reversed_multi_key_actions_at_distinct_places_complete_without_deadlock
             world
                 .submit_action(
                     second_user,
-                    property_action(
-                        Uuid::new_v4(),
-                        second_revision,
-                        "The southern surveyor fixes both calibration marks.",
-                        vec![
-                            property_change(
-                                second_character.entity.id,
-                                "lock_beta",
-                                PropertyValue::Integer(20),
-                            ),
-                            property_change(
-                                second_character.entity.id,
-                                "lock_alpha",
-                                PropertyValue::Integer(10),
-                            ),
-                        ],
-                    ),
+                    SubmitAction {
+                        request_id: Uuid::new_v4(),
+                        expected_place_revision: second_revision,
+                        prose: "The southern surveyor fixes both calibration marks.".to_owned(),
+                        consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                            property_change: vec![
+                                property_change(
+                                    second_character.entity.id,
+                                    "lock_beta",
+                                    PropertyValue::Integer(20),
+                                ),
+                                property_change(
+                                    second_character.entity.id,
+                                    "lock_alpha",
+                                    PropertyValue::Integer(10),
+                                ),
+                            ],
+                            trait_change: vec![
+                                establish_trait(second_character.entity.id, "Beta lock observed."),
+                                establish_trait(second_character.entity.id, "Alpha lock observed."),
+                            ],
+                        }),
+                    },
                 )
                 .await
         })
@@ -1134,6 +1177,8 @@ async fn reversed_multi_key_actions_at_distinct_places_complete_without_deadlock
     let second = second.await.unwrap().unwrap();
     assert_eq!(first.activity.property_change.len(), 2);
     assert_eq!(second.activity.property_change.len(), 2);
+    assert_eq!(first.activity.trait_change.len(), 2);
+    assert_eq!(second.activity.trait_change.len(), 2);
     assert_eq!(
         first
             .activity
@@ -1152,7 +1197,7 @@ async fn reversed_multi_key_actions_at_distinct_places_complete_without_deadlock
             .collect::<Vec<_>>(),
         vec!["lock_alpha", "lock_beta"]
     );
-    let counts: (i64, i64, i64, i64) = sqlx::query_as(
+    let counts: (i64, i64, i64, i64, i64) = sqlx::query_as(
         r#"
         SELECT
             (SELECT count(*) FROM property_key
@@ -1163,15 +1208,20 @@ async fn reversed_multi_key_actions_at_distinct_places_complete_without_deadlock
             (SELECT count(*) FROM entity_property
              JOIN property_key ON property_key.id = entity_property.property_key_id
              WHERE property_key.key IN ('lock_alpha', 'lock_beta')),
+            (SELECT count(*) FROM entity_trait_version
+             WHERE statement IN (
+                'Alpha lock observed.',
+                'Beta lock observed.'
+             )),
             (SELECT count(*) FROM activity
              WHERE operation = 'submit_action'
-               AND action_consequence = 'change_entity_property')
+               AND action_consequence = 'change_entity_state')
         "#,
     )
     .fetch_one(&pool)
     .await
     .unwrap();
-    assert_eq!(counts, (2, 4, 4, 2));
+    assert_eq!(counts, (2, 4, 4, 4, 2));
     timed_pool.close().await;
 }
 
@@ -1215,6 +1265,7 @@ async fn property_storage_failure_rolls_back_entity_activity_key_and_place_revis
                     name: "Rolled Back Property Entity".to_owned(),
                     description: "No partial bundle may survive.".to_owned(),
                     property: vec![text_property("colour", "red")],
+                    r#trait: Vec::new(),
                 },
             )
             .await,

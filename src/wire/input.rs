@@ -267,6 +267,10 @@ pub struct CreateEntityInput {
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
     pub property: Vec<PropertyInput>,
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl From<CreateEntityInput> for CreateEntity {
@@ -275,6 +279,7 @@ impl From<CreateEntityInput> for CreateEntity {
             name: value.name,
             description: value.description,
             property: value.property.into_iter().map(Into::into).collect(),
+            r#trait: value.r#trait.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -295,6 +300,10 @@ pub struct CreateCharacterInput {
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
     pub property: Vec<PropertyInput>,
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl From<CreateCharacterInput> for CreateCharacter {
@@ -303,6 +312,7 @@ impl From<CreateCharacterInput> for CreateCharacter {
             name: value.name,
             description: value.description,
             property: value.property.into_iter().map(Into::into).collect(),
+            r#trait: value.r#trait.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -323,6 +333,10 @@ pub struct CreateEntryPlaceInput {
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
     pub property: Vec<PropertyInput>,
+    #[serde(default)]
+    #[schemars(length(max = 100))]
+    #[schema(max_items = 100)]
+    pub r#trait: Vec<TraitInput>,
 }
 
 impl From<CreateEntryPlaceInput> for CreateEntryPlace {
@@ -331,6 +345,7 @@ impl From<CreateEntryPlaceInput> for CreateEntryPlace {
             name: value.name,
             description: value.description,
             property: value.property.into_iter().map(Into::into).collect(),
+            r#trait: value.r#trait.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -353,17 +368,20 @@ pub enum ActionConsequenceInput {
         #[schemars(length(max = 100))]
         #[schema(max_items = 100)]
         property: Vec<PropertyInput>,
+        #[serde(default)]
+        #[schemars(length(max = 100))]
+        #[schema(max_items = 100)]
+        r#trait: Vec<TraitInput>,
     },
-    /// Change one or more typed Properties of exact local Entities atomically.
-    ChangeEntityProperty {
-        #[schemars(length(min = 1, max = 100))]
-        #[schema(min_items = 1, max_items = 100)]
+    /// Change Properties and/or Traits of exact local Entities atomically.
+    ChangeEntityState {
+        #[serde(default)]
+        #[schemars(length(max = 100))]
+        #[schema(max_items = 100)]
         property_change: Vec<EntityPropertyChangeInput>,
-    },
-    /// Establish and/or develop one through 100 exact-local Entity-owned Traits.
-    ChangeEntityTrait {
-        #[schemars(length(min = 1, max = 100))]
-        #[schema(min_items = 1, max_items = 100)]
+        #[serde(default)]
+        #[schemars(length(max = 100))]
+        #[schema(max_items = 100)]
         trait_change: Vec<EntityTraitChangeInput>,
     },
 }
@@ -392,21 +410,20 @@ impl SubmitActionInput {
                 name,
                 description,
                 property,
+                r#trait,
             } => ActionConsequence::IntroduceEntity(IntroduceEntity {
                 name,
                 description,
                 property: property.into_iter().map(Into::into).collect(),
+                r#trait: r#trait.into_iter().map(Into::into).collect(),
             }),
-            ActionConsequenceInput::ChangeEntityProperty { property_change } => {
-                ActionConsequence::ChangeEntityProperty(ChangeEntityProperty {
-                    property_change: property_change.into_iter().map(Into::into).collect(),
-                })
-            }
-            ActionConsequenceInput::ChangeEntityTrait { trait_change } => {
-                ActionConsequence::ChangeEntityTrait(ChangeEntityTrait {
-                    trait_change: trait_change.into_iter().map(Into::into).collect(),
-                })
-            }
+            ActionConsequenceInput::ChangeEntityState {
+                property_change,
+                trait_change,
+            } => ActionConsequence::ChangeEntityState(ChangeEntityState {
+                property_change: property_change.into_iter().map(Into::into).collect(),
+                trait_change: trait_change.into_iter().map(Into::into).collect(),
+            }),
         };
         Ok(SubmitAction {
             request_id: self.request_id,

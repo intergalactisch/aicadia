@@ -34,7 +34,7 @@ assert_live_attempt_shape() {
 make_fakes() {
     local root="$1"
     mkdir -p "$root/bin" "$root/state" "$root/output"
-    cp "$REPO_DIR/tools/agent-playtest-schema/historical-agent-tool-catalog.json" "$root/state/catalog.json"
+    cp "$REPO_DIR/tests/agent-tool-catalog.json" "$root/state/catalog.json"
 
     cat >"$root/bin/cargo" <<'FAKE'
 #!/usr/bin/env bash
@@ -107,20 +107,27 @@ done
 place_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 action_character='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 observer_character='dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+entity_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 action_user='11111111-1111-4111-8111-111111111111'
 observer_user='22222222-2222-4222-8222-222222222222'
 marker=''
 [[ ! -f "$state/marker" ]] || marker="$(<"$state/marker")"
 place="$(jq -nc --arg id "$place_id" --arg marker "$marker" --arg user "$action_user" '{entity:{id:$id,name:("Entry Place "+$marker),description:("Disposable shared entry Place for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:02:00Z"},is_entry:true}')"
+place_summary="$(jq -nc --argjson place "$place" '$place.entity|{id,name,description}')"
 character() {
     local id="$1" owner="$2" role="$3"
     jq -nc --arg id "$id" --arg owner "$owner" --arg marker "$marker" --arg role "$role" --argjson place "$place" \
         '{entity:{id:$id,name:($role+" Character "+$marker),description:("Disposable "+($role|ascii_downcase)+" Character for "+$marker),introduced_by_user_id:$owner,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$owner,current_place:$place}'
 }
+character_state() {
+    local id="$1" owner="$2" role="$3" revision="${4:-v1.fake.before}"
+    jq -nc --argjson character "$(character "$id" "$owner" "$role")" --arg revision "$revision" \
+        '{character:$character,place_revision:$revision,current_state:{association:[],next:null}}'
+}
 response='{}'; status=200
 case "$url" in
     */api/openapi.json)
-        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{post:{operationId:"create_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/place/current/entity/property":{get:{operationId:"list_entity_property_at_current_place"}},"/api/action":{post:{operationId:"submit_action"}},"/api/interaction":{post:{operationId:"submit_interaction"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
+        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{post:{operationId:"create_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/place/current/entity/{entity_id}":{get:{operationId:"get_entity_at_current_place"}},"/api/action":{post:{operationId:"submit_action"}},"/api/interaction":{post:{operationId:"submit_interaction"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
     */mcp)
         response="$(jq -nc --slurpfile tools "$state/catalog.json" '{jsonrpc:"2.0",id:1,result:{tools:$tools[0]}}')" ;;
     */api/world) response='{"name":"Aicadia"}' ;;
@@ -132,24 +139,29 @@ case "$url" in
             if [[ "$user" == "$action_user" ]]; then response="$(character "$action_character" "$action_user" Action | jq '.current_place=null')";
             else response="$(character "$observer_character" "$observer_user" Observer | jq '.current_place=null')"; fi
             status=201
-        elif [[ "$user" == "$action_user" ]]; then response="$(character "$action_character" "$action_user" Action)";
-        else response="$(character "$observer_character" "$observer_user" Observer)"; fi ;;
+        elif [[ "$user" == "$action_user" ]]; then response="$(character_state "$action_character" "$action_user" Action "v1.fake.after")";
+        else response="$(character_state "$observer_character" "$observer_user" Observer "v1.fake.after")"; fi ;;
     */api/world/entry)
         if [[ ! -f "$state/place-created" ]]; then status=404; response='{"error":{"code":"entry_place_not_found"}}';
         elif [[ "$user" == "$action_user" ]]; then response="$(character "$action_character" "$action_user" Action)";
         else response="$(character "$observer_character" "$observer_user" Observer)"; fi ;;
     */api/place/entry)
         : >"$state/place-created"; response="$place"; status=201 ;;
+    */api/place/current/entity/$entity_id*)
+        printf 'http-current-entity-state\n' >>"$state/timeline"
+        entity="$(jq '.entity' "$state/accepted.json")"
+        response="$(jq -nc --argjson place "$place_summary" --argjson entity "$entity" '{place:$place,place_revision:"v1.fake.after",entity:($entity|{id,name,description}),current_state:{association:[{type:"property",property:{key:"material",value:{type:"text",text:"weathered cedar"}}}],next:null}}')" ;;
     */api/place/current/entity*)
         printf 'http-current-entity\n' >>"$state/timeline"
         if [[ -f "$state/accepted.json" ]]; then
-            entity="$(jq '.entity|{id,name}' "$state/accepted.json")"
+            entity="$(jq '.entity|{id,name,description}' "$state/accepted.json")"
+            other_entity="$(character "$action_character" "$action_user" Action | jq '.entity|{id,name,description}')"
             if [[ "$(<"$state/mode")" == http-duplicate-entity ]]; then
-                response="$(jq -nc --argjson place "$place" --argjson entity "$entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity,$entity],next:null}')"
+                response="$(jq -nc --argjson place "$place_summary" --argjson entity "$entity" --argjson other "$other_entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity,$entity,$other],next:null}')"
             else
-                response="$(jq -nc --argjson place "$place" --argjson entity "$entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity],next:null}')"
+                response="$(jq -nc --argjson place "$place_summary" --argjson entity "$entity" --argjson other "$other_entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity,$other],next:null}')"
             fi
-        else response="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"; fi ;;
+        else response="$(jq -nc --argjson place "$place_summary" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"; fi ;;
     */api/place/current/activity*)
         printf 'http-current-activity\n' >>"$state/timeline"
         if [[ -f "$state/accepted.json" ]]; then
@@ -158,12 +170,11 @@ case "$url" in
                 activity="$(jq '.actor_character.id="ffffffff-ffff-4fff-8fff-ffffffffffff"' <<<"$activity")"
             fi
             if [[ "$(<"$state/mode")" == http-duplicate-action ]]; then
-                response="$(jq -nc --argjson place "$place" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity,$activity],next:null}')"
+                response="$(jq -nc --argjson place "$place_summary" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity,$activity],next:null}')"
             else
-                response="$(jq -nc --argjson place "$place" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
+                response="$(jq -nc --argjson place "$place_summary" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
             fi
-        else response="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"; fi ;;
-    */api/entity/*) printf 'http-entity\n' >>"$state/timeline"; response="$(jq '.entity' "$state/accepted.json")" ;;
+        else response="$(jq -nc --argjson place "$place_summary" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"; fi ;;
     *) printf 'unexpected fake curl: %s\n' "$*" >&2; exit 91 ;;
 esac
 if [[ -n "$output" ]]; then
@@ -200,9 +211,9 @@ if [[ "$*" == *'features list' ]]; then
 fi
 if [[ "$*" == *'mcp get aicadia --json' ]]; then
     arguments="$(printf '%s\n' "$@")"
-    if [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]';
+    if [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]';
     elif [[ "$*" == *'enabled_tools=["submit_action"]'* ]]; then tools='["submit_action"]';
-    elif [[ "$*" == *'enabled_tools=["get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_character","list_entity_at_current_place","list_activity_at_current_place"]';
+    elif [[ "$*" == *'enabled_tools=["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]';
     else exit 96; fi
     for required in 'features.code_mode.enabled=true' 'features.code_mode.direct_only_tool_namespaces=["mcp__aicadia"]'; do grep -Fx -- "$required" <<<"$arguments" >/dev/null || exit 97; done
     jq -nc --argjson tools "$tools" '{name:"aicadia",enabled:true,transport:{type:"streamable_http",url:"http://127.0.0.1:9/mcp",env_http_headers:{"Aicadia-User-Id":"AICADIA_USER_ID"}},enabled_tools:$tools,disabled_tools:null}'
@@ -226,6 +237,7 @@ place_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'; character_id='aaaaaaaa-aaaa-4aa
 entity_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'; activity_id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'; request_id='44444444-4444-4444-8444-444444444444'
 action_user='11111111-1111-4111-8111-111111111111'
 place="$(jq -nc --arg id "$place_id" --arg marker "$marker" --arg user "$action_user" '{entity:{id:$id,name:("Entry Place "+$marker),description:("Disposable shared entry Place for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:02:00Z"},is_entry:true}')"
+place_summary="$(jq -nc --argjson place "$place" '$place.entity|{id,name,description}')"
 printf '%s\n' "{\"type\":\"thread.started\",\"thread_id\":\"$session\"}"
 printf '%s\n' '{"type":"turn.started"}'
 mcp_sequence=0
@@ -240,15 +252,14 @@ mcp() {
 mcp_started() { jq -nc --arg id "$1" --arg tool "$2" '{type:"item.started",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:{},result:null,status:"in_progress",error:null}}'; }
 case "$count" in
     1)
-        character="$(jq -nc --arg id "$character_id" --arg user "$action_user" --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$user,current_place:$place}')"
-        entity_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"
-        activity_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"
-        property_page="$(jq -nc --argjson place "$place" '{place:$place,place_revision:"v1.fake.before",property:[],next:null}')"
+        character_entity="$(jq -nc --arg id "$character_id" --arg user "$action_user" --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$user,current_place:$place}')"
+        character="$(jq -nc --argjson character "$character_entity" '{character:$character,place_revision:"v1.fake.before",current_state:{association:[],next:null}}')"
+        entity_page="$(jq -nc --argjson place "$place_summary" '{place:$place,place_revision:"v1.fake.before",entity:[],next:null}')"
+        activity_page="$(jq -nc --argjson place "$place_summary" '{place:$place,place_revision:"v1.fake.before",activity:[],next:null}')"
         mcp get_world '{}' '{"name":"Aicadia"}'
         mcp get_character '{}' "$character"
         mcp list_entity_at_current_place '{"limit":25}' "$entity_page"
         mcp list_activity_at_current_place '{"limit":25}' "$activity_page"
-        mcp list_entity_property_at_current_place '{"limit":25}' "$property_page"
         if [[ "$mode" == premature-phase1 ]]; then mcp submit_action '{}' '{}'; fi
         if [[ "$mode" == malformed-proposals ]]; then printf '%s\n' '{"status":"proposed","marker":"wrong"}' >"$final";
         else jq -n --arg marker "$marker" '{status:"proposed",marker:$marker,place_revision:"v1.fake.before",proposals:[{id:"one",direction:"Inspect the quiet crossing",grounding:"The entered Character is at the empty entry Place"},{id:"two",direction:"Establish a trail marker",grounding:"The current Place has no placed Entities"},{id:"three",direction:"Record signs of passage",grounding:"Place Activity contains no prior action prose"}]}' >"$final"; fi ;;
@@ -273,15 +284,23 @@ case "$count" in
     4)
         [[ "$mode" != observer-fail ]] || exit 21
         accepted="$(<"$state/accepted.json")"; entity="$(jq '.entity' <<<"$accepted")"; activity="$(jq '.activity' <<<"$accepted")"
-        character="$(jq -nc --arg id "$observer_id" --arg user '22222222-2222-4222-8222-222222222222' --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Observer Character "+$marker),description:("Disposable observer Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:03:00Z"},owner_user_id:$user,current_place:$place}')"
-        entity_page="$(jq -nc --argjson place "$place" --argjson entity "$(jq '{id,name}' <<<"$entity")" '{place:$place,place_revision:"v1.fake.after",entity:[$entity],next:null}')"
-        activity_page="$(jq -nc --argjson place "$place" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
-        mcp get_character '{}' "$character"; mcp list_entity_at_current_place '{"limit":25}' "$entity_page"; mcp list_activity_at_current_place '{"limit":25}' "$activity_page"
-        observed_entity="$entity_id"; observed_prose="$(jq -r '.prose' <<<"$activity")"; observed_name="$(jq -r '.name' <<<"$entity")"
+        character_entity="$(jq -nc --arg id "$observer_id" --arg user '22222222-2222-4222-8222-222222222222' --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Observer Character "+$marker),description:("Disposable observer Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:03:00Z"},owner_user_id:$user,current_place:$place}')"
+        character="$(jq -nc --argjson character "$character_entity" '{character:$character,place_revision:"v1.fake.after",current_state:{association:[],next:null}}')"
+        other_entity="$(jq -nc --arg id "$character_id" --arg marker "$marker" '{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker)}')"
+        entity_page="$(jq -nc --argjson place "$place_summary" --argjson entity "$(jq '{id,name,description}' <<<"$entity")" --argjson other "$other_entity" '{place:$place,place_revision:"v1.fake.after",entity:[$entity,$other],next:null}')"
+        entity_state="$(jq -nc --argjson place "$place_summary" --argjson entity "$entity" '{place:$place,place_revision:"v1.fake.after",entity:($entity|{id,name,description}),current_state:{association:[{type:"property",property:{key:"material",value:{type:"text",text:"weathered cedar"}}}],next:null}}')"
+        activity_page="$(jq -nc --argjson place "$place_summary" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
+        entity_arguments="$(jq -nc --arg entity "$entity_id" '{entity_id:$entity,limit:100}')"
+        [[ "$mode" != observer-invalid-limit ]] || entity_arguments="$(jq -nc --arg entity "$entity_id" '{entity_id:$entity,limit:101}')"
+        [[ "$mode" != observer-cursor ]] || entity_arguments="$(jq -nc --arg entity "$entity_id" '{entity_id:$entity,limit:100,cursor:"forbidden"}')"
+        mcp get_character '{}' "$character"; mcp list_entity_at_current_place '{"limit":25}' "$entity_page"; mcp get_entity_at_current_place "$entity_arguments" "$entity_state"; mcp list_activity_at_current_place '{"limit":25}' "$activity_page"
+        observed_entity="$entity_id"; observed_prose="$(jq -r '.prose' <<<"$activity")"; observed_name="$(jq -r '.name' <<<"$entity")"; observed_description="$(jq -r '.description' <<<"$entity")"; observed_property='weathered cedar'
         [[ "$mode" != observer-wrong-id ]] || observed_entity='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
         [[ "$mode" != observer-wrong-prose ]] || observed_prose="Wrong observer prose $marker"
         [[ "$mode" != observer-wrong-name ]] || observed_name="Wrong observer name $marker"
-        jq -n --arg marker "$marker" --arg entity "$observed_entity" --arg place "$place_id" --arg prose "$observed_prose" --arg name "$observed_name" '{status:"observed",marker:$marker,entity_id:$entity,place_id:$place,prose:$prose,entity_name:$name}' >"$final" ;;
+        [[ "$mode" != observer-wrong-description ]] || observed_description="Wrong observer description $marker"
+        [[ "$mode" != observer-wrong-property ]] || observed_property='fresh pine'
+        jq -n --arg marker "$marker" --arg entity "$observed_entity" --arg place "$place_id" --arg prose "$observed_prose" --arg name "$observed_name" --arg description "$observed_description" --arg property "$observed_property" '{status:"observed",marker:$marker,entity_id:$entity,place_id:$place,prose:$prose,entity_name:$name,entity_description:$description,property_key:"material",property_text:$property}' >"$final" ;;
 esac
 printf '%s\n' '{"type":"turn.completed"}'
 FAKE
@@ -418,6 +437,11 @@ test_happy_resumed_contract() {
     manifest="$(latest_manifest "$root")"; run_dir="$(dirname "$manifest")"
     jq -e '.evidence_kind=="fake_controller_test" and .run_status=="fake_completed"
         and .run_status!="completed" and .cleanup.status=="dropped"
+        and .deployment.status=="dropped" and .deployment.server_address==null
+        and .candidate_started==false and .authorization_consumed==false
+        and .codex_invoked==false and .model_calls==0 and .actual_usage_events==null
+        and .paid_candidate==false
+        and .frozen.process_calls==4 and .frozen.retries==0
         and (.phases|keys|sort)==(["proposals","preview","commit","http","observer"]|sort)
         and .validation.status=="passed" and all(.phases[];.status=="passed")
         and .codex.version=="codex-cli 0.147.0" and .codex.model=="gpt-5.6-sol"
@@ -440,15 +464,23 @@ test_happy_resumed_contract() {
     assert_contains "$root/state/call-3/argv" 'resume'
     assert_contains "$root/state/call-4/argv" '--ephemeral'
     assert_contains "$root/state/call-4/argv" 'mcp_2026_07_28'
-    assert_contains "$root/state/call-4/argv" 'enabled_tools=["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
-    assert_not_contains "$root/state/call-4/argv" 'get_entity'
+    assert_contains "$root/state/call-4/argv" 'enabled_tools=["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'
     assert_not_contains "$root/state/call-4/prompt" 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
     assert_not_contains "$root/state/call-4/prompt" 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
     assert_not_contains "$root/state/call-4/prompt" 'The Character braces a weathered cedar marker'
-    jq -e 'has("entity_description") | not' "$run_dir/observer.final.json" >/dev/null
-    assert_live_attempt_shape "$run_dir/action-phase-1.events.jsonl" '["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place","list_entity_property_at_current_place"]'
+    jq -e '.entity_description|contains("weathered cedar trail marker")' "$run_dir/observer.final.json" >/dev/null
+    jq -e '.property_key=="material" and .property_text=="weathered cedar"' "$run_dir/observer.final.json" >/dev/null
+    jq -e '(.entity|length)==2 and ([.entity[]|select(.id=="cccccccc-cccc-4ccc-8ccc-cccccccccccc")]|length)==1' \
+        "$run_dir/http-observer-entity.json" >/dev/null \
+        || fail 'happy HTTP fixture did not prove one marker among an unrelated co-located Character'
+    grep -F "manifest_set '.actual_usage_events=\$usage'" "$RUNNER" >/dev/null \
+        || fail 'live Property calls do not persist usage before terminal validation'
+    assert_live_attempt_shape "$run_dir/action-phase-1.events.jsonl" '["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
     assert_live_attempt_shape "$run_dir/action-phase-3.events.jsonl" '["submit_action"]'
-    assert_live_attempt_shape "$run_dir/observer.events.jsonl" '["get_character","list_entity_at_current_place","list_activity_at_current_place"]'
+    assert_live_attempt_shape "$run_dir/observer.events.jsonl" '["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'
+    jq -s -e '[.[]|select(.type=="item.completed" and .item.type=="mcp_tool_call")|.item][2].arguments.limit==100' \
+        "$run_dir/observer.events.jsonl" >/dev/null \
+        || fail 'happy observer fixture did not exercise the valid explicit maximum Entity-state limit'
     commit_line="$(grep -nFx 'agent-3' "$root/state/timeline" | cut -d: -f1)"
     http_line="$(grep -nFx 'http-current-entity' "$root/state/timeline" | cut -d: -f1)"
     observer_line="$(grep -nFx 'agent-4' "$root/state/timeline" | cut -d: -f1)"
@@ -467,7 +499,7 @@ test_happy_resumed_contract() {
 
 test_failure_paths() {
     local mode root manifest expected_exec actual_exec
-    for mode in premature-phase1 premature-phase2 no-commit double-commit incomplete-extra-commit malformed-proposals malformed-preview malformed-commit observer-fail observer-wrong-id observer-wrong-name observer-wrong-prose server-fail cleanup-fail ambiguous-create ownership-mismatch-create http-duplicate-entity http-duplicate-action http-wrong-actor; do
+    for mode in premature-phase1 premature-phase2 no-commit double-commit incomplete-extra-commit malformed-proposals malformed-preview malformed-commit observer-fail observer-invalid-limit observer-cursor observer-wrong-id observer-wrong-name observer-wrong-description observer-wrong-property observer-wrong-prose server-fail cleanup-fail ambiguous-create ownership-mismatch-create http-duplicate-entity http-duplicate-action http-wrong-actor; do
         root="$TEST_TMP/failure-$mode"; make_fakes "$root"
         if run_fake "$root" "$mode" run; then fail "$mode unexpectedly passed"; fi
         manifest="$(latest_manifest "$root")"; [[ -n "$manifest" ]] || fail "$mode retained no manifest"
@@ -482,13 +514,14 @@ test_failure_paths() {
                 and (.cleanup.recovery|contains("automatic cleanup is forbidden"))' "$manifest" >/dev/null
             ! grep -F 'drop-attempt' "$root/state/database-actions" >/dev/null || fail "$mode attempted automatic drop"
         else
-            jq -e '.cleanup.status=="dropped"' "$manifest" >/dev/null
+            jq -e '.cleanup.status=="dropped" and .deployment.status=="dropped"
+                and .deployment.server_address==null' "$manifest" >/dev/null
         fi
         case "$mode" in
             premature-phase1|malformed-proposals) expected_exec=1 ;;
             premature-phase2|malformed-preview) expected_exec=2 ;;
             no-commit|double-commit|incomplete-extra-commit|malformed-commit) expected_exec=3 ;;
-            observer-fail|observer-wrong-id|observer-wrong-name|observer-wrong-prose|cleanup-fail) expected_exec=4 ;;
+            observer-fail|observer-wrong-id|observer-wrong-name|observer-wrong-description|observer-wrong-property|observer-wrong-prose|cleanup-fail) expected_exec=4 ;;
             http-duplicate-entity|http-duplicate-action|http-wrong-actor) expected_exec=3 ;;
             server-fail|ambiguous-create|ownership-mismatch-create) expected_exec=0 ;;
         esac
@@ -503,7 +536,7 @@ test_failure_paths() {
                 assert_contains "$root/state/database-actions" 'create-attempt aicadia_playtest_'
                 assert_contains "$root/state/database-actions" 'drop-attempt aicadia_playtest_'
                 ;;
-            observer-fail|observer-wrong-id|observer-wrong-name|observer-wrong-prose)
+            observer-fail|observer-wrong-id|observer-wrong-name|observer-wrong-description|observer-wrong-property|observer-wrong-prose)
                 jq -e '.phases.http.status=="passed" and .validation.status=="passed"
                     and .phases.observer.status=="failed"' "$manifest" >/dev/null
                 ;;

@@ -10,19 +10,27 @@ Annotation summary: additive, non-idempotent.
 
 ## Purpose
 
-Create the current User's one unplaced Character Entity role with 0–100 optional initial Properties; accepts no ids.
+Create the current User's one unplaced Character Entity role with independent 0–100
+optional initial Properties and Traits; accepts no ids.
 
 ## Input
 
-`{ name, description, property }`; `property` defaults to `[]`. World call `create_character(context.user_id, input)`; HTTP `POST /api/character`; MCP `create_character`.
+`{ name, description, property, trait }`; both state lists default to `[]`. World
+call `create_character(context.user_id, input)`; HTTP `POST /api/character`; MCP
+`create_character`.
 
 ## Validation
 
-The User may own at most one Character. All creation routes reject a `trait` field. Shared name, description and Property rules are in [Domain contract](../domain.md#shared-value-validation).
+The User may own at most one Character. Initial Trait items contain only one
+`statement` and establish new World-assigned lineages. Shared name, description,
+Property and Trait rules are in [Domain contract](../domain.md#shared-value-validation).
 
 ## Result
 
-Atomically creates Entity, Character, Activity and initial Property state. Concurrent creates for one User yield exactly one Character without orphan state. The result is unplaced. Absence means the Character exists but has not entered the World; it is not a missing lookup or unknown coordinate.
+Atomically creates Entity, Character, Activity and initial Property/Trait state.
+Concurrent creates for one User yield exactly one Character without orphan state.
+The result is unplaced. Absence means the Character exists but has not entered the
+World; it is not a missing lookup or unknown coordinate.
 
 ## Retry and tool-local safety
 

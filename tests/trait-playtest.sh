@@ -182,8 +182,22 @@ test_live_gate_and_freeze() {
     grep -En "MAX_MODEL_CALLS=7|MAX_RETRIES=0|CODEX_MODEL='gpt-5.6-sol'|CODEX_REASONING_EFFORT='high'" "$RUNNER" >/dev/null \
         || fail 'live freeze lost exact calls, retries, model or effort'
     grep -En 'ZERO_TOOL_TOOLS=' "$RUNNER" >/dev/null || fail 'preview phases lost their empty MCP allowlist'
+    grep -F 'validate_action_preview_names "$final"' "$RUNNER" >/dev/null \
+        || fail 'live Action preview bypasses the shared exact-name validator'
+    grep -F 'validate_interaction_preview_names "$final"' "$RUNNER" >/dev/null \
+        || fail 'live Interaction preview bypasses the shared exact-name validator'
+    ! grep -F 'startswith("Pip ")' "$RUNNER" >/dev/null \
+        || fail 'live Trait validator still rejects the exact natural Pip name'
+    ! grep -F 'startswith("Mara ")' "$RUNNER" >/dev/null \
+        || fail 'live Trait validator still rejects the exact natural Mara name'
     grep -En 'Codex CLI 0.147.0 exposes no enforceable per-run token ceiling' "$RUNNER" >/dev/null \
         || fail 'token boundary is not honest and explicit'
+    grep -F "manifest_set '.actual_usage_events=\$usage'" "$RUNNER" >/dev/null \
+        || fail 'live Trait calls do not persist usage before terminal validation'
+    grep -F "manifest_set '.phases.http_establish_gate=\"failed\"'" "$RUNNER" >/dev/null \
+        || fail 'reached rejected Trait establishment gate remains indistinguishable from unstarted'
+    grep -F "manifest_set '.phases.http_develop_gate=\"failed\"'" "$RUNNER" >/dev/null \
+        || fail 'reached rejected Trait development gate remains indistinguishable from unstarted'
     [[ "$(grep -Ec -- '--enable mcp_2026_07_28' "$RUNNER")" -ge 2 ]] \
         || fail 'Trait Codex validation and live commands do not both pin MCP 2026-07-28'
     [[ "$after" == "$before" ]] || fail 'rejected authorization changed private candidate state'

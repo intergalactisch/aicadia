@@ -178,6 +178,7 @@ impl ErrorOutput {
             WorldError::InvalidAction { field, reason } => {
                 let (field, subject) = match field {
                     ActionField::Prose => ("prose", "Action prose"),
+                    ActionField::Consequence => ("consequence", "Action consequence"),
                     ActionField::ConsequenceName => ("consequence.name", "Action consequence name"),
                     ActionField::ConsequenceDescription => {
                         ("consequence.description", "Action consequence description")

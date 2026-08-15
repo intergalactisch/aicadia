@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashSet;
 
 impl World {
     pub async fn create_user(&self) -> Result<User, WorldError> {
@@ -57,6 +58,10 @@ impl World {
         write_property_changes(&mut transaction, activity_id, &property)
             .await
             .map_err(|error| map_property_error(error, "create_entity"))?;
+        let trait_change = trait_writes_for_entity(entity.id, input.r#trait);
+        write_trait_changes(&mut transaction, activity_id, &trait_change, &[entity.id])
+            .await
+            .map_err(|error| map_trait_error(error, "create_entity"))?;
         if let Some(place) = context
             .as_ref()
             .and_then(|character| character.current_place.as_ref())
@@ -120,6 +125,10 @@ impl World {
         write_property_changes(&mut transaction, activity_id, &property)
             .await
             .map_err(|error| map_property_error(error, "create_character"))?;
+        let trait_change = trait_writes_for_entity(entity.id, input.r#trait);
+        write_trait_changes(&mut transaction, activity_id, &trait_change, &[entity.id])
+            .await
+            .map_err(|error| map_trait_error(error, "create_character"))?;
         transaction
             .commit()
             .await
@@ -176,6 +185,10 @@ impl World {
         write_property_changes(&mut transaction, activity_id, &property)
             .await
             .map_err(|error| map_property_error(error, "create_entry_place"))?;
+        let trait_change = trait_writes_for_entity(entity.id, input.r#trait);
+        write_trait_changes(&mut transaction, activity_id, &trait_change, &[entity.id])
+            .await
+            .map_err(|error| map_trait_error(error, "create_entry_place"))?;
         if let Err(error) = sqlx::query(
             "INSERT INTO place (entity_id, is_entry, latest_activity_id) VALUES ($1, true, $2)",
         )
@@ -310,12 +323,12 @@ impl World {
                             (place.entity.id, ActivityEntityRole::Location),
                         ],
                         property_writes_for_entity(entity.id, consequence.property),
-                        Vec::new(),
-                        Vec::new(),
+                        trait_writes_for_entity(entity.id, consequence.r#trait),
+                        vec![entity.id],
                         "introduce_entity",
                     )
                 }
-                ActionConsequence::ChangeEntityProperty(consequence) => {
+                ActionConsequence::ChangeEntityState(consequence) => {
                     let property = consequence
                         .property_change
                         .into_iter()
@@ -333,27 +346,6 @@ impl World {
                         "submit_action",
                     )
                     .await?;
-                    let mut subject = property
-                        .iter()
-                        .map(|write| write.entity_id)
-                        .collect::<Vec<_>>();
-                    subject
-                        .sort_unstable_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
-                    subject.dedup();
-                    let mut involved = subject
-                        .into_iter()
-                        .map(|entity_id| (entity_id, ActivityEntityRole::Subject))
-                        .collect::<Vec<_>>();
-                    involved.push((place.entity.id, ActivityEntityRole::Location));
-                    (
-                        involved,
-                        property,
-                        Vec::new(),
-                        Vec::new(),
-                        "change_entity_property",
-                    )
-                }
-                ActionConsequence::ChangeEntityTrait(consequence) => {
                     let trait_change = consequence
                         .trait_change
                         .into_iter()
@@ -373,20 +365,36 @@ impl World {
                                 statement,
                             },
                         })
-                        .collect();
-                    let eligible_trait_entity = find_local_entity_ids(
-                        &mut transaction,
-                        character.entity.id,
-                        place.entity.id,
-                        "submit_action",
-                    )
-                    .await?;
+                        .collect::<Vec<_>>();
+                    let eligible_trait_entity = if trait_change.is_empty() {
+                        Vec::new()
+                    } else {
+                        find_local_entity_ids(
+                            &mut transaction,
+                            character.entity.id,
+                            place.entity.id,
+                            "submit_action",
+                        )
+                        .await?
+                    };
+                    let mut subject = property
+                        .iter()
+                        .map(|write| write.entity_id)
+                        .collect::<Vec<_>>();
+                    subject
+                        .sort_unstable_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
+                    subject.dedup();
+                    let mut involved = subject
+                        .into_iter()
+                        .map(|entity_id| (entity_id, ActivityEntityRole::Subject))
+                        .collect::<Vec<_>>();
+                    involved.push((place.entity.id, ActivityEntityRole::Location));
                     (
-                        vec![(place.entity.id, ActivityEntityRole::Location)],
-                        Vec::new(),
+                        involved,
+                        property,
                         trait_change,
                         eligible_trait_entity,
-                        "change_entity_trait",
+                        "change_entity_state",
                     )
                 }
             };
@@ -418,9 +426,15 @@ impl World {
         .await
         .map_err(|error| map_trait_error(error, "submit_action"))?;
         if !stored_trait_change.is_empty() {
+            let existing_subject = involved
+                .iter()
+                .filter(|(_, role)| *role == ActivityEntityRole::Subject)
+                .map(|(entity_id, _)| *entity_id)
+                .collect::<HashSet<_>>();
             let mut subject = stored_trait_change
                 .iter()
                 .map(|change| change.entity_id)
+                .filter(|entity_id| !existing_subject.contains(entity_id))
                 .collect::<Vec<_>>();
             subject.sort_unstable_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
             subject.dedup();

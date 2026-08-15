@@ -48,6 +48,10 @@ quality:
    the historical development. No observer-specific Knowledge or receipt state is
    invented.
 
+Both fake and live preview validators require the exact natural names `Pip` and
+`Mara`; they share the same name checks, so a valid schema result is not rejected by
+a stricter live-only prefix rule.
+
 The suite also rejects malformed MCP results, premature, duplicate and incomplete
 mutation attempts, changed confirmed previews, executable Trait claims, wrong Trait
 continuity, wrong current projection, invented observer state, malformed
@@ -98,7 +102,9 @@ development preview/commit and Mara's observation.
 Codex CLI 0.147.0 exposes no enforceable per-run token ceiling. The honest spend
 boundary is therefore exactly seven model process calls, not a fabricated token
 number; actual usage events are retained when Codex emits them. The command has no
-automatic retry path. One failed call still consumes the one authorization.
+automatic retry path. Usage is aggregated into the manifest after every completed
+process, including terminal failures before a later phase. One failed call still
+consumes the one authorization.
 
 ## Token-free readiness and paid gate
 
@@ -147,8 +153,9 @@ a second candidate, and failure never authorizes a retry or protocol fallback.
 
 ## Historical runner boundary
 
-[`tools/agent-playtest`](../../../tools/agent-playtest) and its recorded Action evidence
-remain historical. Its token-free replay uses a frozen Property-era catalog fixture,
-not the current runtime catalog or current Agent contract. The old prompts, schemas,
-candidate history and evidence claims are not relabelled or reused by this
-controller; it is not evidence for current Trait gameplay.
+The earlier paid Action candidates and their recorded evidence remain historical.
+[`tools/agent-playtest`](../../../tools/agent-playtest) is now the current bounded
+Property runner and binds the generated current catalog; only its separate immutable
+test fixture preserves the old Property-era catalog. Neither that runner's current
+Property scenario nor its candidate history is relabelled or reused by this
+controller, and neither is evidence for current Trait gameplay.

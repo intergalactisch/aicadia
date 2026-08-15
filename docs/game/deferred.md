@@ -18,7 +18,8 @@ remote Interaction, relationship scores and multi-actor commits are also absent.
 Property deletion/unset, key rename, aliases, Trait retirement/reactivation/delete/
 merge/transfer or direct editing, possession/relations,
 placement changes, remote or prose-derived selectors, reverse/global Property
-search and mixed Action consequence kinds are absent. The accepted Property/Trait
+search and mixing Entity introduction with existing-state change in one Action are
+absent. The accepted Property/Trait
 target admits only explicitly submitted and confirmed Agent-authored Actions and
 Interactions. No deterministic external Trait writer, background Agent, timer,
 scheduler, `world_event` or ungrounded simulation exists.

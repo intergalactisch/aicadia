@@ -8,15 +8,15 @@ explicit confirmation.
 The preview must be complete for the chosen consequence kind:
 
 - `introduce_entity`: the complete meaning of prose, name, description and
-  all 0–100 initial Properties;
-- `change_entity_property`: the prose and every 1–100 exact-local
-  subject/key/type/value change;
-- `change_entity_trait`: every affected subject, whether its
-  characterization is established or develops, and the exact current and
-  proposed characterization where applicable.
+  all independent 0–100 initial Properties and Traits;
+- `change_entity_state`: the prose, every 0–100 exact-local Property
+  subject/key/type/value change and every 0–100 affected Trait subject,
+  whether its characterization is established or develops, including the
+  exact current and proposed characterization where applicable.
 
-One Action carries exactly one consequence kind; a Trait package may mix
-establishment and development. Privately submit the stable Trait id fetched
+One Action carries exactly one consequence kind; a state-change package needs
+at least one item and its Trait list may mix establishment and development.
+Privately submit the stable Trait id fetched
 from the World for every development — it stays out of player conversation.
 The actor, the current Place, another co-present person and an ordinary
 placed thing are equally eligible subjects; never reveal which is

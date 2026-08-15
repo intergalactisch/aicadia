@@ -12,6 +12,7 @@ async fn http_concurrency_preserves_single_genesis_and_retry_safe_entry(pool: Pg
                 name: "Mara Venn".to_owned(),
                 description: "A careful surveyor.".to_owned(),
                 property: Vec::new(),
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -23,6 +24,7 @@ async fn http_concurrency_preserves_single_genesis_and_retry_safe_entry(pool: Pg
                 name: "Tomas Reed".to_owned(),
                 description: "A patient observer.".to_owned(),
                 property: Vec::new(),
+                r#trait: Vec::new(),
             },
         )
         .await

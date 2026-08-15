@@ -66,7 +66,7 @@ readonly STATE_DIR
 readonly PROFILE="$STATE_DIR/profile.json"
 
 [[ -f "$PROFILE" && ! -L "$PROFILE" ]] \
-    || { fail 'the stable local profile is unavailable; start ./tools/aicadia-local first'; exit 1; }
+    || { fail 'the stable local profile is unavailable; start cargo dev first'; exit 1; }
 jq -e --arg user_id "$AICADIA_USER_ID" '
     type == "object"
     and (keys == ["database_name", "user_id", "version"])

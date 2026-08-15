@@ -14,19 +14,22 @@ inspects accepted World, Entity and Activity/prose data.
 From the trusted repository root, with local PostgreSQL available, run:
 
 ```sh
-./tools/aicadia-local
+cargo dev
 ```
 
 The launcher uses database `aicadia_local`, starts the server on loopback port
 `3000`, provisions a User only on the first start, opens the ledger and prints its
-URL, the MCP URL and the exact Agent command. Supply another PostgreSQL
+URL, the MCP URL and the exact Agent command. `cargo dev` is the Cargo alias for the
+owned `tools/aicadia-local` launcher. When PostgreSQL was installed as a keg-only
+Homebrew formula, the launcher discovers its client commands without requiring a
+shell `PATH` change. Supply another PostgreSQL
 administration connection when the local default does not apply:
 
 ```sh
-DATABASE_URL='postgres://localhost/postgres' ./tools/aicadia-local
+DATABASE_URL='postgres://localhost/postgres' cargo dev
 ```
 
-Use `./tools/aicadia-local --no-open` to leave the browser closed. The launcher
+Use `cargo dev --no-open` to leave the browser closed. The launcher
 stores only the selected database name and stable User UUID in the ignored private
 `.aicadia-local/profile.json`; it stores no credentials or conversation.
 
@@ -89,8 +92,8 @@ URL before using the value only as the contextual Activity header.
 ## Stop, restart and reset
 
 Press Ctrl-C in the launcher terminal to stop only the server process it started.
-The database and `.aicadia-local/profile.json` remain. Run the same launcher command
-again to reuse the database and verify the same User before serving the same durable
+The database and `.aicadia-local/profile.json` remain. Run `cargo dev` again to reuse
+the database and verify the same User before serving the same durable
 Character, placement, Entities, Activity and prose. A concurrent launcher, corrupt
 profile, missing profile beside an existing selected database, missing profiled User
 or database mismatch fails visibly instead of silently provisioning a replacement.

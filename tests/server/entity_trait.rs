@@ -59,7 +59,7 @@ async fn trait_http_and_mcp_share_contextual_change_entity_fetch_and_history(poo
         "expected_place_revision": structured(&context)["place_revision"],
         "prose": "Mara watches Pip wait for the returning echo.",
         "consequence": {
-            "type": "change_entity_trait",
+            "type": "change_entity_state",
             "trait_change": [
                 {"type":"establish","entity_id":actor_entity_id,"statement":"Waits for the second echo before moving."},
                 {"type":"establish","entity_id":target_entity_id,"statement":"Jumps unusually high when startled."},
@@ -78,7 +78,7 @@ async fn trait_http_and_mcp_share_contextual_change_entity_fetch_and_history(poo
         .unwrap();
     assert_eq!(response.status(), StatusCode::CREATED);
     let accepted: Value = response.json().await.unwrap();
-    assert_eq!(accepted["consequence"]["type"], "change_entity_trait");
+    assert_eq!(accepted["consequence"]["type"], "change_entity_state");
     assert_eq!(
         accepted["activity"]["trait_change"]
             .as_array()
@@ -168,7 +168,7 @@ async fn trait_http_and_mcp_share_contextual_change_entity_fetch_and_history(poo
         "request_id":Uuid::new_v4(),
         "expected_place_revision":page["place_revision"],
         "prose":"Nothing changes.",
-        "consequence":{"type":"change_entity_trait","trait_change":[{"type":"develop","trait_id":actor_trait_id,"statement":"Waits for Pip's second footfall before moving."}]}
+        "consequence":{"type":"change_entity_state","trait_change":[{"type":"develop","trait_id":actor_trait_id,"statement":"Waits for Pip's second footfall before moving."}]}
     });
     let no_op_response = server.tool("submit_action", no_op, Some(actor.id.0)).await;
     assert_eq!(error_code(&mcp_error(&no_op_response)), "invalid_trait");

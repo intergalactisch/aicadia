@@ -10,14 +10,15 @@ Annotation summary: modifying, idempotent by request id and unordered typed set.
 
 ## Purpose
 
-Atomically introduce one Entity, change 1–100 exact-local Properties or mix 1–100 Trait establishments/developments after confirmation.
+Atomically introduce one Entity with initial Property/Trait state or change exact-local
+Properties and Traits together after confirmation.
 
 ## Contract
 
-`submit_action` accepts one of three homogeneous typed consequence kinds. It is not
-a generic patch language and one Action never mixes Entity introduction, Property
-changes and Trait changes with each other. A Trait-change Action contains one mixed
-Trait lifecycle list:
+`submit_action` accepts one of two typed consequence kinds. It is not a generic patch
+language: one Action either introduces one Entity or changes existing Entity state.
+The state package keeps Property and Trait meanings distinct while committing them
+together:
 
 ```rust
 struct SubmitAction {
@@ -31,6 +32,7 @@ struct IntroduceEntity {
     name: String,
     description: String,
     property: Vec<PropertyInput>,
+    trait: Vec<TraitInput>,
 }
 
 struct AcceptedAction {
@@ -48,12 +50,12 @@ struct PlaceRevision {
 
 `ActionConsequence` is a strict tagged union:
 
-- `introduce_entity { name, description, property[0..100] }` creates and places one
-  Entity with optional initial Property state; or
-- `change_entity_property { property_change[1..100] }` changes 1–100 unique exact
-  `(entity_id, key)` pairs in one atomic operation; or
-- `change_entity_trait { trait_change[1..100] }` atomically mixes typed
-  `establish { entity_id, statement }` and `develop { trait_id, statement }` items.
+- `introduce_entity { name, description, property[0..100], trait[0..100] }` creates
+  and places one Entity with optional initial state; or
+- `change_entity_state { property_change[0..100], trait_change[0..100] }` atomically
+  combines unique exact `(entity_id, key)` Property changes with typed
+  `establish { entity_id, statement }` and `develop { trait_id, statement }` Trait
+  changes. At least one list must be non-empty.
 
 The change subjects may be the actor, current Place, other co-present Characters or
 placed ordinary Entities at that exact current Place. The submitted Entity ids are
@@ -72,15 +74,15 @@ Entity. Expected Place revision plus the locked current pointer selects the
 predecessor atomically; development accepts no predecessor selector.
 
 One accepted introduction atomically creates and places the Entity, writes its
-initial Properties, inserts one Activity with one canonical prose value and records
-explicit Entity roles. One accepted Property Action atomically writes every new
-immutable value and current pointer under that same Activity. One accepted Trait
-Action atomically writes every root/version/current pointer under the Activity; each
-affected Entity has `subject` participation and the Place remains `location`.
+initial Properties and Trait roots, inserts one Activity with one canonical prose
+value and records explicit Entity roles. One accepted state-change Action atomically
+writes every Property value/current pointer and every Trait root/version/current
+pointer under that same Activity; each affected Entity has `subject` participation
+and the Place remains `location`.
 Partial acceptance is forbidden. Rejected calls, stale calls and retries add no
 Activity, Property or Trait state. The returned `AcceptedAction` tags the introduced
-Entity, exact sorted Property changes or exact sorted established/developed Traits
-and is the canonical stored result.
+Entity or both exact sorted Property and Trait changes and is the canonical stored
+result.
 
 ## Input examples
 
@@ -97,50 +99,35 @@ The introduction form is:
     "description": "A waist-high cedar marker carved with three crossing lines.",
     "property": [
       {"key": "material", "value": {"type": "text", "text": "cedar"}}
+    ],
+    "trait": [
+      {"statement": "Answers a hard strike with a low cedar note."}
     ]
   }
 }
 ```
 
-The homogeneous Property-change Action alternative is:
+The combined state-change Action is:
 
 ```json
 {
   "request_id": "fcd45b43-b7d4-45df-a5ee-22b1bd76036b",
   "expected_place_revision": "opaque-versioned-token",
-  "prose": "The blast blackens the gate, Mara and the cedar marker together.",
+  "prose": "The blast blackens the gate while its echo teaches Pip to wait.",
   "consequence": {
-    "type": "change_entity_property",
+    "type": "change_entity_state",
     "property_change": [
       {
         "entity_id": "8ec3cf2f-7484-4230-ad63-16b9e84e4545",
         "key": "surface",
         "value": {"type": "text", "text": "blackened"}
       }
-    ]
-  }
-}
-```
-
-The homogeneous Trait-change Action alternative contains one mixed lifecycle list:
-
-```json
-{
-  "request_id": "2ad2e4ec-ddf3-4602-909e-51377f713c74",
-  "expected_place_revision": "opaque-versioned-token",
-  "prose": "The echo makes Pip wait, then spring only after the second sound.",
-  "consequence": {
-    "type": "change_entity_trait",
+    ],
     "trait_change": [
       {
         "type": "establish",
         "entity_id": "8ec3cf2f-7484-4230-ad63-16b9e84e4545",
         "statement": "Waits for the second echo before springing."
-      },
-      {
-        "type": "develop",
-        "trait_id": "0889a741-3212-4a91-8a04-87f78ff11b44",
-        "statement": "Reads approaching footsteps through the returning echo."
       }
     ]
   }

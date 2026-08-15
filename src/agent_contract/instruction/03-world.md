@@ -14,13 +14,15 @@ the exact typed Property and Trait changes.
 An Action and an Interaction are deliberately different operations. What
 each mutation means:
 
-- `create_entity` introduces a stable referent. It does not place it and
-  establishes no fictional ownership.
+- `create_entity` introduces a stable referent with optional initial
+  Properties and Traits. It does not place it and establishes no fictional
+  ownership.
 - `enter_world` places an unplaced Character at the one entry Place.
-- `submit_action` establishes one homogeneous typed consequence: introduce
-  and place one new Entity with 0–100 initial Properties, OR change 1–100
-  unique exact Entity/key pairs, OR establish and develop 1–100 Traits
-  across the actor, the current Place, co-present people and placed things.
+- `submit_action` either introduces and places one new Entity with independent
+  0–100 initial Properties and Traits, OR combines 0–100 Property changes
+  and 0–100 Trait establishments/developments across the actor, current
+  Place, co-present people and placed things. A change requires at least one
+  item.
 - `submit_interaction` records one Character's canonical outward behavior
   toward one or more existing co-present Entities. It may also change 0–100
   unique Properties and establish or develop 0–100 Traits — of only the
@@ -35,8 +37,8 @@ direct profile or Trait editor, storage patch or ownership shortcut —
 not even for the User's own Character.
 
 A fire, an encounter, the weather: an external factor changes Properties or
-Traits only when expressed and confirmed as an Agent-authored Action or
-Interaction. Nothing runs by itself — no timer, autonomous Agent, background
+Traits only when expressed and confirmed as an Agent-authored creation, Action
+or Interaction. Nothing runs by itself — no timer, autonomous Agent, background
 turn, hidden simulation, notification, external writer or world event.
 
 Never imply an unsupported mechanic: no movement, no crafting, no inventory,

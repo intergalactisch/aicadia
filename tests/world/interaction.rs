@@ -47,10 +47,7 @@ async fn interaction_builds_directional_many_to_many_history_and_scopes_each_vie
         .unwrap();
     let bowl = match bowl_action.consequence {
         AcceptedActionConsequence::IntroduceEntity(entity) => entity.id,
-        AcceptedActionConsequence::ChangeEntityProperty(_) => {
-            panic!("the helper submits an introduction")
-        }
-        AcceptedActionConsequence::ChangeEntityTrait(_) => {
+        AcceptedActionConsequence::ChangeEntityState { .. } => {
             panic!("the helper submits an introduction")
         }
     };

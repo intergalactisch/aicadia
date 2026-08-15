@@ -8,8 +8,8 @@ use uuid::Uuid;
 use crate::{
     AcceptedAction, AcceptedActionConsequence, AcceptedInteraction, ActionConsequence, ActionField,
     Activity, ActivityCursor, ActivityEntityReference, ActivityEntityRole, ActivityId,
-    ActivityOperation, ActivityPage, ActivityTraitChange, ChangeEntityProperty, ChangeEntityTrait,
-    Character, CharacterEntityStatePage, CreateCharacter, CreateEntity, CreateEntryPlace,
+    ActivityOperation, ActivityPage, ActivityTraitChange, ChangeEntityState, Character,
+    CharacterEntityStatePage, CreateCharacter, CreateEntity, CreateEntryPlace,
     CurrentPlaceActivityPage, CurrentPlaceEntity, CurrentPlaceEntityPage,
     CurrentPlaceEntityStatePage, Entity, EntityCurrentAssociation, EntityCurrentStateCursor,
     EntityCurrentStatePage, EntityCursor, EntityField, EntityId, EntityPage, EntityPropertyChange,
@@ -18,7 +18,7 @@ use crate::{
     GetEntityCurrentState, InteractionField, IntroduceEntity, InvalidReason, ListActivity,
     ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace, Place, PlaceRevision,
     PlaceSummary, PropertyField, PropertyInput as WorldPropertyInput, PropertyValue, SubmitAction,
-    SubmitInteraction, User, UserId, WorldError, WorldView,
+    SubmitInteraction, TraitInput as WorldTraitInput, User, UserId, WorldError, WorldView,
 };
 
 pub const USER_CONTEXT_HEADER: &str = "Aicadia-User-Id";

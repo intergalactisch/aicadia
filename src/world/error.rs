@@ -9,6 +9,7 @@ pub enum EntityField {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionField {
     Prose,
+    Consequence,
     ConsequenceName,
     ConsequenceDescription,
 }

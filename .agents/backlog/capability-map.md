@@ -29,7 +29,7 @@ changes. Do not mark a capability executable from documentation or research alon
 | Enter the shared World | Arrive with that Character at the one World-derived entry Place | No destination choice, movement or further Place | [Place and World entry](../../docs/game/domain.md#place-and-world-entry) |
 | Orient at the exact Place | Read compact local descriptions, then fetch the actor or one selected exact-local Entity with bounded current Property/Trait associations, plus only Activity authorized for this Character at that Place | Exact Place equality is eligibility, not general visibility, sensory access or neighborhood; Property/Trait content is not control provenance | [Local Entity list](../../docs/game/capability/list_entity_at_current_place.md) · [local Activity](../../docs/game/capability/list_activity_at_current_place.md) · [scoped Entity state](../../docs/game/capability/get_entity_at_current_place.md) |
 | Recall personal history | Read immutable accepted Activity in which the current Character acted or was explicitly involved | No private conversation, rejected attempt or inferred knowledge history | [Personal history](../../docs/game/capability/list_activity.md) |
-| Establish or change local state | Choose and steer one of three grounded directions, completely preview and confirm one homogeneous Action that introduces a placed Entity with initial Properties, changes 1–100 exact-local Entity/key pairs or establishes/develops 1–100 Entity Traits | No mixed Action consequence kind, generic patch, remote selector, direct storage edit or executable Trait prose | [Character-grounded Action](../../docs/game/capability/submit_action.md#contract) |
+| Establish or change local state | Choose and steer one of three grounded directions, completely preview and confirm one Action that introduces a placed Entity with initial Properties and Traits or changes both state kinds together | No introduction-plus-existing-state mixture, generic patch, remote selector, direct storage edit or executable Trait prose | [Character-grounded Action](../../docs/game/capability/submit_action.md#contract) |
 | Observe another marker | A second Character at the same Place can find the same Entity and canonical prose | This proves shared state, not complete co-presence or Character observation | [Cross-contract evidence obligations](../../docs/game/protocol.md#cross-contract-evidence-obligations) |
 | Interact with present Entities | Direct one confirmed outward behavior toward 1–100 distinct co-present Entities, optionally changing actor/explicit-target Properties and establishing/developing their Traits | No target-authored response, thought, consent, relationship, placement, implicit witness or Trait mechanics | [Character-grounded Interaction](../../docs/game/capability/submit_interaction.md#contract) |
 | Recall directed interaction | Actor and explicit target Character can later read the same canonical outward behavior and complete target set; a reverse response is a new Interaction | Non-target bystanders and distant Characters receive no Interaction automatically | [Personal history](../../docs/game/capability/list_activity.md) · [Place history](../../docs/game/capability/list_activity_at_current_place.md) |
@@ -44,12 +44,16 @@ does not restate its protocol or implementation boundary.
 
 ## Future experience
 
+Uniform Entity creation and state-change packages are delivered in the current
+experience above. The bounded Sol-medium smoke validation is closed with a negative
+revision-retention result and adds no player capability. Investigation and discovery
+is restored unchanged to `Now / Proposed`.
+
 | Capability | Intended User experience | Planning state | Next step or unresolved edge |
 | --- | --- | --- | --- |
 | Private attention control | Privately stop repeated unwanted targeting without rewriting co-presence or shared history | Deferred | Revisit before movement, notifications or broader Interaction reach |
 | Ripple knowledge | Learn a reduced, sourced consequence of a distant event only after it plausibly travels to the Character | Explored | Define propagation, information loss, provenance and arrival behavior |
-| Investigation roll | Have the Agent choose a grounded investigation that World resolves first as retry-stable zero or positive context | Later / Queued | Define meaningful zero, eligibility and context-dependent table |
-| Discovery commit | Turn a positive investigation result into one confirmed concrete shared change with provenance | Later / Queued | Define candidate results, duplicates, contradictions and transaction |
+| Investigation and discovery | Have the Agent ground World-admitted independent investigations across scope-bound parallel conversations, then complete a positive result as one shared change with provenance and Activity | Now / Proposed | Resume the draft grill by selecting the first concrete positive result; implementation still requires explicit plan acceptance |
 | Place neighborhood | Inspect explicit containing and adjacent Places around the exact current Place | Later / Queued | Select first relationship behavior without implying visibility |
 | Movement and expansion | Establish additional Places and connections and move through validated transitions | Later / Queued | Define route, action, time and historical location semantics |
 | Rich World subjects | Establish flora, fauna, materials, boundaries and temporal processes when play needs them | Later / Queued | Introduce one concrete domain behavior at a time |

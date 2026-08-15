@@ -24,9 +24,9 @@ The executable contract is published in [`docs/game/`](../../../docs/game/README
 
 - `create_entity`, `create_character`, `create_entry_place` and
   `submit_action.introduce_entity` uniformly accept 0–100 initial Properties.
-- `submit_action.change_entity_property` accepts 1–100 unique Entity/key writes over
-  actor, current Place, co-present Characters and ordinary Entities without role or
-  control branching.
+- `submit_action.change_entity_state` accepts Property-only or combined state
+  packages, including 1–100 unique Entity/key writes over actor, current Place,
+  co-present Characters and ordinary Entities without role or control branching.
 - `submit_interaction` retains pure outward behavior with no changes and may
   atomically change only actor/explicit-target Properties.
 - Agent-created canonical keys contain immutable English key and value type only;
@@ -52,10 +52,12 @@ ungrounded simulation remain absent.
 
 ## Non-goals
 
-Unset/deletion, aliases, Traits, possession/relations, volition/response/consent,
+Unset/deletion, aliases, possession/relations, volition/response/consent,
 placement/movement, remote/cross-Place subjects, dynamic/prose selectors and
 global/reverse search.
 
 ## Completion evidence
 
-Delivery history and current status: see [Property evidence](../../../docs/evidence/property.md).
+Delivery history and current status: see
+[Property evidence](../../../docs/evidence/property.md) and
+[uniform Entity-state evidence](../../../docs/evidence/entity-state.md).

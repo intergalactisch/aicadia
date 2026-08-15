@@ -14,9 +14,15 @@ candidate ids or audit findings.
 | Local play and ledger | Deterministic launcher, handoff, persistence and browser proof complete | [Local-play evidence](local-play.md) |
 | Character-grounded Action | Deterministic delivery and bounded live proof complete | [Action evidence](action.md) · [Agent runner contract](runner/agent-playtest.md) |
 | Character-grounded Interaction | Deterministic evidence complete; no paid-model Interaction claim | [Interaction evidence](interaction.md) · [Agent runner contract](runner/agent-playtest.md) |
-| Entity Property | Deterministic evidence complete; no paid-model Property claim | [Property evidence](property.md) · [Agent runner contract](runner/agent-playtest.md) |
-| Entity Trait | Deterministic delivery complete; live validation closed as failed with its controller correction deferred | [Trait evidence](trait.md) · [Trait runner contract](runner/trait-playtest.md) |
+| Entity Property | Deterministic evidence complete; the fresh paid flow reached exact World, HTTP and independent-observer content but terminal-failed on a valid optional observer limit; current controller corrected and pinned token-free, no retry authority | [Property evidence](property.md) · [Agent runner contract](runner/agent-playtest.md) |
+| Entity Trait | Deterministic delivery and complete paid establish/develop/independent-observer validation succeed; exact seven-call candidate, lineage, both HTTP gates and ownership-safe cleanup passed | [Trait evidence](trait.md) · [Trait runner contract](runner/trait-playtest.md) |
+| Uniform Entity state packages | Deterministic creation and combined Action delivery complete across World, HTTP and MCP; no new paid/model call | [Uniform Entity-state evidence](entity-state.md) |
 | Agent contract delivery | Current deterministic host/catalog delivery complete; historical catalog milestones remain bounded history | [Agent contract delivery](#agent-contract-delivery) |
+
+The post-correction combined audit first found one P3 in stale active-planning text.
+After that text was corrected without changing evidence, its read-only
+`gpt-5.6-sol` high re-audit returned GO with P0–P3 all zero. The audit itself made
+zero paid/model calls, playtests, server/database mutations or repository edits.
 
 ## Agent contract delivery
 

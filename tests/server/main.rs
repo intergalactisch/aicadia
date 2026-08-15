@@ -1,5 +1,6 @@
 mod action;
 mod concurrency;
+mod entity_state_creation;
 mod entity_trait;
 mod error;
 mod interaction;

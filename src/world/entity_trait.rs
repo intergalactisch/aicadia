@@ -182,6 +182,37 @@ fn map_trait_normalization_error(_error: TraitNormalizationError) -> WorldError 
     WorldError::InvalidTrait
 }
 
+pub(super) fn normalize_trait_input(input: Vec<TraitInput>) -> Result<Vec<TraitInput>, WorldError> {
+    let writes = input
+        .into_iter()
+        .map(|input| TraitWrite::Establish {
+            entity_id: EntityId(Uuid::nil()),
+            statement: input.statement,
+        })
+        .collect();
+    normalize_trait_writes(writes, true)
+        .map_err(map_trait_normalization_error)?
+        .into_iter()
+        .map(|write| match write {
+            TraitWrite::Establish { statement, .. } => Ok(TraitInput { statement }),
+            TraitWrite::Develop { .. } => Err(WorldError::InvalidTrait),
+        })
+        .collect()
+}
+
+pub(super) fn trait_writes_for_entity(
+    entity_id: EntityId,
+    input: Vec<TraitInput>,
+) -> Vec<TraitWrite> {
+    input
+        .into_iter()
+        .map(|input| TraitWrite::Establish {
+            entity_id,
+            statement: input.statement,
+        })
+        .collect()
+}
+
 pub(super) fn normalize_trait_change_input(
     input: Vec<EntityTraitChangeInput>,
     allow_empty: bool,

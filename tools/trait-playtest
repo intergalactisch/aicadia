@@ -69,6 +69,9 @@ developed_statement_for_marker() { printf 'Reads Mara’s second footfall throug
 action_prose_for_marker() { printf 'At the Echo Arch, Pip waits for the second echo before springing — %s.' "$1"; }
 interaction_prose_for_marker() { printf 'Pip circles Mara once, pauses, then moves only after her second footfall — %s.' "$1"; }
 
+validate_action_preview_names() { jq -e '.entity_name=="Pip"' "$1" >/dev/null; }
+validate_interaction_preview_names() { jq -e '.actor_name=="Pip" and .target_name=="Mara"' "$1" >/dev/null; }
+
 manifest_set() {
     local expression="$1"
     shift
@@ -97,7 +100,7 @@ validate_token_free_contract() {
         and all(.[];(.description|type)=="string" and (.description|length)>0
             and (.inputSchema|type)=="object" and (.outputSchema|type)=="object")
         and (map(select(.name=="get_entity_at_current_place"))[0].description|contains("Property and Trait"))
-        and (map(select(.name=="submit_action"))[0].description|contains("Traits in one mixed package"))
+        and (map(select(.name=="submit_action"))[0].description|contains("0–100 Trait establishments/developments"))
         and (map(select(.name=="submit_interaction"))[0].description|contains("target-authored"))
     ' "$TOOL_CATALOG" >/dev/null || fail 'the fixed Trait-aware thirteen-tool catalog is invalid.' || return
     jq -n -e --argjson all "$CAPABILITIES" --argjson ar "$ACTION_READ_TOOLS" \
@@ -307,6 +310,8 @@ run_fake() {
     if [[ "$MODE" == altered-action-prose ]]; then
         jq '.prose += " Almost."' "$action_preview" >"$action_preview.tmp" && mv "$action_preview.tmp" "$action_preview"
     fi
+    validate_action_preview_names "$action_preview" \
+        || { fail 'Action preview did not use the exact natural Pip name.'; return 1; }
     jq -e --arg marker "$marker" --arg statement "$initial" --arg prose "$action_prose" '
       (keys|sort)==(["status","marker","selected_proposal_id","prose","entity_name","lifecycle","current_characterization","proposed_characterization"]|sort)
       and .status=="previewed" and .marker==$marker and .selected_proposal_id=="two"
@@ -323,9 +328,9 @@ run_fake() {
         'The User now explicitly accepts the exact retained Action preview. Only submit_action is available; call exactly once with unchanged content.'
     action_events="$RUN_DIR/action-commit.events.jsonl"; : >"$action_events"
     local action_arguments action_result
-    action_arguments="$(jq -nc --arg revision "$place_revision" --arg prose "$action_prose" --arg entity "$pip" --arg statement "$initial" '{request_id:"77777777-7777-4777-8777-777777777777",expected_place_revision:$revision,prose:$prose,consequence:{type:"change_entity_trait",trait_change:[{type:"establish",entity_id:$entity,statement:$statement}]}}')"
+    action_arguments="$(jq -nc --arg revision "$place_revision" --arg prose "$action_prose" --arg entity "$pip" --arg statement "$initial" '{request_id:"77777777-7777-4777-8777-777777777777",expected_place_revision:$revision,prose:$prose,consequence:{type:"change_entity_state",trait_change:[{type:"establish",entity_id:$entity,statement:$statement}]}}')"
     [[ "$MODE" != changed-action-preview ]] || action_arguments="$(jq '.consequence.trait_change[0].statement="Changed after confirmation."' <<<"$action_arguments")"
-    action_result="$(jq -nc --arg id "$establish_activity" --arg pip "$pip" --arg place "$place" --arg trait "$trait" --arg statement "$initial" --arg prose "$action_prose" --argjson accepted_place "$place_output" '{activity:{id:$id,operation:"submit_action",actor_character:{id:$pip,name:"Pip"},context_place:{entity:{id:$place,name:"Echo Arch"},is_entry:true},involved_entity:[{entity:{id:$pip,name:"Pip"},role:"subject"},{entity:{id:$place,name:"Echo Arch"},role:"location"}],property_change:[],trait_change:[{type:"establish",entity:{id:$pip,name:"Pip"},trait:{id:$trait,statement:$statement}}],prose:$prose,occurred_at:"2026-08-13T20:00:00.234567Z"},consequence:{type:"change_entity_trait",trait_change:[{type:"establish",entity:{id:$pip,name:"Pip"},trait:{id:$trait,statement:$statement}}]},place:$accepted_place}')"
+    action_result="$(jq -nc --arg id "$establish_activity" --arg pip "$pip" --arg place "$place" --arg trait "$trait" --arg statement "$initial" --arg prose "$action_prose" --argjson accepted_place "$place_output" '{activity:{id:$id,operation:"submit_action",actor_character:{id:$pip,name:"Pip"},context_place:{entity:{id:$place,name:"Echo Arch"},is_entry:true},involved_entity:[{entity:{id:$pip,name:"Pip"},role:"subject"},{entity:{id:$place,name:"Echo Arch"},role:"location"}],property_change:[],trait_change:[{type:"establish",entity:{id:$pip,name:"Pip"},trait:{id:$trait,statement:$statement}}],prose:$prose,occurred_at:"2026-08-13T20:00:00.234567Z"},consequence:{type:"change_entity_state",property_change:[],trait_change:[{type:"establish",entity:{id:$pip,name:"Pip"},trait:{id:$trait,statement:$statement}}]},place:$accepted_place}')"
     [[ "$MODE" != malformed-action-result ]] || action_result="$(jq 'del(.place)' <<<"$action_result")"
     emit_pair "$action_events" submit_action "$action_arguments" "$action_result" 1 || return 1
     [[ "$MODE" != double-action ]] || emit_pair "$action_events" submit_action "$action_arguments" "$action_result" 2 || return 1
@@ -348,6 +353,15 @@ run_fake() {
     established_entity_page="$(jq -nc --argjson place "$place_flat" --argjson entity "$mara_entity" '{place:$place,place_revision:"v1.fake.trait.established",entity:[$entity|{id,name,description}],next:null}')"
     established_activity_page="$(jq -nc --argjson place "$place_flat" --argjson activity "$action_result" '{place:$place,place_revision:"v1.fake.trait.established",activity:[$activity.activity],next:null}')"
     [[ "$MODE" != malformed-activity-page-result ]] || established_activity_page="$action_result"
+    validate_tool_output list_activity_at_current_place "$established_activity_page" \
+        || { fail 'fake list_activity_at_current_place structured_content violates its runtime outputSchema.'; return 1; }
+    printf '%s\n' "$established_character_result" >"$RUN_DIR/fake-http-after-establish-character.json"
+    printf '%s\n' "$established_activity_page" >"$RUN_DIR/fake-http-after-establish-activity.json"
+    chmod 600 "$RUN_DIR/fake-http-after-establish-character.json" "$RUN_DIR/fake-http-after-establish-activity.json"
+    validate_establish_http_files "$RUN_DIR/fake-http-after-establish-character.json" \
+        "$RUN_DIR/fake-http-after-establish-activity.json" "$pip" "$place" "$trait" "$initial" \
+        "$action_prose" "$establish_activity" \
+        || { fail 'Shared authoritative HTTP establishment validator rejected the fake accepted state.'; return 1; }
     mara_state_result="$(jq -nc --argjson place "$place_flat" --argjson entity "$mara_entity" '{place:$place,place_revision:"v1.fake.trait.established",entity:($entity|{id,name,description}),current_state:{association:[],next:null}}')"
     emit_pair "$interaction_events" get_character '{}' "$established_character_result" 1 || return 1
     emit_pair "$interaction_events" list_entity_at_current_place '{}' "$established_entity_page" 2 || return 1
@@ -368,6 +382,8 @@ run_fake() {
     if [[ "$MODE" == target-authored-interaction-prose ]]; then
         jq '.prose += " Mara applauds and agrees."' "$interaction_preview" >"$interaction_preview.tmp" && mv "$interaction_preview.tmp" "$interaction_preview"
     fi
+    validate_interaction_preview_names "$interaction_preview" \
+        || { fail 'Interaction preview did not use the exact natural Pip and Mara names.'; return 1; }
     jq -e --arg previous "$initial" --arg statement "$developed" --arg prose "$interaction_prose" '
       .actor_name=="Pip" and .target_name=="Mara" and .lifecycle=="develop"
       and .current_characterization==$previous and .proposed_characterization==$statement
@@ -396,6 +412,20 @@ run_fake() {
         && jq -e --arg trait "$trait" --arg previous "$initial" --arg statement "$developed" '.activity.trait_change[0].trait.id==$trait and .activity.trait_change[0].previous_statement==$previous and .activity.trait_change[0].trait.statement==$statement and ([.activity.involved_entity[].role]|sort)==["location","target"]' <<<"$interaction_result" >/dev/null \
         || { fail 'Interaction commit was not the one unchanged confirmed development without a response.'; return 1; }
     manifest_set '.phases.interaction_commit="passed"'
+
+    local developed_character_result mara_character_result developed_activity_page
+    developed_character_result="$(jq -nc --argjson entity "$pip_entity" --arg owner "$pip_owner" --argjson place "$place_output" --arg trait "$trait" --arg statement "$developed" '{character:{entity:$entity,owner_user_id:$owner,current_place:$place},place_revision:"v1.fake.trait.developed",current_state:{association:[{type:"trait",trait:{id:$trait,statement:$statement}}],next:null}}')"
+    mara_character_result="$(jq -nc --argjson entity "$mara_entity" --arg owner "$mara_owner" --argjson place "$place_output" '{character:{entity:$entity,owner_user_id:$owner,current_place:$place},place_revision:"v1.fake.trait.developed",current_state:{association:[],next:null}}')"
+    developed_activity_page="$(jq -nc --argjson place "$place_flat" --argjson activity "$interaction_result" '{place:$place,place_revision:"v1.fake.trait.developed",activity:[$activity.activity],next:null}')"
+    printf '%s\n' "$developed_character_result" >"$RUN_DIR/fake-http-after-develop-pip.json"
+    printf '%s\n' "$mara_character_result" >"$RUN_DIR/fake-http-after-develop-mara.json"
+    printf '%s\n' "$developed_activity_page" >"$RUN_DIR/fake-http-after-develop-activity.json"
+    chmod 600 "$RUN_DIR/fake-http-after-develop-pip.json" "$RUN_DIR/fake-http-after-develop-mara.json" \
+        "$RUN_DIR/fake-http-after-develop-activity.json"
+    validate_develop_http_files "$RUN_DIR/fake-http-after-develop-pip.json" \
+        "$RUN_DIR/fake-http-after-develop-mara.json" "$RUN_DIR/fake-http-after-develop-activity.json" \
+        "$pip" "$mara" "$place" "$trait" "$initial" "$developed" "$interaction_prose" "$develop_activity" \
+        || { fail 'Shared authoritative HTTP development validator rejected the fake accepted state.'; return 1; }
 
     observer_events="$RUN_DIR/observer.events.jsonl"; : >"$observer_events"
     write_prompt "$RUN_DIR/observer.prompt.txt" observer \
@@ -802,7 +832,7 @@ prepare_candidate_artifacts() {
         --arg digest "$INSPECTED_CANDIDATE_DIGEST" \
         --arg recovery "$recovery" --argjson timeout "$timeout" --argjson calls "$MAX_MODEL_CALLS" '
       {run_id:$run,started_at:$started,evidence_kind:"live_trait_candidate",candidate_started:true,
-       authorization_consumed:true,codex_invoked:false,model_calls:0,candidate_digest:$digest,
+       authorization_consumed:true,codex_invoked:false,model_calls:0,actual_usage_events:null,candidate_digest:$digest,
        frozen:{agents:2,sessions:2,process_calls:$calls,retries:0,token_boundary:$boundary,
          model:$model,reasoning_effort:$effort,timeout_seconds_per_call:$timeout},
        codex:{path:$path,version:$version},deployment:{database:$database,ownership_token:$token,server_address:null,status:"not_created"},
@@ -854,7 +884,7 @@ write_live_prompts() {
     interaction_prose="$(interaction_prose_for_marker "$marker")"
     printf '%s\n' "You are Pip's Agent in a one-candidate Aicadia Trait playtest. Use only direct Aicadia MCP. Call get_world, get_character, list_entity_at_current_place and list_activity_at_current_place exactly once each, in that order and without cursors. Require one shared non-null place_revision and confirm Pip has no Trait. Selection, steering and confirmation are withheld: do not mutate and do not choose. Return exactly three grounded directions, ids one/two/three, in the strict schema. Copy marker $marker only into marker." >"$RUN_DIR/action-propose.prompt.txt"
     printf '%s\n' "The User selects proposal two and steers Pip toward patiently waiting for a returning echo. Confirmation remains withheld. No MCP tool is enabled. Return only the strict preview. Use this byte-exact JSON string as prose: $(jq -Rn --arg value "$action_prose" '$value'). Name Pip naturally; lifecycle establish; current characterization exactly A small grey rat-like traveler.; proposed characterization exactly $initial. Expose no identifier and invent no mechanics." >"$RUN_DIR/action-preview.prompt.txt"
-    printf '%s\n' "The User explicitly confirms the exact retained Action preview. Generate one fresh UUID request_id. Call only submit_action exactly once, with the retained place_revision and unchanged prose, and consequence change_entity_trait establishing the exact proposed statement on Pip's authoritative Entity id. Do not read or retry. Return only the strict commit result copied from the accepted World result; marker $marker." >"$RUN_DIR/action-commit.prompt.txt"
+    printf '%s\n' "The User explicitly confirms the exact retained Action preview. Generate one fresh UUID request_id. Call only submit_action exactly once, with the retained place_revision and unchanged prose, and consequence change_entity_state containing the exact Trait establishment on Pip's authoritative Entity id and no Property change. Do not read or retry. Return only the strict commit result copied from the accepted World result; marker $marker." >"$RUN_DIR/action-commit.prompt.txt"
     printf '%s\n' "Later in the same World, ground one Interaction. Call get_character, list_entity_at_current_place, list_activity_at_current_place and then get_entity_at_current_place for Mara's id derived from compact orientation, exactly once each in that order. Verify Pip's established current Trait and Mara's presence. Selection, steering and confirmation are withheld; do not mutate or choose. Return exactly three grounded directions ids one/two/three in the strict schema; marker $marker." >"$RUN_DIR/interaction-propose.prompt.txt"
     printf '%s\n' "The User selects proposal two and steers toward Mara's second footfall. Confirmation remains withheld. No MCP tool is enabled. Return only the strict preview. Use this byte-exact JSON string as prose: $(jq -Rn --arg value "$interaction_prose" '$value'). Name Pip and Mara naturally; lifecycle develop; current characterization exactly $initial; proposed characterization exactly $developed. Expose no identifier and author no Mara response, thought, consent or volition." >"$RUN_DIR/interaction-preview.prompt.txt"
     printf '%s\n' "The User explicitly confirms the exact retained Interaction preview. Generate one fresh UUID request_id. Call only submit_interaction exactly once with the retained place_revision, Mara's authoritative Entity id as the sole target, empty property_change, and one develop item using Pip's exact stable Trait id and unchanged proposed statement. Do not read or retry; author no target response. Return only the strict commit result copied from the accepted World result; marker $marker." >"$RUN_DIR/interaction-commit.prompt.txt"
@@ -896,7 +926,7 @@ stop_agent_watchdog() {
 terminate_agent_group() { [[ -z "$1" ]] || { kill -TERM -- "-$1" 2>/dev/null || true; sleep 0.1; kill -KILL -- "-$1" 2>/dev/null || true; }; }
 
 run_codex_process() {
-    local cwd="$1" user_id="$2" events="$3" stderr="$4" timeout status pgid marker
+    local cwd="$1" user_id="$2" events="$3" stderr="$4" timeout status pgid marker actual_usage
     shift 4
     timeout="$(agent_timeout_seconds)" || return
     build_sanitized_env
@@ -912,6 +942,8 @@ run_codex_process() {
     [[ -f "$marker" ]] && wait "$AGENT_WATCHDOG_PID" 2>/dev/null || stop_agent_watchdog
     AGENT_WATCHDOG_PID=''; terminate_agent_group "$pgid"; AGENT_PID=''
     chmod 600 "$events" "$stderr"
+    actual_usage="$(jq -s '[..|objects|.usage? // empty]|if length==0 then null else . end' "$RUN_DIR"/*.events.jsonl)" || return
+    manifest_set '.actual_usage_events=$usage' --argjson usage "$actual_usage" || return
     [[ ! -f "$marker" ]] || return 142
     return "$status"
 }
@@ -999,10 +1031,11 @@ validate_action_proposal() {
 validate_action_preview() {
     local events="$1" final="$2" marker="$3" initial="$4" prose="$5"
     validate_zero_tool_phase "$events" || return
+    validate_action_preview_names "$final" || return
     jq -e --arg marker "$marker" --arg initial "$initial" --arg prose "$prose" '
       (keys|sort)==(["status","marker","selected_proposal_id","prose","entity_name","lifecycle","current_characterization","proposed_characterization"]|sort)
       and .status=="previewed" and .marker==$marker and .selected_proposal_id=="two"
-      and (.entity_name|startswith("Pip ")) and .lifecycle=="establish"
+      and .lifecycle=="establish"
       and .current_characterization=="A small grey rat-like traveler." and .proposed_characterization==$initial
       and .prose==$prose and ([.prose,.proposed_characterization]|join(" ")|test("\\+2|bonus|modifier|permission|guaranteed success";"i")|not)
     ' "$final" >/dev/null
@@ -1017,7 +1050,7 @@ validate_action_commit() {
       (.arguments|keys|sort)==(["request_id","expected_place_revision","prose","consequence"]|sort)
       and (.arguments.request_id|test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"))
       and .arguments.expected_place_revision==$revision and .arguments.prose==$preview[0].prose
-      and .arguments.consequence=={type:"change_entity_trait",trait_change:[{type:"establish",entity_id:$pip,statement:$preview[0].proposed_characterization}]}
+      and .arguments.consequence=={type:"change_entity_state",trait_change:[{type:"establish",entity_id:$pip,statement:$preview[0].proposed_characterization}]}
       and .result.structured_content.activity.operation=="submit_action"
       and .result.structured_content.activity.prose==$preview[0].prose
       and .result.structured_content.activity.trait_change[0].type=="establish"
@@ -1033,13 +1066,12 @@ validate_action_commit() {
     ' "$final" >/dev/null
 }
 
-validate_establish_http_gate() {
-    local pip_user="$1" pip_id="$2" place_id="$3" trait_id="$4" statement="$5" prose="$6" activity_id="$7"
-    http_request GET /api/character "$pip_user" '' 200 "$RUN_DIR/http-after-establish-character.json" || return
-    http_request GET '/api/place/current/activity?limit=100' "$pip_user" '' 200 "$RUN_DIR/http-after-establish-activity.json" || return
+validate_establish_http_files() {
+    local character_file="$1" activity_file="$2" pip_id="$3" place_id="$4" trait_id="$5" statement="$6" prose="$7" activity_id="$8"
     jq -e --arg pip "$pip_id" --arg trait "$trait_id" --arg statement "$statement" '
-      .character.entity.id==$pip and [.current_state.association[]|select(.type=="trait" and .trait.id==$trait and .trait.statement==$statement)]|length==1
-    ' "$RUN_DIR/http-after-establish-character.json" >/dev/null || return
+      .character.entity.id==$pip
+      and ([.current_state.association[]|select(.type=="trait" and .trait.id==$trait and .trait.statement==$statement)]|length)==1
+    ' "$character_file" >/dev/null || return
     jq -e --arg activity "$activity_id" --arg pip "$pip_id" --arg place "$place_id" --arg trait "$trait_id" --arg statement "$statement" --arg prose "$prose" '
       [.activity[]|select(.id==$activity and .operation=="submit_action"
         and .prose==$prose and .actor_character.id==$pip and .context_place.entity.id==$place
@@ -1048,7 +1080,16 @@ validate_establish_http_gate() {
         and ([.involved_entity[].role]|sort)==["location","subject"]
         and any(.involved_entity[];.role=="subject" and .entity.id==$pip)
         and any(.involved_entity[];.role=="location" and .entity.id==$place))]|length==1
-    ' "$RUN_DIR/http-after-establish-activity.json" >/dev/null
+    ' "$activity_file" >/dev/null
+}
+
+validate_establish_http_gate() {
+    local pip_user="$1" pip_id="$2" place_id="$3" trait_id="$4" statement="$5" prose="$6" activity_id="$7"
+    http_request GET /api/character "$pip_user" '' 200 "$RUN_DIR/http-after-establish-character.json" || return
+    http_request GET '/api/place/current/activity?limit=100' "$pip_user" '' 200 "$RUN_DIR/http-after-establish-activity.json" || return
+    validate_establish_http_files "$RUN_DIR/http-after-establish-character.json" \
+        "$RUN_DIR/http-after-establish-activity.json" "$pip_id" "$place_id" "$trait_id" \
+        "$statement" "$prose" "$activity_id"
 }
 
 validate_interaction_proposal() {
@@ -1077,10 +1118,11 @@ validate_interaction_proposal() {
 validate_interaction_preview() {
     local events="$1" final="$2" marker="$3" previous="$4" developed="$5" prose="$6"
     validate_zero_tool_phase "$events" || return
+    validate_interaction_preview_names "$final" || return
     jq -e --arg marker "$marker" --arg previous "$previous" --arg developed "$developed" --arg prose "$prose" '
       (keys|sort)==(["status","marker","selected_proposal_id","prose","actor_name","target_name","lifecycle","current_characterization","proposed_characterization"]|sort)
       and .status=="previewed" and .marker==$marker and .selected_proposal_id=="two"
-      and (.actor_name|startswith("Pip ")) and (.target_name|startswith("Mara ")) and .lifecycle=="develop"
+      and .lifecycle=="develop"
       and .current_characterization==$previous and .proposed_characterization==$developed and .prose==$prose
     ' "$final" >/dev/null
 }
@@ -1109,14 +1151,11 @@ validate_interaction_commit() {
       and .statement==$call.result.structured_content.activity.trait_change[0].trait.statement' "$final" >/dev/null
 }
 
-validate_develop_http_gate() {
-    local pip_user="$1" mara_user="$2" pip="$3" mara="$4" place="$5" trait="$6" previous="$7" current="$8" prose="$9" activity="${10}"
-    http_request GET /api/character "$pip_user" '' 200 "$RUN_DIR/http-after-develop-pip.json" || return
-    http_request GET /api/character "$mara_user" '' 200 "$RUN_DIR/http-after-develop-mara.json" || return
-    http_request GET '/api/place/current/activity?limit=100' "$mara_user" '' 200 "$RUN_DIR/http-after-develop-activity.json" || return
+validate_develop_http_files() {
+    local pip_file="$1" mara_file="$2" activity_file="$3" pip="$4" mara="$5" place="$6" trait="$7" previous="$8" current="$9" prose="${10}" activity="${11}"
     jq -e --arg pip "$pip" --arg trait "$trait" --arg current "$current" '.character.entity.id==$pip
-      and [.current_state.association[]|select(.type=="trait" and .trait.id==$trait and .trait.statement==$current)]|length==1' "$RUN_DIR/http-after-develop-pip.json" >/dev/null || return
-    jq -e --arg mara "$mara" '.character.entity.id==$mara and .current_state.association==[]' "$RUN_DIR/http-after-develop-mara.json" >/dev/null || return
+      and ([.current_state.association[]|select(.type=="trait" and .trait.id==$trait and .trait.statement==$current)]|length)==1' "$pip_file" >/dev/null || return
+    jq -e --arg mara "$mara" '.character.entity.id==$mara and .current_state.association==[]' "$mara_file" >/dev/null || return
     jq -e --arg activity "$activity" --arg pip "$pip" --arg mara "$mara" --arg place "$place" --arg trait "$trait" --arg previous "$previous" --arg current "$current" --arg prose "$prose" '
       [.activity[]|select(.id==$activity and .operation=="submit_interaction"
         and .prose==$prose and .actor_character.id==$pip and .context_place.entity.id==$place
@@ -1126,7 +1165,17 @@ validate_develop_http_gate() {
         and ([.involved_entity[].role]|sort)==["location","target"]
         and any(.involved_entity[];.role=="target" and .entity.id==$mara)
         and any(.involved_entity[];.role=="location" and .entity.id==$place))]|length==1
-    ' "$RUN_DIR/http-after-develop-activity.json" >/dev/null
+    ' "$activity_file" >/dev/null
+}
+
+validate_develop_http_gate() {
+    local pip_user="$1" mara_user="$2" pip="$3" mara="$4" place="$5" trait="$6" previous="$7" current="$8" prose="$9" activity="${10}"
+    http_request GET /api/character "$pip_user" '' 200 "$RUN_DIR/http-after-develop-pip.json" || return
+    http_request GET /api/character "$mara_user" '' 200 "$RUN_DIR/http-after-develop-mara.json" || return
+    http_request GET '/api/place/current/activity?limit=100' "$mara_user" '' 200 "$RUN_DIR/http-after-develop-activity.json" || return
+    validate_develop_http_files "$RUN_DIR/http-after-develop-pip.json" \
+        "$RUN_DIR/http-after-develop-mara.json" "$RUN_DIR/http-after-develop-activity.json" \
+        "$pip" "$mara" "$place" "$trait" "$previous" "$current" "$prose" "$activity"
 }
 
 validate_observer() {
@@ -1201,7 +1250,7 @@ prepare_live_evidence_files() {
 
 run_live_candidate() {
     local authorized_digest="$1" codex_bin marker pip_user_json mara_user_json pip_user mara_user pip mara place session revision
-    local initial developed action_prose action_activity trait interaction_activity interaction_prose exit_status actual_usage
+    local initial developed action_prose action_activity trait interaction_activity interaction_prose exit_status
     validate_candidate_freeze "$authorized_digest" || return 1
     preflight || return 1
     codex_bin="$INSPECTED_CODEX_BIN"
@@ -1256,8 +1305,11 @@ run_live_candidate() {
         || { fail 'Action commit call failed or was not the one confirmed establishment; no retry is authorized.'; return 1; }
     trait="$(jq -r '.trait_id' "$RUN_DIR/action-commit.final.json")"; action_activity="$(jq -r '.activity_id' "$RUN_DIR/action-commit.final.json")"
     manifest_set '.phases.action_commit={status:"passed",trait_id:$trait,activity_id:$activity}' --arg trait "$trait" --arg activity "$action_activity" || return
-    validate_establish_http_gate "$pip_user" "$pip" "$place" "$trait" "$initial" "$action_prose" "$action_activity" \
-        || fail 'authoritative HTTP establishment gate disagreed.' || return
+    if ! validate_establish_http_gate "$pip_user" "$pip" "$place" "$trait" "$initial" "$action_prose" "$action_activity"; then
+        manifest_set '.phases.http_establish_gate="failed"' || return
+        fail 'authoritative HTTP establishment gate disagreed.'
+        return
+    fi
     manifest_set '.phases.http_establish_gate="passed"' || return
 
     run_resume_agent "$codex_bin" "$ISOLATED_PIP" "$pip_user" "$session" "$INTERACTION_READ_TOOLS" "$SCHEMA_DIR/proposals.json" \
@@ -1284,8 +1336,11 @@ run_live_candidate() {
         || { fail 'Interaction commit call failed or changed the stable Trait; no retry is authorized.'; return 1; }
     interaction_activity="$(jq -r '.activity_id' "$RUN_DIR/interaction-commit.final.json")"
     manifest_set '.phases.interaction_commit={status:"passed",trait_id:$trait,activity_id:$activity}' --arg trait "$trait" --arg activity "$interaction_activity" || return
-    validate_develop_http_gate "$pip_user" "$mara_user" "$pip" "$mara" "$place" "$trait" "$initial" "$developed" "$interaction_prose" "$interaction_activity" \
-        || fail 'authoritative HTTP development gate disagreed or implied a Mara response.' || return
+    if ! validate_develop_http_gate "$pip_user" "$mara_user" "$pip" "$mara" "$place" "$trait" "$initial" "$developed" "$interaction_prose" "$interaction_activity"; then
+        manifest_set '.phases.http_develop_gate="failed"' || return
+        fail 'authoritative HTTP development gate disagreed or implied a Mara response.'
+        return
+    fi
     manifest_set '.phases.http_develop_gate="passed"' || return
 
     run_new_agent "$codex_bin" "$ISOLATED_MARA" "$mara_user" "$OBSERVER_TOOLS" "$SCHEMA_DIR/observer.json" \
@@ -1297,8 +1352,7 @@ run_live_candidate() {
     manifest_set '.phases.mara_fetch="passed"' || return
 
     [[ "$(jq -r '.model_calls' "$MANIFEST")" == "$MAX_MODEL_CALLS" ]] || fail 'candidate did not consume exactly seven frozen calls.' || return
-    actual_usage="$(jq -s '[..|objects|.usage? // empty]|if length==0 then null else . end' "$RUN_DIR"/*.events.jsonl)"
-    manifest_set '.actual_usage_events=$usage | .validation="passed"' --argjson usage "$actual_usage" || return
+    manifest_set '.validation="passed"' || return
     cleanup_owned_database || return
     find "$RUN_DIR" -type f -exec chmod 600 {} +
     [[ -z "$(find "$RUN_DIR" -type f ! -perm 600 -print -quit)" ]] || return
@@ -1319,7 +1373,8 @@ candidate_material() {
     done
     declare -p DISABLED_CODEX_FEATURES
     for name in fail initial_statement_for_marker developed_statement_for_marker action_prose_for_marker \
-        interaction_prose_for_marker manifest_set validate_schema_policy validate_token_free_contract validate_tool_output resolve_codex_bin \
+        interaction_prose_for_marker validate_action_preview_names validate_interaction_preview_names \
+        manifest_set validate_schema_policy validate_token_free_contract validate_tool_output resolve_codex_bin \
         reject_public_overrides new_ownership_token database_helper \
         validate_output_schemas validate_allowlists validate_codex_role_config validate_codex curl_json \
         stop_server start_owned_server cleanup_owned_database verify_runtime_catalog preflight_exit_cleanup prepare_preflight_artifacts \
@@ -1327,9 +1382,9 @@ candidate_material() {
         write_live_prompts build_common_codex_command build_sanitized_env stop_agent_watchdog \
         terminate_agent_group run_codex_process run_new_agent run_new_resumable_agent run_resume_agent \
         events_are_clean session_id_from_events validate_event_tools validate_zero_tool_phase single_completed_call \
-        validate_action_proposal validate_action_preview validate_action_commit validate_establish_http_gate \
+        validate_action_proposal validate_action_preview validate_action_commit validate_establish_http_files validate_establish_http_gate \
         validate_interaction_proposal validate_interaction_preview validate_interaction_commit \
-        validate_develop_http_gate validate_observer cleanup_local_directories cleanup_all on_exit on_signal \
+        validate_develop_http_files validate_develop_http_gate validate_observer cleanup_local_directories cleanup_all on_exit on_signal \
         prepare_live_evidence_files run_live_candidate candidate_material candidate_digest validate_candidate_freeze main; do
         printf 'FUNCTION %s\n' "$name"
         declare -f "$name"

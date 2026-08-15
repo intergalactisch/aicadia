@@ -188,6 +188,309 @@ async fn trait_action_uniformly_establishes_develops_reads_and_reconstructs_retr
 }
 
 #[sqlx::test(migrations = "./migration")]
+async fn action_combines_property_and_trait_changes_in_one_retryable_activity(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let (place, participant) = entered_characters(&world, &["Mara", "Pip"]).await;
+    let (mara_user, mara) = participant[0];
+    let (_, pip) = participant[1];
+    let revision = world
+        .list_entity_at_current_place(mara_user, ListEntityAtCurrentPlace::default())
+        .await
+        .unwrap()
+        .place_revision;
+    let established = world
+        .submit_action(
+            mara_user,
+            trait_action(
+                Uuid::new_v4(),
+                revision,
+                "Mara records Pip's measured patience.",
+                vec![establish_trait(pip, "Waits for the second echo.")],
+            ),
+        )
+        .await
+        .unwrap();
+    let pip_trait_id = match &accepted_trait_change(&established)[0] {
+        ActivityTraitChange::Establish { r#trait, .. } => r#trait.id,
+        ActivityTraitChange::Develop { .. } => unreachable!(),
+    };
+
+    let revision = world
+        .list_entity_at_current_place(mara_user, ListEntityAtCurrentPlace::default())
+        .await
+        .unwrap()
+        .place_revision;
+    let request_id = Uuid::new_v4();
+    let input = |reverse: bool| {
+        let mut property_change = vec![
+            property_change(mara, "temper", PropertyValue::Text("hot".to_owned())),
+            property_change(pip, "leg_count", PropertyValue::Integer(3)),
+        ];
+        let mut trait_change = vec![
+            develop_trait(pip_trait_id, "Leaps before the second echo."),
+            establish_trait(
+                place.entity.id,
+                "Returns unusually high landings as echoes.",
+            ),
+        ];
+        if reverse {
+            property_change.reverse();
+            trait_change.reverse();
+        }
+        SubmitAction {
+            request_id,
+            expected_place_revision: revision,
+            prose: "The whole observed state changes together.".to_owned(),
+            consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                property_change,
+                trait_change,
+            }),
+        }
+    };
+    let accepted = world.submit_action(mara_user, input(false)).await.unwrap();
+    let (property_change, trait_change) = match &accepted.consequence {
+        AcceptedActionConsequence::ChangeEntityState {
+            property_change,
+            trait_change,
+        } => (property_change, trait_change),
+        AcceptedActionConsequence::IntroduceEntity(_) => unreachable!(),
+    };
+    assert_eq!(property_change, &accepted.activity.property_change);
+    assert_eq!(trait_change, &accepted.activity.trait_change);
+    assert_eq!(property_change.len(), 2);
+    assert_eq!(trait_change.len(), 2);
+    assert!(
+        trait_change
+            .iter()
+            .any(|change| matches!(change, ActivityTraitChange::Establish { .. }))
+    );
+    assert!(
+        trait_change
+            .iter()
+            .any(|change| matches!(change, ActivityTraitChange::Develop { .. }))
+    );
+
+    let subject = accepted
+        .activity
+        .involved_entity
+        .iter()
+        .filter(|reference| reference.role == ActivityEntityRole::Subject)
+        .map(|reference| reference.entity.id)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        subject
+            .iter()
+            .copied()
+            .collect::<std::collections::HashSet<_>>(),
+        [mara, pip, place.entity.id].into_iter().collect()
+    );
+    assert_eq!(
+        subject.len(),
+        3,
+        "the union must not duplicate subject roles"
+    );
+    let location = accepted
+        .activity
+        .involved_entity
+        .iter()
+        .filter(|reference| reference.role == ActivityEntityRole::Location)
+        .collect::<Vec<_>>();
+    assert_eq!(location.len(), 1);
+    assert_eq!(location[0].entity.id, place.entity.id);
+
+    let retry = world.submit_action(mara_user, input(true)).await.unwrap();
+    assert_eq!(retry, accepted);
+    let stored: (i64, i64, i64) = sqlx::query_as(
+        r#"
+        SELECT
+            (SELECT count(*) FROM activity WHERE request_id = $1),
+            (SELECT count(*) FROM entity_property_history WHERE activity_id = $2),
+            (SELECT count(*) FROM entity_trait_version WHERE activity_id = $2)
+        "#,
+    )
+    .bind(request_id)
+    .bind(accepted.activity.id.0)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(stored, (1, 2, 2));
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn state_action_accepts_independent_hundred_property_and_hundred_trait_bounds(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let (_, participant) = entered_characters(&world, &["Mara"]).await;
+    let (user_id, mara) = participant[0];
+    let revision = world
+        .list_entity_at_current_place(user_id, ListEntityAtCurrentPlace::default())
+        .await
+        .unwrap()
+        .place_revision;
+    let accepted = world
+        .submit_action(
+            user_id,
+            SubmitAction {
+                request_id: Uuid::new_v4(),
+                expected_place_revision: revision,
+                prose: "Mara records one complete bounded state package.".to_owned(),
+                consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                    property_change: (0..100)
+                        .map(|index| {
+                            property_change(
+                                mara,
+                                format!("state_key_{index:03}"),
+                                PropertyValue::Integer(index),
+                            )
+                        })
+                        .collect(),
+                    trait_change: (0..100)
+                        .map(|index| {
+                            establish_trait(mara, format!("Bounded characterization {index:03}."))
+                        })
+                        .collect(),
+                }),
+            },
+        )
+        .await
+        .unwrap();
+    let AcceptedActionConsequence::ChangeEntityState {
+        property_change,
+        trait_change,
+    } = &accepted.consequence
+    else {
+        unreachable!()
+    };
+    assert_eq!(property_change.len(), 100);
+    assert_eq!(trait_change.len(), 100);
+    assert_eq!(accepted.activity.property_change, *property_change);
+    assert_eq!(accepted.activity.trait_change, *trait_change);
+    let stored: (i64, i64, i64) = sqlx::query_as(
+        r#"
+        SELECT
+            (SELECT count(*) FROM activity WHERE id = $1),
+            (SELECT count(*) FROM entity_property_history WHERE activity_id = $1),
+            (SELECT count(*) FROM entity_trait_version WHERE activity_id = $1)
+        "#,
+    )
+    .bind(accepted.activity.id.0)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(stored, (1, 100, 100));
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn state_action_rejects_empty_and_checks_property_before_trait_without_writes(pool: PgPool) {
+    let world = World::new(pool.clone());
+    let (place, participant) = entered_characters(&world, &["Mara"]).await;
+    let (user_id, mara) = participant[0];
+    let unplaced = world
+        .create_entity(user_id, entity("Remote Frog"))
+        .await
+        .unwrap();
+    let revision = world
+        .list_entity_at_current_place(user_id, ListEntityAtCurrentPlace::default())
+        .await
+        .unwrap()
+        .place_revision;
+    let before: (i64, i64, i64, i64) = sqlx::query_as(
+        r#"
+        SELECT
+            (SELECT count(*) FROM activity),
+            (SELECT count(*) FROM property_key),
+            (SELECT count(*) FROM entity_property_history),
+            (SELECT count(*) FROM entity_trait_version)
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+
+    assert_eq!(
+        world
+            .submit_action(
+                user_id,
+                SubmitAction {
+                    request_id: Uuid::new_v4(),
+                    expected_place_revision: revision,
+                    prose: "Nothing changes.".to_owned(),
+                    consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                        property_change: Vec::new(),
+                        trait_change: Vec::new(),
+                    }),
+                },
+            )
+            .await,
+        Err(WorldError::InvalidAction {
+            field: ActionField::Consequence,
+            reason: InvalidReason::Empty,
+        })
+    );
+    assert_eq!(
+        world
+            .submit_action(
+                user_id,
+                SubmitAction {
+                    request_id: Uuid::new_v4(),
+                    expected_place_revision: revision,
+                    prose: "Both malformed kinds are rejected in stable order.".to_owned(),
+                    consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                        property_change: vec![property_change(
+                            mara,
+                            "Bad Key",
+                            PropertyValue::Text("value".to_owned()),
+                        )],
+                        trait_change: vec![establish_trait(mara, "   ")],
+                    }),
+                },
+            )
+            .await,
+        Err(WorldError::InvalidProperty {
+            field: PropertyField::Key,
+            reason: InvalidReason::InvalidFormat,
+        })
+    );
+    assert_eq!(
+        world
+            .submit_action(
+                user_id,
+                SubmitAction {
+                    request_id: Uuid::new_v4(),
+                    expected_place_revision: revision,
+                    prose: "Local eligibility fails in Property order.".to_owned(),
+                    consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                        property_change: vec![property_change(
+                            unplaced.id,
+                            "leg_count",
+                            PropertyValue::Integer(3),
+                        )],
+                        trait_change: vec![develop_trait(
+                            EntityTraitId(Uuid::new_v4()),
+                            "Would otherwise be unavailable.",
+                        )],
+                    }),
+                },
+            )
+            .await,
+        Err(WorldError::PropertyEntityUnavailable)
+    );
+    assert_eq!(place.entity.id, revision.place_entity_id());
+    let after: (i64, i64, i64, i64) = sqlx::query_as(
+        r#"
+        SELECT
+            (SELECT count(*) FROM activity),
+            (SELECT count(*) FROM property_key),
+            (SELECT count(*) FROM entity_property_history),
+            (SELECT count(*) FROM entity_trait_version)
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(after, before);
+}
+
+#[sqlx::test(migrations = "./migration")]
 async fn interaction_trait_and_property_changes_are_atomic_target_scoped_and_retryable(
     pool: PgPool,
 ) {
@@ -740,6 +1043,7 @@ async fn trait_validation_combined_cursor_unavailability_and_concurrency_are_clo
                     text_property("colour", "amber"),
                     integer_property("leg_count", 2),
                 ],
+                r#trait: Vec::new(),
             },
         )
         .await
@@ -871,8 +1175,24 @@ async fn trait_validation_combined_cursor_unavailability_and_concurrency_are_clo
     );
 
     let revision = fresh.place_revision.unwrap();
+    assert_eq!(
+        world
+            .submit_action(
+                user_id,
+                trait_action(
+                    Uuid::new_v4(),
+                    revision,
+                    "This empty state change writes nothing.",
+                    Vec::new(),
+                ),
+            )
+            .await,
+        Err(WorldError::InvalidAction {
+            field: ActionField::Consequence,
+            reason: InvalidReason::Empty,
+        })
+    );
     for invalid in [
-        Vec::new(),
         vec![
             establish_trait(character.entity.id, " Duplicate statement. "),
             establish_trait(character.entity.id, "Duplicate statement."),
@@ -1004,19 +1324,49 @@ async fn trait_validation_combined_cursor_unavailability_and_concurrency_are_clo
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn every_creation_route_remains_trait_free(pool: PgPool) {
+async fn every_creation_route_atomically_establishes_initial_traits(pool: PgPool) {
     let world = World::new(pool.clone());
     let user_id = create_user(&world).await;
-    world
-        .create_character(user_id, character("Trait-free Character"))
+    let character = world
+        .create_character(
+            user_id,
+            CreateCharacter {
+                name: "Three-legged Frog Keeper".to_owned(),
+                description: "A careful keeper.".to_owned(),
+                property: Vec::new(),
+                r#trait: vec![TraitInput {
+                    statement: "Remembers every frog by its landing sound.".to_owned(),
+                }],
+            },
+        )
         .await
         .unwrap();
-    world
-        .create_entry_place(user_id, place("Trait-free Place"))
+    let place = world
+        .create_entry_place(
+            user_id,
+            CreateEntryPlace {
+                name: "Frog Court".to_owned(),
+                description: "A heat-scorched stone court.".to_owned(),
+                property: Vec::new(),
+                r#trait: vec![TraitInput {
+                    statement: "Returns every landing as a sharp echo.".to_owned(),
+                }],
+            },
+        )
         .await
         .unwrap();
-    world
-        .create_entity(user_id, entity("Trait-free ordinary Entity"))
+    let ordinary = world
+        .create_entity(
+            user_id,
+            CreateEntity {
+                name: "Three-legged Frog".to_owned(),
+                description: "A heat-scorched frog with three legs.".to_owned(),
+                property: Vec::new(),
+                r#trait: vec![TraitInput {
+                    statement: "Jumps unusually high.".to_owned(),
+                }],
+            },
+        )
         .await
         .unwrap();
     world.enter_world(user_id).await.unwrap();
@@ -1025,20 +1375,67 @@ async fn every_creation_route_remains_trait_free(pool: PgPool) {
         .await
         .unwrap()
         .place_revision;
-    world
+    let introduced = world
         .submit_action(
             user_id,
-            action(Uuid::new_v4(), revision, "Trait-free introduced Entity"),
+            SubmitAction {
+                request_id: Uuid::new_v4(),
+                expected_place_revision: revision,
+                prose: "The keeper settles a copper spring beside the court.".to_owned(),
+                consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
+                    name: "Copper Spring".to_owned(),
+                    description: "A warm copper spring.".to_owned(),
+                    property: Vec::new(),
+                    r#trait: vec![TraitInput {
+                        statement: "Sings after an unusually high landing.".to_owned(),
+                    }],
+                }),
+            },
         )
         .await
         .unwrap();
+    let introduced_id = introduced_entity(&introduced).id;
     let count: (i64, i64, i64) = sqlx::query_as(
         "SELECT (SELECT count(*) FROM entity_trait), (SELECT count(*) FROM entity_trait_version), (SELECT count(*) FROM entity_trait_current)",
     )
     .fetch_one(&pool)
     .await
     .unwrap();
-    assert_eq!(count, (0, 0, 0));
+    assert_eq!(count, (4, 4, 4));
+    let roots: Vec<(EntityId, String, String)> = sqlx::query_as(
+        r#"
+        SELECT version.entity_id, activity.operation, version.statement
+        FROM entity_trait_version AS version
+        JOIN activity ON activity.id = version.activity_id
+        WHERE version.previous_activity_id IS NULL
+        ORDER BY version.statement
+        "#,
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    assert_eq!(roots.len(), 4);
+    assert!(roots.contains(&(
+        character.entity.id,
+        "create_character".to_owned(),
+        "Remembers every frog by its landing sound.".to_owned(),
+    )));
+    assert!(roots.contains(&(
+        place.entity.id,
+        "create_entry_place".to_owned(),
+        "Returns every landing as a sharp echo.".to_owned(),
+    )));
+    assert!(roots.contains(&(
+        ordinary.id,
+        "create_entity".to_owned(),
+        "Jumps unusually high.".to_owned(),
+    )));
+    assert!(roots.contains(&(
+        introduced_id,
+        "submit_action".to_owned(),
+        "Sings after an unusually high landing.".to_owned(),
+    )));
+    assert_eq!(introduced.activity.trait_change.len(), 1);
 }
 
 #[sqlx::test(migrations = "./migration")]
@@ -1089,7 +1486,7 @@ async fn trait_world_storage_failure_rolls_back_activity_lineage_pointer_and_rev
     let count: (i64, i64, i64, i64) = sqlx::query_as(
         r#"
         SELECT
-            (SELECT count(*) FROM activity WHERE action_consequence = 'change_entity_trait'),
+            (SELECT count(*) FROM activity WHERE action_consequence = 'change_entity_state'),
             (SELECT count(*) FROM entity_trait),
             (SELECT count(*) FROM entity_trait_version),
             (SELECT count(*) FROM entity_trait_current)

@@ -43,3 +43,16 @@ configuration, injected the exact player contract, required current Aicadia MCP,
 removed its owned root and reported `codex_invoked=false`. Independent review found
 no P0-P3 issue. No test database, temporary player root, new listener or process
 remained; the pre-existing server on port 3000 was deliberately untouched.
+
+## Cargo developer entrypoint
+
+The 2026-08-14 developer-entrypoint completion made `cargo dev` the supported thin
+entry into the unchanged local launcher. A real isolated first start from the normal
+shell environment discovered the installed keg-only Homebrew PostgreSQL client,
+created and migrated its disposable database, provisioned exactly one User and
+served that User through the printed ledger context. Ctrl-C followed by a second
+`cargo dev` returned the identical User UUID. The full disposable launcher/adapter
+lifecycle, the Cargo bridge's strict Clippy check, Rust formatting, Bash syntax and
+diff integrity passed. The explicitly named verification database and private state
+directory were removed after exact ownership checks; the pre-existing database,
+profile and server on port 3000 were untouched.

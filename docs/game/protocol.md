@@ -28,8 +28,12 @@ remains stable only across uncertain delivery retries and must not be reused for
 different mutation.
 World derives a versioned SHA-256 `request_fingerprint` from a length-prefixed
 encoding of the normalized request. Action fingerprints include the expected Place
-revision, prose, consequence tag and Entity introduction fields, Property changes or
-typed Trait changes. Interaction fingerprints include the expected Place revision,
+revision, prose, consequence meaning and Entity introduction fields or combined
+Property/Trait changes. Empty-initial-Trait introductions and single-kind current
+state changes retain their historical semantic fingerprints; combined state and
+non-empty initial Trait input use an unambiguous length-prefixed extension. Stored
+historical Action tags decode to the current result shape but are not public inputs.
+Interaction fingerprints include the expected Place revision,
 prose, target Entity ids sorted by UUID bytes, Property changes and typed Trait
 changes. Initial Property lists
 sort by canonical key; change lists sort by normalized `(entity_id,key,type,value)`.
@@ -146,8 +150,9 @@ AcceptedAction {
   activity: Activity,
   consequence:
     { type: "introduce_entity", entity: Entity } |
-    { type: "change_entity_property", property_change: [EntityProperty] } |
-    { type: "change_entity_trait", trait_change: [ActivityTraitChange] },
+    { type: "change_entity_state",
+      property_change: [EntityProperty],
+      trait_change: [ActivityTraitChange] },
   place: Place
 }
 AcceptedInteraction { activity: Activity, place: CurrentPlaceOutput }
@@ -216,8 +221,9 @@ effective time, separate consequence object or target metadata.
 may name only the actor or an explicit target.
 
 Trait statements are trimmed non-NUL PostgreSQL `text` of 1–4,000 Unicode
-characters. Action `trait_change` contains 1–100 typed establish/develop items;
-Interaction's optional list contains 0–100 and may coexist with Property changes.
+characters. Creation `trait` contains 0–100 establishment statements. Action and
+Interaction `trait_change` contain 0–100 typed establish/develop items and may
+coexist with Property changes; `change_entity_state` requires at least one list item.
 Duplicate lifecycle items and unchanged development reject. World also evaluates
 the intended post-package active statement set per Entity: development into another
 unchanged active statement, two developments to the same final statement and an
@@ -339,9 +345,9 @@ Automated tests require:
    history.
 8. Missing, fabricated, duplicate, self, remote and changed-Place targets share one
    neutral error and atomic rollback; equal retries normalize target order.
-9. All four Entity-creation routes share the same optional 0–100 initial Property
-   shape and atomic result semantics across adapters.
-10. One adapter can submit homogeneous multi-Entity Action changes and optional
+9. All four Entity-creation routes share the same independent optional 0–100 initial
+   Property and Trait shapes and atomic result semantics across adapters.
+10. One adapter can submit combined multi-Entity Action changes and optional
    actor/target Interaction changes whose sorted typed Activity history and current
    local values the other adapter reads without role/control leakage.
 11. Property bounds, duplicates, key/type conflict, neutral Entity eligibility,
@@ -349,8 +355,8 @@ Automated tests require:
 12. Stateless MCP `2026-07-28` exposes all thirteen tools, the one global play
    contract and complete cache metadata without creating a transport session; older
    revisions fail closed.
-13. All creation routes remain Trait-free; mixed 1–100 Action establishment/
-    development and optional 0–100 actor/target Interaction Trait changes preserve
+13. All creation routes establish optional 0–100 initial Traits; mixed 0–100 Action
+    establishment/development and optional 0–100 actor/target Interaction Trait changes preserve
     stable ids, immutable roots/versions/current pointers, exact Activity history,
     Property coexistence and atomic rollback. Deferred bounded per-Trait commit
     checks enforce exactly one root, exactly one current pointer and a pointer at the

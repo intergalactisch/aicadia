@@ -176,8 +176,9 @@ mod property_query_count_test {
                     request_id: Uuid::new_v4(),
                     expected_place_revision: revision,
                     prose: format!("Mara records {count} exact physical measures."),
-                    consequence: ActionConsequence::ChangeEntityProperty(ChangeEntityProperty {
+                    consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
                         property_change: changes(entity_id, count),
+                        trait_change: Vec::new(),
                     }),
                 },
             )
@@ -205,6 +206,7 @@ mod property_query_count_test {
                     name: "Mara Venn".to_owned(),
                     description: "A careful surveyor.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -216,6 +218,7 @@ mod property_query_count_test {
                     name: "North Gate".to_owned(),
                     description: "A wind-worn stone gate.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -344,6 +347,7 @@ mod property_query_count_test {
                     name: "Index Seer".to_owned(),
                     description: "A careful surveyor.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -355,6 +359,7 @@ mod property_query_count_test {
                     name: "North Gate".to_owned(),
                     description: "A wind-worn stone gate.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -517,7 +522,7 @@ mod trait_persistence_test {
                 prose: Some("A Trait changes."),
                 request_id: Some(Uuid::new_v4()),
                 request_fingerprint: Some(&fingerprint),
-                action_consequence: Some("change_entity_trait"),
+                action_consequence: Some("change_entity_state"),
             },
             "trait_test",
         )
@@ -623,6 +628,7 @@ mod trait_persistence_test {
                     name: "First Trait Writer Subject".to_owned(),
                     description: "A first subject.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -634,6 +640,7 @@ mod trait_persistence_test {
                     name: "Second Trait Writer Subject".to_owned(),
                     description: "A second subject.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -739,7 +746,7 @@ mod trait_persistence_test {
             transaction.rollback().await.unwrap();
         }
         let activity_count: i64 = sqlx::query_scalar(
-            "SELECT count(*) FROM activity WHERE action_consequence = 'change_entity_trait'",
+            "SELECT count(*) FROM activity WHERE action_consequence = 'change_entity_state'",
         )
         .fetch_one(&pool)
         .await
@@ -784,6 +791,7 @@ mod trait_persistence_test {
                     name: "Bounded Trait Subject".to_owned(),
                     description: "A subject with many bounded Traits.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -844,6 +852,7 @@ mod trait_persistence_test {
                     name: "Indexed Active Trait Subject".to_owned(),
                     description: "Carries one hundred active indexed Traits.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -919,6 +928,7 @@ mod trait_persistence_test {
                     name: "Bounded Trait Character".to_owned(),
                     description: "Carries one or one hundred Traits.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -930,6 +940,7 @@ mod trait_persistence_test {
                     name: "Bounded Trait Place".to_owned(),
                     description: "One exact current Place.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -955,7 +966,8 @@ mod trait_persistence_test {
                         request_id: Uuid::new_v4(),
                         expected_place_revision: revision,
                         prose: format!("The World accepts {count} bounded Traits."),
-                        consequence: ActionConsequence::ChangeEntityTrait(ChangeEntityTrait {
+                        consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+                            property_change: Vec::new(),
                             trait_change: (0..count)
                                 .map(|index| EntityTraitChangeInput::Establish {
                                     entity_id,
@@ -1066,6 +1078,7 @@ mod trait_persistence_test {
                     name: "First Lock Subject".to_owned(),
                     description: "First lock-order subject.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await
@@ -1077,6 +1090,7 @@ mod trait_persistence_test {
                     name: "Second Lock Subject".to_owned(),
                     description: "Second lock-order subject.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 },
             )
             .await

@@ -1,5 +1,54 @@
 use super::*;
 
+fn add_fingerprint_field(hash: &mut Sha256, field: &[u8]) {
+    hash.update((field.len() as u64).to_be_bytes());
+    hash.update(field);
+}
+
+fn legacy_action_fingerprint(
+    revision: PlaceRevision,
+    prose: &str,
+    discriminator: &[u8],
+    entity_id: EntityId,
+    value: Option<(&str, &PropertyValue)>,
+    statement: Option<&str>,
+) -> Vec<u8> {
+    let mut revision_bytes = Vec::with_capacity(41);
+    revision_bytes.push(1);
+    revision_bytes.extend_from_slice(revision.place_entity_id().0.as_bytes());
+    revision_bytes.extend_from_slice(&revision.occurred_at().timestamp_micros().to_be_bytes());
+    revision_bytes.extend_from_slice(revision.activity_id().0.as_bytes());
+    let mut hash = Sha256::new();
+    for field in [
+        b"aicadia-submit-action-fingerprint-v1".as_slice(),
+        revision_bytes.as_slice(),
+        prose.as_bytes(),
+        discriminator,
+    ] {
+        add_fingerprint_field(&mut hash, field);
+    }
+    if let Some((key, value)) = value {
+        add_fingerprint_field(&mut hash, entity_id.0.as_bytes());
+        add_fingerprint_field(&mut hash, key.as_bytes());
+        match value {
+            PropertyValue::Text(value) => {
+                add_fingerprint_field(&mut hash, b"text");
+                add_fingerprint_field(&mut hash, value.as_bytes());
+            }
+            PropertyValue::Integer(value) => {
+                add_fingerprint_field(&mut hash, b"integer");
+                add_fingerprint_field(&mut hash, &value.to_be_bytes());
+            }
+        }
+    }
+    if let Some(statement) = statement {
+        add_fingerprint_field(&mut hash, b"establish");
+        add_fingerprint_field(&mut hash, entity_id.0.as_bytes());
+        add_fingerprint_field(&mut hash, statement.as_bytes());
+    }
+    hash.finalize().to_vec()
+}
+
 #[sqlx::test(migrations = "./migration")]
 async fn action_atomically_places_one_entity_and_exposes_canonical_prose_to_two_users(
     pool: PgPool,
@@ -36,10 +85,7 @@ async fn action_atomically_places_one_entity_and_exposes_canonical_prose_to_two_
     assert_eq!(accepted.place, entry);
     let accepted_entity = match &accepted.consequence {
         AcceptedActionConsequence::IntroduceEntity(entity) => entity,
-        AcceptedActionConsequence::ChangeEntityProperty(_) => {
-            panic!("the helper submits an introduction")
-        }
-        AcceptedActionConsequence::ChangeEntityTrait(_) => {
+        AcceptedActionConsequence::ChangeEntityState { .. } => {
             panic!("the helper submits an introduction")
         }
     };
@@ -141,6 +187,7 @@ async fn action_normalizes_before_fingerprinting_and_equal_retry_returns_canonic
                     name: "  Cedar Marker  ".to_owned(),
                     description: "  Three lines cross its face.  ".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 }),
             },
         )
@@ -157,6 +204,7 @@ async fn action_normalizes_before_fingerprinting_and_equal_retry_returns_canonic
                     name: "Cedar Marker".to_owned(),
                     description: "Three lines cross its face.".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 }),
             },
         )
@@ -207,6 +255,261 @@ async fn action_normalizes_before_fingerprinting_and_equal_retry_returns_canonic
     .await
     .unwrap();
     assert_eq!(counts, (1, 1, 1));
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn current_single_kind_retries_decode_historical_action_rows_without_legacy_input(
+    pool: PgPool,
+) {
+    let world = World::new(pool.clone());
+    let user_id = create_user(&world).await;
+    let character = world
+        .create_character(user_id, character("Mara Venn"))
+        .await
+        .unwrap();
+    let place = world
+        .create_entry_place(user_id, place("North Gate"))
+        .await
+        .unwrap();
+    world.enter_world(user_id).await.unwrap();
+
+    let property_revision = world
+        .list_entity_at_current_place(user_id, ListEntityAtCurrentPlace::default())
+        .await
+        .unwrap()
+        .place_revision;
+    let property_request_id = Uuid::new_v4();
+    let property_activity_id = Uuid::new_v4();
+    let property_value = PropertyValue::Integer(3);
+    let property_fingerprint = legacy_action_fingerprint(
+        property_revision,
+        "Mara records three legs.",
+        b"change_entity_property",
+        character.entity.id,
+        Some(("leg_count", &property_value)),
+        None,
+    );
+    sqlx::query(
+        r#"
+        INSERT INTO activity (
+            id, operation, requested_by_user_id,
+            actor_character_entity_id, context_place_entity_id,
+            prose, request_id, request_fingerprint, action_consequence
+        )
+        VALUES ($1, 'submit_action', $2, $3, $4, $5, $6, $7, 'change_entity_property')
+        "#,
+    )
+    .bind(property_activity_id)
+    .bind(user_id.0)
+    .bind(character.entity.id.0)
+    .bind(place.entity.id.0)
+    .bind("Mara records three legs.")
+    .bind(property_request_id)
+    .bind(&property_fingerprint)
+    .execute(&pool)
+    .await
+    .unwrap();
+    for (entity_id, role) in [
+        (character.entity.id, "subject"),
+        (place.entity.id, "location"),
+    ] {
+        sqlx::query(
+            "INSERT INTO activity_entity (activity_id, entity_id, role) VALUES ($1, $2, $3)",
+        )
+        .bind(property_activity_id)
+        .bind(entity_id.0)
+        .bind(role)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+    let property_key_id: i64 = sqlx::query_scalar(
+        "INSERT INTO property_key (key, value_type, first_activity_id) VALUES ('leg_count', 'integer', $1) RETURNING id",
+    )
+    .bind(property_activity_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        r#"
+        INSERT INTO entity_property_history (
+            entity_id, property_key_id, activity_id, value_type, integer_value
+        ) VALUES ($1, $2, $3, 'integer', 3)
+        "#,
+    )
+    .bind(character.entity.id.0)
+    .bind(property_key_id)
+    .bind(property_activity_id)
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO entity_property (entity_id, property_key_id, current_activity_id) VALUES ($1, $2, $3)",
+    )
+    .bind(character.entity.id.0)
+    .bind(property_key_id)
+    .bind(property_activity_id)
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("UPDATE place SET latest_activity_id = $1 WHERE entity_id = $2")
+        .bind(property_activity_id)
+        .bind(place.entity.id.0)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    let property_retry = world
+        .submit_action(
+            user_id,
+            property_action(
+                property_request_id,
+                property_revision,
+                "Mara records three legs.",
+                vec![property_change(
+                    character.entity.id,
+                    "leg_count",
+                    property_value,
+                )],
+            ),
+        )
+        .await
+        .unwrap();
+    assert_eq!(property_retry.activity.id.0, property_activity_id);
+    assert!(matches!(
+        property_retry.consequence,
+        AcceptedActionConsequence::ChangeEntityState {
+            ref property_change,
+            ref trait_change,
+        } if property_change.len() == 1 && trait_change.is_empty()
+    ));
+
+    let trait_revision = world
+        .list_entity_at_current_place(user_id, ListEntityAtCurrentPlace::default())
+        .await
+        .unwrap()
+        .place_revision;
+    let trait_request_id = Uuid::new_v4();
+    let trait_activity_id = Uuid::new_v4();
+    let trait_id = Uuid::new_v4();
+    let statement = "Jumps unusually high.";
+    let trait_fingerprint = legacy_action_fingerprint(
+        trait_revision,
+        "Mara records one lasting characterization.",
+        b"change_entity_trait",
+        character.entity.id,
+        None,
+        Some(statement),
+    );
+    sqlx::query(
+        r#"
+        INSERT INTO activity (
+            id, operation, requested_by_user_id,
+            actor_character_entity_id, context_place_entity_id,
+            prose, request_id, request_fingerprint, action_consequence
+        )
+        VALUES ($1, 'submit_action', $2, $3, $4, $5, $6, $7, 'change_entity_trait')
+        "#,
+    )
+    .bind(trait_activity_id)
+    .bind(user_id.0)
+    .bind(character.entity.id.0)
+    .bind(place.entity.id.0)
+    .bind("Mara records one lasting characterization.")
+    .bind(trait_request_id)
+    .bind(&trait_fingerprint)
+    .execute(&pool)
+    .await
+    .unwrap();
+    for (entity_id, role) in [
+        (character.entity.id, "subject"),
+        (place.entity.id, "location"),
+    ] {
+        sqlx::query(
+            "INSERT INTO activity_entity (activity_id, entity_id, role) VALUES ($1, $2, $3)",
+        )
+        .bind(trait_activity_id)
+        .bind(entity_id.0)
+        .bind(role)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+    sqlx::raw_sql(
+        "ALTER TABLE entity_trait_version DISABLE TRIGGER entity_trait_version_activity_check",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    let mut historical_trait = pool.begin().await.unwrap();
+    sqlx::query("INSERT INTO entity_trait (id, entity_id) VALUES ($1, $2)")
+        .bind(trait_id)
+        .bind(character.entity.id.0)
+        .execute(&mut *historical_trait)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO entity_trait_version (trait_id, entity_id, activity_id, statement) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(trait_id)
+    .bind(character.entity.id.0)
+    .bind(trait_activity_id)
+    .bind(statement)
+    .execute(&mut *historical_trait)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO entity_trait_current (trait_id, entity_id, current_activity_id) VALUES ($1, $2, $3)",
+    )
+    .bind(trait_id)
+    .bind(character.entity.id.0)
+    .bind(trait_activity_id)
+    .execute(&mut *historical_trait)
+    .await
+    .unwrap();
+    historical_trait.commit().await.unwrap();
+    sqlx::raw_sql(
+        "ALTER TABLE entity_trait_version ENABLE TRIGGER entity_trait_version_activity_check",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("UPDATE place SET latest_activity_id = $1 WHERE entity_id = $2")
+        .bind(trait_activity_id)
+        .bind(place.entity.id.0)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    let trait_retry = world
+        .submit_action(
+            user_id,
+            trait_action(
+                trait_request_id,
+                trait_revision,
+                "Mara records one lasting characterization.",
+                vec![establish_trait(character.entity.id, statement)],
+            ),
+        )
+        .await
+        .unwrap();
+    assert_eq!(trait_retry.activity.id.0, trait_activity_id);
+    assert!(matches!(
+        trait_retry.consequence,
+        AcceptedActionConsequence::ChangeEntityState {
+            ref property_change,
+            ref trait_change,
+        } if property_change.is_empty() && trait_change.len() == 1
+    ));
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM activity WHERE request_id IN ($1, $2)")
+            .bind(property_request_id)
+            .bind(trait_request_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        2
+    );
 }
 
 #[sqlx::test(migrations = "./migration")]
@@ -482,6 +785,7 @@ async fn invalid_unplaced_stale_and_storage_failed_actions_leave_no_partial_rows
                     name: "Valid".to_owned(),
                     description: "Valid".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 }),
             },
             ActionField::Prose,
@@ -496,6 +800,7 @@ async fn invalid_unplaced_stale_and_storage_failed_actions_leave_no_partial_rows
                     name: "Bad\0name".to_owned(),
                     description: "Valid".to_owned(),
                     property: Vec::new(),
+                    r#trait: Vec::new(),
                 }),
             },
             ActionField::ConsequenceName,

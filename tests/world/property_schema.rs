@@ -334,7 +334,7 @@ async fn property_schema_rejects_invalid_keys_values_lineage_and_history_changes
         )
         VALUES (
             $1, 'submit_action', $2, 'A Property changes.',
-            $3, $4, 'change_entity_property'
+            $3, $4, 'change_entity_state'
         )
         "#,
     )
@@ -344,7 +344,7 @@ async fn property_schema_rejects_invalid_keys_values_lineage_and_history_changes
     .bind(vec![3_u8; 32])
     .execute(&pool)
     .await
-    .expect("the second closed Action discriminator must be accepted");
+    .expect("the current state Action discriminator must be accepted");
     assert!(
         sqlx::query(
             r#"

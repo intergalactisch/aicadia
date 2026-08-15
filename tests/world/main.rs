@@ -1,6 +1,7 @@
 mod action;
 mod activity;
 mod entity;
+mod entity_state_creation;
 mod interaction;
 mod property_behavior;
 mod property_schema;
@@ -9,13 +10,12 @@ mod trait_storage;
 
 use aicadia::{
     AcceptedActionConsequence, ActionConsequence, ActionField, ActivityEntityRole,
-    ActivityOperation, ActivityTraitChange, ChangeEntityProperty, ChangeEntityTrait,
-    CreateCharacter, CreateEntity, CreateEntryPlace, EntityCurrentAssociation, EntityField,
-    EntityId, EntityPropertyChangeInput, EntityTraitChangeInput, EntityTraitId,
-    GetEntityAtCurrentPlace, GetEntityCurrentState, InteractionField, IntroduceEntity,
-    InvalidReason, ListActivity, ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace,
-    PlaceRevision, PropertyField, PropertyInput, PropertyValue, SubmitAction, SubmitInteraction,
-    UserId, World, WorldError,
+    ActivityOperation, ActivityTraitChange, ChangeEntityState, CreateCharacter, CreateEntity,
+    CreateEntryPlace, EntityCurrentAssociation, EntityField, EntityId, EntityPropertyChangeInput,
+    EntityTraitChangeInput, EntityTraitId, GetEntityAtCurrentPlace, GetEntityCurrentState,
+    InteractionField, IntroduceEntity, InvalidReason, ListActivity, ListActivityAtCurrentPlace,
+    ListEntity, ListEntityAtCurrentPlace, PlaceRevision, PropertyField, PropertyInput,
+    PropertyValue, SubmitAction, SubmitInteraction, TraitInput, UserId, World, WorldError,
 };
 use chrono::{TimeZone, Utc};
 use sha2::{Digest, Sha256};
@@ -36,6 +36,7 @@ fn entity(name: &str) -> CreateEntity {
         name: name.to_owned(),
         description: format!("Description of {name}"),
         property: Vec::new(),
+        r#trait: Vec::new(),
     }
 }
 
@@ -44,6 +45,7 @@ fn character(name: &str) -> CreateCharacter {
         name: name.to_owned(),
         description: format!("Description of {name}"),
         property: Vec::new(),
+        r#trait: Vec::new(),
     }
 }
 
@@ -52,6 +54,7 @@ fn place(name: &str) -> CreateEntryPlace {
         name: name.to_owned(),
         description: format!("Description of {name}"),
         property: Vec::new(),
+        r#trait: Vec::new(),
     }
 }
 
@@ -64,6 +67,7 @@ fn action(request_id: Uuid, expected_place_revision: PlaceRevision, name: &str) 
             name: name.to_owned(),
             description: format!("Description of {name}"),
             property: Vec::new(),
+            r#trait: Vec::new(),
         }),
     }
 }
@@ -120,8 +124,9 @@ fn property_action(
         request_id,
         expected_place_revision,
         prose: prose.into(),
-        consequence: ActionConsequence::ChangeEntityProperty(ChangeEntityProperty {
+        consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
             property_change,
+            trait_change: Vec::new(),
         }),
     }
 }
@@ -150,27 +155,26 @@ fn trait_action(
         request_id,
         expected_place_revision,
         prose: prose.into(),
-        consequence: ActionConsequence::ChangeEntityTrait(ChangeEntityTrait { trait_change }),
+        consequence: ActionConsequence::ChangeEntityState(ChangeEntityState {
+            property_change: Vec::new(),
+            trait_change,
+        }),
     }
 }
 
 fn accepted_trait_change(accepted: &aicadia::AcceptedAction) -> &[ActivityTraitChange] {
     match &accepted.consequence {
-        AcceptedActionConsequence::ChangeEntityTrait(change) => change,
-        AcceptedActionConsequence::IntroduceEntity(_)
-        | AcceptedActionConsequence::ChangeEntityProperty(_) => {
-            panic!("expected Trait changes")
-        }
+        AcceptedActionConsequence::ChangeEntityState { trait_change, .. } => trait_change,
+        AcceptedActionConsequence::IntroduceEntity(_) => panic!("expected Trait changes"),
     }
 }
 
 fn introduced_entity(accepted: &aicadia::AcceptedAction) -> &aicadia::Entity {
     match &accepted.consequence {
         AcceptedActionConsequence::IntroduceEntity(entity) => entity,
-        AcceptedActionConsequence::ChangeEntityProperty(_) => {
+        AcceptedActionConsequence::ChangeEntityState { .. } => {
             panic!("expected an introduced Entity")
         }
-        AcceptedActionConsequence::ChangeEntityTrait(_) => panic!("expected an introduced Entity"),
     }
 }
 
@@ -219,6 +223,30 @@ async fn insert_trait_action_activity(pool: &PgPool, user_id: UserId) -> Uuid {
         )
         VALUES (
             $1, 'submit_action', $2, 'A Trait changes.',
+            $3, $4, 'change_entity_state'
+        )
+        "#,
+    )
+    .bind(activity_id)
+    .bind(user_id.0)
+    .bind(Uuid::new_v4())
+    .bind(vec![8_u8; 32])
+    .execute(pool)
+    .await
+    .expect("a raw state Action Activity should be valid");
+    activity_id
+}
+
+async fn insert_historical_trait_action_activity(pool: &PgPool, user_id: UserId) -> Uuid {
+    let activity_id = Uuid::new_v4();
+    sqlx::query(
+        r#"
+        INSERT INTO activity (
+            id, operation, requested_by_user_id, prose,
+            request_id, request_fingerprint, action_consequence
+        )
+        VALUES (
+            $1, 'submit_action', $2, 'A historical Trait changes.',
             $3, $4, 'change_entity_trait'
         )
         "#,
@@ -229,7 +257,7 @@ async fn insert_trait_action_activity(pool: &PgPool, user_id: UserId) -> Uuid {
     .bind(vec![8_u8; 32])
     .execute(pool)
     .await
-    .expect("a raw Trait Action Activity should be valid");
+    .expect("a historical Trait Action Activity should be valid before migration 0009");
     activity_id
 }
 

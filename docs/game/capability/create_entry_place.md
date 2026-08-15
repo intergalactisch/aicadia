@@ -10,11 +10,14 @@ Annotation summary: additive, non-idempotent.
 
 ## Purpose
 
-Create the one shared entry Place with 0–100 optional initial Properties from the current unplaced Character; accepts semantic content only.
+Create the one shared entry Place with independent 0–100 optional initial Properties
+and Traits from the current unplaced Character; accepts semantic content only.
 
 ## Input
 
-World call `create_entry_place(context.user_id, input)`; HTTP `POST /api/place/entry`; MCP `create_entry_place`. Input is `{ name, description, property }`; `property` defaults to `[]`.
+World call `create_entry_place(context.user_id, input)`; HTTP `POST /api/place/entry`;
+MCP `create_entry_place`. Input is `{ name, description, property, trait }`; both
+state lists default to `[]`.
 
 `create_character`, `create_entry_place` and `create_entity` accept exactly:
 
@@ -25,17 +28,22 @@ World call `create_entry_place(context.user_id, input)`; HTTP `POST /api/place/e
   "property": [
     {"key": "surface", "value": {"type": "text", "text": "weathered stone"}},
     {"key": "arch_count", "value": {"type": "integer", "integer": 3}}
+  ],
+  "trait": [
+    {"statement": "Carries every returning footstep as a low echo."}
   ]
 }
 ```
 
 ## Validation
 
-The derived Character must exist and be unplaced. Zero entry Places is valid before genesis; exactly one concurrent request may establish the sole entry Place. A `trait` field is unknown input.
+The derived Character must exist and be unplaced. Zero entry Places is valid before
+genesis; exactly one concurrent request may establish the sole entry Place.
 
 ## Result
 
-Atomically creates Entity, Place, Activity and initial Properties. This is World genesis, not discovery; a second entry Place is rejected without orphan state.
+Atomically creates Entity, Place, Activity and initial Property/Trait state. This is
+World genesis, not discovery; a second entry Place is rejected without orphan state.
 
 ## Retry and tool-local safety
 

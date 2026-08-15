@@ -10,19 +10,25 @@ Annotation summary: additive, non-idempotent.
 
 ## Purpose
 
-Ask World to create one unplaced shared stable referent with 0–100 optional initial Properties; equal retries create another Entity.
+Ask World to create one unplaced shared stable referent with independent 0–100
+optional initial Properties and Traits; equal retries create another Entity.
 
 ## Input
 
-World call `create_entity(context.user_id, input)`; HTTP `POST /api/entity`; MCP `create_entity`. Input is `{ name, description, property }`; `property` defaults to `[]`.
+World call `create_entity(context.user_id, input)`; HTTP `POST /api/entity`; MCP
+`create_entity`. Input is `{ name, description, property, trait }`; both state lists
+default to `[]`.
 
 ## Validation
 
-The list contains 0–100 unique canonical keys. A `trait` field is unknown input; Traits arise only through a later confirmed Action or Interaction.
+The Property list contains 0–100 unique canonical keys. The Trait list contains
+0–100 unique normalized statements and establishes new World-assigned lineages.
 
 ## Result
 
-World derives the introducing User, always creates a new unplaced Entity and returns the complete Entity. Equal input remains two Entities. Entity, Activity, initial Property history and current pointers commit as one bundle.
+World derives the introducing User, always creates a new unplaced Entity and returns
+the complete Entity. Equal input remains two Entities. Entity, Activity and initial
+Property/Trait history and current pointers commit as one bundle.
 
 ## Retry and tool-local safety
 
@@ -40,7 +46,8 @@ Canonical codes and transport mapping are defined in [Protocol contract](../prot
 
 ## Workshop link
 
-Entity creation with initial Properties follows the authority boundary in [Required Character workshop and World-entry flow](../agent.md#required-character-workshop-and-world-entry-flow).
+Entity creation with initial Properties and Traits follows the authority boundary in
+[Required Character workshop and World-entry flow](../agent.md#required-character-workshop-and-world-entry-flow).
 
 ## Evidence obligations
 

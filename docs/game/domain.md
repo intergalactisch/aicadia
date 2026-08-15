@@ -8,12 +8,12 @@ This document is the current game authority. Aicadia has one persistent `World`,
 durable `User` records, shared `Entity` records, at most one owned `Character` Entity
 role per User, and zero or one shared entry `Place`. A Character may remain unplaced
 or explicitly enter that Place. Every Entity may carry zero or more compact typed
-Properties, established at introduction or changed through confirmed local Actions
-and actor/target Interactions. Every Entity may also carry zero or more stable,
-developing, non-executable Traits established only through confirmed play. An
-entered Character may submit one homogeneous Action that introduces one Entity,
-changes 1–100 exact-local Entity/key pairs or atomically establishes/develops 1–100
-Traits across exact-local Entities. One directed Interaction toward 1–100 existing
+Properties and stable, developing, non-executable Traits, established at creation or
+changed through confirmed local Actions and actor/target Interactions. An entered
+Character may submit one Action that introduces one Entity with initial Property and
+Trait state, or atomically combines 0–100 exact-local Property changes with 0–100
+Trait establishments/developments across exact-local Entities; a state-change Action
+requires at least one change. One directed Interaction toward 1–100 existing
 co-present Entities may carry optional actor/target Property changes and 0–100 mixed
 Trait establishments/developments without authoring their responses. Accepted game mutations append
 immutable normalized `activity` in the same PostgreSQL transaction as current state.
@@ -80,8 +80,9 @@ A User never receives a direct profile or Property-storage edit. The User steers
 and confirms the complete meaning, the Agent proposes exact initial state or an
 Action/Interaction consequence, and World alone validates and writes. No accepted
 Property input identifies which Entities are User-controlled. The same authority
-split applies to Traits: the Agent authors an exact contextual consequence, the User
-accepts or rejects its complete natural preview, and World alone validates/writes it.
+split applies to Traits: the Agent authors exact initial or contextual state, the
+User accepts or rejects its complete natural preview, and World alone
+validates/writes it.
 There is no direct Trait editor.
 
 Property keys and values are user-authored in-World content, including keys or text
@@ -169,8 +170,7 @@ server-owned roles have these exact meanings:
 | `create_entry_place` | proposing unplaced Character | absent | new Place Entity as `subject` |
 | `enter_world` | entering Character | entry Place | entry Place Entity as `destination` |
 | `submit_action.introduce_entity` | acting Character | derived current Place | new Entity as `subject`; current Place as `location` |
-| `submit_action.change_entity_property` | acting Character | derived current Place | each changed Entity as `subject`; current Place as `location` |
-| `submit_action.change_entity_trait` | acting Character | derived current Place | each affected Trait-owning Entity as `subject`; current Place as `location` |
+| `submit_action.change_entity_state` | acting Character | derived current Place | each Property- or Trait-affected Entity as `subject`; current Place as `location` |
 | `submit_interaction` | acting Character | derived current Place | 1–100 existing Entities as `target`; current Place as `location` |
 
 Only accepted `submit_action` and `submit_interaction` Activity has non-null prose,
@@ -187,8 +187,10 @@ Properties from all four creation routes are changes of their creation Activity.
 Activity never infers a Property from prose, and internal Property-key ids are not
 exposed.
 
-`trait_change` is empty when an Activity established or developed no Trait.
-Otherwise it contains the exact sorted Activity-backed establishment/development
+`trait_change` is empty when an Activity established or developed no Trait. Initial
+Traits from all four creation routes are establishments of their creation Activity;
+that provenance records first accepted shared-World establishment and does not claim
+the Trait was fictionally learned then. Otherwise it contains the exact sorted Activity-backed establishment/development
 results, including stable Trait id, compact owning Entity summary, current statement
 and previous statement for development. These are hydrated in one bounded query
 after the personal or Place lens authorizes the Activity. Activity Entity references
@@ -234,6 +236,7 @@ tag/value, invalid key or list outside its route's 0–100 or 1–100 bound retu
 ## Trait statements and lifecycle
 
 ```text
+TraitInput { statement }
 EntityTrait { id, statement }
 EntityTraitChangeInput =
   { type: "establish", entity_id, statement } |
@@ -249,8 +252,9 @@ Statement normalization trims outer Unicode whitespace, rejects U+0000 and valid
 code points. Exact duplicate/no-op comparison uses only that stored trimmed value;
 World performs no Unicode folding or semantic comparison.
 
-Action `trait_change` contains 1–100 items; Interaction `trait_change` contains
-0–100. Within one mixed list, duplicate establishment
+Creation `trait` contains 0–100 establishment statements. Action and Interaction
+`trait_change` contain 0–100 items; a `change_entity_state` Action requires its
+Property or Trait list to be non-empty. Within one mixed list, duplicate establishment
 `(entity_id, normalized statement)`, duplicate development `trait_id`, development
 to that Trait's exact current statement or any duplicate exact statement in the
 intended post-package active set for one Entity returns `invalid_trait`. The final-set
@@ -258,8 +262,8 @@ rule rejects development into another unchanged active statement, two developmen
 to the same statement and an establishment plus development to the same statement.
 A statement vacated by another development in that same unordered package may be
 reused because it is unique after the complete package; input order never changes
-the result. Every such failure rejects the whole Action or Interaction atomically,
-including any Interaction Property changes, Activity and participation.
+the result. Every such failure rejects the whole creation, Action or Interaction
+atomically, including any Property changes, Activity, role or participation state.
 Semantic near-duplicates and contradictions are accepted. A well-formed missing,
 remote, departed, stale or otherwise ineligible Entity/Trait uses neutral
 `trait_unavailable` and exposes no role/control/existence distinction.
@@ -287,8 +291,10 @@ Tests retain all prior evidence and prove:
 - the delivered schema, World, HTTP/MCP adapters, exact thirteen-tool catalog, Agent
   contract and token-free fake controller agree on the deterministic Trait contract;
   none of that evidence is a paid or real-model Trait claim;
-- every creation route remains Trait-free and strictly rejects a `trait` field;
-- mixed 1–100 Action Trait changes uniformly cover actor, current Place, ordinary
+- every creation route accepts 0 and 100 initial Traits beside 0 and 100 Properties,
+  gives each Trait a stable id rooted in that creation Activity and rejects duplicate,
+  malformed or 101st state without orphan rows;
+- mixed 0–100 Action Trait changes uniformly cover actor, current Place, ordinary
   Entity and other Character; optional 0–100 Interaction Trait changes cover actor
   and explicit targets and coexist atomically with Property changes without a target
   response;
@@ -313,11 +319,13 @@ Tests retain all prior evidence and prove:
 - Agent guidance requires complete natural Trait preview and whole-package User
   confirmation, exposes no direct editor and never treats Trait prose as mechanics;
 - each of `create_entity`, `create_character`, `create_entry_place` and
-  `submit_action.introduce_entity` accepts 0 and 100 initial Properties and commits
+  `submit_action.introduce_entity` accepts independent 0–100 initial Property and
+  Trait lists and commits
   its whole Entity/role/placement/Activity/history/current bundle atomically;
 - duplicate or 101st initial values reject the whole creation with no orphan state;
-- one homogeneous Action changes actor, current Place, an ordinary Entity and
-  another Character under one role/control-neutral exact-local rule, while missing,
+- one `change_entity_state` Action changes Properties and Traits of the actor, current
+  Place, an ordinary Entity and another Character under one role/control-neutral
+  exact-local rule, while missing,
   remote and departed subjects share one neutral error and leave zero writes;
 - an Interaction with no changes preserves its outward-only result; one with changes
   atomically updates actor and explicit targets without authoring a response; and a

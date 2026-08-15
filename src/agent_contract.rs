@@ -20,8 +20,7 @@ const INSTRUCTION_SECTION: [&str; 15] = [
     include_str!("agent_contract/instruction/14-recovery.md"),
 ];
 
-static ASSEMBLED_INSTRUCTIONS: LazyLock<String> =
-    LazyLock::new(|| INSTRUCTION_SECTION.join("\n"));
+static ASSEMBLED_INSTRUCTIONS: LazyLock<String> = LazyLock::new(|| INSTRUCTION_SECTION.join("\n"));
 
 /// The complete play contract published through `server/discover`.
 pub fn instructions() -> &'static str {
@@ -163,7 +162,7 @@ mod tests {
             "user-authored in-World content",
             "## Traits",
             "one stable identity and one current statement",
-            "Traits are never creation input",
+            "An accepted Entity creation may establish the first statement",
             "Retirement, deletion, reactivation and direct editing do not exist",
             "supersedes only itself",
             "honest World possibilities",
@@ -247,10 +246,10 @@ mod tests {
     fn trait_tool_descriptions_pin_creation_orientation_preview_and_response_boundaries() {
         for tool in ["create_character", "create_entry_place", "create_entity"] {
             let description = description(tool);
-            assert!(description.contains("0–100 initial"));
+            assert!(description.contains("independent 0–100 initial"));
             assert!(description.contains("Properties"));
-            assert!(description.contains("no Traits"));
-            assert!(description.contains("contextual Action or Interaction"));
+            assert!(description.contains("0–100 initial Traits"));
+            assert!(description.contains("creation Activity"));
         }
 
         let character_read = description("get_character");
@@ -258,7 +257,7 @@ mod tests {
             "combined page",
             "current Properties and Traits",
             "accepts no ids",
-            "Traits are never creation input",
+            "complete initial Property/Trait package",
         ] {
             assert!(character_read.contains(required));
         }
@@ -278,7 +277,7 @@ mod tests {
 
         let action = description("submit_action");
         for required in [
-            "1–100 Traits in one mixed package",
+            "combine 0–100 exact-local Property changes and 0–100 Trait establishments/developments",
             "get_entity_at_current_place",
             "exactly once",
             "every Trait's lifecycle and its current and proposed characterization",

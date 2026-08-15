@@ -38,6 +38,10 @@ for dependency in psql dropdb curl jq lsof cargo; do
     command -v "$dependency" >/dev/null 2>&1 || fail "missing test dependency: $dependency"
 done
 
+cargo_dev_help="$(cd "$REPO_DIR" && cargo dev --help)"
+[[ "$cargo_dev_help" == 'Usage: cargo dev [--no-open]' ]] \
+    || fail 'cargo dev did not invoke the supported local launcher'
+
 existing_test_database="$(psql "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
     --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'")"
 [[ "$existing_test_database" == 0 ]] || fail "refusing to reuse disposable database $DATABASE_NAME"

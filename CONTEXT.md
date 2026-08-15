@@ -126,8 +126,9 @@ A non-executable Entity-owned statement that characterizes the Entity, such as
 immutable Activity-backed statement version; development appends a predecessor-
 linked version and advances its current pointer. It is not reducible to one Property
 key/value, Relationship state, observer-specific Knowledge or a mechanic. An Agent
-authors it through a confirmed Action or Interaction; a User has no direct Trait
-editor.
+authors its first statement in a confirmed Entity creation, Action or Interaction
+and may develop it through a confirmed Action or Interaction; a User has no direct
+Trait editor.
 _Avoid_: Property, status, score
 
 **Prose**:

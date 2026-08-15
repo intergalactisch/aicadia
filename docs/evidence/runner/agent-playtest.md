@@ -8,12 +8,14 @@ Delivery history and current status: see [Action evidence](../action.md),
 [World-entry evidence](../world-entry.md), [Interaction evidence](../interaction.md),
 [Property evidence](../property.md) and [Trait evidence](../trait.md).
 
-The runner defines one bounded clean-room trail-marker claim: a real Agent can
+The runner defines one bounded clean-room Property claim: a real Agent can
 ground itself in separate Aicadia MCP reads, offer exactly three private directions,
 incorporate a withheld User selection and steering, retain one exact public package,
 wait for a separately withheld explicit confirmation and call `submit_action`
 exactly once. A separate Agent must then observe the placed marker and the same
-canonical prose at its own Character's exact current Place. This claim does
+canonical prose at its own Character's exact current Place, including the marker's
+complete description and current initial `material = weathered cedar` Property.
+This claim does
 not prove every model, arbitrary prose quality, later Places, movement, discovery or
 future consequence types.
 
@@ -81,11 +83,11 @@ drop. It fails closed unless all of these facts agree:
   composition before Codex, while requiring every object schema to close additional
   properties and require exactly its declared properties;
 - the action-read role contains only `get_world`, `get_character`,
-  `list_entity_at_current_place`, `list_activity_at_current_place` and
-  `list_entity_property_at_current_place`;
+  `list_entity_at_current_place` and `list_activity_at_current_place`;
 - the commit role contains only `submit_action`;
 - the observer role contains only `get_character`,
-  `list_entity_at_current_place` and `list_activity_at_current_place`;
+  `list_entity_at_current_place`, `get_entity_at_current_place` and
+  `list_activity_at_current_place`;
 - Code Mode exists only as local direct MCP routing for `mcp__aicadia`; Codex
   explicitly enables the sole supported MCP wire protocol revision `2026-07-28`
   and fails closed without it—there is no older initialize flow, downgrade,
@@ -109,6 +111,12 @@ DATABASE_URL=postgres://localhost:5433/postgres tools/agent-playtest run --confi
 Delivery history and current status: see [Action evidence](../action.md). Every run
 requires its own concrete evidence claim and explicit authorization. The protocol is:
 
+The exact spend boundary is four `gpt-5.6-sol` high process calls and zero retries:
+three calls in one resumed action session and one separate ephemeral observer call.
+Codex CLI 0.147.0 exposes no enforceable per-run token ceiling, so the controller
+records that honest process-call boundary and any usage events Codex emits instead
+of claiming a token maximum.
+
 1. Before database mutation it creates a mode-`700` run directory and mode-`600`
    recovery manifest, records an unguessable 64-hex ownership token and the exact
    inspected Codex path/version/model/reasoning, and writes all evidence files with
@@ -121,7 +129,7 @@ requires its own concrete evidence claim and explicit authorization. The protoco
    and byte-meaning-equivalent complete MCP tool catalog, provisions two Users and
    establishes their distinct Characters at the same entry Place.
 3. Action phase one exposes only four reads. The Agent must call each exactly once
-   in the required order, use two equal opaque Place revisions, return exactly three
+   in the required order, use three equal opaque Place revisions, return exactly three
    distinct grounded proposals with ids `one`, `two`, `three`, and make no mutation.
 4. Only after phase-one JSONL and strict final validation does the controller reveal
    selection `two` plus the retained steering. The same explicit session resumes.
@@ -135,18 +143,22 @@ requires its own concrete evidence claim and explicit authorization. The protoco
    MCP call id and status, including incomplete attempts: exactly one unique
    `submit_action` attempt and exactly one completed result are permitted.
 6. Immediately after validating the commit, the controller independently reads both
-   Characters, the placed Entity and the Place-local Entity and Activity pages over
-   HTTP. It requires exactly one placed
-   action Entity and exactly one `submit_action` Activity, with the same Place,
-   Entity, complete description, prose, actor, `subject` and `location` roles. This
-   authoritative gate finishes before another Agent can start.
+   Characters, the Place-local Entity summary, that Entity's scoped complete current
+   state and Place Activity over HTTP. It requires exactly one matching marker among
+   the possibly other co-located Entity summaries and exactly one `submit_action`
+   Activity, with the same Place,
+   Entity, complete description, exact initial Property, matching Property history,
+   prose, actor, `subject` and `location` roles. This authoritative gate finishes
+   before another Agent can start.
 7. Only after HTTP passes, a separate least-privilege observer Agent reads its
-   Character, placed Entities and Place Activity exactly once each. It must copy the
-   exact marker Entity name, canonical prose, Entity id and Place id after reading
-   those authoritative ids from World; none is supplied out of band. At the time of
-   this historical run, the Place-local Entity summary did not expose description,
-   so the observer was not asked to fabricate it. The current scoped
-   `CurrentPlaceEntityOutput` does include description.
+   Character, placed Entity summaries, the marker Entity's scoped complete current
+   state and Place Activity exactly once each, in that order. It must copy the exact
+   Entity name and description, canonical prose, Entity id, Place id and
+   `material = weathered cedar` Property after deriving the Entity id from compact
+   orientation; none is supplied out of band. All four reads must share one opaque
+   Place revision. The three pageable reads accept an omitted limit or any explicit
+   schema-valid limit from 1 through 100, but never a cursor in this one-page
+   scenario.
 8. It stops the server and asks the helper to drop only after it re-verifies both the
    generated database name and stored ownership token. A prefix alone never
    authorizes deletion. Token mismatch refuses termination and drop. Cleanup failure
@@ -157,7 +169,8 @@ requires its own concrete evidence claim and explicit authorization. The protoco
 Selection and confirmation are absent from every earlier prompt. A tool call in the
 preview phase, a call other than `submit_action` in the commit phase, zero or two
 submissions, an incomplete or second call attempt, malformed output, inconsistent
-ids or prose, duplicate authoritative Entity/Activity state, observer failure,
+ids, prose, description or Property, duplicate authoritative Entity/Activity state,
+observer failure,
 authoritative-state disagreement or cleanup failure all fail the run. Failure never
 starts a second Agent attempt. Another paid run always requires fresh User
 authorization.
@@ -177,6 +190,8 @@ the run id, generated database and ownership token, loopback address, exact Code
 path/version/model/reasoning, deadline,
 disposable User ids, separate proposal, preview, commit, HTTP and observer passed or
 failed statuses, accepted Entity and Place ids, authoritative validation and cleanup.
+Usage events are aggregated into the manifest after every completed model process,
+including terminal failures before the observer.
 Overall status becomes complete only after every phase and ownership-verified
 cleanup pass. Prompts, schema-constrained finals, JSONL events, stderr and server
 logs remain private inside the mode-`700` directory. Credentials are never recorded.
@@ -199,21 +214,19 @@ also prove that authoritative HTTP runs after commit and before the observer. An
 HTTP failure leaves the observer unstarted; an observer failure retains the already
 passed HTTP phase. Fake evidence remains structurally distinct from live evidence.
 
-The historical observer fixtures prove that the then-observable Entity id and name
-plus canonical prose were sufficient for a successful observer result, and
-independently reject a wrong Entity id, name or prose. In that historical harness,
-full Entity description remained independently checked against the retained preview
-by authoritative HTTP validation. The current Character-scoped Entity output now
-returns id, name and description; this later contract change does not alter what the
-recorded candidate observed.
+The current observer fixtures require the combined scoped Entity read, exercise its
+valid explicit `limit: 100`, and reject a wrong Entity id, name, description, prose
+or Property. The fake suite pins the
+compiler-generated current thirteen-tool catalog. A separate immutable fixture
+still proves the exact historical Property-era catalog as history; it is never used
+by public preflight or live execution.
 
-That historical fake suite also pinned its then-current thirteen-tool catalog and
-injected a forbidden `uniqueItems` keyword into an isolated schema copy; its
-preflight proved rejection before operator build, any Codex command or
-evidence creation. Array `minItems` and `maxItems` and UUID `format` remain in the
-published schemas. String non-emptiness, semantic bounds, exactly three proposals,
-proposal ids and distinct directions/grounding are proved by the controller and
-World instead of unsupported or redundant schema keywords.
+The suite also injects a forbidden `uniqueItems` keyword into an isolated schema
+copy; preflight proves rejection before operator build, any Codex command or evidence
+creation. Array `minItems` and `maxItems` and UUID `format` remain in the published
+schemas. String non-emptiness, semantic bounds, exactly three proposals, proposal ids
+and distinct directions/grounding are proved by the controller and World instead of
+unsupported or redundant schema keywords.
 
 Cleanup intent and the unguessable token are recorded before `CREATE DATABASE`, but
 cleanup is armed only after the database proves that exact token. Ordinary exit and

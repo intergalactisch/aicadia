@@ -63,7 +63,7 @@ depend on it.
 
 ## Current Aicadia facts
 
-- `./tools/aicadia-local` starts one persistent local World on loopback, provisions
+- `cargo dev` starts one persistent local World on loopback, provisions
   one stable development User and stores the selected database plus User UUID in
   `.aicadia-local/profile.json`.
 - HTTP and MCP expose the same thirteen player capabilities. `create_user` remains
