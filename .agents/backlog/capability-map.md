@@ -2,15 +2,16 @@
 
 > **Role / side:** player-experience planning map / development side.
 > **Authority:** maps current and future User experiences to their owning authorities and backlog state.
-> **Excludes:** executable game contracts and delivery evidence; see `docs/game/` and `docs/evidence/`.
+> **Excludes:** accepted game contracts and delivery evidence; see `docs/game/` and `docs/evidence/`.
 
 Status: living planning index
 
 This map lets a reader see which experiences Aicadia currently gives a User through
 their Agent and which game capabilities are still being designed. It is not an
-implementation contract: [current game docs](../../docs/game/README.md) govern
-executable behavior, the [ordered backlog](README.md) governs forward state and the
-[concept log](../../docs/concept/log/README.md) records why direction changed.
+implementation contract: [current game docs](../../docs/game/README.md) govern the
+accepted behavior, the [ordered backlog](README.md) and active plan govern unfinished
+execution state, [evidence](../../docs/evidence/README.md) records delivered results,
+and the [concept log](../../docs/concept/log/README.md) records why direction changed.
 
 The delivered Interaction tasks in the [interaction plan](../plans/20260813-114241-character-grounded-interaction-history/plan.md)
 contains the complete D&D and wider-tabletop traceability matrix from research
@@ -30,7 +31,8 @@ changes. Do not mark a capability executable from documentation or research alon
 | Orient at the exact Place | Read compact local descriptions, then fetch the actor or one selected exact-local Entity with bounded current Property/Trait associations, plus only Activity authorized for this Character at that Place | Exact Place equality is eligibility, not general visibility, sensory access or neighborhood; Property/Trait content is not control provenance | [Local Entity list](../../docs/game/capability/list_entity_at_current_place.md) · [local Activity](../../docs/game/capability/list_activity_at_current_place.md) · [scoped Entity state](../../docs/game/capability/get_entity_at_current_place.md) |
 | Recall personal history | Read immutable accepted Activity in which the current Character acted or was explicitly involved | No private conversation, rejected attempt or inferred knowledge history | [Personal history](../../docs/game/capability/list_activity.md) |
 | Establish or change local state | Choose and steer one of three grounded directions, completely preview and confirm one Action that introduces a placed Entity with initial Properties and Traits or changes both state kinds together | No introduction-plus-existing-state mixture, generic patch, remote selector, direct storage edit or executable Trait prose | [Character-grounded Action](../../docs/game/capability/submit_action.md#contract) |
-| Observe another marker | A second Character at the same Place can find the same Entity and canonical prose | This proves shared state, not complete co-presence or Character observation | [Cross-contract evidence obligations](../../docs/game/protocol.md#cross-contract-evidence-obligations) |
+| Investigate and complete one find | Let World resolve an admitted zero or positive investigation before authorship; after a positive, re-ground, preview and confirm one found Entity whose state and Activity become shared | No caller-selected odds/result, made-object substitution, movement, new Place or unconfirmed commit | [Investigation start](../../docs/game/capability/start_investigation.md) · [discovery commit](../../docs/game/capability/submit_discovery.md) |
+| Observe another marker | A second Character at the same Place can find the same Entity and canonical prose | This proves shared state, not complete co-presence or Character observation | [Cross-contract evidence obligations](../../docs/game/adapter-parity.md#cross-contract-evidence-obligations) |
 | Interact with present Entities | Direct one confirmed outward behavior toward 1–100 distinct co-present Entities, optionally changing actor/explicit-target Properties and establishing/developing their Traits | No target-authored response, thought, consent, relationship, placement, implicit witness or Trait mechanics | [Character-grounded Interaction](../../docs/game/capability/submit_interaction.md#contract) |
 | Recall directed interaction | Actor and explicit target Character can later read the same canonical outward behavior and complete target set; a reverse response is a new Interaction | Non-target bystanders and distant Characters receive no Interaction automatically | [Personal history](../../docs/game/capability/list_activity.md) · [Place history](../../docs/game/capability/list_activity_at_current_place.md) |
 | Encounter without control labels | Meet a locally described Entity such as Pip the rat without being told whether it is User-controlled, an NPC or an ordinary subject | Control provenance, global counts and distant facts are unavailable in player mode | [Agent knowledge boundary](../../docs/game/agent.md#agent-guidance-and-player-facing-communication) |
@@ -39,21 +41,20 @@ changes. Do not mark a capability executable from documentation or research alon
 ## Current player boundary
 
 The [capability catalog](../../docs/game/README.md#capability-catalog) owns the exact
-current player surface. This planning map groups that surface by User experience and
-does not restate its protocol or implementation boundary.
+accepted player surface. The table above groups the delivered subset by User
+experience; this planning map does not restate contract or implementation meaning.
 
 ## Future experience
 
-Uniform Entity creation and state-change packages are delivered in the current
-experience above. The bounded Sol-medium smoke validation is closed with a negative
-revision-retention result and adds no player capability. Investigation and discovery
-is restored unchanged to `Now / Proposed`.
+Uniform Entity creation, state-change packages and the first complete discovery loop
+are delivered in the current experience above. The bounded Sol-medium smoke
+validation is closed and adds no player capability. No next edge is currently
+selected; the ordered backlog retains the queued horizon.
 
 | Capability | Intended User experience | Planning state | Next step or unresolved edge |
 | --- | --- | --- | --- |
 | Private attention control | Privately stop repeated unwanted targeting without rewriting co-presence or shared history | Deferred | Revisit before movement, notifications or broader Interaction reach |
 | Ripple knowledge | Learn a reduced, sourced consequence of a distant event only after it plausibly travels to the Character | Explored | Define propagation, information loss, provenance and arrival behavior |
-| Investigation and discovery | Have the Agent ground World-admitted independent investigations across scope-bound parallel conversations, then complete a positive result as one shared change with provenance and Activity | Now / Proposed | Resume the draft grill by selecting the first concrete positive result; implementation still requires explicit plan acceptance |
 | Place neighborhood | Inspect explicit containing and adjacent Places around the exact current Place | Later / Queued | Select first relationship behavior without implying visibility |
 | Movement and expansion | Establish additional Places and connections and move through validated transitions | Later / Queued | Define route, action, time and historical location semantics |
 | Rich World subjects | Establish flora, fauna, materials, boundaries and temporal processes when play needs them | Later / Queued | Introduce one concrete domain behavior at a time |
@@ -93,9 +94,9 @@ is restored unchanged to `Now / Proposed`.
 - Users steer and confirm natural-language meaning but never write Property or Trait
   state directly; Agents author exact Actions and World alone validates and writes.
 - Uniform local Property consequences do not branch on Entity role or User control,
-  including for Characters and Places. Current executable causes are only confirmed
-  Agent-authored Actions and Interactions. External-factor mechanics may later reuse
-  the private writer only after explicit acceptance; no such writer, background
+  including for Characters and Places. Current executable causes are confirmed
+  Agent-authored Actions, Interactions and discoveries. External-factor mechanics
+  may later reuse the private writer only after explicit acceptance; no background
   Agent, timer, `world_event` or ungrounded simulation is delivered now.
 - No capability adds scores, levels, currencies, background inference or a hidden
   server narrator.

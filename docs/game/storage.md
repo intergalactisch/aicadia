@@ -51,6 +51,15 @@ entity_trait_version(trait_id, entity_id, activity_id FK activity,
 entity_trait_current(trait_id PK, entity_id,
                      current_activity_id,
                      FK same Trait/version lineage)
+investigation_attempt(id UUID PK,
+                      requested_by_user_id FK user,
+                      request_id UUID,
+                      character_entity_id FK character,
+                      place_entity_id FK place,
+                      outcome,
+                      consumed_by_activity_id NULL UNIQUE/FK activity,
+                      voided_by_attempt_id NULL/FK investigation_attempt,
+                      created_at)
 ```
 
 The Property relations above are the delivered schema. `entity_property_history` is
@@ -73,10 +82,20 @@ Indexes exist only for current behavior:
   current_place_entity_id IS NOT NULL` serves exact-Place Character target lookup;
 - partial `activity(actor_character_entity_id, occurred_at DESC, id DESC)` and
   `activity_entity(entity_id, activity_id)` serve personal and Place history;
+- partial `activity(context_place_entity_id, occurred_at DESC, id DESC) WHERE
+  context_place_entity_id IS NOT NULL` serves the bounded last-48 exact-Place chance
+  window without scanning a hot Place's complete history;
 - partial unique `activity(requested_by_user_id, request_id) WHERE request_id IS NOT
-  NULL` serves accepted Action and Interaction retry lookup; fingerprints are
+  NULL` serves accepted Action, Interaction and discovery retry lookup; fingerprints are
   exactly 32 bytes;
-- primary-key indexes serve role joins and involved-Entity lookup.
+- primary-key indexes serve role joins and involved-Entity lookup;
+- unique `investigation_attempt(requested_by_user_id, request_id)` serves stable
+  start retry identity in its namespace;
+- `investigation_attempt(requested_by_user_id, created_at DESC)` serves the inclusive
+  rolling-hour admission window; and
+- partial `investigation_attempt(requested_by_user_id, created_at) WHERE outcome
+  = 'positive' AND consumed_by_activity_id IS NULL AND voided_by_attempt_id IS NULL`
+  serves live-positive count and deterministic FIFO voiding.
 
 The delivered Property migration adds only the unique canonical-key lookup and
 `entity_property_history(activity_id, entity_id, property_key_id)` hydration index;
@@ -126,3 +145,30 @@ locks existing pointers in stable order, arbitrates first-use keys, bulk-inserts
 history and bulk-upserts current pointers. Route-specific Entity, role and placement
 writes remain in the same transaction. No public generic Property-write capability
 or deterministic external-factor writer is delivered by this slice.
+
+Migration `0010_investigation.sql` adds the attempt relation and three attempt
+indexes above, plus the earned partial Place-Activity ordering index. Attempt outcome
+is exactly `zero` or `positive`. Zero may never be consumed or voided; a positive may
+be consumed or voided, never both. Attempt rows are otherwise immutable, and each
+lifecycle pointer is set at most once. A check rejects
+`voided_by_attempt_id = id`, so an attempt cannot be its own void provenance. There
+is no response snapshot, fingerprint, counter, session, secret or generic discovery
+payload.
+
+Start locks only the responsible User. It resolves retry first, then uses one
+PostgreSQL `statement_timestamp()` for both the inclusive one-hour boundary and the
+new row's `created_at`. At most 12 new attempts are admitted in that window. Chance
+reads at most the last 48 Activities at the derived Place. After insertion, only a
+new positive beyond three live positives voids the oldest prior live positive with
+`id <> new_attempt_id`, ordered by `(created_at ASC, id ASC)`, and records the
+now-existing new attempt in `voided_by_attempt_id`. Zero never voids another attempt.
+These are per-User and per-Place access paths; no global row, lock or counter exists.
+
+The migration extends the closed `activity.operation` check and prose/request
+provenance check with `submit_discovery`. It also replaces the existing
+`validate_entity_trait_version_activity()` function so a Trait root may be owned by
+`submit_discovery`; without that explicit validator correction a discovery with an
+initial Trait would fail at commit. Accepted submit locks User then Place and, in one
+transaction, inserts the Entity, placement, initial Property/Trait state, Activity
+and `subject`/`location` roles, points `consumed_by_activity_id` to that Activity and
+advances `place.latest_activity_id`. Rejection changes none of them.

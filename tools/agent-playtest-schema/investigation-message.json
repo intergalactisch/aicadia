@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["zero", "committed", "observed", "recovered"]
+    },
+    "player_message": { "type": "string" }
+  },
+  "required": ["status", "player_message"]
+}

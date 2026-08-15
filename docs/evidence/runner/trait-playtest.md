@@ -18,8 +18,11 @@ Run the dedicated deterministic check from the repository root:
 tests/trait-playtest.sh
 ```
 
-The suite invokes no Codex command, model, Aicadia server or database. It validates
-the runtime-generated exact thirteen-tool catalog fixture, closed output schemas,
+The suite invokes no Codex command or model. Its ordinary fake scenarios start no
+Aicadia server or database; when `DATABASE_URL` is supplied, one additional
+token-free regression starts an owned disposable deployment, injects failure after
+live catalog verification and proves ownership-verified cleanup. The suite validates
+the runtime-generated exact fifteen-tool catalog fixture, closed output schemas,
 least-privilege role allowlists and a staged fake controller. Every fake MCP
 `structured_content` result is checked against that tool's exact runtime
 `outputSchema`; malformed Character, accepted-Action and Activity-page results fail
@@ -119,7 +122,7 @@ then verifies its exact version, login, model/effort availability, feature/confi
 parsing, explicit-session resume,
 strict schemas and direct-only allowlists; builds the server/operator binaries;
 creates, ownership-tags and reads a disposable PostgreSQL database; compares live
-HTTP OpenAPI and MCP `tools/list` with the exact thirteen-tool catalog; then verifies
+HTTP OpenAPI and MCP `tools/list` with the exact fifteen-tool catalog; then verifies
 the exact database name plus its unguessable token before dropping it. Its JSON
 result declares `codex_invoked:false`, `model_calls:0`, the frozen call/token claim,
 GO/NO-GO and cleanup result.

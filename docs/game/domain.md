@@ -17,12 +17,20 @@ requires at least one change. One directed Interaction toward 1–100 existing
 co-present Entities may carry optional actor/target Property changes and 0–100 mixed
 Trait establishments/developments without authoring their responses. Accepted game mutations append
 immutable normalized `activity` in the same PostgreSQL transaction as current state.
+An entered Character may also begin one World-resolved investigation and, after a
+positive result and User-confirmed Agent authorship, establish exactly one found
+Entity at that Place with the same initial Property/Trait rules and attributable
+Activity.
 
 ## Subjects and current state
 
 ### World seam
 
-The concrete `World` type is the only public game-behavior seam. The thirteen player capabilities ship together through thin HTTP and MCP adapters. Each explicit call stands alone: there is no durable game session and no server-side Agent invocation or inference. Agents may reason and propose, but only World assigns identities, validates commands and writes durable state.
+The concrete `World` type is the only public game-behavior seam. The fifteen player
+capabilities ship together through thin HTTP and MCP adapters. Each explicit call
+stands alone: there is no durable game session and no server-side Agent invocation
+or inference. Agents may reason and propose, but only World assigns identities,
+resolves investigation chance, validates commands and writes durable state.
 
 ### User
 
@@ -122,6 +130,41 @@ struct Place {
 A Place is an Entity role whose stable identity is `place.entity_id`. Zero entry
 Places is valid before genesis; at most one row may have `is_entry = true`.
 
+### Investigation attempt and discovery
+
+An investigation is one explicit request by the Agent for World to test whether the
+entered Character can find something at its exact current Place. World derives both
+Character and Place, applies per-User admission, reads the bounded recent Place
+history signal and performs one authoritative random draw before the Agent authors
+content. The User may advise the Agent but supplies no mechanical focus, seed, odds,
+result count or retry count.
+
+The signal `n` is the number of `submit_discovery` Activities among the last 48
+Activities at that Place. Chance is
+`p = 1/10 + (1/2 - 1/10) * 2^(-n/6)`, resolved from operating-system entropy behind
+World's private chance component. A fresh admitted attempt is independent. Elapsed
+time, prior zero outcomes and consecutive misses never improve odds; there is no
+pity, accumulated luck or runtime-configurable chance input.
+
+Every admitted start creates one durable internal attempt with one World-assigned id,
+the responsible User, derived Character and Place, stored `zero` or `positive`
+outcome, creation time and optional consumed/voided provenance. The attempt is not an
+Entity, Activity, pending opportunity, session or player-visible history. It exists
+only to make retry, admission, bounded coexistence and one-time consumption exact
+across processes and restarts. A start retry returns its stored outcome and immutable
+limit without another draw. Zero and unconsumed positive attempts change no current
+World state and append no Activity. A voided positive always names a distinct newer
+attempt as provenance and can never point to itself.
+
+A positive attempt permits one discovery: an Agent-authored Entity representing
+something found rather than made, brought or placed. After re-reading current
+exact-Place context, the Agent previews the complete name, description, 0–100
+Properties and 0–100 Traits and the User confirms them. World cannot infer or prove
+the found-versus-made distinction; the Agent contract owns it. World verifies only
+the typed attempt and find rules, then atomically creates and places the Entity,
+establishes its state, appends `submit_discovery` Activity, consumes the attempt and
+advances the Place pointer. There is no generic Discovery record or World-typed kind.
+
 
 ## Activity
 
@@ -149,6 +192,7 @@ enum ActivityOperation {
     EnterWorld,
     SubmitAction,
     SubmitInteraction,
+    SubmitDiscovery,
 }
 
 enum ActivityEntityRole {
@@ -172,10 +216,13 @@ server-owned roles have these exact meanings:
 | `submit_action.introduce_entity` | acting Character | derived current Place | new Entity as `subject`; current Place as `location` |
 | `submit_action.change_entity_state` | acting Character | derived current Place | each Property- or Trait-affected Entity as `subject`; current Place as `location` |
 | `submit_interaction` | acting Character | derived current Place | 1–100 existing Entities as `target`; current Place as `location` |
+| `submit_discovery` | acting Character | attempt's Place, equal to the Character's derived current Place | found Entity as `subject`; current Place as `location` |
 
-Only accepted `submit_action` and `submit_interaction` Activity has non-null prose,
-request id and request fingerprint. Existing and other new Activity keeps those
-fields null. Activity rows, relations and accepted prose reject update and delete.
+Only accepted `submit_action`, `submit_interaction` and `submit_discovery` Activity
+has non-null prose, request id and request fingerprint. Existing and other new
+Activity keeps those fields null. Activity rows, relations and accepted prose reject
+update and delete. The consumed investigation attempt points to its accepted
+discovery Activity; Activity does not duplicate the attempt id in its public shape.
 Reads, rejected requests, transport traffic, conversation text and private Agent
 reasoning are not activity. There is no JSON event payload, universal event
 abstraction or event sourcing.
@@ -183,12 +230,12 @@ abstraction or event sourcing.
 `property_change` is empty when an Activity established no Properties. Otherwise it
 contains that Activity's exact typed values, sorted by Entity id then key, after the
 existing personal or Place authorization has selected the Activity. Initial
-Properties from all four creation routes are changes of their creation Activity.
+Properties from all five creation routes are changes of their creation Activity.
 Activity never infers a Property from prose, and internal Property-key ids are not
 exposed.
 
 `trait_change` is empty when an Activity established or developed no Trait. Initial
-Traits from all four creation routes are establishments of their creation Activity;
+Traits from all five creation routes are establishments of their creation Activity;
 that provenance records first accepted shared-World establishment and does not claim
 the Trait was fictionally learned then. Otherwise it contains the exact sorted Activity-backed establishment/development
 results, including stable Trait id, compact owning Entity summary, current statement
@@ -274,12 +321,13 @@ Action and Interaction prose use the same normalization, require 1 through 4,000
 Unicode characters and reject U+0000. PostgreSQL repeats the stored text invariants.
 
 World distinguishes malformed request or revision input; invalid Entity, Character,
-Place, Action, Interaction, Property or Trait input; invalid Entity or Activity
+Place, Action, Interaction, discovery prose, Property or Trait input; invalid Entity or Activity
 limit; User, Entity,
 Character or entry Place not found; unplaced Character; existing Character,
 already-entered Character or existing entry Place; request-id conflict; neutral
-Interaction-target, Property-Entity, scoped-Entity or Trait unavailability;
-Property-key conflict;
+Interaction-target, discovery-attempt, Property-Entity, scoped-Entity or Trait
+unavailability; Action, Interaction or discovery request-id conflict; investigation
+admission; Property-key conflict;
 exact-Place revision conflict; and unavailable storage.
 Adapters expose the canonical spellings and status mapping in
 [Protocol contract](protocol.md#canonical-errors).
@@ -288,7 +336,7 @@ Adapters expose the canonical spellings and status mapping in
 
 Tests retain all prior evidence and prove:
 
-- the delivered schema, World, HTTP/MCP adapters, exact thirteen-tool catalog, Agent
+- the schema, World, HTTP/MCP adapters, exact fifteen-tool catalog, Agent
   contract and token-free fake controller agree on the deterministic Trait contract;
   none of that evidence is a paid or real-model Trait claim;
 - every creation route accepts 0 and 100 initial Traits beside 0 and 100 Properties,
@@ -315,11 +363,11 @@ Tests retain all prior evidence and prove:
   continuations, expose no role/control state and keep orientation, mutation results
   and Activity Entity references compact;
 - HTTP/MCP replace the standalone Property list with scoped Entity fetch and publish
-  exactly the same thirteen-name catalog, schemas, results and errors; and
+  exactly the same fifteen-name catalog, schemas, results and errors; and
 - Agent guidance requires complete natural Trait preview and whole-package User
   confirmation, exposes no direct editor and never treats Trait prose as mechanics;
-- each of `create_entity`, `create_character`, `create_entry_place` and
-  `submit_action.introduce_entity` accepts independent 0–100 initial Property and
+- each of `create_entity`, `create_character`, `create_entry_place`,
+  `submit_action.introduce_entity` and `submit_discovery` accepts independent 0–100 initial Property and
   Trait lists and commits
   its whole Entity/role/placement/Activity/history/current bundle atomically;
 - duplicate or 101st initial values reject the whole creation with no orphan state;

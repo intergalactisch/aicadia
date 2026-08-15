@@ -21,6 +21,11 @@ pub enum InteractionField {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DiscoveryField {
+    Prose,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyField {
     Property,
     PropertyChange,
@@ -67,6 +72,11 @@ pub enum WorldError {
         field: InteractionField,
         reason: InvalidReason,
     },
+    #[error("discovery input is invalid")]
+    InvalidDiscovery {
+        field: DiscoveryField,
+        reason: InvalidReason,
+    },
     #[error("property input is invalid")]
     InvalidProperty {
         field: PropertyField,
@@ -100,6 +110,12 @@ pub enum WorldError {
     ActionRequestConflict,
     #[error("interaction request id has already been used with different content")]
     InteractionRequestConflict,
+    #[error("discovery request id has already been used with different content")]
+    DiscoveryRequestConflict,
+    #[error("investigation attempt is unavailable")]
+    DiscoveryAttemptUnavailable,
+    #[error("investigation was not admitted")]
+    InvestigationNotAdmitted,
     #[error("one or more interaction targets are unavailable")]
     InteractionTargetUnavailable,
     #[error("one or more property entities are unavailable")]

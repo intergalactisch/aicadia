@@ -8,12 +8,12 @@ Status: Done
 
 ## Outcome
 
-The retained Property and Trait playtest controllers agree with the current
-thirteen-tool Agent contract. After token-free readiness, exactly one paid
-`gpt-5.6-sol` high candidate per controller establishes whether a real Agent can
+The retained Property and Trait playtest controllers bind the current published
+Agent catalog. Their one paid `gpt-5.6-sol` high candidate per controller ran against
+the then-current thirteen-tool contract and established whether a real Agent could
 complete each bounded confirmed mutation-and-observation scenario. Every candidate
-ends with exact evidence and ownership-verified disposable database cleanup; a
-failure is never relabelled as gameplay success.
+ended with exact evidence and ownership-verified disposable database cleanup; a
+failure was never relabelled as gameplay success.
 
 The accepted execution boundary is the
 [current validation plan](../../plans/20260814-204720-current-property-trait-live-validation/plan.md).
@@ -33,7 +33,7 @@ and [Trait evidence](../../../docs/evidence/trait.md).
 ## Dependencies
 
 - delivered Property and Trait World/HTTP/MCP behavior;
-- current thirteen-tool Agent contract;
+- current published Agent catalog;
 - token-free controller suites and ownership-safe public preflights;
 - final independent `gpt-5.6-sol` high review.
 

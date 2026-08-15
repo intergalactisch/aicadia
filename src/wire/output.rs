@@ -543,6 +543,7 @@ pub enum ActivityOperationOutput {
     EnterWorld,
     SubmitAction,
     SubmitInteraction,
+    SubmitDiscovery,
 }
 
 impl From<ActivityOperation> for ActivityOperationOutput {
@@ -554,6 +555,7 @@ impl From<ActivityOperation> for ActivityOperationOutput {
             ActivityOperation::EnterWorld => Self::EnterWorld,
             ActivityOperation::SubmitAction => Self::SubmitAction,
             ActivityOperation::SubmitInteraction => Self::SubmitInteraction,
+            ActivityOperation::SubmitDiscovery => Self::SubmitDiscovery,
         }
     }
 }
@@ -629,8 +631,8 @@ pub struct ActivityOutput {
     /// Exact Trait establishments/developments caused by this Activity. Entity
     /// references remain compact and current state is not recursively hydrated.
     pub trait_change: Vec<ActivityTraitChangeOutput>,
-    /// Canonical readable text accepted with submit_action or submit_interaction,
-    /// or null for every other operation.
+    /// Canonical readable text accepted with submit_action, submit_interaction or
+    /// submit_discovery, or null for every other operation.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub prose: Option<String>,

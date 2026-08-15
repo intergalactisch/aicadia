@@ -7,9 +7,10 @@
 ## Absent
 
 Authentication, OAuth, browser gameplay, general web UI beyond the supported local
-read-only ledger, movement, additional Places, coordinates, routes, Place containment
-and adjacency, metric neighborhoods, investigation, rolls, discovery, claims,
-generic action or consequence engines, multiple consequences, Entity update or
+read-only ledger, movement, additional Places, discovery of new Places, coordinates,
+routes, Place containment and adjacency, metric neighborhoods, claims, generic
+Discovery or Observation models, generic action or consequence engines, more than
+one result per investigation, Entity update or
 movement, generic events, event sourcing, global World revisions, durable proposal
 or Agent sessions, replay, as-of state, scores, currencies, clocks, background
 simulation and server-side intelligence are absent. Interaction witness observation,
@@ -19,7 +20,7 @@ Property deletion/unset, key rename, aliases, Trait retirement/reactivation/dele
 merge/transfer or direct editing, possession/relations,
 placement changes, remote or prose-derived selectors, reverse/global Property
 search and mixing Entity introduction with existing-state change in one Action are
-absent. The accepted Property/Trait
-target admits only explicitly submitted and confirmed Agent-authored Actions and
-Interactions. No deterministic external Trait writer, background Agent, timer,
-scheduler, `world_event` or ungrounded simulation exists.
+absent. The accepted Property/Trait target admits only explicitly submitted and
+confirmed Agent-authored Actions, Interactions and discoveries. No deterministic
+external Trait writer, background Agent, timer, scheduler, `world_event` or
+ungrounded simulation exists.

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": { "type": "string", "const": "previewed" },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "prose": { "type": "string" },
+        "find": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "property": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "key": { "type": "string" },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": { "type": "string", "const": "text" },
+                          "text": { "type": "string" }
+                        },
+                        "required": ["type", "text"]
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": { "type": "string", "const": "integer" },
+                          "integer": { "type": "integer" }
+                        },
+                        "required": ["type", "integer"]
+                      }
+                    ]
+                  }
+                },
+                "required": ["key", "value"]
+              }
+            },
+            "trait": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "statement": { "type": "string" }
+                },
+                "required": ["statement"]
+              }
+            }
+          },
+          "required": ["name", "description", "property", "trait"]
+        }
+      },
+      "required": ["prose", "find"]
+    }
+  },
+  "required": ["status", "package"]
+}

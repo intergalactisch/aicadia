@@ -56,6 +56,28 @@ state consequence. It is distinct from an Interaction, whose primary meaning is
 directed involvement between Entities, and from the Activity that remembers either.
 _Avoid_: Interaction, Activity, arbitrary command
 
+**Investigation**:
+One explicit Agent request for World to admit and resolve whether the entered
+Character can find something at its exact current Place. World derives the context
+and rolls before the Agent authors content; the User supplies no mechanical focus,
+seed, odds or result count.
+_Avoid_: Search query, User-selected roll, Agent inference, discovery commit
+
+**Investigation attempt**:
+Durable internal provenance for one admitted investigation, identified by one
+World-assigned attempt id and storing its Character, Place, zero/positive outcome
+and optional consumed/voided lifecycle. It is not Activity, a session, a listable
+opportunity or player inventory.
+_Avoid_: Roll token, proposal, quest, pending find, conversation
+
+**Discovery**:
+The accepted gameplay outcome in which one positive investigation becomes one
+found Entity at the attempt's Place after Agent authorship and User confirmation.
+Discovery is not a universal record or Entity kind; its durable state is the
+ordinary Entity and initial state, `submit_discovery` Activity and consumed attempt
+provenance.
+_Avoid_: Entity introduction for something made, generic Discovery object, loot
+
 **Activity**:
 Immutable normalized history of one accepted state-changing game operation. Activity
 records operation, responsible User internally, optional actor Character, optional

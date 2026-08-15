@@ -1,7 +1,7 @@
 # Protocol contract
 
 > **Role / side:** Defines request context, wire shapes, retry identity, freshness, HTTP/MCP behavior and canonical errors / runtime side.
-> **Authority:** Cross-adapter delivery semantics for the thirteen player capabilities.
+> **Authority:** Cross-adapter delivery semantics for the fifteen player capabilities.
 > **Excludes:** Delivery status, rollout narrative and evidence results.
 
 ## Request context
@@ -11,7 +11,9 @@ untrusted development context, not authentication. Missing, malformed, duplicate
 comma-joined or unknown values are rejected before game behavior succeeds. Capability
 input never accepts a User id. Character and contextual Place operations also accept
 no Character id. `enter_world`, `submit_action` and `submit_interaction` accept no
-Place id; World derives the exact Place from the current Character. The local
+Place id; World derives the exact Place from the current Character.
+`start_investigation` and `submit_discovery` likewise accept no Character or Place
+selector; discovery also accepts no Place revision. The local
 scoped Entity read accepts exactly one `entity_id` and no role, User, Character or
 Place selector; `get_character` accepts no Entity selector.
 
@@ -19,7 +21,6 @@ MCP supports only the current `2026-07-28` revision. Every stateless request car
 its protocol version, client information and capabilities; Aicadia creates no
 transport session. Current tool catalogs carry public cache metadata with `ttlMs: 0`.
 Older revisions and `initialize`-session flows are unsupported.
-
 
 ## Delivery identity and exact-Place freshness
 
@@ -69,13 +70,57 @@ Every writer that changes this exact-Place representation takes the same Place l
 before acceptance. `create_entry_place` assigns its preallocated genesis Activity as
 `latest_activity_id` when it inserts the new Place. `enter_world`, `create_entity`
 when its acting Character is currently placed, although the new Entity remains
-unplaced; `submit_action`; and `submit_interaction` lock the existing Place, insert
-their Activity, then
+unplaced; `submit_action`; `submit_interaction`; and `submit_discovery` lock the
+existing Place, insert their Activity, then
 atomically point that Place to the inserted Activity in the same transaction. A
 failure rolls back both Activity and pointer change. Mutations at different Places
 remain concurrent. Reads issue no nonce, reservation or preparation record, and no
 global revision or counter exists.
 
+### Investigation retry identity
+
+`start_investigation.request_id` is an Agent-generated UUID in the attempt namespace.
+It is the only semantic start input, so World stores no request fingerprint and has
+no start content-conflict branch. Under the User lock, an existing
+`(requested_by_user_id, request_id)` attempt returns its stored id, outcome and
+immutable limits before admission or another roll. The response contains no mutable
+Place context, so equal retries remain byte-identical after unrelated World changes.
+
+For a new id, World derives the entered Character and exact Place, uses one
+PostgreSQL `statement_timestamp()` for the inclusive rolling-hour admission boundary
+and stored `created_at`, reads the last 48 Place Activities, rolls once and inserts
+the attempt. Rate rejection occurs before rolling and inserts nothing. Only a newly
+inserted positive that takes the User beyond three live positives voids the oldest
+prior live positive satisfying `id <> new_attempt_id`, ordered by
+`(created_at ASC, id ASC)`, with the new attempt as provenance. The new attempt can
+never void itself. Zero never triggers voiding.
+
+The attempt namespace is separate from the shared Activity request-id namespace. A
+UUID may therefore identify one start attempt and, separately, one state-changing
+Activity request without conflict.
+
+### Discovery delivery identity
+
+`submit_discovery.request_id` shares the Activity namespace with Action and
+Interaction. Before the User lock, strict decoding and complete normalization reject
+malformed or semantically invalid prose, Entity, Property and Trait input and derive
+a versioned SHA-256 fingerprint from the normalized attempt id, prose and find.
+Properties sort by canonical key and Traits by normalized statement; JSON field and
+list order do not alter identity.
+
+Under the User lock, World first looks up an accepted Activity with the same
+`(requested_by_user_id, request_id)`. The same operation and fingerprint return the
+canonical `{activity, entity, place}` result before later Character or attempt
+preconditions. Different content—or reuse of that Activity request id across Action,
+Interaction or discovery—returns `discovery_request_conflict`. Only an unseen id
+continues to Character lookup, neutral attempt availability and database-dependent
+find validation.
+
+An available attempt is own, positive, unconsumed and unvoided, and binds the same
+Character and exact Place where that Character is currently entered. A well-formed
+foreign, zero, consumed, voided, unplaced or moved attempt returns
+`discovery_attempt_unavailable` without distinguishing why. No Place revision is
+submitted or stored on the attempt; unrelated exact-Place changes do not stale it.
 
 ## Wire shapes
 
@@ -117,7 +162,7 @@ Activity {
   id,
   operation: "create_character" | "create_entity" |
              "create_entry_place" | "enter_world" | "submit_action" |
-             "submit_interaction",
+             "submit_interaction" | "submit_discovery",
   actor_character: EntitySummary | null,
   context_place: PlaceSummary | null,
   involved_entity: [ActivityEntityReference],
@@ -156,7 +201,18 @@ AcceptedAction {
   place: Place
 }
 AcceptedInteraction { activity: Activity, place: CurrentPlaceOutput }
+InvestigationLimits { result_count: 1, kind: "entity_at_current_place" }
+InvestigationResult {
+  attempt_id,
+  outcome: "zero" | "positive",
+  limits: InvestigationLimits
+}
+AcceptedDiscovery { activity: Activity, entity: Entity, place: Place }
 ```
+
+Investigation `limits.result_count` is the cap for a positive attempt, not a count of
+finds created by start. The same immutable limits appear in a zero response so its
+stored retry body remains the same shape.
 
 `CurrentPlaceOutput` is deliberately the flat safe current-Place view: it contains
 only the Place Entity's id, name and description. Unlike `Place`, it exposes neither
@@ -192,8 +248,10 @@ pages.
 ## MCP publication invariants
 
 Every tool declares `destructiveHint: false` and `openWorldHint: false`.
-`submit_action` and `submit_interaction` are nevertheless irreversible World history
-and their capability descriptions state the confirmation requirement. Exact descriptions,
+`submit_action`, `submit_interaction` and `submit_discovery` are nevertheless
+irreversible World history and their capability descriptions state the confirmation
+requirement. `start_investigation` stores internal attempt provenance but requires no
+confirmation because it creates no player-visible World change. Exact descriptions,
 JSON Schemas and annotations are compiler-generated and pinned by
 `tests/agent-tool-catalog.json`.
 
@@ -239,16 +297,25 @@ of length 1–4,000; integer values are signed 64-bit integers. Initial and chan
 lists are semantically unordered. Same key/type reuses the canonical key; same
 key/different type conflicts. World infers no aliases or synonyms.
 
+`start_investigation` accepts exactly one `request_id`. `submit_discovery` accepts
+exactly `request_id`, `attempt_id`, prose and `find`. Discovery prose follows Action
+prose bounds. `find` contains name, description and independent 0–100 initial
+Property and 0–100 initial Trait lists with the same validation and normalization as
+other Entity creation routes. It accepts no kind, selector, revision, chance input
+or additional result.
+
 ## HTTP contract
 
 - Reads return `200 OK`.
-- `create_character`, `create_entry_place`, `create_entity`, `submit_action` and
-  `submit_interaction` return `201 Created`; an equal delivery retry for either
-  confirmed mutation returns the same status and canonical body.
+- `create_character`, `create_entry_place`, `create_entity`, `submit_action`,
+  `submit_interaction` and `submit_discovery` return `201 Created`; an equal delivery
+  retry for a confirmed mutation returns the same status and canonical body.
+- `start_investigation` returns `200 OK` for both `zero` and `positive`, including an
+  equal retry.
 - `enter_world` returns `200 OK` on first acceptance and delivery retries.
 - JSON/query decoding failures and unknown fields return canonical
   `invalid_request` errors.
-- `GET /api/openapi.json` publishes exactly the thirteen player
+- `GET /api/openapi.json` publishes exactly the fifteen player
   operation IDs above with shared schemas and no provisioning or operator reads.
 
 The server binds only to loopback. MCP accepts an absent `Origin` for non-browser
@@ -256,15 +323,8 @@ clients, accepts the server's exact local origin, and rejects foreign origins.
 
 ## Canonical errors
 
-```json
-{
-  "error": {
-    "code": "invalid_action",
-    "message": "Action prose is empty.",
-    "field": "prose",
-    "reason": "empty"
-  }
-}
+```text
+Error { code, message, field?: string, reason?: string }
 ```
 
 | Code | Meaning | HTTP |
@@ -276,6 +336,7 @@ clients, accepts the server's exact local origin, and rejects foreign origins.
 | `invalid_place` | Place semantic text invalid | `400` |
 | `invalid_action` | action prose or consequence text invalid | `400` |
 | `invalid_interaction` | Interaction prose or target count invalid | `400` |
+| `invalid_discovery` | discovery prose invalid | `400` |
 | `invalid_property` | Property list bound, key, value, tag or duplicate key/Entity-key invalid | `400` |
 | `invalid_trait` | Trait list/lifecycle/statement invalid, exact duplicate or unchanged development | `400` |
 | `invalid_entity_limit` | Entity limit outside 1 through 100 | `400` |
@@ -290,12 +351,15 @@ clients, accepts the server's exact local origin, and rejects foreign origins.
 | `entry_place_already_exists` | World already has its one entry Place | `409` |
 | `action_request_conflict` | request id was accepted with different normalized content | `409` |
 | `interaction_request_conflict` | request id was accepted with different normalized Interaction content | `409` |
+| `discovery_request_conflict` | Activity request id was accepted with different normalized discovery content or another operation | `409` |
+| `discovery_attempt_unavailable` | attempt is foreign, zero, consumed, voided, unplaced or no longer at the Character's current Place; no distinction is exposed | `409` |
 | `interaction_target_unavailable` | one or more submitted targets are duplicated, self, absent, remote or no longer co-present; no distinction is exposed | `409` |
 | `property_entity_unavailable` | one or more Property subjects are absent, remote, departed or ineligible for this Action/Interaction; no distinction is exposed | `409` |
 | `entity_at_current_place_unavailable` | selected scoped Entity is absent, remote, departed or otherwise ineligible; no distinction is exposed | `409` |
 | `trait_unavailable` | selected Trait/owning Entity is absent, remote, departed, stale or otherwise ineligible; no distinction is exposed | `409` |
 | `property_key_conflict` | canonical key already exists with another immutable value type | `409` |
 | `place_revision_conflict` | exact current Place representation changed after the read | `412` |
+| `investigation_not_admitted` | per-User rolling admission window is full; no attempt or roll occurred | `429` |
 | `unavailable` | World storage could not complete the request | `503` |
 
 A malformed target UUID is `invalid_request`; an empty or over-100 target list is
@@ -317,89 +381,20 @@ A well-formed missing,
 remote, departed, stale or ineligible Trait mutation uses neutral
 `trait_unavailable`; a scoped Entity fetch uses neutral
 `entity_at_current_place_unavailable`. None reveals existence, role or control, and
-every mutation error rolls back its complete Action/Interaction package.
+every mutation error rolls back its complete Action/Interaction/discovery package.
+
+Malformed discovery JSON or UUIDs use `invalid_request`. Invalid prose uses only
+`invalid_discovery`; find fields retain `invalid_entity`, `invalid_property`,
+`invalid_trait` and `property_key_conflict`. Typed normalization happens before
+locking, while equal accepted retry/conflict resolution precedes Character and
+attempt availability. A missing Character uses `character_not_found`; start on an
+unplaced Character uses `character_not_entered`, while submit with an unplaced or
+moved Character uses neutral `discovery_attempt_unavailable`. Every rejected submit
+leaves the attempt lifecycle, Entity state, Activity and Place pointer unchanged.
 
 MCP game failures are successful JSON-RPC tool responses with `isError: true` and one
 text content block containing the same error object. Protocol framing, unknown tools,
 unsupported versions and origin rejection remain MCP protocol errors outside this
 game error contract.
 
-## Parity evidence
-
-Automated tests require:
-
-1. Executable catalog tests prove that `get_entity_at_current_place` replaces
-   `list_entity_property_at_current_place` in the exact thirteen-name OpenAPI/MCP
-   catalog; loopback operator Entity reads remain absent.
-2. MCP descriptions, annotations and schemas equal the checked-in fixture.
-3. Character creation and reads expose `current_place: null`, then both adapters
-   expose the complete same entry Place after World entry.
-4. Entry Place creation through one adapter is used by entry through the other.
-5. HTTP and MCP personal and exact-Place pagination share typed opaque cursor and
-   revision semantics.
-6. Both adapters return the same canonical context, semantic, not-found, delivery
-   conflict and freshness errors.
-7. One adapter can submit an Interaction whose canonical Activity/prose and complete
-   target set an explicit target reads through the other adapter, while a non-target
-   bystander receives no Interaction and still sees ordinary same-Place trail-marker
-   history.
-8. Missing, fabricated, duplicate, self, remote and changed-Place targets share one
-   neutral error and atomic rollback; equal retries normalize target order.
-9. All four Entity-creation routes share the same independent optional 0–100 initial
-   Property and Trait shapes and atomic result semantics across adapters.
-10. One adapter can submit combined multi-Entity Action changes and optional
-   actor/target Interaction changes whose sorted typed Activity history and current
-   local values the other adapter reads without role/control leakage.
-11. Property bounds, duplicates, key/type conflict, neutral Entity eligibility,
-   retry normalization and full rollback have the same canonical HTTP/MCP errors.
-12. Stateless MCP `2026-07-28` exposes all thirteen tools, the one global play
-   contract and complete cache metadata without creating a transport session; older
-   revisions fail closed.
-13. All creation routes establish optional 0–100 initial Traits; mixed 0–100 Action
-    establishment/development and optional 0–100 actor/target Interaction Trait changes preserve
-    stable ids, immutable roots/versions/current pointers, exact Activity history,
-    Property coexistence and atomic rollback. Deferred bounded per-Trait commit
-    checks enforce exactly one root, exactly one current pointer and a pointer at the
-    lineage tip, rejecting incomplete root/pointer state, current deletion or
-    backtracking and successor-without-advance.
-14. Statement bounds, exact duplicate/no-op and post-package active-set cases,
-    same-package vacated-statement reuse, semantic contradiction, neutral
-    eligibility, retry reconstruction, concurrency, branch prevention, deadlock and
-    set-based 100-item query plans match across World/HTTP/MCP.
-15. `get_character` and scoped `get_entity_at_current_place` return combined 1/100-
-    association pages with exact cursor/Place-revision semantics; compact orientation,
-    mutation acknowledgements and Activity Entity references never recursively carry
-    current state.
-16. Agent contract evidence proves full natural Trait preview, whole-package User
-    confirmation/rejection, no direct Trait editor, no hidden post-confirm mutation
-    and no executable interpretation of Trait prose.
-
-## Cross-contract evidence obligations
-- one accepted trail-marker package atomically writes one placed Entity, one Activity,
-  canonical prose, exact actor, context, subject and location roles;
-- every validation, storage and stale-revision failure rolls back every package row;
-- equal request retries return the canonical result, changed content under one id
-  conflicts, and accepted identity resolves before later Character/Place preconditions;
-- exact-Place pages, pointer targets and revisions are consistent snapshots;
-  same-Place writers serialize and advance the pointer even across equal timestamps
-  or clock rollback, unrelated Places do not conflict, and malformed tokens are
-  rejected;
-- a second Character at the Place can read the marker and same Activity/prose;
-- one actor can submit 1–100 distinct co-present targets as one Activity, a target
-  can recall the canonical outward behavior and co-target set, a reverse response is
-  a new Activity, and a non-target bystander receives no Interaction automatically;
-- missing, fabricated, duplicate, self, remote and no-longer-present targets return
-  the same neutral error and leave no Activity or partial target rows;
-- equal Interaction retries ignore target order and return the canonical result,
-  while changed content under the same request id conflicts;
-- non-Interaction Place history, including trail markers, remains available to
-  Characters currently there under the existing scoped-Place rule;
-- the thirteen player capabilities have one semantic World/HTTP/MCP contract,
-  strict schemas, complete catalog/OpenAPI publication and matching errors;
-- the local launcher preserves one database and User across restart, refuses
-  concurrent or unprofiled reuse that could create a second User, and never starts
-  Codex itself; its printed adapter isolates workspace, home/configuration and
-  transient conversation state while requiring current Aicadia MCP;
-- the browser ledger uses only the four accepted GET reads, hides User UUIDs, remains
-  responsive and keyboard-operable, and renders identical accepted ids and prose
-  before and after restart; and
+Proof obligations are owned by the [adapter parity contract](adapter-parity.md).

@@ -721,6 +721,7 @@ pub enum ActivityOperation {
     EnterWorld,
     SubmitAction,
     SubmitInteraction,
+    SubmitDiscovery,
 }
 
 impl ActivityOperation {
@@ -732,6 +733,7 @@ impl ActivityOperation {
             Self::EnterWorld => "enter_world",
             Self::SubmitAction => "submit_action",
             Self::SubmitInteraction => "submit_interaction",
+            Self::SubmitDiscovery => "submit_discovery",
         }
     }
 
@@ -743,6 +745,7 @@ impl ActivityOperation {
             "enter_world" => Ok(Self::EnterWorld),
             "submit_action" => Ok(Self::SubmitAction),
             "submit_interaction" => Ok(Self::SubmitInteraction),
+            "submit_discovery" => Ok(Self::SubmitDiscovery),
             _ => Err(invalid_stored_relation()),
         }
     }

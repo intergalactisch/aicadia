@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 
 use rmcp::handler::server::router::tool::ToolRouter;
 
-const INSTRUCTION_SECTION: [&str; 15] = [
+const INSTRUCTION_SECTION: [&str; 16] = [
     include_str!("agent_contract/instruction/00-contract.md"),
     include_str!("agent_contract/instruction/01-role.md"),
     include_str!("agent_contract/instruction/02-authority.md"),
@@ -17,7 +17,8 @@ const INSTRUCTION_SECTION: [&str; 15] = [
     include_str!("agent_contract/instruction/11-orientation.md"),
     include_str!("agent_contract/instruction/12-action.md"),
     include_str!("agent_contract/instruction/13-interaction.md"),
-    include_str!("agent_contract/instruction/14-recovery.md"),
+    include_str!("agent_contract/instruction/14-investigation.md"),
+    include_str!("agent_contract/instruction/15-recovery.md"),
 ];
 
 static ASSEMBLED_INSTRUCTIONS: LazyLock<String> = LazyLock::new(|| INSTRUCTION_SECTION.join("\n"));
@@ -27,7 +28,7 @@ pub fn instructions() -> &'static str {
     &ASSEMBLED_INSTRUCTIONS
 }
 
-const TOOL_DESCRIPTION: [(&str, &str); 13] = [
+const TOOL_DESCRIPTION: [(&str, &str); 15] = [
     (
         "get_world",
         include_str!("agent_contract/tool/get_world.md"),
@@ -70,12 +71,20 @@ const TOOL_DESCRIPTION: [(&str, &str); 13] = [
         include_str!("agent_contract/tool/get_entity_at_current_place.md"),
     ),
     (
+        "start_investigation",
+        include_str!("agent_contract/tool/start_investigation.md"),
+    ),
+    (
         "submit_action",
         include_str!("agent_contract/tool/submit_action.md"),
     ),
     (
         "submit_interaction",
         include_str!("agent_contract/tool/submit_interaction.md"),
+    ),
+    (
+        "submit_discovery",
+        include_str!("agent_contract/tool/submit_discovery.md"),
     ),
 ];
 
@@ -113,7 +122,7 @@ mod tests {
     }
 
     #[test]
-    fn agent_contract_describes_the_exact_thirteen_trait_capabilities() {
+    fn agent_contract_describes_the_exact_fifteen_player_capabilities() {
         let expected = [
             "get_world",
             "get_user",
@@ -126,8 +135,10 @@ mod tests {
             "list_entity_at_current_place",
             "list_activity_at_current_place",
             "get_entity_at_current_place",
+            "start_investigation",
             "submit_action",
             "submit_interaction",
+            "submit_discovery",
         ];
 
         assert_eq!(
@@ -209,6 +220,36 @@ mod tests {
                 "global Agent instructions retain superseded guidance: {rejected}"
             );
         }
+    }
+
+    #[test]
+    fn investigation_contract_requires_world_first_chance_confirmation_and_recovery() {
+        for required in [
+            "distinguish finding from making",
+            "free of confirmation",
+            "honest unsuccessful search",
+            "re-read the exact current Place",
+            "complete found Entity",
+            "explicit confirmation",
+            "investigation_not_admitted",
+            "discovery_attempt_unavailable",
+            "discovery_request_conflict",
+        ] {
+            assert!(
+                instructions().contains(required),
+                "global Agent instructions lack investigation boundary: {required}"
+            );
+        }
+
+        let start = description("start_investigation");
+        assert!(start.contains("free of confirmation"));
+        assert!(start.contains("same stored outcome"));
+        assert!(start.contains("never author a find from the start result"));
+
+        let submit = description("submit_discovery");
+        assert!(submit.contains("entire found Entity"));
+        assert!(submit.contains("explicit confirmation"));
+        assert!(submit.contains("semantically identical"));
     }
 
     #[test]

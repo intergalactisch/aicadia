@@ -10,12 +10,12 @@ Aicadia publishes one provider- and model-neutral play contract through current
 `server/discover.instructions` and one complete description per tool. A conforming
 interactive Agent host must make both available to its model, treat Aicadia MCP as
 required, keep raw tool and protocol progress out of player-visible output and stop
-play before mutation when discovery or an authoritative read fails. It must not
+play before mutation when capability discovery or an authoritative read fails. It must not
 substitute repository files, source, direct HTTP, PostgreSQL, shell, browser, logs
 or remembered state for live MCP results. Aicadia does not inspect or allowlist the
 host, provider, model or other tools.
 
-A direct protocol caller may skip discovery under MCP and can still use a tool, but
+A direct protocol caller may skip capability discovery under MCP and can still use a tool, but
 it has not established a conforming interactive play experience. Provider, model,
 tool choice and host architecture remain unrestricted when the behavioral boundary
 above is satisfied.
@@ -98,6 +98,14 @@ ownership or control provenance. It neither reveals nor overrides infrastructure
 metadata. World and the Agent infer no aliases or synonyms between keys, and World
 uses no control-word denylist beyond ordinary Property shape validation.
 
+The Agent distinguishes finding from making before it proposes a write. Something
+that already existed without the Character making it—such as a plant, track, ore,
+spring or ruin fragment—can enter World only through a positive investigation and
+confirmed discovery. Something the Character makes, brings or places remains an
+ordinary confirmed Action introduction. This is a conduct rule: World validates
+typed structure and attempt authority but performs no semantic found-versus-made
+inference.
+
 No User directly edits Property storage. The User steers and confirms meaning, the
 Agent proposes a complete exact creation, Action or Interaction package, and World
 alone validates and writes. The Agent creates a canonical English lower-snake key at
@@ -151,13 +159,61 @@ the private workshop occurred.
 
 This first-use error path is deliberate because zero entry Places is valid before
 genesis. `create_entry_place` never creates later Places, and no current tool performs
-movement, discovery or arbitrary placement.
+movement, later-Place creation or arbitrary placement.
 
 Any Agent use of `create_entity` with initial Properties and Traits follows the same
 authority boundary: the User steers and confirms the complete Entity and state
 meaning, the Agent retains canonical English structured input privately, and World
 validates and writes the atomic bundle. A User never supplies a direct storage patch.
 Empty state lists preserve the existing creation behavior.
+
+## Required investigation and discovery flow
+
+Investigation is World-first uncertainty followed, only on a positive result, by a
+private confirmed find workshop. The Agent must:
+
+1. Ground through `get_world`, `get_character`,
+   `list_entity_at_current_place`, `list_activity_at_current_place` and any
+   `get_entity_at_current_place` reads needed to understand the present situation.
+2. Intelligently decide whether and how to investigate from those facts. The User
+   may advise, but the Agent never turns a requested focus, effort, seed, odds,
+   result count or retry count into mechanical input.
+3. Create one attempt request UUID and call `start_investigation` without a
+   confirmation ceremony. It supplies no Character, Place, focus or prose.
+4. On `zero`, describe one honest unsuccessful search naturally and stop that
+   attempt. Do not imply that a thing was found, expose chance/admission mechanics or
+   submit a discovery. A later conscious investigation uses a new request id.
+5. On `positive`, re-read the exact current Place, relevant local Entities and their
+   current state, and recent exact-Place Activity. The stable start response is
+   permission, not context; never author from stale pre-roll reads alone.
+6. Author exactly one coherent found Entity within the returned limit: complete
+   English name and description plus independent 0–100 initial Properties and 0–100
+   initial Traits. Do not assign a World kind or create a new Place.
+7. Present the entire found thing and canonical discovery passage naturally in the
+   User's language, privately retaining semantically identical English structured
+   content. Wait for explicit confirmation of the whole package. The User may steer
+   its meaning but does not choose the prior roll or authenticate that it was found.
+8. Create one Activity request UUID and call `submit_discovery` once with the
+   positive attempt id, canonical English prose and confirmed find.
+
+Selection, reasoning, drafts and rejected finds stay private and create no Activity.
+Any post-confirmation edit to prose, name, description, Property or Trait meaning
+requires a complete new preview, confirmation and Activity request id. An uncertain
+start delivery retries the same start id and receives the same outcome without a new
+roll. An uncertain submit delivery retries the same Activity request id, attempt id
+and semantically identical normalized content.
+
+On `investigation_not_admitted`, the Agent says only that a new search cannot begin
+now and continues ordinary play; it never exposes thresholds or repeatedly retries.
+On `discovery_attempt_unavailable`, it says neutrally that this find can no longer be
+completed, re-orients and makes no claim about whether the attempt was zero, foreign,
+consumed, voided or tied to another Place. On `discovery_request_conflict`, it never
+silently edits or reuses the id. Invalid prose or typed find content returns to the
+private workshop for correction and fresh confirmation where meaning changes.
+
+The Agent never shows attempt or request ids in play. A successful submit is the
+first moment the found Entity becomes shared World state; it triggers no other
+Agent, notification or background process.
 
 ## Required private-workshop action flow
 

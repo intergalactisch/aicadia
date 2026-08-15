@@ -7,8 +7,8 @@
 This directory keeps the forward development route visible to every builder. It is
 not a game contract, decision log or research archive:
 
-- `docs/game/` defines the accepted contract and explicitly separates published
-  implementation-pending targets from executable delivery.
+- `docs/game/` defines the accepted current contract. Active plans and this backlog
+  own unfinished execution state; `docs/evidence/` owns delivery results and status.
 - `docs/concept/log/README.md` indexes why material choices changed.
 - `docs/research/` preserves sourced findings.
 - this backlog orders concrete outcomes and records their current planning state.
@@ -36,7 +36,7 @@ must be corrected in the same change.
 | Done | [Post-correction Property and Trait live validation](items/post-correction-property-trait-live-validation.md) | Done | Delivery history and current status: see [Property evidence](../../docs/evidence/property.md) and [Trait evidence](../../docs/evidence/trait.md). |
 | Done | [Uniform Entity creation and state-change packages](items/uniform-entity-state-packages.md) | Done | Every Entity role can be created with multiple Properties and Traits, and one Action can later change both atomically in one Activity. |
 | Done | [Sol-medium combined Entity-state live validation](items/sol-medium-combined-state-validation.md) | Done | One clean-room Sol-medium smoke test grounded through MCP and committed one combined Property/Trait Action; HTTP proved both changes in one Activity. |
-| Now | [First complete investigation and discovery loop](items/first-investigation-discovery-loop.md) | Blocked | The accepted plan's full baseline ladder is green, but implementation waits for the User to commit the complete uniform Entity-state build including migration `0009`. |
+| Done | [First complete investigation and discovery loop](items/first-investigation-discovery-loop.md) | Done | Delivery history and current status: see [discovery evidence](../../docs/evidence/discovery.md). |
 | Later | Place-neighborhood context | Queued | An Agent can inspect a bounded set of explicit containing and adjacent Places through composable typed reads, without geometry or a monolithic context response. |
 | Later | Place expansion and movement | Queued | Discoveries establish further Places and connections; Characters move through validated transitions while past locations remain queryable. |
 | Later | Rich domain change | Queued | Flora, fauna, materials, partial boundaries and temporal processes gain concrete models only when selected gameplay needs them. |

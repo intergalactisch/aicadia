@@ -9,13 +9,13 @@ Aicadia has one current game contract. Read it in this order:
 1. [Domain contract](domain.md) — subjects, current state, value invariants and Activity.
 2. [Capability catalog](#capability-catalog) and the linked per-capability contracts.
 3. [Protocol contract](protocol.md) — request context, wire shapes, freshness, HTTP/MCP and errors.
-4. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
-5. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
-6. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
-7. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only ledger.
+4. [Adapter parity contract](adapter-parity.md) — cross-adapter and cross-contract proof obligations.
+5. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
+6. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
+7. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
+8. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only ledger.
 
 The current contract is authoritative over exploration history.
-Delivery history and current status: see [Trait evidence](../evidence/trait.md).
 
 ## Capability catalog
 
@@ -34,8 +34,10 @@ Catalog order is deterministic:
 | `list_entity_at_current_place` | `list_entity_at_current_place(context.user_id, input)` | `GET /api/place/current/entity` | `list_entity_at_current_place` | required |
 | `list_activity_at_current_place` | `list_activity_at_current_place(context.user_id, input)` | `GET /api/place/current/activity` | `list_activity_at_current_place` | required |
 | `get_entity_at_current_place` | `get_entity_at_current_place(context.user_id, input)` | `GET /api/place/current/entity/{entity_id}?cursor&limit` | `get_entity_at_current_place` | required |
+| `start_investigation` | `start_investigation(context.user_id, input)` | `POST /api/investigation` | `start_investigation` | required |
 | `submit_action` | `submit_action(context.user_id, input)` | `POST /api/action` | `submit_action` | required |
 | `submit_interaction` | `submit_interaction(context.user_id, input)` | `POST /api/interaction` | `submit_interaction` | required |
+| `submit_discovery` | `submit_discovery(context.user_id, input)` | `POST /api/discovery` | `submit_discovery` | required |
 
 `create_user` is deliberately absent. Database creation, migration, diagnostics,
 administration and every other operational action are not Agent capabilities.
@@ -56,5 +58,7 @@ from MCP and this catalog.
 - [`list_entity_at_current_place`](capability/list_entity_at_current_place.md)
 - [`list_activity_at_current_place`](capability/list_activity_at_current_place.md)
 - [`get_entity_at_current_place`](capability/get_entity_at_current_place.md)
+- [`start_investigation`](capability/start_investigation.md)
 - [`submit_action`](capability/submit_action.md)
 - [`submit_interaction`](capability/submit_interaction.md)
+- [`submit_discovery`](capability/submit_discovery.md)

@@ -6,7 +6,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 readonly DEFAULT_SCHEMA_DIR="$SCRIPT_DIR/trait-playtest-schema"
 readonly TOOL_CATALOG="$REPO_DIR/tests/agent-tool-catalog.json"
-readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","get_entity_at_current_place","submit_action","submit_interaction"]'
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","get_entity_at_current_place","start_investigation","submit_action","submit_interaction","submit_discovery"]'
 readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
 readonly ACTION_COMMIT_TOOLS='["submit_action"]'
 readonly INTERACTION_READ_TOOLS='["get_character","list_entity_at_current_place","list_activity_at_current_place","get_entity_at_current_place"]'
@@ -96,13 +96,13 @@ validate_token_free_contract() {
     command -v jq >/dev/null || fail 'jq is required.' || return
     [[ -f "$TOOL_CATALOG" ]] || fail 'the exact catalog fixture is missing.' || return
     jq -e --argjson expected "$CAPABILITIES" '
-        type=="array" and [.[]|.name]==$expected and length==13
+        type=="array" and [.[]|.name]==$expected and length==15
         and all(.[];(.description|type)=="string" and (.description|length)>0
             and (.inputSchema|type)=="object" and (.outputSchema|type)=="object")
         and (map(select(.name=="get_entity_at_current_place"))[0].description|contains("Property and Trait"))
         and (map(select(.name=="submit_action"))[0].description|contains("0–100 Trait establishments/developments"))
         and (map(select(.name=="submit_interaction"))[0].description|contains("target-authored"))
-    ' "$TOOL_CATALOG" >/dev/null || fail 'the fixed Trait-aware thirteen-tool catalog is invalid.' || return
+    ' "$TOOL_CATALOG" >/dev/null || fail 'the fixed Trait-aware fifteen-tool catalog is invalid.' || return
     jq -n -e --argjson all "$CAPABILITIES" --argjson ar "$ACTION_READ_TOOLS" \
         --argjson ac "$ACTION_COMMIT_TOOLS" --argjson ir "$INTERACTION_READ_TOOLS" \
         --argjson ic "$INTERACTION_COMMIT_TOOLS" --argjson observer "$OBSERVER_TOOLS" --argjson zero "$ZERO_TOOL_TOOLS" '
@@ -671,7 +671,7 @@ verify_runtime_catalog() {
     local openapi listed
     openapi="$(curl_json "$BASE_URL/api/openapi.json")" || return
     jq -e --argjson expected "$CAPABILITIES" '([.paths[][]|.operationId]|sort)==($expected|sort)
-        and ([.paths[][]|.operationId]|length)==13' <<<"$openapi" >/dev/null || return
+        and ([.paths[][]|.operationId]|length)==15' <<<"$openapi" >/dev/null || return
     listed="$(curl_json -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
         -H 'MCP-Protocol-Version: 2026-07-28' -H 'Mcp-Method: tools/list' -H "Origin: $BASE_URL" \
         --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-trait-preflight","version":"0.1.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}' "$MCP_URL")" || return
@@ -726,7 +726,7 @@ prepare_preflight_artifacts() {
                    "interaction_propose","interaction_preview","interaction_commit","http_develop_gate","mara_fetch"]},
          codex:{path:$path,version:$version,login:"verified",explicit_session_resume:true},
          deployment:{database:$database,ownership_token:$token,server_address:null,status:"not_created"},
-         catalog:{expected_tools:13,status:"pending"},schemas:{count:6,status:"passed"},
+         catalog:{expected_tools:15,status:"pending"},schemas:{count:6,status:"passed"},
          run_status:"preflight_running",go:false,
          cleanup:{intent:"exact_name_plus_unguessable_token",status:"not_armed",recovery:$recovery}}
     ' >"$MANIFEST" || return

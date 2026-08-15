@@ -6,18 +6,20 @@
 
 Delivery history and current status: see [Action evidence](../action.md),
 [World-entry evidence](../world-entry.md), [Interaction evidence](../interaction.md),
-[Property evidence](../property.md) and [Trait evidence](../trait.md).
+[Property evidence](../property.md), [Trait evidence](../trait.md) and [discovery
+evidence](../discovery.md).
 
-The runner defines one bounded clean-room Property claim: a real Agent can
+The public paid runner defines one bounded clean-room Property claim: a real Agent can
 ground itself in separate Aicadia MCP reads, offer exactly three private directions,
 incorporate a withheld User selection and steering, retain one exact public package,
 wait for a separately withheld explicit confirmation and call `submit_action`
 exactly once. A separate Agent must then observe the placed marker and the same
 canonical prose at its own Character's exact current Place, including the marker's
 complete description and current initial `material = weathered cedar` Property.
-This claim does
-not prove every model, arbitrary prose quality, later Places, movement, discovery or
-future consequence types.
+This paid claim does not prove every model, arbitrary prose quality, later Places,
+movement, discovery or future consequence types. A separate internal-only,
+token-free controller path below proves investigation/discovery orchestration; it is
+never relabelled as paid or live-model evidence.
 
 ## Trait evidence pointer
 
@@ -38,7 +40,7 @@ The controller owns only disposable test setup and evidence orchestration. It:
   complete disposable World.
 
 The controller never inserts game rows directly. Both Agents receive only their
-least-privilege MCP subsets from the current thirteen-tool player catalog. They run
+least-privilege MCP subsets from the current fifteen-tool player catalog. They run
 in empty isolated working directories, with user configuration and project rules
 ignored, no repository or database variables, no shell, web, native application,
 delegation or multi-Agent path, and direct-only access to their Aicadia MCP allowlist.
@@ -78,7 +80,7 @@ drop. It fails closed unless all of these facts agree:
 - initial exec and explicit-session `exec resume` expose every required strict
   output, configuration and JSONL flag;
 - all four closed output schemas use the supported Structured Outputs subset and the
-  compiler-generated catalog contains exactly thirteen complete tools; recursive
+  compiler-generated catalog contains exactly fifteen complete tools; recursive
   local policy rejects `uniqueItems`, string-length keywords and unsupported
   composition before Codex, while requiring every object schema to close additional
   properties and require exactly its declared properties;
@@ -196,17 +198,27 @@ Overall status becomes complete only after every phase and ownership-verified
 cleanup pass. Prompts, schema-constrained finals, JSONL events, stderr and server
 logs remain private inside the mode-`700` directory. Credentials are never recorded.
 
-The fake integration suite uses an explicit internal-only command path, spends no
+The fake integration suite uses explicit internal-only command paths, spends no
 tokens and writes `evidence_kind: fake_controller_test` plus
-`run_status: fake_completed`; it can never produce `completed` live evidence. It
-proves public fake/executable override rejection, portable PATH discovery and
-semantic CLI drift rejection before Codex execution, the controller's happy path,
-withheld selection and confirmation, exact explicit-session resume, environment and
-allowlist isolation, premature phase-one and phase-two mutation rejection, absent
-and double commit rejection, incomplete extra commit-attempt rejection, malformed
-proposal/preview/commit rejection, exact authoritative count checks, observer
-failure, server failure, ownership mismatch, ambiguous create without auto-drop,
-verified cleanup, cleanup failure, CLI drift and no-token preflight.
+`run_status: fake_completed`; it can never produce `completed` live evidence. The
+existing Action path proves public fake/executable override rejection, portable
+PATH discovery and semantic CLI drift rejection before Codex execution, withheld
+selection and confirmation, exact explicit-session resume, environment and
+allowlist isolation, mutation/shape/count failures, observer gating, server failure
+and ownership-safe cleanup.
+
+The investigation path executes seven isolated fake-Codex processes through the
+same JSONL controller boundary. One explicit session handles an honest zero with an
+equal uncertain-delivery retry, then a fresh positive, equal retry, exact-Place
+re-grounding, a complete Property/Trait/prose preview and—only after a separately
+written confirmation—one exact `submit_discovery` with equal uncertain-delivery
+retry. A distinct co-present observer derives the accepted Entity id from compact
+orientation and reads the same current Property, Trait and discovery Activity.
+Three further least-privilege phases exercise admission, unavailable-attempt and
+request-conflict recovery without fallback authority, leaked mechanics or
+background work. Every call is a paired Aicadia-only `item.started`/
+`item.completed` event; the derived trace is validator input, never primary
+orchestration evidence.
 
 The fake success events use the same paired `item.started`/`item.completed` MCP
 attempt shape and per-attempt identity observed in the second live candidate. They
@@ -214,10 +226,12 @@ also prove that authoritative HTTP runs after commit and before the observer. An
 HTTP failure leaves the observer unstarted; an observer failure retains the already
 passed HTTP phase. Fake evidence remains structurally distinct from live evidence.
 
-The current observer fixtures require the combined scoped Entity read, exercise its
+The Action observer fixtures require the combined scoped Entity read, exercise its
 valid explicit `limit: 100`, and reject a wrong Entity id, name, description, prose
-or Property. The fake suite pins the
-compiler-generated current thirteen-tool catalog. A separate immutable fixture
+or Property. The investigation validator additionally rejects missing grounding,
+changed retries or confirmation packages, impossible accepted Property/Trait
+changes, observer-state disagreement, fallback, background work and missing
+recovery. The fake suite pins the compiler-generated current fifteen-tool catalog. A separate immutable fixture
 still proves the exact historical Property-era catalog as history; it is never used
 by public preflight or live execution.
 

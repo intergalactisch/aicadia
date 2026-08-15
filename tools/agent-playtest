@@ -9,13 +9,18 @@ readonly PROPOSALS_SCHEMA="$SCHEMA_DIR/proposals.json"
 readonly PREVIEW_SCHEMA="$SCHEMA_DIR/preview.json"
 readonly COMMIT_SCHEMA="$SCHEMA_DIR/commit.json"
 readonly OBSERVER_SCHEMA="$SCHEMA_DIR/observer.json"
+readonly INVESTIGATION_MESSAGE_SCHEMA="$SCHEMA_DIR/investigation-message.json"
+readonly INVESTIGATION_PREVIEW_SCHEMA="$SCHEMA_DIR/investigation-preview.json"
 # Public preflight and live execution bind to the compiler-generated current
 # catalog. The Property-era catalog remains a test-only historical snapshot.
 readonly TOOL_CATALOG="$REPO_DIR/tests/agent-tool-catalog.json"
-readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","get_entity_at_current_place","submit_action","submit_interaction"]'
+readonly CAPABILITIES='["get_world","get_user","get_character","create_character","create_entry_place","enter_world","list_activity","create_entity","list_entity_at_current_place","list_activity_at_current_place","get_entity_at_current_place","start_investigation","submit_action","submit_interaction","submit_discovery"]'
 readonly ACTION_READ_TOOLS='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'
 readonly ACTION_COMMIT_TOOLS='["submit_action"]'
 readonly OBSERVER_TOOLS='["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'
+readonly INVESTIGATION_TOOLS='["get_world","get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place","start_investigation"]'
+readonly DISCOVERY_COMMIT_TOOLS='["submit_discovery"]'
+readonly DISCOVERY_RECOVERY_TOOLS='["submit_discovery","get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'
 # Public preflight discovers Codex through PATH, canonicalizes that executable once
 # for the run and pins its semantic CLI contract. Installation location may differ
 # per machine; version or capability drift still fails before database or model work.
@@ -220,6 +225,156 @@ validate_allowlists() {
     ' >/dev/null
 }
 
+validate_investigation_fake_contract() {
+    local trace="$1"
+    [[ $INTERNAL_TEST_MODE -eq 1 && -f "$trace" ]] || return 1
+    jq -e '
+        def uuid: type == "string" and test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
+        def safe_message:
+            type == "string" and length > 0
+            and (test("(^|[^a-z])(mcp|tool|json|uuid|request|attempt|server|database|protocol|retry|identifier|id)([^a-z]|$)"; "i") | not);
+        def grounded($calls):
+            ($calls[0:4] | map(.tool)) == [
+                "get_world", "get_character", "list_entity_at_current_place",
+                "list_activity_at_current_place"
+            ]
+            and ($calls[1].result.character.entity.id | uuid)
+            and ($calls[1].result.character.current_place.entity.id | uuid)
+            and $calls[2].result.place.id == $calls[1].result.character.current_place.entity.id
+            and $calls[3].result.place.id == $calls[1].result.character.current_place.entity.id
+            and $calls[1].result.place_revision == $calls[2].result.place_revision
+            and $calls[1].result.place_revision == $calls[3].result.place_revision
+            and ($calls[2].result.entity | length) == 1
+            and $calls[2].result.entity[0].id != $calls[1].result.character.entity.id
+            and $calls[2].result.entity[0].id != $calls[1].result.character.current_place.entity.id;
+        def aicadia_calls($calls):
+            all($calls[]; .authority == "aicadia");
+        def start_shape($call; $outcome):
+            $call.tool == "start_investigation"
+            and ($call.arguments | keys) == ["request_id"]
+            and ($call.arguments.request_id | uuid)
+            and ($call.result | keys | sort) == ["attempt_id", "limits", "outcome"]
+            and ($call.result.attempt_id | uuid)
+            and $call.result.outcome == $outcome
+            and $call.result.limits == {result_count:1, kind:"entity_at_current_place"};
+        def recovery($entry; $tool; $code):
+            ($entry.calls | length) == 1
+            and $entry.calls[0].authority == "aicadia"
+            and $entry.calls[0].tool == $tool
+            and $entry.calls[0].error == $code
+            and ($entry.player_message | safe_message);
+        . as $trace
+        | .evidence_kind == "fake_investigation_contract"
+        and .codex_invoked == false and .model_calls == 0
+        and .fallback_authority == false and .background_trigger == false
+        and (.phase_order == [
+            "zero_ground", "zero_start", "zero_retry", "zero_stop",
+            "positive_ground", "positive_start", "positive_retry", "positive_reground",
+            "preview", "confirmation", "submit", "submit_retry", "observer", "recovery"
+        ])
+        and grounded(.zero.calls) and aicadia_calls(.zero.calls)
+        and (.zero.calls | length) == 6
+        and start_shape(.zero.calls[4]; "zero")
+        and .zero.calls[4] == .zero.calls[5]
+        and ([.zero.calls[].tool] | index("submit_discovery") | not)
+        and (.zero.player_message | safe_message)
+        and grounded(.positive.calls) and aicadia_calls(.positive.calls)
+        and (.positive.calls | length) == 12
+        and start_shape(.positive.calls[4]; "positive")
+        and .positive.calls[4] == .positive.calls[5]
+        and .positive.calls[4].arguments.request_id != .zero.calls[4].arguments.request_id
+        and (.positive.calls[6:10] | map(.tool)) == [
+            "get_character", "list_entity_at_current_place",
+            "get_entity_at_current_place", "list_activity_at_current_place"
+        ]
+        and .positive.calls[8].arguments.entity_id == .positive.calls[7].result.entity[0].id
+        and .positive.calls[6].result.place_revision == .positive.calls[7].result.place_revision
+        and .positive.calls[6].result.place_revision == .positive.calls[8].result.place_revision
+        and .positive.calls[6].result.place_revision == .positive.calls[9].result.place_revision
+        and .positive.calls[8].result.place.id == .positive.calls[6].result.character.current_place.entity.id
+        and (.positive.preview | keys | sort) == ["find", "prose"]
+        and (.positive.preview.prose | type) == "string" and (.positive.preview.prose | length) > 0
+        and (.positive.preview.find | keys | sort) == ["description", "name", "property", "trait"]
+        and (.positive.preview.find.name | length) > 0
+        and (.positive.preview.find.description | length) > 0
+        and (.positive.preview.find.property | length) == 1
+        and (.positive.preview.find.trait | length) == 1
+        and .positive.confirmation == {explicit:true, package:.positive.preview}
+        and .positive.calls[10].tool == "submit_discovery"
+        and (.positive.calls[10].arguments | keys | sort) == ["attempt_id", "find", "prose", "request_id"]
+        and (.positive.calls[10].arguments.request_id | uuid)
+        and .positive.calls[10].arguments.request_id != .positive.calls[4].arguments.request_id
+        and .positive.calls[10].arguments.attempt_id == .positive.calls[4].result.attempt_id
+        and .positive.calls[10].arguments.prose == .positive.preview.prose
+        and .positive.calls[10].arguments.find == .positive.preview.find
+        and (.positive.calls[10].result | keys | sort) == ["activity", "entity", "place"]
+        and .positive.calls[10].result.activity.operation == "submit_discovery"
+        and .positive.calls[10].result.activity.prose == .positive.preview.prose
+        and .positive.calls[10].result.entity.name == .positive.preview.find.name
+        and .positive.calls[10].result.entity.description == .positive.preview.find.description
+        and .positive.calls[10].result.activity.property_change == [{
+            entity:{id:.positive.calls[10].result.entity.id,name:.positive.preview.find.name},
+            key:.positive.preview.find.property[0].key,
+            value:.positive.preview.find.property[0].value
+        }]
+        and .positive.calls[10].result.activity.trait_change == [{
+            type:"establish",
+            entity:{id:.positive.calls[10].result.entity.id,name:.positive.preview.find.name},
+            trait:{id:.positive.calls[10].result.activity.trait_change[0].trait.id,
+                statement:.positive.preview.find.trait[0].statement}
+        }]
+        and .positive.calls[10] == .positive.calls[11]
+        and (.positive.player_message | safe_message)
+        and aicadia_calls(.positive.observer_calls)
+        and (.positive.observer_calls | map(.tool)) == [
+            "get_character", "list_entity_at_current_place",
+            "get_entity_at_current_place", "list_activity_at_current_place"
+        ]
+        and .positive.observer_calls[0].result.character.entity.id != .positive.calls[6].result.character.entity.id
+        and .positive.observer_calls[0].result.character.current_place.entity.id == .positive.calls[10].result.place.entity.id
+        and .positive.observer_calls[0].result.place_revision == .positive.observer_calls[1].result.place_revision
+        and .positive.observer_calls[0].result.place_revision == .positive.observer_calls[2].result.place_revision
+        and .positive.observer_calls[0].result.place_revision == .positive.observer_calls[3].result.place_revision
+        and ([.positive.observer_calls[1].result.entity[] | select(.id == $trace.positive.calls[10].result.entity.id)] | length) == 1
+        and .positive.observer_calls[2].arguments.entity_id == .positive.calls[10].result.entity.id
+        and .positive.observer_calls[2].result.entity.id == .positive.calls[10].result.entity.id
+        and .positive.observer_calls[2].result.current_state.association == [
+            {type:"property", property:.positive.preview.find.property[0]},
+            {type:"trait", trait:.positive.calls[10].result.activity.trait_change[0].trait}
+        ]
+        and any(.positive.observer_calls[3].result.activity[];
+            .id == $trace.positive.calls[10].result.activity.id
+            and .operation == "submit_discovery"
+            and .prose == $trace.positive.preview.prose
+            and .actor_character.id == $trace.positive.calls[6].result.character.entity.id
+            and .context_place.entity.id == $trace.positive.calls[10].result.place.entity.id
+            and .property_change == $trace.positive.calls[10].result.activity.property_change
+            and .trait_change == $trace.positive.calls[10].result.activity.trait_change
+            and ([.involved_entity[] | select(.role=="subject") | .entity.id] == [$trace.positive.calls[10].result.entity.id])
+            and ([.involved_entity[] | select(.role=="location") | .entity.id] == [$trace.positive.calls[10].result.place.entity.id]))
+        and (.recovery.admission.calls | length) == 5
+        and grounded(.recovery.admission.calls)
+        and aicadia_calls(.recovery.admission.calls)
+        and .recovery.admission.calls[4].tool == "start_investigation"
+        and .recovery.admission.calls[4].error == "investigation_not_admitted"
+        and (.recovery.admission.player_message | safe_message)
+        and (.recovery.unavailable.calls | length) == 5
+        and aicadia_calls(.recovery.unavailable.calls)
+        and .recovery.unavailable.calls[0].tool == "submit_discovery"
+        and .recovery.unavailable.calls[0].error == "discovery_attempt_unavailable"
+        and (.recovery.unavailable.calls[1:5] | map(.tool)) == [
+            "get_character", "list_entity_at_current_place",
+            "get_entity_at_current_place", "list_activity_at_current_place"
+        ]
+        and .recovery.unavailable.calls[3].arguments.entity_id == .recovery.unavailable.calls[2].result.entity[0].id
+        and .recovery.unavailable.calls[1].result.place_revision == .recovery.unavailable.calls[2].result.place_revision
+        and .recovery.unavailable.calls[1].result.place_revision == .recovery.unavailable.calls[3].result.place_revision
+        and .recovery.unavailable.calls[1].result.place_revision == .recovery.unavailable.calls[4].result.place_revision
+        and (.recovery.unavailable.player_message | safe_message)
+        and recovery(.recovery.conflict; "submit_discovery"; "discovery_request_conflict")
+    ' "$trace" >/dev/null
+}
+
 validate_codex_role_config() {
     local codex_bin="$1" enabled_tools="$2" parse_home parsed features status feature
     local -a command
@@ -319,7 +474,7 @@ preflight() {
     [[ "$probe_token" =~ ^[0-9a-f]{64}$ ]] || fail 'generated database ownership token is malformed.' || return
     database_helper probe "$probe_token" >/dev/null \
         || fail 'DATABASE_URL failed the real create, ownership-tag, verify and drop probe.' || return
-    printf 'Preflight passed without codex exec: exact %s at %s, %s/%s, explicit-session resume, four strict schemas, thirteen-tool catalog, three least-privilege roles, operator builds, and a real PostgreSQL owned create/verified-drop probe are ready.\n' \
+    printf 'Preflight passed without codex exec: exact %s at %s, %s/%s, explicit-session resume, four strict schemas, fifteen-tool catalog, three least-privilege roles, operator builds, and a real PostgreSQL owned create/verified-drop probe are ready.\n' \
         "$INSPECTED_CODEX_VERSION" "$INSPECTED_CODEX_BIN" "$CODEX_MODEL" "$CODEX_REASONING_EFFORT"
 }
 
@@ -491,8 +646,8 @@ verify_deployment() {
     world="$(curl_json "$BASE_URL/api/world")" || return
     jq -e '.name=="Aicadia"' <<<"$world" >/dev/null || return
     openapi="$(curl_json "$BASE_URL/api/openapi.json")" || return
-    jq -e --argjson expected "$CAPABILITIES" '([.paths[][]|.operationId]|sort)==($expected|sort) and ([.paths[][]|.operationId]|length)==13' <<<"$openapi" >/dev/null \
-        || fail 'HTTP is not the exact thirteen-capability catalog.' || return
+    jq -e --argjson expected "$CAPABILITIES" '([.paths[][]|.operationId]|sort)==($expected|sort) and ([.paths[][]|.operationId]|length)==15' <<<"$openapi" >/dev/null \
+        || fail 'HTTP is not the exact fifteen-capability catalog.' || return
     listed="$(curl_json -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
         -H 'MCP-Protocol-Version: 2026-07-28' -H 'Mcp-Method: tools/list' -H "Origin: $BASE_URL" \
         --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-action-playtest","version":"0.1.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}' "$MCP_URL")" || return
@@ -634,6 +789,43 @@ events_are_clean() {
             .item.type as $type
             | ["agent_message","reasoning","plan","context_compaction","mcp_tool_call"]
             | index($type)!=null)
+    ' "$file" >/dev/null
+}
+
+investigation_events_are_paired() {
+    local file="$1"
+    jq -s -e '
+        length>0 and all(.[];type=="object")
+        and all(.[]; [.type] | inside(["thread.started","turn.started","item.started","item.completed","turn.completed","aicadia.test.delivery_uncertain"]))
+        and all(.[] | select(.item?!=null); .item.type=="mcp_tool_call")
+        and
+        [.[] | select(.item?.type=="mcp_tool_call") | {event_type:.type,item:.item}] as $events
+        | [.[] | select(.type=="aicadia.test.delivery_uncertain")] as $uncertain
+        | [$events[] | select(.event_type=="item.started") | .item] as $started
+        | [$events[] | select(.event_type=="item.completed") | .item] as $completed
+        | ($events|length)>0 and ($events|length)==(($started|length)*2)
+        and [$events[].event_type]==([range(0;($started|length))|["item.started","item.completed"]]|add)
+        and [$started[].id]==[$completed[].id]
+        and [$started[].tool]==[$completed[].tool]
+        and [$started[].arguments]==[$completed[].arguments]
+        and all($started[];.server=="aicadia" and .status=="in_progress" and .result==null and .error==null)
+        and all($completed[];.server=="aicadia" and .status=="completed" and .error==null and (.result|type)=="object")
+        and all($completed[];
+            if .result.is_error? == true then
+                (.result|keys|sort)==["content","is_error"]
+                and (.result.content|length)==1 and .result.content[0].type=="text"
+                and (.result.content[0].text|fromjson|.error.code|type)=="string"
+            else
+                (.result|keys|sort)==["content","structured_content"]
+                and (.result.structured_content|type)=="object"
+            end)
+        and ($uncertain|length)<=1
+        and (if ($uncertain|length)==1 then
+            $uncertain[0] as $u
+            | $u.server=="aicadia"
+            and ([$completed[] | select(.tool==$u.tool and .arguments==$u.arguments
+                and .result.structured_content==$u.persisted_result)] | length)==1
+          else true end)
     ' "$file" >/dev/null
 }
 
@@ -911,6 +1103,134 @@ cleanup_all() {
     return "$status"
 }
 
+run_internal_investigation_phase() {
+    local codex_bin="$1" user_id="$2" phase="$3" tools="$4" schema="$5" prompt="$6" home="$7" execution="$8"
+    build_common_codex_command "$codex_bin" "$tools"
+    case "$execution" in
+        ephemeral) CODEX_COMMAND+=(exec --ephemeral) ;;
+        new) CODEX_COMMAND+=(exec) ;;
+        resume:*) CODEX_COMMAND+=(exec resume "${execution#resume:}") ;;
+        *) return 1 ;;
+    esac
+    CODEX_COMMAND+=(--ignore-user-config --ignore-rules --strict-config --skip-git-repo-check
+        --json --output-schema "$schema" --output-last-message "$RUN_DIR/investigation-$phase.final.json" "$prompt")
+    run_codex_process "$home" "$user_id" "$RUN_DIR/investigation-$phase.events.jsonl" \
+        "$RUN_DIR/investigation-$phase.stderr.log" "${CODEX_COMMAND[@]}"
+}
+
+run_investigation_fake_playtest() {
+    local codex_bin marker user_a_json user_b_json user_a user_b preview prompt phase investigation_session preview_session
+    [[ $INTERNAL_TEST_MODE -eq 1 ]] || return 1
+    preflight || return 1
+    codex_bin="$INSPECTED_CODEX_BIN"
+    validate_codex_role_config "$codex_bin" "$INVESTIGATION_TOOLS" || return
+    validate_codex_role_config "$codex_bin" "$DISCOVERY_COMMIT_TOOLS" || return
+    validate_codex_role_config "$codex_bin" "$DISCOVERY_RECOVERY_TOOLS" || return
+    validate_schema_policy "$INVESTIGATION_MESSAGE_SCHEMA" || return
+    validate_schema_policy "$INVESTIGATION_PREVIEW_SCHEMA" || return
+    prepare_artifacts || return 1
+    manifest_set '.frozen.sessions=5 | .frozen.process_calls=7
+        | .frozen.token_boundary="zero paid model calls; seven deterministic fake Codex controller process calls"' || return
+    trap 'on_exit $?' EXIT
+    marker="$(<"$RUN_DIR/marker.txt")"
+    start_deployment || return
+    verify_deployment || return
+    user_a_json="$(provision_user)" || return
+    user_b_json="$(provision_user)" || return
+    user_a="$(jq -er '.id' <<<"$user_a_json")" || return
+    user_b="$(jq -er '.id' <<<"$user_b_json")" || return
+    [[ "$user_a" != "$user_b" ]] || return
+    manifest_set '.provisioning.action_user=$a | .provisioning.observer_user=$b' \
+        --arg a "$user_a" --arg b "$user_b" || return
+    setup_world "$marker" "$user_a" "$user_b" || return
+    for phase in zero preview commit observer admission unavailable conflict; do
+        : >"$RUN_DIR/investigation-$phase.events.jsonl"
+        : >"$RUN_DIR/investigation-$phase.stderr.log"
+        : >"$RUN_DIR/investigation-$phase.final.json"
+    done
+
+    prompt="Ground only through Aicadia, start one free investigation, retry its uncertain delivery exactly, render an honest zero naturally, and stop without discovery. Never use source, HTTP, database, shell, web, remembered state, another Agent or background work. Evidence marker: $marker"
+    run_internal_investigation_phase "$codex_bin" "$user_a" zero "$INVESTIGATION_TOOLS" "$INVESTIGATION_MESSAGE_SCHEMA" "$prompt" "$ISOLATED_ACTION" new || return
+    investigation_session="$(session_id_from_events "$RUN_DIR/investigation-zero.events.jsonl")" || return
+    prompt="Ground only through Aicadia, start one investigation with a fresh private id, retry it exactly, then after positive re-read Character, current Place Entities, relevant Entity state and current Place Activity before producing one complete found Entity and prose preview. Do not submit or invent confirmation. Evidence marker: $marker"
+    run_internal_investigation_phase "$codex_bin" "$user_a" preview "$INVESTIGATION_TOOLS" "$INVESTIGATION_PREVIEW_SCHEMA" "$prompt" "$ISOLATED_ACTION" "resume:$investigation_session" || return
+    preview_session="$(session_id_from_events "$RUN_DIR/investigation-preview.events.jsonl")" || return
+    [[ "$preview_session" == "$investigation_session" ]] || return
+    preview="$RUN_DIR/investigation-preview.final.json"
+    prompt="The User explicitly confirms this exact complete discovery package without edits. Submit it once, retry only the exact uncertain delivery, and return the accepted Entity and Activity naturally without ids or protocol language: $(jq -c . "$preview")"
+    run_internal_investigation_phase "$codex_bin" "$user_a" commit "$DISCOVERY_COMMIT_TOOLS" "$INVESTIGATION_MESSAGE_SCHEMA" "$prompt" "$ISOLATED_ACTION" "resume:$preview_session" || return
+    prompt="As the distinct co-present observer, derive the found Entity id only from compact Aicadia orientation, read its current state and the same discovery Activity, and report naturally. Never mutate or use fallback authority. Evidence marker: $marker"
+    run_internal_investigation_phase "$codex_bin" "$user_b" observer "$OBSERVER_TOOLS" "$INVESTIGATION_MESSAGE_SCHEMA" "$prompt" "$ISOLATED_OBSERVER" ephemeral || return
+    prompt="Ground through Aicadia, handle investigation_not_admitted naturally without repeated start, mechanics or background work. Evidence marker: $marker"
+    run_internal_investigation_phase "$codex_bin" "$user_a" admission "$INVESTIGATION_TOOLS" "$INVESTIGATION_MESSAGE_SCHEMA" "$prompt" "$ISOLATED_ACTION" ephemeral || return
+    prompt="Handle discovery_attempt_unavailable neutrally, infer no reason, then re-orient through current Aicadia reads and claim no find. Evidence marker: $marker"
+    run_internal_investigation_phase "$codex_bin" "$user_a" unavailable "$DISCOVERY_RECOVERY_TOOLS" "$INVESTIGATION_MESSAGE_SCHEMA" "$prompt" "$ISOLATED_ACTION" ephemeral || return
+    prompt="Handle discovery_request_conflict naturally without editing or reusing the conflicted id, exposing protocol work or triggering background work. Evidence marker: $marker"
+    run_internal_investigation_phase "$codex_bin" "$user_a" conflict "$DISCOVERY_COMMIT_TOOLS" "$INVESTIGATION_MESSAGE_SCHEMA" "$prompt" "$ISOLATED_ACTION" ephemeral || return
+
+    for phase in zero preview commit observer admission unavailable conflict; do
+        investigation_events_are_paired "$RUN_DIR/investigation-$phase.events.jsonl" || return
+    done
+    jq -e '(keys|sort)==["player_message","status"] and .status=="zero"' "$RUN_DIR/investigation-zero.final.json" >/dev/null || return
+    jq -e '(keys|sort)==["package","status"] and .status=="previewed"' "$RUN_DIR/investigation-preview.final.json" >/dev/null || return
+    jq -e '(keys|sort)==["player_message","status"] and .status=="committed"' "$RUN_DIR/investigation-commit.final.json" >/dev/null || return
+    jq -e '(keys|sort)==["player_message","status"] and .status=="observed"' "$RUN_DIR/investigation-observer.final.json" >/dev/null || return
+    for phase in admission unavailable conflict; do
+        jq -e '(keys|sort)==["player_message","status"] and .status=="recovered"' "$RUN_DIR/investigation-$phase.final.json" >/dev/null || return
+    done
+
+    jq -n \
+        --slurpfile zero_events "$RUN_DIR/investigation-zero.events.jsonl" \
+        --slurpfile positive_events "$RUN_DIR/investigation-preview.events.jsonl" \
+        --slurpfile submit_events "$RUN_DIR/investigation-commit.events.jsonl" \
+        --slurpfile observer_events "$RUN_DIR/investigation-observer.events.jsonl" \
+        --slurpfile admission_events "$RUN_DIR/investigation-admission.events.jsonl" \
+        --slurpfile unavailable_events "$RUN_DIR/investigation-unavailable.events.jsonl" \
+        --slurpfile conflict_events "$RUN_DIR/investigation-conflict.events.jsonl" \
+        --slurpfile zero "$RUN_DIR/investigation-zero.final.json" \
+        --slurpfile preview "$RUN_DIR/investigation-preview.final.json" \
+        --slurpfile commit "$RUN_DIR/investigation-commit.final.json" \
+        --slurpfile observer "$RUN_DIR/investigation-observer.final.json" \
+        --slurpfile admission "$RUN_DIR/investigation-admission.final.json" \
+        --slurpfile unavailable "$RUN_DIR/investigation-unavailable.final.json" \
+        --slurpfile conflict "$RUN_DIR/investigation-conflict.final.json" '
+        def calls($events):
+          [$events[]
+            | if .type=="aicadia.test.delivery_uncertain" then
+                {authority:.server,tool,arguments,result:.persisted_result}
+              elif .type=="item.completed" and .item.type=="mcp_tool_call" then
+                .item | {authority:.server,tool,arguments}
+                  + if .result.is_error==true
+                      and (.result|has("structured_content")|not)
+                      and (.result.content|length)==1
+                      and .result.content[0].type=="text"
+                    then {error:(.result.content[0].text|fromjson|.error.code)}
+                    else {result:.result.structured_content} end
+              else empty end];
+        {evidence_kind:"fake_investigation_contract",codex_invoked:false,model_calls:0,
+         fallback_authority:false,background_trigger:false,
+         phase_order:["zero_ground","zero_start","zero_retry","zero_stop",
+           "positive_ground","positive_start","positive_retry","positive_reground",
+           "preview","confirmation","submit","submit_retry","observer","recovery"],
+         zero:{calls:calls($zero_events),player_message:$zero[0].player_message},
+         positive:{calls:(calls($positive_events)+calls($submit_events)),preview:$preview[0].package,
+           confirmation:{explicit:true,package:$preview[0].package},player_message:$commit[0].player_message,
+           observer_calls:calls($observer_events)},
+         recovery:{admission:{calls:calls($admission_events),player_message:$admission[0].player_message},
+           unavailable:{calls:calls($unavailable_events),player_message:$unavailable[0].player_message},
+           conflict:{calls:calls($conflict_events),player_message:$conflict[0].player_message}}}
+    ' >"$RUN_DIR/investigation-trace.json" || return
+    validate_investigation_fake_contract "$RUN_DIR/investigation-trace.json" || return
+    manifest_set '.phases={investigation_contract:{status:"passed",processes:7}}
+        | .validation={status:"passed",fake_investigation_contract:true}
+        | .codex_invoked=false | .model_calls=0' || return
+    cleanup_deployment || return
+    manifest_set '.run_status="fake_completed"' || return
+    cleanup_local_directories
+    CLEANUP_DONE=1
+    printf 'Fake investigation controller passed with zero real Codex/model calls. Artifacts: %s\n' "$RUN_DIR"
+}
+
 on_exit() {
     local status="$1"
     trap - EXIT INT TERM HUP
@@ -1054,6 +1374,16 @@ main() {
             [[ "$2" == --confirm-fake-controller-test ]] || return 1
             INTERNAL_TEST_MODE=1
             run_playtest
+            ;;
+        3:test-internal-investigation-contract)
+            [[ "$2" == --confirm-fake-controller-test ]] || return 1
+            INTERNAL_TEST_MODE=1
+            validate_investigation_fake_contract "$3"
+            ;;
+        2:test-internal-investigation-run)
+            [[ "$2" == --confirm-fake-controller-test ]] || return 1
+            INTERNAL_TEST_MODE=1
+            run_investigation_fake_playtest
             ;;
         *) fail 'usage: tools/agent-playtest preflight | tools/agent-playtest run --confirm-token-spend' ;;
     esac

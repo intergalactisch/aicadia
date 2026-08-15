@@ -448,7 +448,7 @@ pub struct AcceptedInteraction {
     pub place: Place,
 }
 
-fn normalize_entity_text(
+pub(super) fn normalize_entity_text(
     name: String,
     description: String,
     invalid: impl Fn(EntityField, InvalidReason) -> WorldError,

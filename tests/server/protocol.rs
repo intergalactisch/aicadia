@@ -111,7 +111,7 @@ async fn ledger_reads_remain_truthful_before_character_onboarding(pool: PgPool) 
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) {
+async fn catalog_exposes_exactly_the_fifteen_player_capabilities(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;
 
     let openapi: Value = server
@@ -189,6 +189,10 @@ async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) 
         "CurrentPlaceActivityPageOutput",
         "CharacterEntityStatePageOutput",
         "CurrentPlaceEntityStatePageOutput",
+        "StartInvestigationInput",
+        "InvestigationResultOutput",
+        "SubmitDiscoveryInput",
+        "AcceptedDiscoveryOutput",
     ] {
         assert!(
             openapi["components"]["schemas"].get(schema).is_some(),
@@ -230,7 +234,7 @@ async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) 
         listed["result"]["tools"], expected_tools,
         "the checked-in catalog must equal the runtime catalog after central Agent descriptions are applied"
     );
-    assert_eq!(tools.len(), 13);
+    assert_eq!(tools.len(), 15);
     let tool_name = tools
         .iter()
         .map(|tool| tool["name"].as_str().expect("tool name should be text"))
@@ -254,6 +258,16 @@ async fn catalog_exposes_exactly_the_thirteen_player_capabilities(pool: PgPool) 
     assert_eq!(property["annotations"]["destructiveHint"], false);
     assert_eq!(property["annotations"]["idempotentHint"], true);
     assert_eq!(property["annotations"]["openWorldHint"], false);
+    for name in ["start_investigation", "submit_discovery"] {
+        let tool = tools
+            .iter()
+            .find(|tool| tool["name"] == name)
+            .unwrap_or_else(|| panic!("{name} should be in the fixed catalog"));
+        assert_eq!(tool["annotations"]["readOnlyHint"], false);
+        assert_eq!(tool["annotations"]["destructiveHint"], false);
+        assert_eq!(tool["annotations"]["idempotentHint"], true);
+        assert_eq!(tool["annotations"]["openWorldHint"], false);
+    }
     for required in [
         "never a live-state fallback",
         "honestly unknown",
@@ -420,8 +434,10 @@ async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabi
         ("list_entity_at_current_place", true),
         ("list_activity_at_current_place", true),
         ("get_entity_at_current_place", true),
+        ("start_investigation", true),
         ("submit_action", true),
         ("submit_interaction", true),
+        ("submit_discovery", true),
     ] {
         let response = server
             .tool(
@@ -467,6 +483,78 @@ async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabi
     let mcp_response = server
         .tool("create_entity", unknown_entity_body, Some(user.id.0))
         .await;
+    assert_eq!(mcp_error(&mcp_response), http_error);
+
+    let unknown_start = json!({
+        "request_id": Uuid::new_v4(),
+        "unexpected": true
+    });
+    let http_response = server
+        .client
+        .post(format!("{}/api/investigation", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&unknown_start)
+        .send()
+        .await
+        .expect("unknown HTTP investigation field should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("unknown HTTP investigation field should be JSON");
+    let mcp_response = server
+        .tool("start_investigation", unknown_start, Some(user.id.0))
+        .await;
+    assert_eq!(error_code(&http_error), "invalid_request");
+    assert_eq!(mcp_error(&mcp_response), http_error);
+
+    let invalid_start_id = json!({"request_id": "not-a-uuid"});
+    let http_response = server
+        .client
+        .post(format!("{}/api/investigation", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&invalid_start_id)
+        .send()
+        .await
+        .expect("invalid HTTP investigation UUID should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("invalid HTTP investigation UUID should be JSON");
+    let mcp_response = server
+        .tool("start_investigation", invalid_start_id, Some(user.id.0))
+        .await;
+    assert_eq!(error_code(&http_error), "invalid_request");
+    assert_eq!(mcp_error(&mcp_response), http_error);
+
+    let unknown_discovery_find = json!({
+        "request_id": Uuid::new_v4(),
+        "attempt_id": Uuid::new_v4(),
+        "prose": "This malformed discovery must not be accepted.",
+        "find": {
+            "name": "Must not exist",
+            "description": "An unknown nested field rejects the complete body.",
+            "unexpected": true
+        }
+    });
+    let http_response = server
+        .client
+        .post(format!("{}/api/discovery", server.base_url))
+        .header(USER_CONTEXT_HEADER, user.id.0.to_string())
+        .json(&unknown_discovery_find)
+        .send()
+        .await
+        .expect("unknown nested HTTP discovery field should send");
+    assert_eq!(http_response.status(), StatusCode::BAD_REQUEST);
+    let http_error: Value = http_response
+        .json()
+        .await
+        .expect("unknown nested HTTP discovery field should be JSON");
+    let mcp_response = server
+        .tool("submit_discovery", unknown_discovery_find, Some(user.id.0))
+        .await;
+    assert_eq!(error_code(&http_error), "invalid_request");
     assert_eq!(mcp_error(&mcp_response), http_error);
 
     let http_response = server

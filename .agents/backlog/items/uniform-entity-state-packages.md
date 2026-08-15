@@ -39,7 +39,7 @@ delivered proof.
 ## Completion evidence
 
 Delivered through migration `0009_uniform_entity_state.sql`, the World, HTTP/MCP and
-Agent contract, with 119/119 Rust tests, exact thirteen-tool runtime-catalog parity,
-Clippy with warnings denied and both token-free fake suites passing. The build made
-zero paid/model calls; detailed proof lives in
+Agent contract, with 119/119 Rust tests, exact then-current thirteen-tool
+runtime-catalog parity, Clippy with warnings denied and both token-free fake suites
+passing. The build made zero paid/model calls; detailed proof lives in
 [uniform Entity-state evidence](../../../docs/evidence/entity-state.md).

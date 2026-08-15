@@ -3,6 +3,7 @@ mod activity;
 mod entity;
 mod entity_state_creation;
 mod interaction;
+mod investigation_schema;
 mod property_behavior;
 mod property_schema;
 mod trait_behavior;

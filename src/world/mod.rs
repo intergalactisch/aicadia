@@ -1,6 +1,7 @@
 #[cfg(test)]
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
@@ -21,6 +22,7 @@ mod activity;
 mod common;
 mod entity_trait;
 mod error;
+mod investigation;
 mod model;
 mod mutation;
 mod property;
@@ -28,6 +30,10 @@ mod read;
 
 pub use activity::*;
 pub use error::*;
+pub use investigation::{
+    AcceptedDiscovery, DiscoveryFind, DiscoveryKind, InvestigationAttemptId, InvestigationLimits,
+    InvestigationOutcome, InvestigationResult, StartInvestigation, SubmitDiscovery,
+};
 pub use model::*;
 pub use property::*;
 
@@ -103,11 +109,23 @@ fn record_trait_query(kind: TraitQueryKind) {
 
 pub struct World {
     pool: PgPool,
+    chance: Arc<dyn investigation::chance::ChanceSource>,
 }
 
 impl World {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            pool,
+            chance: Arc::new(investigation::chance::OsChance),
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn with_scripted_chance(pool: PgPool, draw: Vec<f64>) -> Self {
+        Self {
+            pool,
+            chance: Arc::new(investigation::chance::ScriptedChance::new(draw)),
+        }
     }
 
     pub fn get_world(&self) -> WorldView {

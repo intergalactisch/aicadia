@@ -1,6 +1,6 @@
 # Discovery and investigation
 
-> **Role / side:** live concept exploration of investigation and volatile discovery rolls / development side.
+> **Role / side:** live concept exploration of investigation and stochastic discovery rolls / development side.
 > **Authority:** current discovery rationale, responsibility boundaries, roll transport, provenance, frontier decisions and prototype
 > **Excludes:** Executable behavior, delivery evidence and the separate knowledge, interaction, spatial, time and tabletop themes.
 
@@ -53,13 +53,12 @@ The direction established so far is:
 4. The World validates the request and resolves a server-authoritative chance table
    before the Agent authors any discovery. A delivery retry of the same attempt
    returns the same roll result rather than consuming another roll.
-5. The result is zero or a positive, volatile roll result bound to the
-   current World-state. It exposes generic limits, applicable current meta-state and
-   changes, but no storage helper or semantic discovery direction. With zero, the
-   investigation ends without new World state.
-6. The response gives a rich qualitative overview plus typed stable references. The
-   Agent may use published read capabilities to inspect referenced World state more
-   deeply before deciding what to create.
+5. The result is zero or positive. The accepted revision uses a retry-stable
+   response containing only the stored outcome, opaque attempt authority and
+   immutable generic limits, with no mutable World-state snapshot or semantic
+   discovery direction. With zero, the investigation ends without new World state.
+6. After a positive the Agent uses the existing bounded exact-Place, Entity-state
+   and Activity reads to re-ground current context before deciding what to create.
 7. The Agent formulates one structured candidate World change within the roll
    result's limits, previews it completely in the User's language and, only after
    explicit User confirmation, submits it to the World. Starting an investigation
@@ -69,28 +68,30 @@ The direction established so far is:
    candidate's deterministic domain rules and commits accepted concrete state to the
    one shared World.
 
-Steps 3 through 8 express the authority boundary. Their first concrete
-representation is decided in the resolved frontier below and awaits plan
-acceptance.
+Steps 3 through 8 express the authority boundary. The [current game
+contract](../game/README.md) owns their concrete executable representation; this
+record retains why that boundary was selected.
 
 For example, “I wonder whether anything left tracks beside the river” may inspire
 the Agent to investigate tracks, investigate something else or do nothing. It may
 not map directly to a server focus, create an eligible attempt, improve a chance or
 force a tracks-related result.
 
-## Volatile roll result
+## Stable roll result
 
 The earlier helper-shaped `World-change opportunity` direction is corrected. A roll
 must not return `introduce_entity`, `add_relation` or another persistence operation
 as if that were the gameplay result. Such helpers leak storage structure into the
 Agent interface and make the World prescribe what kind of discovery occurred.
 
-A positive roll instead returns a volatile roll result: a server-authoritative
-outcome, generic limits and bounded meta-context captured from the current
-World-state. It is not a session and is not a listable Character opportunity. The
-Agent uses it while relevant, performs any needed read-only inspection and submits a
-structured candidate World change. The candidate must carry enough explicit
-structure for deterministic validation; the World performs no semantic inference.
+A positive roll instead returns a stable roll result: a server-authoritative
+outcome, opaque attempt authority and generic limits. T1 review reopened and
+rejected the earlier mutable meta-context payload as incoherent with byte-identical
+retries, the deliberately minimal attempt row and bounded current-state reads. The
+accepted revision returns no snapshot; the Agent performs current read-only inspection
+and submits a structured candidate World change. The candidate must carry enough
+explicit structure for deterministic validation; World performs no semantic
+inference.
 
 Since 2026-08-15 the attempt itself is durable technical provenance—one
 `investigation_attempt` row holding retry identity, outcome and its consuming
@@ -112,13 +113,13 @@ a separate public `Investigation` interface would create competing ownership.
 | Starting and paying for an Agent interaction | User |
 | Reasoning over context and authoring a candidate | Agent |
 | Durable personal context | Character as the subject; World authorizes access from User context |
-| Roll, meta-view, roll-result freshness and acceptance | World |
+| Roll, retry-stable result authority and acceptance | World |
 | Entity, Place, relationship and future result invariants | Their concrete domain behavior inside World |
 | Atomic validation and commit across accepted results | World |
 | Accepted persistent state | The shared World, never the User or Agent |
 | HTTP and MCP encoding, errors and protocol state | Thin transport adapters |
 
-The volatile roll result remains World-issued authority temporarily carried by the
+The stable roll result remains World-issued authority temporarily carried by the
 Agent; the Agent does not own it and cannot modify its scope. A candidate remains
 Agent-authored workshop material until World accepts it. Investigation may later
 earn an internal module for locality and testing, but it does not earn a second
@@ -127,16 +128,15 @@ implementation becomes complex.
 
 For the selected first complete loop, the User has now made that locality constraint
 explicit: discovery must not be appended to a monolithic World or server file. The
-draft build direction is one private deep investigation Module behind the existing
+accepted build direction is one private deep investigation Module behind the existing
 `World` Interface, with distinct ownership for typed chance resolution, attempt/
-retry state, volatile result authority and atomic concrete commit. Existing Entity,
+retry state, stable result authority and atomic concrete commit. Existing Entity,
 Property and Activity behavior keeps ownership of its own invariants; investigation
 composes those rules instead of copying them or calling an ordinary public mutation
 as a shortcut. HTTP and MCP remain separate thin Adapters. A private Interface is
 introduced only when two real Adapters exist—for example production randomness and
 a deterministic test resolver—and never solely to make the file tree look layered.
-The exact file map remains owned by the draft plan until Q1–Q7 are settled and the
-plan is accepted.
+The exact file map remains owned by the accepted plan.
 
 ### High-velocity roll transport — superseded on 2026-08-15
 
@@ -180,11 +180,16 @@ tokens based only on unrelated state remain usable. A Character-global
 would let one conversation silently invalidate unrelated work in another. No
 replacement marker is stored merely to serialize the Character.
 
-### Meta-state handoff
+### Post-roll grounding — reopened on 2026-08-15
 
-The World returns the roll outcome and structural envelope together with trustworthy,
-scope-bounded meta-state and changes in that state. It does not interpret those
-facts into a semantic discovery direction. For example:
+Independent T1 review proved that the earlier positive payload could not satisfy its
+own retry and scale invariants. Place state is paginated and may grow without a
+lifetime cap; recent Activity and current state change after issue; the attempt row
+stores neither a snapshot nor an as-of revision. Recomputing later would break
+byte-identical retry semantics, while persisting the response would duplicate World
+truth and create unearned snapshot machinery.
+
+The User reaccepted this stable response on 2026-08-15:
 
 ```text
 type: positive
@@ -192,20 +197,18 @@ attempt_id: <opaque attempt authority>
 limits:
   result_count: 1
   kind: entity_at_current_place
-context:
-  place: <safe current-Place view>
-  place_state: <the Place's own current Properties and Traits>
-  recent_discovery: <accepted finds among the last W Activities at this Place>
 ```
 
-This is the payload accepted for the first slice on 2026-08-15: bounded, typed and
-free of counts, ranking, kind lists or server prose. The richer broad-inspection
-payload sketched earlier in this record remains a later possibility.
+After `positive`, the Agent re-reads the current exact Place, selected Entity state
+and recent exact-Place Activity through existing paginated capabilities. The attempt
+remains bound only to its original Place identity; unrelated same-Place changes do
+not stale it. The richer broad-inspection payload remains later exploration, not
+part of this slice.
 
-The Agent analyses this information using World context, heuristics, coherence and
-fun value, then decides what the discovery means. It might create flora, fauna, a
-material, a route or a future subject within the generic limits and deterministic
-domain rules. The World never emits `local_flora`, “the World needs an animal” or an
+The Agent analyses the current read results using World context, heuristics, coherence and
+fun value, then decides what the discovery means. It might establish flora, fauna, a
+material, tracks or a ruin fragment as one ordinary Entity within the generic limits
+and deterministic domain rules. The World never emits `local_flora`, “the World needs an animal” or an
 equivalent semantic recommendation and never invents a name, appearance, behavior or
 story.
 
@@ -284,8 +287,10 @@ Accepted source evidence is append-only. Later identification, contradiction,
 refinement or merging adds evidence and relationships; it does not mutate the
 original uncertain encounter into something it did not state.
 
-The exact generic name and storage shape for the investigation action and its source
-history are still open.
+The first slice uses Activity operation `submit_discovery` and one private
+`investigation_attempt` row with the consuming Activity link as provenance. Broader
+future discovery kinds still keep their own concrete domain state rather than
+earning a generic Discovery relation.
 
 ## Investigation rolls
 
@@ -316,8 +321,8 @@ The following are explicitly absent:
 - no transferable or hidden accumulated luck.
 
 Prior outcomes therefore do not improve later odds. Fresh accepted attempts are
-independent. A technical retry is not fresh and must reproduce the committed roll
-result. Operational rate limiting protects the service from excessive calls but
+independent. A technical retry is not fresh and must reproduce the stored outcome,
+attempt id and immutable limits. Operational rate limiting protects the service from excessive calls but
 does not alter the chance table or masquerade as a fairness mechanic.
 
 An Agent may try another investigation without first having discovered something.
@@ -333,10 +338,13 @@ operational limiter protects request throughput only: it does not alter odds,
 accumulate luck or become Agent-visible gameplay state. Its accepted first form is
 two bounded per-User rules over the durable attempt rows, applied under the existing
 User lock: at most `A` admitted attempts per rolling hour (default 12) and at most
-`P` unconsumed positive attempts (default 3), a further admitted attempt voiding the
-oldest unconsumed positive so a lost attempt id can never deadlock a Character and no
-listable stock of pending finds exists. Thresholds are hidden from play and never
-inputs to odds.
+`P` unconsumed positive attempts (default 3). The accepted revision defines one database
+timestamp for the inclusive rolling-hour boundary and stored attempt time. Only a
+newly inserted positive beyond the cap voids the oldest prior live positive with
+`id <> new_attempt_id`, ordered by `(created_at, id)`; the schema rejects self-void
+provenance and a zero never voids one. A lost attempt id therefore cannot
+deadlock a Character and no listable stock of pending finds exists. Thresholds are
+hidden from play and never inputs to odds.
 
 
 ## Deliberately absent now
@@ -360,7 +368,7 @@ inputs to odds.
 - programmable database or graph query languages exposed to Agents.
 
 
-## Selected planning edge
+## Selected complete loop
 
 On 2026-08-14 the User selected one complete investigation-and-discovery loop as the
 next planning edge. This supersedes treating the first roll and first discovery
@@ -372,46 +380,31 @@ admitting the exact situation, World performs the roll as an internal authoritat
 step. There is no separate caller-controlled roll button and no input for a seed,
 odds, result count or retry count.
 
-The item is currently `Next / Proposed` behind the active Sol-medium validation.
-Selection authorizes the [draft build plan](../../.agents/plans/20260814-204007-first-investigation-discovery-loop/plan.md),
-not a game contract or implementation; the plan is now fully resolved and awaits
-explicit acceptance. Discovery is not `create_entity` or
-`submit_action.introduce_entity` under another name: it uniquely requires World
-admission and chance resolution before Agent authorship plus attempt/result
-provenance, and the discovery rule above states which things must be found rather
-than made. The Q45/Q46 choices remain binding: several unconsumed positive attempts
-may coexist across conversations, and a new explicit Agent request may receive a
-fresh independent roll whenever World admits it, even without an intervening World
-change.
+Discovery is not `create_entity` or `submit_action.introduce_entity` under another
+name: it uniquely requires World admission and chance resolution before Agent
+authorship plus attempt/result provenance, and the discovery rule above states which
+things must be found rather than made. The concurrency choice preserves several
+independent conversations without making conversation identity part of World or
+allowing conversation count to increase throughput.
 
-## Resolved design frontier
+Delivery history and current status: see [discovery
+evidence](../evidence/discovery.md).
 
-The grill resumed on 2026-08-15 and resolved every draft-blocking question; the
-material reasons are recorded in the concept log ("grill resumed"):
+## Resolved design frontier after T1 correction
 
-1. discovery rule and first result: pre-existing things are found, made things are
-   introduced; the first result is one found Entity at the exact current Place with
-   Agent-authored Properties and Traits, no World-typed kind; a new Place is the
-   second result kind and belongs to the movement edge;
-2. positive payload: attempt authority, generic limits and bounded context (Place,
-   Place state, recent finds in the last `W` Place Activities);
-3. confirmation: free start, confirmed find;
-4. zero: no Activity, no pointer change, honest one-attempt end;
-5. representation: durable `investigation_attempt` row, attempt id as authority, no
-   secrets; production randomness from `rand` behind one injected chance source that
-   tests script and that is reachable only through World construction;
-6. chance: the owned saturation component and defaults above;
-7. admission: rate and hoarding rules above;
-8. conflicts: only invalid values, foreign/non-positive/consumed/voided/other-Place
-   attempts, Character not at the attempt's Place and request-id content conflicts;
-   no name uniqueness, no exact-Place revision binding;
-9. history: Activity `submit_discovery` with actor, context Place, `subject`,
-   `location`, canonical prose and the attempt's consuming-Activity link;
-10. public operations: `start_investigation` and `submit_discovery` with the neutral
-    errors listed in the plan; fifteen capabilities.
+The grill resolved the main domain choices, then T1 review caught one incoherent
+combination: mutable Place context could not be both bounded and byte-identical on
+retry without adding snapshot storage. The accepted correction kept the attempt
+minimal and moved current context back to the existing scoped reads. It also kept
+operational admission separate from chance, made the start free of User
+confirmation, retained confirmation for the authored find, and rejected a generic
+Discovery object or signed authority token.
 
-Nothing here is executable until the plan is accepted and promoted into `docs/game/`
-through World, HTTP and MCP together.
+Those material reasons and the correction trail live in the [concept
+log](log/2026-08.md). The [game contract](../game/README.md) owns all current fields,
+limits, errors, ordering and adapter behavior; the [completed build
+plan](../../.agents/plans/20260814-204007-first-investigation-discovery-loop/plan.md)
+retains the dependency-ordered execution boundary.
 
 ## Prototype under evaluation
 

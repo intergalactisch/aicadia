@@ -29,6 +29,7 @@ pub enum ErrorCode {
     InvalidPlace,
     InvalidAction,
     InvalidInteraction,
+    InvalidDiscovery,
     InvalidProperty,
     InvalidTrait,
     InvalidEntityLimit,
@@ -43,12 +44,15 @@ pub enum ErrorCode {
     EntryPlaceNotFound,
     ActionRequestConflict,
     InteractionRequestConflict,
+    DiscoveryRequestConflict,
+    DiscoveryAttemptUnavailable,
     InteractionTargetUnavailable,
     PropertyEntityUnavailable,
     EntityAtCurrentPlaceUnavailable,
     TraitUnavailable,
     PropertyKeyConflict,
     PlaceRevisionConflict,
+    InvestigationNotAdmitted,
     Unavailable,
 }
 
@@ -223,6 +227,25 @@ impl ErrorOutput {
                     reason,
                 )
             }
+            WorldError::InvalidDiscovery { field, reason } => {
+                let field = match field {
+                    DiscoveryField::Prose => "prose",
+                };
+                let (reason, explanation) = match reason {
+                    InvalidReason::Empty => ("empty", "is empty"),
+                    InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
+                    InvalidReason::TooLong => ("too_long", "is too long"),
+                    InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+                    InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+                    InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
+                };
+                Self::with_detail(
+                    ErrorCode::InvalidDiscovery,
+                    format!("Discovery prose {explanation}."),
+                    field,
+                    reason,
+                )
+            }
             WorldError::InvalidProperty { field, reason } => {
                 let field = match field {
                     PropertyField::Property => "property",
@@ -307,6 +330,14 @@ impl ErrorOutput {
                 ErrorCode::InteractionRequestConflict,
                 "request_id was already accepted with different interaction content.",
             ),
+            WorldError::DiscoveryRequestConflict => Self::new(
+                ErrorCode::DiscoveryRequestConflict,
+                "request_id was already accepted with different discovery content.",
+            ),
+            WorldError::DiscoveryAttemptUnavailable => Self::new(
+                ErrorCode::DiscoveryAttemptUnavailable,
+                "The investigation attempt is unavailable.",
+            ),
             WorldError::InteractionTargetUnavailable => Self::new(
                 ErrorCode::InteractionTargetUnavailable,
                 "One or more interaction targets are unavailable.",
@@ -330,6 +361,10 @@ impl ErrorOutput {
             WorldError::PlaceRevisionConflict => Self::new(
                 ErrorCode::PlaceRevisionConflict,
                 "The current Place changed after it was read.",
+            ),
+            WorldError::InvestigationNotAdmitted => Self::new(
+                ErrorCode::InvestigationNotAdmitted,
+                "The investigation was not admitted.",
             ),
             WorldError::Unavailable => Self::new(
                 ErrorCode::Unavailable,

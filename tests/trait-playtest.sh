@@ -45,12 +45,13 @@ candidate_state_snapshot() {
 
 copy_candidate_material() {
     local copy="$1"
-    mkdir -p "$copy/tools/trait-playtest-schema" "$copy/tests" "$copy/src" "$copy/migration"
+    mkdir -p "$copy/tools/trait-playtest-schema" "$copy/tests" "$copy/src" "$copy/migration" "$copy/web"
     cp "$RUNNER" "$copy/tools/trait-playtest"
     cp "$REPO_DIR/Cargo.toml" "$REPO_DIR/Cargo.lock" "$copy/"
     cp "$REPO_DIR/tests/agent-tool-catalog.json" "$copy/tests/"
     cp -R "$REPO_DIR/src/." "$copy/src/"
     cp -R "$REPO_DIR/migration/." "$copy/migration/"
+    cp "$REPO_DIR/web/index.html" "$copy/web/"
     cp "$REPO_DIR/tools/trait-playtest-schema/"* "$copy/tools/trait-playtest-schema/"
     chmod +x "$copy/tools/trait-playtest"
 }
@@ -225,28 +226,33 @@ test_candidate_digest_binds_runtime_build_and_validator() {
 
 test_owned_preflight_cleanup_after_catalog_failure() {
     local before="$TEST_ROOT/preflight-before" after="$TEST_ROOT/preflight-after" manifest db token
-    local portable_bin="$TEST_ROOT/portable-bin" actual_codex
+    local portable_bin="$TEST_ROOT/portable-bin" portable_codex actual_codex copy="$TEST_ROOT/preflight-copy"
     [[ -n "${DATABASE_URL:-}" ]] || return 0
+    copy_candidate_material "$copy"
+    mkdir "$copy/.aicadia-trait-playtest"
+    chmod 700 "$copy/.aicadia-trait-playtest"
     actual_codex="$(command -v codex)" || fail 'Codex is unavailable for the live token-free regression'
     mkdir -p "$portable_bin"
     printf '#!/bin/bash\nexec %q "$@"\n' "$actual_codex" >"$portable_bin/portable-codex"
     chmod +x "$portable_bin/portable-codex"
-    find "$REPO_DIR/.aicadia-trait-playtest" -maxdepth 2 -name manifest.json -path '*/preflight-*/*' -print 2>/dev/null | sort >"$before"
-    if PATH="$portable_bin:$PATH" CODEX_BIN=portable-codex AICADIA_INTERNAL_TRAIT_PREFLIGHT_MODE=fail-after-catalog \
-        "$RUNNER" test-internal-live-preflight --confirm-fake-controller-test \
+    portable_codex="$(cd "$portable_bin" && pwd -P)/portable-codex"
+    find "$copy/.aicadia-trait-playtest" -maxdepth 2 -name manifest.json -path '*/preflight-*/*' -print 2>/dev/null | sort >"$before"
+    if (cd "$copy" && PATH="$portable_bin:$PATH" CODEX_BIN=portable-codex \
+        AICADIA_INTERNAL_TRAIT_PREFLIGHT_MODE=fail-after-catalog \
+        tools/trait-playtest test-internal-live-preflight --confirm-fake-controller-test) \
         >"$TEST_ROOT/injected-preflight.stdout" 2>"$TEST_ROOT/injected-preflight.stderr"; then
         fail 'injected post-catalog preflight failure unexpectedly passed'
     fi
-    find "$REPO_DIR/.aicadia-trait-playtest" -maxdepth 2 -name manifest.json -path '*/preflight-*/*' -print | sort >"$after"
+    find "$copy/.aicadia-trait-playtest" -maxdepth 2 -name manifest.json -path '*/preflight-*/*' -print | sort >"$after"
     manifest="$(comm -13 "$before" "$after" | head -1)"
     [[ -n "$manifest" ]] || fail 'injected preflight retained no new manifest'
-    jq -e --arg path "$portable_bin/portable-codex" '.go==false and .codex_invoked==false and .model_calls==0
+    jq -e --arg path "$portable_codex" '.go==false and .codex_invoked==false and .model_calls==0
       and .catalog.status=="live_runtime_equal" and .deployment.status=="dropped"
       and .cleanup.status=="ownership_verified_and_dropped"
       and .codex.path==$path' "$manifest" >/dev/null \
         || fail 'post-catalog failure did not end in ownership-safe terminal cleanup'
     db="$(jq -r '.deployment.database' "$manifest")"; token="$(jq -r '.deployment.ownership_token' "$manifest")"
-    if (cd "$REPO_DIR" && cargo run --quiet --bin aicadia-playtest-database -- verify "$db" "$token") >/dev/null 2>&1; then
+    if (cd "$copy" && cargo run --quiet --bin aicadia-playtest-database -- verify "$db" "$token") >/dev/null 2>&1; then
         fail 'injected preflight database still exists after cleanup'
     fi
 }

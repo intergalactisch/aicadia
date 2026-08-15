@@ -127,7 +127,7 @@ character_state() {
 response='{}'; status=200
 case "$url" in
     */api/openapi.json)
-        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{post:{operationId:"create_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/place/current/entity/{entity_id}":{get:{operationId:"get_entity_at_current_place"}},"/api/action":{post:{operationId:"submit_action"}},"/api/interaction":{post:{operationId:"submit_interaction"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
+        jq -n '{paths:{"/api/world":{get:{operationId:"get_world"}},"/api/user":{get:{operationId:"get_user"}},"/api/character":{get:{operationId:"get_character"},post:{operationId:"create_character"}},"/api/place/entry":{post:{operationId:"create_entry_place"}},"/api/world/entry":{post:{operationId:"enter_world"}},"/api/activity":{get:{operationId:"list_activity"}},"/api/entity":{post:{operationId:"create_entity"}},"/api/place/current/entity":{get:{operationId:"list_entity_at_current_place"}},"/api/place/current/activity":{get:{operationId:"list_activity_at_current_place"}},"/api/place/current/entity/{entity_id}":{get:{operationId:"get_entity_at_current_place"}},"/api/investigation":{post:{operationId:"start_investigation"}},"/api/action":{post:{operationId:"submit_action"}},"/api/interaction":{post:{operationId:"submit_interaction"}},"/api/discovery":{post:{operationId:"submit_discovery"}}}}' >"$state/response"; response="$(<"$state/response")" ;;
     */mcp)
         response="$(jq -nc --slurpfile tools "$state/catalog.json" '{jsonrpc:"2.0",id:1,result:{tools:$tools[0]}}')" ;;
     */api/world) response='{"name":"Aicadia"}' ;;
@@ -211,7 +211,10 @@ if [[ "$*" == *'features list' ]]; then
 fi
 if [[ "$*" == *'mcp get aicadia --json' ]]; then
     arguments="$(printf '%s\n' "$@")"
-    if [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]';
+    if [[ "$*" == *'enabled_tools=["submit_discovery","get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["submit_discovery","get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]';
+    elif [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place","start_investigation"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place","start_investigation"]';
+    elif [[ "$*" == *'enabled_tools=["submit_discovery"]'* ]]; then tools='["submit_discovery"]';
+    elif [[ "$*" == *'enabled_tools=["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_world","get_character","list_entity_at_current_place","list_activity_at_current_place"]';
     elif [[ "$*" == *'enabled_tools=["submit_action"]'* ]]; then tools='["submit_action"]';
     elif [[ "$*" == *'enabled_tools=["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]'* ]]; then tools='["get_character","list_entity_at_current_place","get_entity_at_current_place","list_activity_at_current_place"]';
     else exit 96; fi
@@ -250,6 +253,85 @@ mcp() {
         '{type:"item.completed",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:$arguments,result:{content:[{type:"text",text:($result|tojson)}],structured_content:$result},status:"completed",error:null}}'
 }
 mcp_started() { jq -nc --arg id "$1" --arg tool "$2" '{type:"item.started",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:{},result:null,status:"in_progress",error:null}}'; }
+if [[ "$mode" == investigation-happy ]]; then
+    delivery_uncertain() {
+        local tool="$1" arguments="$2" result="$3"
+        jq -nc --arg tool "$tool" --argjson arguments "$arguments" --argjson result "$result" \
+            '{type:"aicadia.test.delivery_uncertain",server:"aicadia",tool:$tool,arguments:$arguments,persisted_result:$result}'
+    }
+    mcp_error() {
+        local tool="$1" arguments="$2" code="$3" id="item_$mcp_sequence"
+        mcp_sequence=$((mcp_sequence + 1))
+        jq -nc --arg id "$id" --arg tool "$tool" --argjson arguments "$arguments" \
+            '{type:"item.started",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:$arguments,result:null,status:"in_progress",error:null}}'
+        jq -nc --arg id "$id" --arg tool "$tool" --argjson arguments "$arguments" --arg code "$code" \
+            '{type:"item.completed",item:{id:$id,type:"mcp_tool_call",server:"aicadia",tool:$tool,arguments:$arguments,result:{content:[{type:"text",text:({error:{code:$code}}|tojson)}],is_error:true},status:"completed",error:null}}'
+    }
+    observer_entity="$(jq -nc --arg id "$observer_id" --arg marker "$marker" '{id:$id,name:("Observer Character "+$marker),description:("Disposable observer Character for "+$marker)}')"
+    character_entity="$(jq -nc --arg id "$character_id" --arg user "$action_user" --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$user,current_place:$place}')"
+    character="$(jq -nc --argjson character "$character_entity" '{character:$character,place_revision:"v1.fake.discovery",current_state:{association:[],next:null}}')"
+    entity_page="$(jq -nc --argjson place "$place_summary" --argjson entity "$observer_entity" '{place:$place,place_revision:"v1.fake.discovery",entity:[$entity],next:null}')"
+    observer_state="$(jq -nc --argjson place "$place_summary" --argjson entity "$observer_entity" '{place:$place,place_revision:"v1.fake.discovery",entity:$entity,current_state:{association:[],next:null}}')"
+    activity_page="$(jq -nc --argjson place "$place_summary" '{place:$place,place_revision:"v1.fake.discovery",activity:[],next:null}')"
+    zero_request='10000000-0000-4000-8000-000000000000'; zero_attempt='20000000-0000-4000-8000-000000000000'
+    positive_request='30000000-0000-4000-8000-000000000000'; positive_attempt='40000000-0000-4000-8000-000000000000'
+    discovery_request='50000000-0000-4000-8000-000000000000'; trait_id='90000000-0000-4000-8000-000000000000'
+    zero="$(jq -nc --arg attempt "$zero_attempt" '{attempt_id:$attempt,outcome:"zero",limits:{result_count:1,kind:"entity_at_current_place"}}')"
+    positive="$(jq -nc --arg attempt "$positive_attempt" '{attempt_id:$attempt,outcome:"positive",limits:{result_count:1,kind:"entity_at_current_place"}}')"
+    package="$(jq -nc --arg marker "$marker" '{prose:("Mara parts the rain-dark reeds and finds chalk-pale rainbell cups beside "+$marker+"."),find:{name:("Rainbell Cups "+$marker),description:("Chalk-pale cups whose thin rims ring in rain beside "+$marker+"."),property:[{key:"colour",value:{type:"text",text:"chalk-pale"}}],trait:[{statement:"Rings softly when collected rain shifts."}]}}')"
+    case "$count" in
+        1)
+            mcp get_world '{}' '{"name":"Aicadia"}'; mcp get_character '{}' "$character"
+            mcp list_entity_at_current_place '{}' "$entity_page"; mcp list_activity_at_current_place '{}' "$activity_page"
+            delivery_uncertain start_investigation "$(jq -nc --arg id "$zero_request" '{request_id:$id}')" "$zero"
+            mcp start_investigation "$(jq -nc --arg id "$zero_request" '{request_id:$id}')" "$zero"
+            jq -n '{status:"zero",player_message:"Mara searches the rain-dark verge carefully and finds nothing new."}' >"$final" ;;
+        2)
+            mcp get_world '{}' '{"name":"Aicadia"}'; mcp get_character '{}' "$character"
+            mcp list_entity_at_current_place '{}' "$entity_page"; mcp list_activity_at_current_place '{}' "$activity_page"
+            delivery_uncertain start_investigation "$(jq -nc --arg id "$positive_request" '{request_id:$id}')" "$positive"
+            mcp start_investigation "$(jq -nc --arg id "$positive_request" '{request_id:$id}')" "$positive"
+            mcp get_character '{}' "$character"; mcp list_entity_at_current_place '{}' "$entity_page"
+            mcp get_entity_at_current_place "$(jq -nc --arg id "$observer_id" '{entity_id:$id}')" "$observer_state"
+            mcp list_activity_at_current_place '{}' "$activity_page"
+            jq -n --argjson package "$package" '{status:"previewed",package:$package}' >"$final" ;;
+        3)
+            entity="$(jq -nc --arg id "$entity_id" --arg user "$action_user" --argjson package "$package" '{id:$id,name:$package.find.name,description:$package.find.description,introduced_by_user_id:$user,introduced_at:"2026-08-11T12:10:00Z"}')"
+            activity="$(jq -nc --arg id "$activity_id" --arg character "$character_id" --arg place "$place_id" --arg entity "$entity_id" --arg trait "$trait_id" --arg marker "$marker" --argjson package "$package" '{id:$id,operation:"submit_discovery",actor_character:{id:$character,name:("Action Character "+$marker)},context_place:{entity:{id:$place,name:("Entry Place "+$marker)},is_entry:true},involved_entity:[{entity:{id:$entity,name:$package.find.name},role:"subject"},{entity:{id:$place,name:("Entry Place "+$marker)},role:"location"}],property_change:[{entity:{id:$entity,name:$package.find.name},key:$package.find.property[0].key,value:$package.find.property[0].value}],trait_change:[{type:"establish",entity:{id:$entity,name:$package.find.name},trait:{id:$trait,statement:$package.find.trait[0].statement}}],prose:$package.prose,occurred_at:"2026-08-11T12:10:00Z"}')"
+            result="$(jq -nc --argjson activity "$activity" --argjson entity "$entity" --argjson place "$place" '{activity:$activity,entity:$entity,place:$place}')"
+            arguments="$(jq -nc --arg request "$discovery_request" --arg attempt "$positive_attempt" --argjson package "$package" '{request_id:$request,attempt_id:$attempt,prose:$package.prose,find:$package.find}')"
+            delivery_uncertain submit_discovery "$arguments" "$result"; mcp submit_discovery "$arguments" "$result"
+            jq -n --argjson activity "$activity" --argjson entity "$entity" '{activity:$activity,entity:$entity}' >"$state/accepted.json"
+            jq -n '{status:"committed",player_message:"Mara finds rainbell cups among the reeds, chalk-pale and softly ringing in the rain."}' >"$final" ;;
+        4)
+            accepted="$(<"$state/accepted.json")"; entity="$(jq '.entity' <<<"$accepted")"; activity="$(jq '.activity' <<<"$accepted")"
+            observer_character_entity="$(jq -nc --arg id "$observer_id" --arg user '22222222-2222-4222-8222-222222222222' --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Observer Character "+$marker),description:("Disposable observer Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:03:00Z"},owner_user_id:$user,current_place:$place}')"
+            observer_character_result="$(jq -nc --argjson character "$observer_character_entity" '{character:$character,place_revision:"v1.fake.after",current_state:{association:[],next:null}}')"
+            found_page="$(jq -nc --argjson place "$place_summary" --argjson entity "$(jq '{id,name,description}' <<<"$entity")" '{place:$place,place_revision:"v1.fake.after",entity:[$entity],next:null}')"
+            found_state="$(jq -nc --argjson place "$place_summary" --argjson entity "$entity" --arg trait "$trait_id" '{place:$place,place_revision:"v1.fake.after",entity:($entity|{id,name,description}),current_state:{association:[{type:"property",property:{key:"colour",value:{type:"text",text:"chalk-pale"}}},{type:"trait",trait:{id:$trait,statement:"Rings softly when collected rain shifts."}}],next:null}}')"
+            found_activity="$(jq -nc --argjson place "$place_summary" --argjson activity "$activity" '{place:$place,place_revision:"v1.fake.after",activity:[$activity],next:null}')"
+            mcp get_character '{}' "$observer_character_result"; mcp list_entity_at_current_place '{}' "$found_page"
+            mcp get_entity_at_current_place "$(jq -nc --arg id "$entity_id" '{entity_id:$id}')" "$found_state"
+            mcp list_activity_at_current_place '{}' "$found_activity"
+            jq -n '{status:"observed",player_message:"The same rainbell cups stand here, chalk-pale and softly ringing in the rain."}' >"$final" ;;
+        5)
+            mcp get_world '{}' '{"name":"Aicadia"}'; mcp get_character '{}' "$character"
+            mcp list_entity_at_current_place '{}' "$entity_page"; mcp list_activity_at_current_place '{}' "$activity_page"
+            mcp_error start_investigation '{"request_id":"b0000000-0000-4000-8000-000000000000"}' investigation_not_admitted
+            jq -n '{status:"recovered",player_message:"A new search cannot begin now, so Mara turns back to the paths already open."}' >"$final" ;;
+        6)
+            mcp_error submit_discovery '{"request_id":"c0000000-0000-4000-8000-000000000000","attempt_id":"d0000000-0000-4000-8000-000000000000","prose":"A complete unavailable find.","find":{"name":"Unavailable Find","description":"A complete find that cannot now be accepted.","property":[],"trait":[]}}' discovery_attempt_unavailable
+            mcp get_character '{}' "$character"; mcp list_entity_at_current_place '{}' "$entity_page"
+            mcp get_entity_at_current_place "$(jq -nc --arg id "$observer_id" '{entity_id:$id}')" "$observer_state"
+            mcp list_activity_at_current_place '{}' "$activity_page"
+            jq -n '{status:"recovered",player_message:"This find can no longer be completed, so Mara reconsiders what is presently around her."}' >"$final" ;;
+        7)
+            mcp_error submit_discovery '{"request_id":"e0000000-0000-4000-8000-000000000000","attempt_id":"f0000000-0000-4000-8000-000000000000","prose":"A complete conflicted find.","find":{"name":"Conflicted Find","description":"A complete find whose offer conflicts.","property":[],"trait":[]}}' discovery_request_conflict
+            jq -n '{status:"recovered",player_message:"That find cannot be completed as offered, so Mara returns to the full description before trying anew."}' >"$final" ;;
+    esac
+    printf '%s\n' '{"type":"turn.completed"}'
+    exit 0
+fi
 case "$count" in
     1)
         character_entity="$(jq -nc --arg id "$character_id" --arg user "$action_user" --arg marker "$marker" --argjson place "$place" '{entity:{id:$id,name:("Action Character "+$marker),description:("Disposable action Character for "+$marker),introduced_by_user_id:$user,introduced_at:"2026-08-11T12:01:00Z"},owner_user_id:$user,current_place:$place}')"
@@ -313,6 +395,7 @@ run_fake() {
     case "$operation" in
         preflight) operation='test-internal-preflight --confirm-fake-controller-test' ;;
         run) operation='test-internal-run --confirm-fake-controller-test' ;;
+        investigation) operation='test-internal-investigation-run --confirm-fake-controller-test' ;;
         *) fail "unknown internal fake operation: $operation" ;;
     esac
     PATH="$root/bin:$PATH" CODEX_BIN=codex-fake DATABASE_URL=postgres://fake/admin \
@@ -347,6 +430,64 @@ test_historical_property_catalog_snapshot() {
         and (map(select(.name=="submit_interaction"))[0].description
             | contains("control-like key or value"))
     ' "$catalog" >/dev/null || fail 'frozen historical catalog lacks the exact Property-era contract'
+}
+
+test_investigation_fake_contract() {
+    local root="$TEST_TMP/investigation" manifest run_dir trace mode mutated session_id
+    make_fakes "$root"
+    run_fake "$root" investigation-happy investigation
+    manifest="$(latest_manifest "$root")"
+    run_dir="$(dirname "$manifest")"
+    trace="$run_dir/investigation-trace.json"
+    jq -e '.evidence_kind=="fake_controller_test" and .run_status=="fake_completed"
+        and .codex_invoked==false and .model_calls==0
+        and .cleanup.status=="dropped" and .deployment.status=="dropped"
+        and .frozen.sessions==5 and .frozen.process_calls==7
+        and (.frozen.token_boundary|startswith("zero paid model calls;"))
+        and .provisioning.action_user != .provisioning.observer_user
+        and .phases.investigation_contract=={status:"passed",processes:7}
+        and .validation=={status:"passed",fake_investigation_contract:true}' "$manifest" >/dev/null
+    [[ "$(<"$root/state/codex-exec-count")" == 7 ]] || fail 'investigation fake did not run exactly seven isolated phases'
+    for call in 1 2 3 4 5 6 7; do
+        assert_not_contains "$root/state/call-$call/environment" 'DATABASE_URL='
+        assert_not_contains "$root/state/call-$call/environment" 'AICADIA_DATABASE_NAME='
+        [[ "$(<"$root/state/call-$call/cwd")" != "$REPO_DIR" ]] || fail 'investigation Agent ran in repository'
+    done
+    assert_contains "$root/state/call-1/prompt" 'stop without discovery'
+    assert_contains "$root/state/call-2/prompt" 'after positive re-read'
+    assert_contains "$root/state/call-3/prompt" 'explicitly confirms this exact complete discovery package'
+    session_id="$(jq -sr '[.[]|select(.type=="thread.started")|.thread_id][0]' "$run_dir/investigation-zero.events.jsonl")"
+    assert_contains "$root/state/call-2/argv" 'resume'
+    assert_contains "$root/state/call-2/argv" "$session_id"
+    assert_contains "$root/state/call-3/argv" 'resume'
+    assert_contains "$root/state/call-3/argv" "$session_id"
+    assert_contains "$root/state/call-6/prompt" 'infer no reason'
+    assert_contains "$root/state/database-actions" 'create-attempt aicadia_playtest_'
+    assert_contains "$root/state/database-actions" 'drop-attempt aicadia_playtest_'
+    for mode in start-before-ground zero-submits stale-positive unconfirmed changed-retry \
+        null-preview-property changed-accepted-trait changed-observer-state leaked-mechanics \
+        fallback-authority background-trigger missing-observer recovery-retry; do
+        mutated="$root/$mode.json"
+        case "$mode" in
+            start-before-ground) jq '.zero.calls[0:2] |= reverse' "$trace" >"$mutated" ;;
+            zero-submits) jq '.zero.calls += [.positive.calls[10]]' "$trace" >"$mutated" ;;
+            stale-positive) jq 'del(.positive.calls[8])' "$trace" >"$mutated" ;;
+            unconfirmed) jq '.positive.confirmation.explicit=false' "$trace" >"$mutated" ;;
+            changed-retry) jq '.positive.calls[11].arguments.prose="Changed after confirmation."' "$trace" >"$mutated" ;;
+            null-preview-property) jq '.positive.preview.find.property=[null] | .positive.confirmation.package.find.property=[null] | .positive.calls[10:12][].arguments.find.property=[null]' "$trace" >"$mutated" ;;
+            changed-accepted-trait) jq '.positive.calls[10:12][].result.activity.trait_change[0].trait.statement="Changed after confirmation."' "$trace" >"$mutated" ;;
+            changed-observer-state) jq '.positive.observer_calls[2].result.current_state.association[0].property.value.text="changed"' "$trace" >"$mutated" ;;
+            leaked-mechanics) jq '.recovery.unavailable.player_message="The attempt id was rejected by the server."' "$trace" >"$mutated" ;;
+            fallback-authority) jq '.fallback_authority=true' "$trace" >"$mutated" ;;
+            background-trigger) jq '.background_trigger=true' "$trace" >"$mutated" ;;
+            missing-observer) jq '.positive.observer_calls[3].result.activity=[]' "$trace" >"$mutated" ;;
+            recovery-retry) jq '.recovery.admission.calls += [.recovery.admission.calls[4]]' "$trace" >"$mutated" ;;
+        esac
+        if AICADIA_PLAYTEST_TEST_MODE=fake "$RUNNER" test-internal-investigation-contract \
+            --confirm-fake-controller-test "$mutated"; then
+            fail "investigation contract mutation $mode unexpectedly passed"
+        fi
+    done
 }
 
 test_no_token_preflight() {
@@ -548,6 +689,7 @@ test_failure_paths() {
 }
 
 test_historical_property_catalog_snapshot
+test_investigation_fake_contract
 test_no_token_preflight
 test_forbidden_schema_keyword_fails_before_codex
 test_cli_drift_fails_closed

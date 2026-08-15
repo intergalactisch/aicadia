@@ -12,6 +12,7 @@ readonly SOURCE_CODEX_HOME="$TEST_ROOT/source-codex-home"
 readonly DATABASE_NAME="aicadia_local_test_${$}_$(date +%s)"
 readonly PORT="$((43000 + ($$ % 10000)))"
 readonly SECOND_PORT="$((PORT + 1))"
+readonly INVESTIGATION_REQUEST_ID='99999999-9999-4999-8999-999999999999'
 LAUNCHER_PID=''
 DATABASE_CLEANUP_ARMED=0
 
@@ -34,7 +35,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for dependency in psql dropdb curl jq lsof cargo; do
+for dependency in psql dropdb curl jq lsof cargo cmp; do
     command -v "$dependency" >/dev/null 2>&1 || fail "missing test dependency: $dependency"
 done
 
@@ -141,6 +142,13 @@ user_count() {
         --command "\\connect \"$DATABASE_NAME\"" --command 'SELECT count(*) FROM "user"'
 }
 
+investigation_attempt_count() {
+    local user_id="$1"
+    psql "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+        --command "\\connect \"$DATABASE_NAME\"" \
+        --command "SELECT count(*) FROM investigation_attempt WHERE requested_by_user_id = '$user_id' AND request_id = '$INVESTIGATION_REQUEST_ID'"
+}
+
 first_stdout="$TEST_ROOT/first.stdout"
 first_stderr="$TEST_ROOT/first.stderr"
 start_launcher "$first_stdout" "$first_stderr"
@@ -224,6 +232,33 @@ served_contract="$(curl --silent --fail \
 [[ "${contract_argument#developer_instructions=}" == "$served_contract" ]] \
     || fail 'Agent developer instructions differ from the served player contract'
 
+character_body='{"name":"Restart Investigator","description":"A disposable Character for restart-safe investigation evidence."}'
+character_status="$(curl --silent --show-error --output "$TEST_ROOT/investigation-character.json" \
+    --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' \
+    --header "Aicadia-User-Id: $first_user_id" --data "$character_body" \
+    "http://127.0.0.1:$PORT/api/character")"
+[[ "$character_status" == 201 ]] || fail "investigation Character setup returned HTTP $character_status"
+place_body='{"name":"Restart Moor","description":"A disposable Place for restart-safe investigation evidence."}'
+place_status="$(curl --silent --show-error --output "$TEST_ROOT/investigation-place.json" \
+    --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' \
+    --header "Aicadia-User-Id: $first_user_id" --data "$place_body" \
+    "http://127.0.0.1:$PORT/api/place/entry")"
+[[ "$place_status" == 201 ]] || fail "investigation Place setup returned HTTP $place_status"
+enter_status="$(curl --silent --show-error --output "$TEST_ROOT/investigation-enter.json" \
+    --write-out '%{http_code}' --request POST --header "Aicadia-User-Id: $first_user_id" \
+    "http://127.0.0.1:$PORT/api/world/entry")"
+[[ "$enter_status" == 200 ]] || fail "investigation entry setup returned HTTP $enter_status"
+investigation_body="$(jq -nc --arg request_id "$INVESTIGATION_REQUEST_ID" '{request_id:$request_id}')"
+investigation_status="$(curl --silent --show-error --output "$TEST_ROOT/investigation-before-restart.json" \
+    --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' \
+    --header "Aicadia-User-Id: $first_user_id" --data "$investigation_body" \
+    "http://127.0.0.1:$PORT/api/investigation")"
+[[ "$investigation_status" == 200 ]] || fail "initial investigation returned HTTP $investigation_status"
+jq -e '.outcome=="zero" or .outcome=="positive"' "$TEST_ROOT/investigation-before-restart.json" >/dev/null \
+    || fail 'initial investigation did not return one accepted outcome'
+[[ "$(investigation_attempt_count "$first_user_id" | tail -1)" == 1 ]] \
+    || fail 'initial investigation did not persist exactly one attempt'
+
 if "${launcher_env[@]}" "AICADIA_USER_ID=$first_user_id" "AICADIA_PORT=$SECOND_PORT" \
     "TMPDIR=$agent_tmp" "AICADIA_AGENT_FAKE_RECORD_DIR=$agent_record_dir" \
     "$AGENT" >"$TEST_ROOT/agent-unavailable.stdout" 2>"$TEST_ROOT/agent-unavailable.stderr"; then
@@ -270,6 +305,17 @@ verified_user="$(curl --silent --show-error --header "Aicadia-User-Id: $first_us
     "http://127.0.0.1:$PORT/api/user")"
 jq -e --arg id "$first_user_id" '.id == $id' <<<"$verified_user" >/dev/null \
     || fail 'restart did not expose the profiled User'
+investigation_retry_status="$(curl --silent --show-error --output "$TEST_ROOT/investigation-after-restart.json" \
+    --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' \
+    --header "Aicadia-User-Id: $first_user_id" --data "$investigation_body" \
+    "http://127.0.0.1:$PORT/api/investigation")"
+[[ "$investigation_retry_status" == 200 ]] || fail "restart investigation retry returned HTTP $investigation_retry_status"
+jq -S -c . "$TEST_ROOT/investigation-before-restart.json" >"$TEST_ROOT/investigation-before-restart.canonical.json"
+jq -S -c . "$TEST_ROOT/investigation-after-restart.json" >"$TEST_ROOT/investigation-after-restart.canonical.json"
+cmp -s "$TEST_ROOT/investigation-before-restart.canonical.json" "$TEST_ROOT/investigation-after-restart.canonical.json" \
+    || fail 'restart changed the stored investigation retry result'
+[[ "$(investigation_attempt_count "$first_user_id" | tail -1)" == 1 ]] \
+    || fail 'restart investigation retry inserted another attempt'
 
 occupied_stdout="$TEST_ROOT/occupied.stdout"
 occupied_stderr="$TEST_ROOT/occupied.stderr"
@@ -316,6 +362,7 @@ printf 'aicadia-local lifecycle: passed\n'
 printf 'database=%s\n' "$DATABASE_NAME"
 printf 'user_id=%s\n' "$first_user_id"
 printf 'restart_user_id=%s\n' "$second_user_id"
+printf 'restart_investigation_retry_identical=true\n'
 printf 'normal_stop_preserved_database=true\n'
 printf 'missing_profile_failed_closed=true\n'
 printf 'concurrent_launch_failed_closed=true\n'
