@@ -11,7 +11,21 @@ impl From<ErrorOutput> for HttpError {
 
 impl IntoResponse for HttpError {
     fn into_response(self) -> Response {
+        // Exhaustive on purpose: a new ErrorCode without a published status stops
+        // compiling here instead of silently defaulting to 400.
         let status = match self.0.error.code {
+            ErrorCode::UserContextRequired
+            | ErrorCode::InvalidRequest
+            | ErrorCode::InvalidEntity
+            | ErrorCode::InvalidCharacter
+            | ErrorCode::InvalidPlace
+            | ErrorCode::InvalidAction
+            | ErrorCode::InvalidInteraction
+            | ErrorCode::InvalidDiscovery
+            | ErrorCode::InvalidProperty
+            | ErrorCode::InvalidTrait
+            | ErrorCode::InvalidEntityLimit
+            | ErrorCode::InvalidActivityLimit => StatusCode::BAD_REQUEST,
             ErrorCode::UserNotFound
             | ErrorCode::EntityNotFound
             | ErrorCode::CharacterNotFound
@@ -32,7 +46,6 @@ impl IntoResponse for HttpError {
             ErrorCode::PlaceRevisionConflict => StatusCode::PRECONDITION_FAILED,
             ErrorCode::InvestigationNotAdmitted => StatusCode::TOO_MANY_REQUESTS,
             ErrorCode::Unavailable => StatusCode::SERVICE_UNAVAILABLE,
-            _ => StatusCode::BAD_REQUEST,
         };
         (status, HttpJson(self.0)).into_response()
     }

@@ -253,10 +253,10 @@ validate_investigation_fake_contract() {
             $call.tool == "start_investigation"
             and ($call.arguments | keys) == ["request_id"]
             and ($call.arguments.request_id | uuid)
-            and ($call.result | keys | sort) == ["attempt_id", "limits", "outcome"]
+            and ($call.result | keys | sort) == ["attempt_id", "limit", "outcome"]
             and ($call.result.attempt_id | uuid)
             and $call.result.outcome == $outcome
-            and $call.result.limits == {result_count:1, kind:"entity_at_current_place"};
+            and $call.result.limit == {result_count:1, kind:"entity_at_current_place"};
         def recovery($entry; $tool; $code):
             ($entry.calls | length) == 1
             and $entry.calls[0].authority == "aicadia"

@@ -147,62 +147,79 @@ fn list_limit_representation_is_parsed_before_world_validation() {
 
 #[test]
 fn error_codes_have_one_compiler_checked_wire_spelling() {
-    let code = [
-        (ErrorCode::UserContextRequired, "user_context_required"),
-        (ErrorCode::InvalidRequest, "invalid_request"),
-        (ErrorCode::InvalidEntity, "invalid_entity"),
-        (ErrorCode::InvalidCharacter, "invalid_character"),
-        (ErrorCode::InvalidPlace, "invalid_place"),
-        (ErrorCode::InvalidAction, "invalid_action"),
-        (ErrorCode::InvalidInteraction, "invalid_interaction"),
-        (ErrorCode::InvalidProperty, "invalid_property"),
-        (ErrorCode::InvalidTrait, "invalid_trait"),
-        (ErrorCode::InvalidEntityLimit, "invalid_entity_limit"),
-        (ErrorCode::InvalidActivityLimit, "invalid_activity_limit"),
-        (ErrorCode::UserNotFound, "user_not_found"),
-        (ErrorCode::EntityNotFound, "entity_not_found"),
-        (ErrorCode::CharacterNotFound, "character_not_found"),
-        (
-            ErrorCode::CharacterAlreadyExists,
-            "character_already_exists",
-        ),
-        (
-            ErrorCode::CharacterAlreadyEntered,
-            "character_already_entered",
-        ),
-        (ErrorCode::CharacterNotEntered, "character_not_entered"),
-        (
-            ErrorCode::EntryPlaceAlreadyExists,
-            "entry_place_already_exists",
-        ),
-        (ErrorCode::EntryPlaceNotFound, "entry_place_not_found"),
-        (ErrorCode::ActionRequestConflict, "action_request_conflict"),
-        (
-            ErrorCode::InteractionRequestConflict,
-            "interaction_request_conflict",
-        ),
-        (
-            ErrorCode::InteractionTargetUnavailable,
-            "interaction_target_unavailable",
-        ),
-        (
-            ErrorCode::PropertyEntityUnavailable,
-            "property_entity_unavailable",
-        ),
-        (
-            ErrorCode::EntityAtCurrentPlaceUnavailable,
-            "entity_at_current_place_unavailable",
-        ),
-        (ErrorCode::TraitUnavailable, "trait_unavailable"),
-        (ErrorCode::PropertyKeyConflict, "property_key_conflict"),
-        (ErrorCode::PlaceRevisionConflict, "place_revision_conflict"),
-        (ErrorCode::Unavailable, "unavailable"),
-    ];
-
-    for (code, expected) in code {
+    for code in [
+        ErrorCode::UserContextRequired,
+        ErrorCode::InvalidRequest,
+        ErrorCode::InvalidEntity,
+        ErrorCode::InvalidCharacter,
+        ErrorCode::InvalidPlace,
+        ErrorCode::InvalidAction,
+        ErrorCode::InvalidInteraction,
+        ErrorCode::InvalidDiscovery,
+        ErrorCode::InvalidProperty,
+        ErrorCode::InvalidTrait,
+        ErrorCode::InvalidEntityLimit,
+        ErrorCode::InvalidActivityLimit,
+        ErrorCode::UserNotFound,
+        ErrorCode::EntityNotFound,
+        ErrorCode::CharacterNotFound,
+        ErrorCode::CharacterAlreadyExists,
+        ErrorCode::CharacterAlreadyEntered,
+        ErrorCode::CharacterNotEntered,
+        ErrorCode::EntryPlaceAlreadyExists,
+        ErrorCode::EntryPlaceNotFound,
+        ErrorCode::ActionRequestConflict,
+        ErrorCode::InteractionRequestConflict,
+        ErrorCode::DiscoveryRequestConflict,
+        ErrorCode::DiscoveryAttemptUnavailable,
+        ErrorCode::InteractionTargetUnavailable,
+        ErrorCode::PropertyEntityUnavailable,
+        ErrorCode::EntityAtCurrentPlaceUnavailable,
+        ErrorCode::TraitUnavailable,
+        ErrorCode::PropertyKeyConflict,
+        ErrorCode::PlaceRevisionConflict,
+        ErrorCode::InvestigationNotAdmitted,
+        ErrorCode::Unavailable,
+    ] {
+        // Exhaustive on purpose: a new ErrorCode without a published spelling
+        // stops compiling here instead of shipping as an unproven public code.
+        let spelling = match code {
+            ErrorCode::UserContextRequired => "user_context_required",
+            ErrorCode::InvalidRequest => "invalid_request",
+            ErrorCode::InvalidEntity => "invalid_entity",
+            ErrorCode::InvalidCharacter => "invalid_character",
+            ErrorCode::InvalidPlace => "invalid_place",
+            ErrorCode::InvalidAction => "invalid_action",
+            ErrorCode::InvalidInteraction => "invalid_interaction",
+            ErrorCode::InvalidDiscovery => "invalid_discovery",
+            ErrorCode::InvalidProperty => "invalid_property",
+            ErrorCode::InvalidTrait => "invalid_trait",
+            ErrorCode::InvalidEntityLimit => "invalid_entity_limit",
+            ErrorCode::InvalidActivityLimit => "invalid_activity_limit",
+            ErrorCode::UserNotFound => "user_not_found",
+            ErrorCode::EntityNotFound => "entity_not_found",
+            ErrorCode::CharacterNotFound => "character_not_found",
+            ErrorCode::CharacterAlreadyExists => "character_already_exists",
+            ErrorCode::CharacterAlreadyEntered => "character_already_entered",
+            ErrorCode::CharacterNotEntered => "character_not_entered",
+            ErrorCode::EntryPlaceAlreadyExists => "entry_place_already_exists",
+            ErrorCode::EntryPlaceNotFound => "entry_place_not_found",
+            ErrorCode::ActionRequestConflict => "action_request_conflict",
+            ErrorCode::InteractionRequestConflict => "interaction_request_conflict",
+            ErrorCode::DiscoveryRequestConflict => "discovery_request_conflict",
+            ErrorCode::DiscoveryAttemptUnavailable => "discovery_attempt_unavailable",
+            ErrorCode::InteractionTargetUnavailable => "interaction_target_unavailable",
+            ErrorCode::PropertyEntityUnavailable => "property_entity_unavailable",
+            ErrorCode::EntityAtCurrentPlaceUnavailable => "entity_at_current_place_unavailable",
+            ErrorCode::TraitUnavailable => "trait_unavailable",
+            ErrorCode::PropertyKeyConflict => "property_key_conflict",
+            ErrorCode::PlaceRevisionConflict => "place_revision_conflict",
+            ErrorCode::InvestigationNotAdmitted => "investigation_not_admitted",
+            ErrorCode::Unavailable => "unavailable",
+        };
         assert_eq!(
             serde_json::to_value(code).expect("error code should serialize"),
-            serde_json::json!(expected)
+            serde_json::json!(spelling)
         );
     }
 }

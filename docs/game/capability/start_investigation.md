@@ -24,32 +24,31 @@ struct StartInvestigation {
 struct InvestigationResult {
     attempt_id: Uuid,
     outcome: InvestigationOutcome, // Zero | Positive
-    limits: InvestigationLimits,
+    limit: InvestigationLimit,
 }
 
-struct InvestigationLimits {
+struct InvestigationLimit {
     result_count: u8, // exactly 1
     kind: DiscoveryKind, // EntityAtCurrentPlace
 }
 ```
 
 Input accepts no User, Character, Place, focus, prose, seed, odds, result count or
-retry count. World derives the User's Character and exact current Place. A missing
-Character returns `character_not_found`; an unplaced Character returns
-`character_not_entered`.
+retry count. World derives the User's Character and exact current Place.
 
 Under the User lock, World first resolves an existing
 `(requested_by_user_id, request_id)` attempt. Otherwise it uses PostgreSQL time to
-apply the bounded per-User admission window, reads only the last 48 Activities at
-the exact Place, resolves one server-authoritative chance roll and stores one
-`zero` or `positive` attempt. A rejected admission stores nothing and performs no
-roll. At most 12 new attempts are admitted in one inclusive rolling hour. Only a
-newly inserted positive attempt can cause the oldest live positive to be voided when
-more than three exist. The candidate must be a prior live positive with
-`id <> new_attempt_id`; the new attempt never voids itself. Those thresholds are
-operational facts, never player-visible mechanics or inputs.
+apply the bounded per-User rolling-hour admission window, reads only a bounded tail
+of Activities at the exact Place, resolves one server-authoritative chance roll and
+stores one `zero` or `positive` attempt. A rejected admission stores nothing and
+performs no roll. Only a newly inserted positive attempt can cause the oldest live
+positive to be voided once the per-User live-positive bound is exceeded; the
+candidate must be a prior live positive with `id <> new_attempt_id`, so the new
+attempt never voids itself. Every window, admission and chance value is owned by
+[Domain contract](../domain.md#investigation-chance-and-admission) and stays an
+operational fact, never a player-visible mechanic or input.
 
-The returned attempt id, stored outcome and immutable limits are the complete
+The returned attempt id, stored outcome and immutable limit are the complete
 result. They contain no mutable Place context, counts, odds, server prose, seed or
 semantic discovery direction. A positive permits at most one found Entity at that
 attempt's Place. `result_count` is that positive-attempt cap, not the number of finds
@@ -64,13 +63,23 @@ create an Entity, Activity or current state.
 }
 ```
 
+## Validation
+
+A missing Character returns `character_not_found` and an unplaced Character returns
+`character_not_entered`; a full per-User admission window returns
+`investigation_not_admitted` before any roll and stores nothing. Admission and chance
+values are owned by [Domain
+contract](../domain.md#investigation-chance-and-admission), canonical errors by
+[Protocol contract](../protocol.md#canonical-errors) and start retry identity by
+[Protocol contract](../protocol.md#investigation-retry-identity).
+
 ## Result
 
 ```json
 {
   "attempt_id": "27bb3450-4159-462f-bd9b-ce5617ceef21",
   "outcome": "positive",
-  "limits": {
+  "limit": {
     "result_count": 1,
     "kind": "entity_at_current_place"
   }

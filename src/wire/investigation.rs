@@ -50,7 +50,7 @@ impl From<DiscoveryKind> for DiscoveryKindOutput {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
-pub struct InvestigationLimitsOutput {
+pub struct InvestigationLimitOutput {
     /// Maximum number of results permitted by a positive attempt; exactly one.
     #[schemars(range(min = 1, max = 1))]
     #[schema(minimum = 1, maximum = 1)]
@@ -59,8 +59,8 @@ pub struct InvestigationLimitsOutput {
     pub kind: DiscoveryKindOutput,
 }
 
-impl From<InvestigationLimits> for InvestigationLimitsOutput {
-    fn from(value: InvestigationLimits) -> Self {
+impl From<InvestigationLimit> for InvestigationLimitOutput {
+    fn from(value: InvestigationLimit) -> Self {
         Self {
             result_count: value.result_count,
             kind: value.kind.into(),
@@ -77,7 +77,7 @@ pub struct InvestigationResultOutput {
     /// Server-resolved result of this investigation attempt.
     pub outcome: InvestigationOutcomeOutput,
     /// Immutable bounds on what a positive attempt permits.
-    pub limits: InvestigationLimitsOutput,
+    pub limit: InvestigationLimitOutput,
 }
 
 impl From<InvestigationResult> for InvestigationResultOutput {
@@ -85,7 +85,7 @@ impl From<InvestigationResult> for InvestigationResultOutput {
         Self {
             attempt_id: value.attempt_id.0,
             outcome: value.outcome.into(),
-            limits: value.limits.into(),
+            limit: value.limit.into(),
         }
     }
 }

@@ -76,6 +76,4 @@ the current combined Property/Trait MCP call after explicit confirmation.
 ## Boundary
 
 No discovery, movement, new Place, Trait mechanic, score, generic patch operation,
-new relation, background writer or server-side inference is delivered. Discovery
-returns to the planning horizon as `Now / Proposed`; this delivery does not accept
-or implement its draft.
+new relation, background writer or server-side inference is delivered.

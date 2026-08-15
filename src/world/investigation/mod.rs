@@ -41,7 +41,6 @@ impl World {
             "start_investigation",
         )
         .await?;
-        let probability = ChancePolicy::probability(discovery_count);
         let draw = self.chance.draw().map_err(|()| {
             eprintln!(
                 "{}",
@@ -55,14 +54,7 @@ impl World {
             );
             WorldError::Unavailable
         })?;
-        if !(0.0..1.0).contains(&draw) {
-            return Err(WorldError::Unavailable);
-        }
-        let outcome = if draw < probability {
-            InvestigationOutcome::Positive
-        } else {
-            InvestigationOutcome::Zero
-        };
+        let outcome = ChancePolicy::resolve(discovery_count, draw);
         let result = attempt::insert_attempt(
             &mut transaction,
             user_id,
@@ -106,7 +98,7 @@ impl World {
         let Some(place) = character.current_place.clone() else {
             return Err(WorldError::DiscoveryAttemptUnavailable);
         };
-        let available_place = attempt::available_place(
+        if attempt::available_place(
             &mut transaction,
             input.attempt_id,
             user_id,
@@ -114,8 +106,9 @@ impl World {
             place.entity.id,
             "submit_discovery",
         )
-        .await?;
-        if available_place != Some(place.entity.id) {
+        .await?
+        .is_none()
+        {
             return Err(WorldError::DiscoveryAttemptUnavailable);
         }
         lock_place(&mut transaction, place.entity.id, "submit_discovery").await?;

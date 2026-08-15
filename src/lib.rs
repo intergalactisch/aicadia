@@ -14,7 +14,7 @@ pub use world::{
     EntityField, EntityId, EntityPage, EntityPropertyChange, EntityPropertyChangeInput,
     EntitySummary, EntityTrait, EntityTraitChangeInput, EntityTraitId, GetEntityAtCurrentPlace,
     GetEntityCurrentState, InteractionField, IntroduceEntity, InvalidReason,
-    InvestigationAttemptId, InvestigationLimits, InvestigationOutcome, InvestigationResult,
+    InvestigationAttemptId, InvestigationLimit, InvestigationOutcome, InvestigationResult,
     ListActivity, ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace, Place,
     PlaceRevision, PlaceSummary, PropertyField, PropertyInput, PropertyValue, StartInvestigation,
     SubmitAction, SubmitDiscovery, SubmitInteraction, TraitInput, User, UserId, World, WorldError,

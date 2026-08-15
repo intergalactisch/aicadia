@@ -7,8 +7,8 @@ use tokio::{net::TcpListener, task::JoinHandle};
 use uuid::Uuid;
 
 use crate::{
-    CreateCharacter, CreateEntryPlace, PropertyInput, PropertyValue, TraitInput, UserId,
-    wire::DiscoveryFindInput,
+    CreateCharacter, CreateEntity, CreateEntryPlace, PropertyInput, PropertyValue, TraitInput,
+    UserId, wire::DiscoveryFindInput,
 };
 
 struct TestServer {
@@ -62,6 +62,18 @@ impl TestServer {
             .unwrap();
         assert_eq!(response.status(), ClientStatus::OK);
         response.json().await.unwrap()
+    }
+
+    async fn post(&self, path: &str, body: &Value, user_id: UserId) -> (ClientStatus, Value) {
+        let response = self
+            .client
+            .post(format!("{}{path}", self.base_url))
+            .header(USER_CONTEXT_HEADER, user_id.0.to_string())
+            .json(body)
+            .send()
+            .await
+            .unwrap();
+        (response.status(), response.json().await.unwrap())
     }
 }
 
@@ -127,10 +139,35 @@ fn structured(response: &Value) -> &Value {
     &response["result"]["structuredContent"]
 }
 
-fn mcp_error_code(response: &Value) -> String {
+fn mcp_error(response: &Value) -> Value {
     let text = response["result"]["content"][0]["text"].as_str().unwrap();
-    let error: Value = serde_json::from_str(text).unwrap();
-    error["error"]["code"].as_str().unwrap().to_owned()
+    serde_json::from_str(text).unwrap()
+}
+
+fn mcp_error_code(response: &Value) -> String {
+    mcp_error(response)["error"]["code"]
+        .as_str()
+        .unwrap()
+        .to_owned()
+}
+
+/// Rejects one discovery body on both adapters and proves they publish the same
+/// status class and the byte-equal error envelope.
+async fn assert_discovery_rejected(
+    server: &TestServer,
+    actor: UserId,
+    body: Value,
+    expected_status: ClientStatus,
+    expected_code: &str,
+) {
+    let (status, http) = server.post("/api/discovery", &body, actor).await;
+    assert_eq!(
+        status, expected_status,
+        "unexpected discovery status: {http}"
+    );
+    assert_eq!(http["error"]["code"], expected_code);
+    let mcp = server.tool("submit_discovery", body, actor).await;
+    assert_eq!(mcp_error(&mcp), http);
 }
 
 #[sqlx::test(migrations = "./migration")]
@@ -151,7 +188,7 @@ async fn deterministic_http_and_mcp_share_start_submit_retry_and_observer_result
     let zero: Value = response.json().await.unwrap();
     assert_eq!(zero["outcome"], "zero");
     assert_eq!(
-        zero["limits"],
+        zero["limit"],
         json!({"result_count": 1, "kind": "entity_at_current_place"})
     );
     let zero_retry = server
@@ -347,6 +384,133 @@ async fn investigation_http_maps_admission_and_entropy_unavailable(pool: PgPool)
         )
         .await;
     assert_eq!(mcp_error_code(&unavailable), "unavailable");
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn http_and_mcp_share_every_published_discovery_rejection(pool: PgPool) {
+    let (world, actor, _observer) = entered_world(pool, vec![0.0]).await;
+    world
+        .create_entity(
+            actor,
+            CreateEntity {
+                name: "Survey Marker".to_owned(),
+                description: "A notched post left by an earlier survey.".to_owned(),
+                property: vec![PropertyInput {
+                    key: "measure".to_owned(),
+                    value: PropertyValue::Integer(2),
+                }],
+                r#trait: Vec::new(),
+            },
+        )
+        .await
+        .unwrap();
+    let server = TestServer::start(world).await;
+
+    let started = server
+        .tool(
+            "start_investigation",
+            json!({"request_id": Uuid::new_v4()}),
+            actor,
+        )
+        .await;
+    let started = structured(&started).clone();
+    assert_eq!(started["outcome"], "positive");
+    let attempt_id = started["attempt_id"].clone();
+
+    let empty_prose = discovery(Uuid::new_v4(), &attempt_id, "   ");
+    assert_discovery_rejected(
+        &server,
+        actor,
+        empty_prose,
+        ClientStatus::BAD_REQUEST,
+        "invalid_discovery",
+    )
+    .await;
+
+    let mut empty_name = discovery(Uuid::new_v4(), &attempt_id, "Mara finds nothing nameable.");
+    empty_name["find"]["name"] = json!("   ");
+    assert_discovery_rejected(
+        &server,
+        actor,
+        empty_name,
+        ClientStatus::BAD_REQUEST,
+        "invalid_entity",
+    )
+    .await;
+
+    let mut bad_key = discovery(
+        Uuid::new_v4(),
+        &attempt_id,
+        "Mara finds an unnameable quality.",
+    );
+    bad_key["find"]["property"][0]["key"] = json!("Colour");
+    assert_discovery_rejected(
+        &server,
+        actor,
+        bad_key,
+        ClientStatus::BAD_REQUEST,
+        "invalid_property",
+    )
+    .await;
+
+    let mut empty_statement = discovery(Uuid::new_v4(), &attempt_id, "Mara finds a silent cup.");
+    empty_statement["find"]["trait"][0]["statement"] = json!("   ");
+    assert_discovery_rejected(
+        &server,
+        actor,
+        empty_statement,
+        ClientStatus::BAD_REQUEST,
+        "invalid_trait",
+    )
+    .await;
+
+    let mut key_conflict = discovery(Uuid::new_v4(), &attempt_id, "Mara finds a contradiction.");
+    key_conflict["find"]["property"][0] =
+        json!({"key": "measure", "value": {"type": "text", "text": "two"}});
+    assert_discovery_rejected(
+        &server,
+        actor,
+        key_conflict,
+        ClientStatus::CONFLICT,
+        "property_key_conflict",
+    )
+    .await;
+
+    let request_id = Uuid::new_v4();
+    let accepted_body = discovery(
+        request_id,
+        &attempt_id,
+        "Mara parts the reeds and finds rainbell cups.",
+    );
+    let (status, accepted) = server.post("/api/discovery", &accepted_body, actor).await;
+    assert_eq!(
+        status,
+        ClientStatus::CREATED,
+        "unexpected acceptance: {accepted}"
+    );
+    let (status, retried) = server.post("/api/discovery", &accepted_body, actor).await;
+    assert_eq!(status, ClientStatus::CREATED, "unexpected retry: {retried}");
+    assert_eq!(retried, accepted);
+
+    let changed = discovery(request_id, &attempt_id, "Changed prose.");
+    assert_discovery_rejected(
+        &server,
+        actor,
+        changed,
+        ClientStatus::CONFLICT,
+        "discovery_request_conflict",
+    )
+    .await;
+
+    let consumed = discovery(Uuid::new_v4(), &attempt_id, "Mara reuses a spent attempt.");
+    assert_discovery_rejected(
+        &server,
+        actor,
+        consumed,
+        ClientStatus::CONFLICT,
+        "discovery_attempt_unavailable",
+    )
+    .await;
 }
 
 #[test]

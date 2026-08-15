@@ -83,8 +83,8 @@ Indexes exist only for current behavior:
 - partial `activity(actor_character_entity_id, occurred_at DESC, id DESC)` and
   `activity_entity(entity_id, activity_id)` serve personal and Place history;
 - partial `activity(context_place_entity_id, occurred_at DESC, id DESC) WHERE
-  context_place_entity_id IS NOT NULL` serves the bounded last-48 exact-Place chance
-  window without scanning a hot Place's complete history;
+  context_place_entity_id IS NOT NULL` serves the bounded exact-Place chance window
+  without scanning a hot Place's complete history;
 - partial unique `activity(requested_by_user_id, request_id) WHERE request_id IS NOT
   NULL` serves accepted Action, Interaction and discovery retry lookup; fingerprints are
   exactly 32 bytes;
@@ -157,11 +157,12 @@ payload.
 
 Start locks only the responsible User. It resolves retry first, then uses one
 PostgreSQL `statement_timestamp()` for both the inclusive one-hour boundary and the
-new row's `created_at`. At most 12 new attempts are admitted in that window. Chance
-reads at most the last 48 Activities at the derived Place. After insertion, only a
-new positive beyond three live positives voids the oldest prior live positive with
+new row's `created_at`. Admission caps new attempts inside that window, and chance
+reads only a bounded tail of Activities at the derived Place. After insertion, only a
+new positive beyond the live-positive bound voids the oldest prior live positive with
 `id <> new_attempt_id`, ordered by `(created_at ASC, id ASC)`, and records the
 now-existing new attempt in `voided_by_attempt_id`. Zero never voids another attempt.
+Each bound is owned by [Domain contract](domain.md#investigation-chance-and-admission).
 These are per-User and per-Place access paths; no global row, lock or counter exists.
 
 The migration extends the closed `activity.operation` check and prose/request

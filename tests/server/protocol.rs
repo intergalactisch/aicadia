@@ -302,6 +302,52 @@ async fn catalog_exposes_exactly_the_fifteen_player_capabilities(pool: PgPool) {
     assert_eq!(status, StatusCode::FORBIDDEN);
 }
 
+/// Rewrites the pinned catalog from the live runtime after an accepted contract
+/// change. It is ignored on purpose: run it explicitly, review the resulting
+/// `git diff tests/agent-tool-catalog.json`, then let the pin test above prove the
+/// new publication. It uses `jq` (already required by the shell suites) so the
+/// runtime key order is preserved exactly as the fixture stores it.
+#[sqlx::test(migrations = "./migration")]
+#[ignore = "rewrites tests/agent-tool-catalog.json; run explicitly after an accepted contract change"]
+async fn regenerate_agent_tool_catalog_fixture(pool: PgPool) {
+    let server = TestServer::start(World::new(pool)).await;
+    let response = server
+        .mcp_raw_response(
+            json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/list",
+                "params": {"_meta": request_meta()},
+            }),
+            &[
+                ("MCP-Protocol-Version", PROTOCOL_VERSION),
+                ("Mcp-Method", "tools/list"),
+                ("Origin", &server.origin),
+            ],
+        )
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let raw = response
+        .bytes()
+        .await
+        .expect("tools/list body should be readable");
+    let mut jq = std::process::Command::new("jq")
+        .arg(".result.tools")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("jq is required to regenerate the catalog fixture");
+    std::io::Write::write_all(jq.stdin.as_mut().expect("jq stdin should be open"), &raw)
+        .expect("tools/list bytes should reach jq");
+    let output = jq.wait_with_output().expect("jq should finish");
+    assert!(
+        output.status.success(),
+        "jq failed to extract .result.tools"
+    );
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/agent-tool-catalog.json");
+    std::fs::write(path, output.stdout).expect("catalog fixture should be writable");
+}
+
 #[sqlx::test(migrations = "./migration")]
 async fn current_mcp_remains_stateless_and_requires_per_request_metadata(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;

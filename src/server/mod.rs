@@ -1,30 +1,17 @@
-use std::{borrow::Cow, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     Json as HttpJson, Router,
-    extract::{Path, Query, State, rejection::JsonRejection, rejection::QueryRejection},
-    http::{HeaderMap, StatusCode, request::Parts},
-    response::{Html, IntoResponse, Response},
-    routing::{get, post},
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
 };
-use rmcp::{
-    ServerHandler,
-    handler::server::{router::tool::ToolRouter, tool::Extension, wrapper::Json},
-    model::{
-        CallToolResult, Implementation, JsonObject, ProtocolVersion, ServerCapabilities, ServerInfo,
-    },
-    tool, tool_handler, tool_router,
-    transport::streamable_http_server::{
-        StreamableHttpServerConfig, StreamableHttpService, session::never::NeverSessionManager,
-    },
+use rmcp::transport::streamable_http_server::{
+    StreamableHttpServerConfig, StreamableHttpService, session::never::NeverSessionManager,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, de::DeserializeOwned};
 use thiserror::Error;
-use utoipa::{OpenApi, openapi::OpenApi as OpenApiDocument};
 
 use crate::{
-    World, agent_contract,
+    World,
     wire::{
         AcceptedActionOutput, AcceptedDiscoveryOutput, AcceptedInteractionOutput,
         ActivityPageOutput, CharacterEntityStatePageOutput, CharacterOutput, CreateCharacterInput,
@@ -45,18 +32,6 @@ mod mcp;
 
 use error::{HttpError, user_context};
 use mcp::AicadiaMcp;
-
-const MCP_VERSION: &str = env!("CARGO_PKG_VERSION");
-const LEDGER_HTML: &str = include_str!("../../web/index.html");
-fn mcp_input_schema<T: JsonSchema + 'static>() -> Arc<JsonObject> {
-    rmcp::handler::server::common::schema_for_input::<T>()
-        .unwrap_or_else(|error| panic!("invalid fixed MCP input schema: {error}"))
-}
-
-#[derive(Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-#[schemars(deny_unknown_fields)]
-struct EmptyInput {}
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ServerError {

@@ -192,9 +192,9 @@ truth and create unearned snapshot machinery.
 The User reaccepted this stable response on 2026-08-15:
 
 ```text
-type: positive
+outcome: positive
 attempt_id: <opaque attempt authority>
-limits:
+limit:
   result_count: 1
   kind: entity_at_current_place
 ```
@@ -407,6 +407,15 @@ plan](../../.agents/plans/20260814-204007-first-investigation-discovery-loop/pla
 retains the dependency-ordered execution boundary.
 
 ## Prototype under evaluation
+
+### Lab framing — superseded on 2026-08-15
+
+The lab's scope-bound parallelism, its forced zero/one/two result selector and its
+"a decision is earned only after a verdict" framing are superseded by the delivered
+contract: an investigation binds no revision or scope, a positive attempt permits
+exactly one result, and the loop is decided and built rather than awaiting hands-on
+evaluation. The [game contract](../game/README.md) owns the current rules. The
+original evaluation text is kept here as history:
 
 The self-contained [discovery roll lab](discovery-roll-prototype.html) tests one
 question: does optimistic, scope-bound parallelism remain understandable and fair

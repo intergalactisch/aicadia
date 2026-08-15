@@ -83,17 +83,17 @@ global revision or counter exists.
 It is the only semantic start input, so World stores no request fingerprint and has
 no start content-conflict branch. Under the User lock, an existing
 `(requested_by_user_id, request_id)` attempt returns its stored id, outcome and
-immutable limits before admission or another roll. The response contains no mutable
+immutable limit before admission or another roll. The response contains no mutable
 Place context, so equal retries remain byte-identical after unrelated World changes.
 
-For a new id, World derives the entered Character and exact Place, uses one
-PostgreSQL `statement_timestamp()` for the inclusive rolling-hour admission boundary
-and stored `created_at`, reads the last 48 Place Activities, rolls once and inserts
-the attempt. Rate rejection occurs before rolling and inserts nothing. Only a newly
-inserted positive that takes the User beyond three live positives voids the oldest
-prior live positive satisfying `id <> new_attempt_id`, ordered by
-`(created_at ASC, id ASC)`, with the new attempt as provenance. The new attempt can
-never void itself. Zero never triggers voiding.
+For a new id, World derives the entered Character and exact Place, uses one PostgreSQL
+`statement_timestamp()` for the inclusive rolling-hour admission boundary and stored
+`created_at`, reads the bounded recent Place Activity window, rolls once and inserts the
+attempt. Rate rejection occurs before rolling and inserts nothing. Only a newly inserted
+positive that takes the User beyond the live-positive bound voids the oldest prior live
+positive satisfying `id <> new_attempt_id`, ordered by `(created_at ASC, id ASC)`, with the
+new attempt as provenance. The new attempt can never void itself. Zero never triggers
+voiding. Chance and admission values live in [Domain contract](domain.md#investigation-chance-and-admission).
 
 The attempt namespace is separate from the shared Activity request-id namespace. A
 UUID may therefore identify one start attempt and, separately, one state-changing
@@ -106,7 +106,8 @@ Interaction. Before the User lock, strict decoding and complete normalization re
 malformed or semantically invalid prose, Entity, Property and Trait input and derive
 a versioned SHA-256 fingerprint from the normalized attempt id, prose and find.
 Properties sort by canonical key and Traits by normalized statement; JSON field and
-list order do not alter identity.
+list order do not alter identity, and each list carries its own item count so no content
+can shift between the Property and Trait lists.
 
 Under the User lock, World first looks up an accepted Activity with the same
 `(requested_by_user_id, request_id)`. The same operation and fingerprint return the
@@ -201,18 +202,17 @@ AcceptedAction {
   place: Place
 }
 AcceptedInteraction { activity: Activity, place: CurrentPlaceOutput }
-InvestigationLimits { result_count: 1, kind: "entity_at_current_place" }
+InvestigationLimit { result_count: 1, kind: "entity_at_current_place" }
 InvestigationResult {
   attempt_id,
   outcome: "zero" | "positive",
-  limits: InvestigationLimits
+  limit: InvestigationLimit
 }
 AcceptedDiscovery { activity: Activity, entity: Entity, place: Place }
 ```
 
-Investigation `limits.result_count` is the cap for a positive attempt, not a count of
-finds created by start. The same immutable limits appear in a zero response so its
-stored retry body remains the same shape.
+Investigation `limit.result_count` is the positive-attempt cap, not a count of finds
+created by start, and the same immutable limit keeps the zero retry body in that shape.
 
 `CurrentPlaceOutput` is deliberately the flat safe current-Place view: it contains
 only the Place Entity's id, name and description. Unlike `Place`, it exposes neither
@@ -253,7 +253,8 @@ irreversible World history and their capability descriptions state the confirmat
 requirement. `start_investigation` stores internal attempt provenance but requires no
 confirmation because it creates no player-visible World change. Exact descriptions,
 JSON Schemas and annotations are compiler-generated and pinned by
-`tests/agent-tool-catalog.json`.
+`tests/agent-tool-catalog.json`; after an accepted contract change only the ignored
+test `regenerate_agent_tool_catalog_fixture` rewrites that pin, and its diff is reviewed.
 
 ## Shared capability inputs
 

@@ -1,5 +1,10 @@
-use super::attempt::{MAX_ATTEMPTS_PER_HOUR, MAX_LIVE_POSITIVES};
+use super::attempt::{
+    ADMISSION_SQL, MAX_ATTEMPTS_PER_HOUR, MAX_LIVE_POSITIVES, PLACE_WINDOW_DISCOVERY_COUNT_SQL,
+    VOID_OLDEST_PRIOR_POSITIVE_SQL,
+};
+use super::chance::PLACE_ACTIVITY_WINDOW;
 use super::*;
+use chrono::Duration;
 use sqlx::PgPool;
 
 async fn entered_world(pool: PgPool, draw: Vec<f64>) -> (World, UserId, Character, Place) {
@@ -96,7 +101,7 @@ async fn start_is_retry_stable_across_restart_and_draws_exactly_once(pool: PgPoo
         .await
         .unwrap();
     assert_eq!(first.outcome, InvestigationOutcome::Positive);
-    assert_eq!(first.limits, InvestigationLimits::CURRENT);
+    assert_eq!(first.limit, InvestigationLimit::CURRENT);
 
     let restarted = World::with_scripted_chance(pool.clone(), Vec::new());
     let retry = restarted
@@ -281,27 +286,27 @@ async fn start_admission_is_bounded_and_rejection_does_not_draw_or_insert(pool: 
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn admission_includes_inside_boundary_and_excludes_outside_boundary(pool: PgPool) {
+async fn admission_counts_exactly_the_rolling_hour_before_the_database_clock(pool: PgPool) {
     let (world, user_id, character, place) = entered_world(pool.clone(), vec![0.99]).await;
+    let reference: DateTime<Utc> = sqlx::query_scalar("SELECT statement_timestamp()")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let boundary = reference - Duration::hours(1);
+    let inside = boundary + Duration::seconds(5);
     for _ in 0..MAX_ATTEMPTS_PER_HOUR {
-        insert_raw_timed_attempt(
-            &pool,
-            user_id,
-            character.entity.id,
-            place.entity.id,
-            "59 minutes 59 seconds",
-        )
-        .await;
+        insert_raw_timed_attempt(&pool, user_id, character.entity.id, place.entity.id, inside)
+            .await;
     }
     assert_eq!(
         positive_or_zero(&world, user_id).await,
         Err(WorldError::InvestigationNotAdmitted)
     );
 
-    let outside_user = world.create_user().await.unwrap();
-    let outside_character = world
+    let boundary_user = world.create_user().await.unwrap();
+    let boundary_character = world
         .create_character(
-            outside_user.id,
+            boundary_user.id,
             CreateCharacter {
                 name: "Boundary Iria".to_owned(),
                 description: "Tests the far side of admission.".to_owned(),
@@ -311,19 +316,20 @@ async fn admission_includes_inside_boundary_and_excludes_outside_boundary(pool: 
         )
         .await
         .unwrap();
-    world.enter_world(outside_user.id).await.unwrap();
-    for _ in 0..MAX_ATTEMPTS_PER_HOUR {
+    world.enter_world(boundary_user.id).await.unwrap();
+    for index in 0..MAX_ATTEMPTS_PER_HOUR {
+        let created_at = if index == 0 { boundary } else { inside };
         insert_raw_timed_attempt(
             &pool,
-            outside_user.id,
-            outside_character.entity.id,
+            boundary_user.id,
+            boundary_character.entity.id,
             place.entity.id,
-            "1 hour 1 second",
+            created_at,
         )
         .await;
     }
     assert_eq!(
-        positive_or_zero(&world, outside_user.id)
+        positive_or_zero(&world, boundary_user.id)
             .await
             .unwrap()
             .outcome,
@@ -336,14 +342,14 @@ async fn insert_raw_timed_attempt(
     user_id: UserId,
     character_entity_id: EntityId,
     place_entity_id: EntityId,
-    age: &str,
+    created_at: DateTime<Utc>,
 ) {
     sqlx::query(
         r#"
         INSERT INTO investigation_attempt (
             id, requested_by_user_id, request_id, character_entity_id,
             place_entity_id, outcome, created_at
-        ) VALUES ($1, $2, $3, $4, $5, 'zero', statement_timestamp() - $6::interval)
+        ) VALUES ($1, $2, $3, $4, $5, 'zero', $6)
         "#,
     )
     .bind(Uuid::new_v4())
@@ -351,7 +357,7 @@ async fn insert_raw_timed_attempt(
     .bind(Uuid::new_v4())
     .bind(character_entity_id.0)
     .bind(place_entity_id.0)
-    .bind(age)
+    .bind(created_at)
     .execute(pool)
     .await
     .unwrap();
@@ -1132,4 +1138,212 @@ async fn insert_raw_activity(
     .execute(pool)
     .await
     .unwrap();
+}
+
+fn colour_as_property_find() -> DiscoveryFind {
+    DiscoveryFind {
+        name: "Rainbell Cups".to_owned(),
+        description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        property: vec![PropertyInput {
+            key: "colour".to_owned(),
+            value: PropertyValue::Text("warm".to_owned()),
+        }],
+        r#trait: Vec::new(),
+    }
+}
+
+fn colour_as_trait_find() -> DiscoveryFind {
+    DiscoveryFind {
+        name: "Rainbell Cups".to_owned(),
+        description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        property: Vec::new(),
+        r#trait: ["colour", "text", "warm"]
+            .into_iter()
+            .map(|statement| TraitInput {
+                statement: statement.to_owned(),
+            })
+            .collect(),
+    }
+}
+
+#[test]
+fn discovery_fingerprint_separates_property_content_from_trait_content() {
+    let attempt_id = InvestigationAttemptId(Uuid::new_v4());
+    let request_id = Uuid::new_v4();
+    let mut as_property = discovery(request_id, attempt_id, "Mara notes one warm colour.");
+    as_property.find = colour_as_property_find();
+    let mut as_trait = as_property.clone();
+    as_trait.find = colour_as_trait_find();
+    let as_property = as_property.normalize().unwrap();
+    let as_trait = as_trait.normalize().unwrap();
+    assert!(as_property.find.r#trait.is_empty());
+    assert!(as_trait.find.property.is_empty());
+    assert_ne!(
+        discovery_fingerprint(&as_property),
+        discovery_fingerprint(&as_trait)
+    );
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn discovery_retry_moving_find_content_between_property_and_trait_conflicts(pool: PgPool) {
+    let (world, user_id, _, _) = entered_world(pool.clone(), vec![0.0]).await;
+    let attempt = positive(&world, user_id).await;
+    let prose = "Mara notes one warm colour.";
+    let mut first = discovery(Uuid::new_v4(), attempt.attempt_id, prose);
+    first.find = colour_as_property_find();
+    let mut second = first.clone();
+    second.find = colour_as_trait_find();
+    world.submit_discovery(user_id, first).await.unwrap();
+    assert_eq!(
+        world.submit_discovery(user_id, second).await,
+        Err(WorldError::DiscoveryRequestConflict)
+    );
+}
+
+fn tag_lookalike_as_property_find() -> DiscoveryFind {
+    DiscoveryFind {
+        name: "Rainbell Cups".to_owned(),
+        description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        property: vec![
+            PropertyInput {
+                key: "a".to_owned(),
+                value: PropertyValue::Text("v1".to_owned()),
+            },
+            PropertyInput {
+                key: "trait".to_owned(),
+                value: PropertyValue::Text("tf".to_owned()),
+            },
+        ],
+        r#trait: vec![TraitInput {
+            statement: "z".to_owned(),
+        }],
+    }
+}
+
+fn tag_lookalike_as_trait_find() -> DiscoveryFind {
+    DiscoveryFind {
+        name: "Rainbell Cups".to_owned(),
+        description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        property: vec![PropertyInput {
+            key: "a".to_owned(),
+            value: PropertyValue::Text("v1".to_owned()),
+        }],
+        r#trait: ["text", "tf", "trait", "z"]
+            .into_iter()
+            .map(|statement| TraitInput {
+                statement: statement.to_owned(),
+            })
+            .collect(),
+    }
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn discovery_retry_realigning_a_find_across_tag_lookalike_content_conflicts(pool: PgPool) {
+    let (world, user_id, _, _) = entered_world(pool.clone(), vec![0.0]).await;
+    let attempt = positive(&world, user_id).await;
+    let prose = "Mara records a key and a statement that read like list tags.".to_owned();
+    let mut first = discovery(Uuid::new_v4(), attempt.attempt_id, &prose);
+    first.find = tag_lookalike_as_property_find();
+    let mut second = first.clone();
+    second.find = tag_lookalike_as_trait_find();
+    world.submit_discovery(user_id, first).await.unwrap();
+    assert_eq!(
+        world.submit_discovery(user_id, second).await,
+        Err(WorldError::DiscoveryRequestConflict)
+    );
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn one_discovery_inside_the_place_window_lowers_the_outcome(pool: PgPool) {
+    let (world, user_id, character, place) = entered_world(pool.clone(), vec![0.49]).await;
+    insert_raw_activity(
+        &pool,
+        user_id,
+        character.entity.id,
+        place.entity.id,
+        "submit_discovery",
+    )
+    .await;
+    assert_eq!(
+        positive_or_zero(&world, user_id).await.unwrap().outcome,
+        InvestigationOutcome::Zero
+    );
+}
+
+#[sqlx::test(migrations = "./migration")]
+async fn investigation_indexes_support_bounded_hot_subject_queries(pool: PgPool) {
+    let (_world, user_id, character, place) = entered_world(pool.clone(), Vec::new()).await;
+    for age_days in 0..128_i32 {
+        sqlx::query(
+            r#"
+            INSERT INTO investigation_attempt (
+                id, requested_by_user_id, request_id, character_entity_id,
+                place_entity_id, outcome, created_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, 'positive',
+                statement_timestamp() - make_interval(days => $6)
+            )
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(user_id.0)
+        .bind(Uuid::new_v4())
+        .bind(character.entity.id.0)
+        .bind(place.entity.id.0)
+        .bind(age_days)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+    sqlx::query("ANALYZE activity, investigation_attempt")
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    let mut transaction = pool.begin().await.unwrap();
+    sqlx::query("SET LOCAL enable_seqscan = off")
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
+    let window_plan = sqlx::query_scalar::<_, String>(&format!(
+        "EXPLAIN (COSTS OFF) {PLACE_WINDOW_DISCOVERY_COUNT_SQL}"
+    ))
+    .bind(place.entity.id.0)
+    .bind(PLACE_ACTIVITY_WINDOW)
+    .fetch_all(&mut *transaction)
+    .await
+    .unwrap()
+    .join("\n");
+    assert!(
+        window_plan.contains("activity_place_occurred_at_id_index"),
+        "the live bounded Place window must use its declared index: {window_plan}"
+    );
+
+    let admission_plan =
+        sqlx::query_scalar::<_, String>(&format!("EXPLAIN (COSTS OFF) {ADMISSION_SQL}"))
+            .bind(user_id.0)
+            .fetch_all(&mut *transaction)
+            .await
+            .unwrap()
+            .join("\n");
+    assert!(
+        admission_plan.contains("investigation_attempt_user_created_at_index"),
+        "the live admission count must use its declared index: {admission_plan}"
+    );
+
+    let void_plan = sqlx::query_scalar::<_, String>(&format!(
+        "EXPLAIN (COSTS OFF) {VOID_OLDEST_PRIOR_POSITIVE_SQL}"
+    ))
+    .bind(user_id.0)
+    .bind(Uuid::new_v4())
+    .bind(MAX_LIVE_POSITIVES)
+    .fetch_all(&mut *transaction)
+    .await
+    .unwrap()
+    .join("\n");
+    assert!(
+        void_plan.contains("investigation_attempt_live_positive_index"),
+        "the live hoarding void must use its declared index: {void_plan}"
+    );
 }

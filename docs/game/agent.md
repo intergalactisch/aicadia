@@ -311,8 +311,9 @@ Global instructions above govern cross-cutting conduct once. Each
 [capability](capability/) owns only its local preconditions, input, result,
 errors and retry behavior. Every published tool description follows one fixed
 template — *What it does · Use it when · Before you call · Input meaning ·
-After acceptance* (or *After the call* for reads) *· On failure · Never* —
-omitting labels that do not apply.
+After acceptance* (or *After the call* for reads and other calls that write no
+World state) *· On failure · Never* — omitting labels that do not apply. A
+description invents no other label.
 
 Because a host may invoke a tool without loading discovery instructions, each
 description deliberately restates only this bounded set where it applies, one

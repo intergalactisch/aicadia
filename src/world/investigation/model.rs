@@ -35,12 +35,12 @@ pub enum DiscoveryKind {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct InvestigationLimits {
+pub struct InvestigationLimit {
     pub result_count: u8,
     pub kind: DiscoveryKind,
 }
 
-impl InvestigationLimits {
+impl InvestigationLimit {
     pub(super) const CURRENT: Self = Self {
         result_count: 1,
         kind: DiscoveryKind::EntityAtCurrentPlace,
@@ -56,7 +56,7 @@ pub struct StartInvestigation {
 pub struct InvestigationResult {
     pub attempt_id: InvestigationAttemptId,
     pub outcome: InvestigationOutcome,
-    pub limits: InvestigationLimits,
+    pub limit: InvestigationLimit,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -127,6 +127,17 @@ impl SubmitDiscovery {
     }
 }
 
+/// Fingerprints a normalized find as a self-delimiting field sequence: the domain
+/// tag, the attempt, the prose and the entity text, then each list introduced by
+/// its own tag *and its item count*.
+///
+/// The counts are load-bearing, not decoration. A Property key may itself be
+/// `trait` and a Trait statement may itself be `text`, so a bare tag cannot mark
+/// where one list ends and the next begins. Without the counts, the find
+/// `property [{a, text v1}, {trait, text tf}] / trait [z]` and the find
+/// `property [{a, text v1}] / trait [text, tf, trait, z]` emit the identical field
+/// sequence, and a retry that moved content between the two lists would hash equal
+/// and be accepted as an equal retry instead of conflicting.
 pub(super) fn discovery_fingerprint(input: &NormalizedSubmitDiscovery) -> Vec<u8> {
     let mut hash = Sha256::new();
     for field in [
@@ -138,26 +149,11 @@ pub(super) fn discovery_fingerprint(input: &NormalizedSubmitDiscovery) -> Vec<u8
     ] {
         fingerprint_field(&mut hash, field);
     }
-    for property in &input.find.property {
-        fingerprint_field(&mut hash, property.key.as_bytes());
-        match &property.value {
-            PropertyValue::Text(value) => {
-                fingerprint_field(&mut hash, b"text");
-                fingerprint_field(&mut hash, value.as_bytes());
-            }
-            PropertyValue::Integer(value) => {
-                fingerprint_field(&mut hash, b"integer");
-                fingerprint_field(&mut hash, &value.to_be_bytes());
-            }
-        }
-    }
-    for r#trait in &input.find.r#trait {
-        fingerprint_field(&mut hash, r#trait.statement.as_bytes());
-    }
+    fingerprint_field(&mut hash, b"property");
+    fingerprint_field(&mut hash, &(input.find.property.len() as u64).to_be_bytes());
+    fingerprint_property_input(&mut hash, &input.find.property);
+    fingerprint_field(&mut hash, b"trait");
+    fingerprint_field(&mut hash, &(input.find.r#trait.len() as u64).to_be_bytes());
+    fingerprint_trait_input(&mut hash, &input.find.r#trait);
     hash.finalize().to_vec()
-}
-
-fn fingerprint_field(hash: &mut Sha256, field: &[u8]) {
-    hash.update((field.len() as u64).to_be_bytes());
-    hash.update(field);
 }

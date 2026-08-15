@@ -31,7 +31,7 @@ mod read;
 pub use activity::*;
 pub use error::*;
 pub use investigation::{
-    AcceptedDiscovery, DiscoveryFind, DiscoveryKind, InvestigationAttemptId, InvestigationLimits,
+    AcceptedDiscovery, DiscoveryFind, DiscoveryKind, InvestigationAttemptId, InvestigationLimit,
     InvestigationOutcome, InvestigationResult, StartInvestigation, SubmitDiscovery,
 };
 pub use model::*;

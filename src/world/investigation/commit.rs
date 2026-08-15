@@ -55,22 +55,9 @@ async fn reconstruct(
     {
         return Err(invalid_stored_relation());
     }
-    let entity = sqlx::query_as::<_, Entity>(
-        r#"
-        SELECT entity.id, entity.name, entity.description,
-               entity.introduced_by_user_id, entity.introduced_at
-        FROM entity_location
-        JOIN entity ON entity.id = entity_location.entity_id
-        WHERE entity_location.entity_id = $1
-          AND entity_location.place_entity_id = $2
-        "#,
-    )
-    .bind(subject_id.0)
-    .bind(location_id.0)
-    .fetch_optional(&mut **transaction)
-    .await
-    .map_err(|error| storage_error(operation, error))?
-    .ok_or_else(invalid_stored_relation)?;
+    let entity = find_placed_entity(transaction, subject_id, location_id, operation)
+        .await?
+        .ok_or_else(invalid_stored_relation)?;
     let place = find_place_by_id(transaction, location_id, operation)
         .await?
         .ok_or_else(invalid_stored_relation)?;

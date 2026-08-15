@@ -5,6 +5,8 @@ use std::sync::Mutex;
 
 use rand::{TryRngCore, rngs::OsRng};
 
+use super::model::InvestigationOutcome;
+
 pub(super) const PLACE_ACTIVITY_WINDOW: i64 = 48;
 const P_MAX: f64 = 0.5;
 const P_MIN: f64 = 0.1;
@@ -15,6 +17,14 @@ pub(super) struct ChancePolicy;
 impl ChancePolicy {
     pub(super) fn probability(discovery_count: u32) -> f64 {
         P_MIN + (P_MAX - P_MIN) * 2_f64.powf(-(f64::from(discovery_count) / HALF_LIFE))
+    }
+
+    pub(super) fn resolve(discovery_count: u32, draw: f64) -> InvestigationOutcome {
+        if draw < Self::probability(discovery_count) {
+            InvestigationOutcome::Positive
+        } else {
+            InvestigationOutcome::Zero
+        }
     }
 }
 

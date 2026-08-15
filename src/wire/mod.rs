@@ -17,7 +17,7 @@ use crate::{
     EntityPropertyChangeInput as WorldPropertyChange, EntitySummary, EntityTrait,
     EntityTraitChangeInput as WorldTraitChange, EntityTraitId, GetEntityAtCurrentPlace,
     GetEntityCurrentState, InteractionField, IntroduceEntity, InvalidReason,
-    InvestigationAttemptId, InvestigationLimits, InvestigationOutcome, InvestigationResult,
+    InvestigationAttemptId, InvestigationLimit, InvestigationOutcome, InvestigationResult,
     ListActivity, ListActivityAtCurrentPlace, ListEntity, ListEntityAtCurrentPlace, Place,
     PlaceRevision, PlaceSummary, PropertyField, PropertyInput as WorldPropertyInput, PropertyValue,
     StartInvestigation, SubmitAction, SubmitDiscovery, SubmitInteraction,

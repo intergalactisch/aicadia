@@ -276,8 +276,8 @@ if [[ "$mode" == investigation-happy ]]; then
     zero_request='10000000-0000-4000-8000-000000000000'; zero_attempt='20000000-0000-4000-8000-000000000000'
     positive_request='30000000-0000-4000-8000-000000000000'; positive_attempt='40000000-0000-4000-8000-000000000000'
     discovery_request='50000000-0000-4000-8000-000000000000'; trait_id='90000000-0000-4000-8000-000000000000'
-    zero="$(jq -nc --arg attempt "$zero_attempt" '{attempt_id:$attempt,outcome:"zero",limits:{result_count:1,kind:"entity_at_current_place"}}')"
-    positive="$(jq -nc --arg attempt "$positive_attempt" '{attempt_id:$attempt,outcome:"positive",limits:{result_count:1,kind:"entity_at_current_place"}}')"
+    zero="$(jq -nc --arg attempt "$zero_attempt" '{attempt_id:$attempt,outcome:"zero",limit:{result_count:1,kind:"entity_at_current_place"}}')"
+    positive="$(jq -nc --arg attempt "$positive_attempt" '{attempt_id:$attempt,outcome:"positive",limit:{result_count:1,kind:"entity_at_current_place"}}')"
     package="$(jq -nc --arg marker "$marker" '{prose:("Mara parts the rain-dark reeds and finds chalk-pale rainbell cups beside "+$marker+"."),find:{name:("Rainbell Cups "+$marker),description:("Chalk-pale cups whose thin rims ring in rain beside "+$marker+"."),property:[{key:"colour",value:{type:"text",text:"chalk-pale"}}],trait:[{statement:"Rings softly when collected rain shifts."}]}}')"
     case "$count" in
         1)

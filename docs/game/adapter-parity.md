@@ -87,6 +87,32 @@ Automated tests require:
   available to Characters currently there under the existing scoped-Place rule;
 - the fifteen player capabilities have one semantic World/HTTP/MCP contract,
   strict schemas, complete catalog/OpenAPI publication and matching errors;
+- the schema, World, both adapters, the exact fifteen-tool catalog, the Agent
+  contract and the token-free fake controller agree on the deterministic
+  Property/Trait contract, and none of that evidence is a paid or real-model claim;
+- every creation route roots each initial Trait in its own creation Activity, while
+  duplicate, malformed or 101st initial Property/Trait values reject the whole
+  creation without orphan rows and Trait retirement, deletion, reactivation and
+  external causes stay absent;
+- one `change_entity_state` Action changes Properties and Traits of the actor,
+  current Place, an ordinary Entity and another Character under one
+  role/control-neutral exact-local rule, while missing, remote and departed subjects
+  share one neutral error and leave zero writes;
+- an Interaction with no changes preserves its outward-only result, one with changes
+  atomically updates actor and explicit targets without authoring a response, and a
+  local non-target subject rejects the whole Interaction neutrally;
+- the same canonical key and type reuse one key, while concurrent first use with
+  equal type succeeds without duplicates and different types yield one winner and
+  one full `property_key_conflict` rollback;
+- equal Action and Interaction retries return the exact original sorted Property and
+  Trait changes even after later state;
+- authorized Activity pages hydrate their changes in one batched query without N+1
+  work;
+- declared indexes and query plans support the 100-write and 100-read bounds, stable
+  lock order prevents deadlocks, accepted history stays immutable and current
+  pointers stay on one lineage;
+- current structured Property wins presentation of its exact key over conflicting
+  introductory prose while both Activities remain immutable history;
 - the local launcher preserves one database and User across restart, refuses
   concurrent or unprofiled reuse that could create a second User, and never starts
   Codex itself; its printed adapter isolates workspace, home/configuration and

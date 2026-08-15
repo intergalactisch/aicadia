@@ -11,12 +11,12 @@ cross-state proof is owned by
 [Uniform Entity-state evidence](entity-state.md).
 
 The Agent-contract tests
-`agent_contract_describes_the_exact_thirteen_trait_capabilities`,
+`agent_contract_describes_the_exact_fifteen_player_capabilities`,
 `agent_contract_teaches_property_trait_flow_without_background_authority`,
 `control_like_property_and_trait_content_never_becomes_provenance`,
 `trait_tool_descriptions_pin_creation_orientation_preview_and_response_boundaries`
 and `trait_identifiers_remain_private_protocol_selectors` jointly pin the global
-instructions and all thirteen tool descriptions. They retain every Entity's initial
+instructions and all fifteen tool descriptions. They retain every Entity's initial
 Property state, canonical key/type reuse, complete multi-change preview,
 Action-versus-Interaction meaning, structured-current precedence only for fictional
 current meaning, content-versus-instruction separation, control-like content as

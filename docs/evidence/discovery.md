@@ -99,7 +99,8 @@ The final 2026-08-15 ladder passed:
 - `cargo fmt --all -- --check`;
 - `cargo clippy --all-targets --all-features -- -D warnings`;
 - PostgreSQL-backed `cargo test --all-targets --all-features`: 147 passed, 0 failed
-  (45 library, 2 database-helper, 14 server and 86 World tests);
+  (45 library, 2 database-helper, 14 server and 86 World tests) at delivery; see
+  the review corrections below for the current 152;
 - `bash tests/aicadia-local.sh`, including
   `restart_investigation_retry_identical=true` and `codex_invoked=false`;
 - `bash tests/agent-playtest.sh`;
@@ -115,6 +116,37 @@ gaps and an initially self-authored discovery trace. Each was corrected before i
 stage passed. The final T4 audit returned GO with no P0-P3 finding. The closing
 standards/spec review found stale evidence-runner, concept, backlog and closure text;
 those authority surfaces were corrected without changing runtime behavior.
+
+## Review corrections (2026-08-15)
+
+An independent three-reader review of the committed delivery (`60ce27c`) found no
+P0, one P1 and bounded P2/P3 debt. The accepted [correction
+plan](../../.agents/plans/20260815-180754-discovery-review-corrections/plan.md)
+closed every item without changing zero/positive semantics, thresholds, formula
+values, payload or operation names:
+
+- the discovery fingerprint reuses the shared helpers and tags each Property and
+  Trait list with its item count; two collision pairs (Property/Trait content moved
+  between lists, and tag-lookalike keys/statements) that previously hashed equal now
+  return `discovery_request_conflict`;
+- `ChancePolicy::resolve` owns resolution; an in-window discovery provably lowers
+  the outcome; index plans and the rolling-hour window are proved on the production
+  SQL constants from crate-internal tests;
+- the investigation result field `limits` became singular `limit`; the wire
+  error-code list and HTTP status map are wildcard-free exhaustive matches; every
+  published discovery rejection, both start Character errors and HTTP retry `201`
+  are proved on both adapters; `src/server/mod.rs` is composition-only;
+- `tool/start_investigation.md` follows the fixed template, `15-recovery.md` owns
+  the three discovery recoveries, `domain.md#investigation-chance-and-admission` is
+  the one home of chance/admission values, and stale evidence pointers were fixed.
+
+The rerun ladder on the corrected tree passed: `cargo fmt --all -- --check`,
+`cargo clippy --all-targets --all-features -- -D warnings`, `git diff --check`,
+PostgreSQL-backed `cargo test --all-targets --all-features` 152 passed, 0 failed
+(51 library, 2 database-helper, 15 server, 84 World), `bash tests/agent-playtest.sh`,
+`bash tests/trait-playtest.sh` (after refreezing the token-free candidate digest for
+the changed sources) and `bash tests/aicadia-local.sh`. The catalog fixture changed
+only by the `limit` rename and the two corrected descriptions.
 
 ## Terry closure
 

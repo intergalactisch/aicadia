@@ -252,7 +252,7 @@ Module -> existing Entity/Property/Trait/Activity persistence helpers -> Postgre
 | Wire | `src/wire/investigation.rs` + `wire/error.rs` | Strict inputs/outputs/conversions, canonical error mapping; no game decision |
 | HTTP / MCP / composition / errors | `src/server/{http,mcp,mod,error}.rs` after the T3 split | Thin Adapters; no mechanics |
 | Agent explanation | one instruction section + `tool/start_investigation.md`, `tool/submit_discovery.md` | Natural play and recovery only |
-| Evidence | `tests/world/investigation/`, `tests/server/investigation/` | Split by observable rule, not by private function |
+| Evidence | `src/world/investigation/test.rs`, `src/server/investigation_test.rs` (crate-internal, scripted chance), `tests/world/investigation_schema.rs`, `tests/server/**` | Split by observable rule, not by private function |
 
 The former `authority.rs` is dropped: with the attempt id as authority there is no
 separate authentication concern. A file is split only for two independent reasons to

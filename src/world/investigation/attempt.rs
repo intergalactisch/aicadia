@@ -5,6 +5,55 @@ use super::model::*;
 pub(super) const MAX_ATTEMPTS_PER_HOUR: i64 = 12;
 pub(super) const MAX_LIVE_POSITIVES: i64 = 3;
 
+pub(super) const ADMISSION_SQL: &str = r#"
+    SELECT statement_timestamp() AS database_now,
+           (
+               SELECT count(*)
+               FROM investigation_attempt
+               WHERE requested_by_user_id = $1
+                 AND created_at >= statement_timestamp() - interval '1 hour'
+                 AND created_at <= statement_timestamp()
+           ) AS admitted_count
+"#;
+
+pub(super) const PLACE_WINDOW_DISCOVERY_COUNT_SQL: &str = r#"
+    SELECT count(*)
+    FROM (
+        SELECT operation
+        FROM activity
+        WHERE context_place_entity_id = $1
+        ORDER BY occurred_at DESC, id DESC
+        LIMIT $2
+    ) AS recent
+    WHERE operation = 'submit_discovery'
+"#;
+
+pub(super) const VOID_OLDEST_PRIOR_POSITIVE_SQL: &str = r#"
+    WITH candidate AS (
+        SELECT id
+        FROM investigation_attempt
+        WHERE requested_by_user_id = $1
+          AND outcome = 'positive'
+          AND consumed_by_activity_id IS NULL
+          AND voided_by_attempt_id IS NULL
+          AND id <> $2
+          AND (
+              SELECT count(*)
+              FROM investigation_attempt
+              WHERE requested_by_user_id = $1
+                AND outcome = 'positive'
+                AND consumed_by_activity_id IS NULL
+                AND voided_by_attempt_id IS NULL
+          ) > $3
+        ORDER BY created_at ASC, id ASC
+        LIMIT 1
+    )
+    UPDATE investigation_attempt
+    SET voided_by_attempt_id = $2
+    FROM candidate
+    WHERE investigation_attempt.id = candidate.id
+"#;
+
 #[derive(FromRow)]
 struct AttemptRow {
     id: InvestigationAttemptId,
@@ -39,7 +88,7 @@ pub(super) async fn find_result(
         Ok(InvestigationResult {
             attempt_id: row.id,
             outcome: InvestigationOutcome::parse(&row.outcome)?,
-            limits: InvestigationLimits::CURRENT,
+            limit: InvestigationLimit::CURRENT,
         })
     })
     .transpose()
@@ -50,22 +99,11 @@ pub(super) async fn admission_time_for_user(
     user_id: UserId,
     operation: &'static str,
 ) -> Result<DateTime<Utc>, WorldError> {
-    let row = sqlx::query_as::<_, AdmissionRow>(
-        r#"
-        SELECT statement_timestamp() AS database_now,
-               (
-                   SELECT count(*)
-                   FROM investigation_attempt
-                   WHERE requested_by_user_id = $1
-                     AND created_at >= statement_timestamp() - interval '1 hour'
-                     AND created_at <= statement_timestamp()
-               ) AS admitted_count
-        "#,
-    )
-    .bind(user_id.0)
-    .fetch_one(&mut **transaction)
-    .await
-    .map_err(|error| storage_error(operation, error))?;
+    let row = sqlx::query_as::<_, AdmissionRow>(ADMISSION_SQL)
+        .bind(user_id.0)
+        .fetch_one(&mut **transaction)
+        .await
+        .map_err(|error| storage_error(operation, error))?;
     if row.admitted_count >= MAX_ATTEMPTS_PER_HOUR {
         return Err(WorldError::InvestigationNotAdmitted);
     }
@@ -77,24 +115,12 @@ pub(super) async fn recent_discovery_count(
     place_entity_id: EntityId,
     operation: &'static str,
 ) -> Result<u32, WorldError> {
-    let count: i64 = sqlx::query_scalar(
-        r#"
-        SELECT count(*)
-        FROM (
-            SELECT operation
-            FROM activity
-            WHERE context_place_entity_id = $1
-            ORDER BY occurred_at DESC, id DESC
-            LIMIT $2
-        ) AS recent
-        WHERE operation = 'submit_discovery'
-        "#,
-    )
-    .bind(place_entity_id.0)
-    .bind(PLACE_ACTIVITY_WINDOW)
-    .fetch_one(&mut **transaction)
-    .await
-    .map_err(|error| storage_error(operation, error))?;
+    let count: i64 = sqlx::query_scalar(PLACE_WINDOW_DISCOVERY_COUNT_SQL)
+        .bind(place_entity_id.0)
+        .bind(PLACE_ACTIVITY_WINDOW)
+        .fetch_one(&mut **transaction)
+        .await
+        .map_err(|error| storage_error(operation, error))?;
     u32::try_from(count).map_err(|_| invalid_stored_relation())
 }
 
@@ -132,7 +158,7 @@ pub(super) async fn insert_attempt(
     Ok(InvestigationResult {
         attempt_id,
         outcome,
-        limits: InvestigationLimits::CURRENT,
+        limit: InvestigationLimit::CURRENT,
     })
 }
 
@@ -142,39 +168,13 @@ async fn void_oldest_prior_positive(
     new_attempt_id: InvestigationAttemptId,
     operation: &'static str,
 ) -> Result<(), WorldError> {
-    sqlx::query(
-        r#"
-        WITH candidate AS (
-            SELECT id
-            FROM investigation_attempt
-            WHERE requested_by_user_id = $1
-              AND outcome = 'positive'
-              AND consumed_by_activity_id IS NULL
-              AND voided_by_attempt_id IS NULL
-              AND id <> $2
-              AND (
-                  SELECT count(*)
-                  FROM investigation_attempt
-                  WHERE requested_by_user_id = $1
-                    AND outcome = 'positive'
-                    AND consumed_by_activity_id IS NULL
-                    AND voided_by_attempt_id IS NULL
-              ) > $3
-            ORDER BY created_at ASC, id ASC
-            LIMIT 1
-        )
-        UPDATE investigation_attempt
-        SET voided_by_attempt_id = $2
-        FROM candidate
-        WHERE investigation_attempt.id = candidate.id
-        "#,
-    )
-    .bind(user_id.0)
-    .bind(new_attempt_id.0)
-    .bind(MAX_LIVE_POSITIVES)
-    .execute(&mut **transaction)
-    .await
-    .map_err(|error| storage_error(operation, error))?;
+    sqlx::query(VOID_OLDEST_PRIOR_POSITIVE_SQL)
+        .bind(user_id.0)
+        .bind(new_attempt_id.0)
+        .bind(MAX_LIVE_POSITIVES)
+        .execute(&mut **transaction)
+        .await
+        .map_err(|error| storage_error(operation, error))?;
     Ok(())
 }
 

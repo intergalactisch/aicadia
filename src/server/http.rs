@@ -1,5 +1,14 @@
 use super::*;
 
+use axum::{
+    extract::{Path, Query, State, rejection::JsonRejection, rejection::QueryRejection},
+    response::Html,
+    routing::{get, post},
+};
+use utoipa::{OpenApi, openapi::OpenApi as OpenApiDocument};
+
+const LEDGER_HTML: &str = include_str!("../../web/index.html");
+
 pub(super) fn routes() -> Router<World> {
     Router::new()
         .route("/", get(ledger))

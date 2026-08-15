@@ -139,13 +139,6 @@ history signal and performs one authoritative random draw before the Agent autho
 content. The User may advise the Agent but supplies no mechanical focus, seed, odds,
 result count or retry count.
 
-The signal `n` is the number of `submit_discovery` Activities among the last 48
-Activities at that Place. Chance is
-`p = 1/10 + (1/2 - 1/10) * 2^(-n/6)`, resolved from operating-system entropy behind
-World's private chance component. A fresh admitted attempt is independent. Elapsed
-time, prior zero outcomes and consecutive misses never improve odds; there is no
-pity, accumulated luck or runtime-configurable chance input.
-
 Every admitted start creates one durable internal attempt with one World-assigned id,
 the responsible User, derived Character and Place, stored `zero` or `positive`
 outcome, creation time and optional consumed/voided provenance. The attempt is not an
@@ -165,6 +158,33 @@ the typed attempt and find rules, then atomically creates and places the Entity,
 establishes its state, appends `submit_discovery` Activity, consumes the attempt and
 advances the Place pointer. There is no generic Discovery record or World-typed kind.
 
+### Investigation chance and admission
+
+This section is the single home of every investigation chance and admission value.
+They are internal operational constants: no adapter, capability, Agent or User
+supplies, reads or negotiates one, and changing any of them is a documented contract
+change rather than configuration.
+
+| Symbol | Value | Meaning |
+| --- | --- | --- |
+| `p_max` | `1/2` | chance at a Place with no recent discovery |
+| `p_min` | `1/10` | floor a saturated Place approaches but never reaches |
+| `h` | `6` | recent discoveries that halve the remaining distance to `p_min` |
+| `W` | `48` | last Activities read at the exact Place to derive the signal `n` |
+| `A` | `12` | new attempts admitted per User in one inclusive rolling hour |
+| `P` | `3` | live unconsumed positives per User before the oldest is voided |
+
+The signal `n` is the number of `submit_discovery` Activities among the last `W`
+Activities at that Place, and chance is `p = p_min + (p_max − p_min) · 2^(−n/h)`,
+resolved from operating-system entropy behind World's private chance component. A
+fresh admitted attempt is independent. Elapsed time, prior zero outcomes and
+consecutive misses never improve odds; there is no pity, accumulated luck or
+runtime-configurable chance input.
+
+Admission is decided before the roll: a User who already has `A` attempts inside the
+inclusive rolling hour is rejected without an attempt row or draw. Only a newly
+inserted positive that takes its User beyond `P` live positives voids the oldest
+prior live positive, never itself.
 
 ## Activity
 
@@ -334,61 +354,5 @@ Adapters expose the canonical spellings and status mapping in
 
 ## Required evidence
 
-Tests retain all prior evidence and prove:
-
-- the schema, World, HTTP/MCP adapters, exact fifteen-tool catalog, Agent
-  contract and token-free fake controller agree on the deterministic Trait contract;
-  none of that evidence is a paid or real-model Trait claim;
-- every creation route accepts 0 and 100 initial Traits beside 0 and 100 Properties,
-  gives each Trait a stable id rooted in that creation Activity and rejects duplicate,
-  malformed or 101st state without orphan rows;
-- mixed 0–100 Action Trait changes uniformly cover actor, current Place, ordinary
-  Entity and other Character; optional 0–100 Interaction Trait changes cover actor
-  and explicit targets and coexist atomically with Property changes without a target
-  response;
-- establishment produces one stable id/root Activity version, development preserves
-  the id and advances one predecessor/current pointer, retirement/external causes are
-  absent, and 1/4,000/4,001 statement bounds behave exactly;
-- exact no-ops and duplicate intended active state reject the complete Action or
-  Interaction atomically—including develop-to-other-active, two-develop-to-same and
-  establish-plus-develop-to-same cases—while same-package reuse of a statement
-  vacated by another development succeeds; semantic contradictions remain valid,
-  concurrent development cannot branch, reverse Action/Interaction lock order
-  cannot deadlock and retries reconstruct original versions;
-- deferred bounded per-Trait commit checks require exactly one root, exactly one
-  current pointer and that pointer at the lineage tip; incomplete roots, current
-  deletion/backtracking and successor-without-advance all reject;
-- combined 1/100-row current-state pages for `get_character` and scoped
-  `get_entity_at_current_place` preserve one Entity/Place revision, reject stale
-  continuations, expose no role/control state and keep orientation, mutation results
-  and Activity Entity references compact;
-- HTTP/MCP replace the standalone Property list with scoped Entity fetch and publish
-  exactly the same fifteen-name catalog, schemas, results and errors; and
-- Agent guidance requires complete natural Trait preview and whole-package User
-  confirmation, exposes no direct editor and never treats Trait prose as mechanics;
-- each of `create_entity`, `create_character`, `create_entry_place`,
-  `submit_action.introduce_entity` and `submit_discovery` accepts independent 0–100 initial Property and
-  Trait lists and commits
-  its whole Entity/role/placement/Activity/history/current bundle atomically;
-- duplicate or 101st initial values reject the whole creation with no orphan state;
-- one `change_entity_state` Action changes Properties and Traits of the actor, current
-  Place, an ordinary Entity and another Character under one role/control-neutral
-  exact-local rule, while missing,
-  remote and departed subjects share one neutral error and leave zero writes;
-- an Interaction with no changes preserves its outward-only result; one with changes
-  atomically updates actor and explicit targets without authoring a response; and a
-  local non-target subject rejects the whole Interaction neutrally;
-- duplicate Entity/key changes reject atomically; same key/type reuses one key;
-  concurrent first use with equal type succeeds without duplicates while different
-  types yield one winner and one full `property_key_conflict` rollback;
-- equal Action and Interaction retries return exact original sorted changes even
-  after later state, reordered equivalent lists retain identity and changed values
-  conflict;
-- one set-based local current read page returns actor, Place, co-present Characters
-  and ordinary Entities without role/control or remote leakage, and authorized
-  Activity pages hydrate changes in one batched query without N+1 work;
-- declared indexes and query plans support 100-write and 100-read bounds, stable lock
-  order prevents deadlocks, history is immutable and current pointers stay on one
-  lineage; and
-- current structured Property wins presentation of its exact key over conflicting
-  introductory prose while both Activities remain immutable history;
+The executable evidence obligations for every rule above are owned by the
+[Adapter parity contract](adapter-parity.md#cross-contract-evidence-obligations).

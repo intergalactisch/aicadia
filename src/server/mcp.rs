@@ -1,5 +1,33 @@
 use super::*;
 
+use std::borrow::Cow;
+
+use axum::http::request::Parts;
+use rmcp::{
+    ServerHandler,
+    handler::server::{router::tool::ToolRouter, tool::Extension, wrapper::Json},
+    model::{
+        CallToolResult, Implementation, JsonObject, ProtocolVersion, ServerCapabilities, ServerInfo,
+    },
+    tool, tool_handler, tool_router,
+};
+use schemars::JsonSchema;
+use serde::{Deserialize, de::DeserializeOwned};
+
+use crate::agent_contract;
+
+const MCP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+fn mcp_input_schema<T: JsonSchema + 'static>() -> Arc<JsonObject> {
+    rmcp::handler::server::common::schema_for_input::<T>()
+        .unwrap_or_else(|error| panic!("invalid fixed MCP input schema: {error}"))
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+struct EmptyInput {}
+
 #[derive(Clone)]
 pub(super) struct AicadiaMcp {
     world: World,

@@ -10,6 +10,12 @@ say naturally that the immediate situation or the established meaning no
 longer supports the proposal. Reconsider with the User and confirm a newly
 grounded attempt with a new request id.
 
+On investigation_not_admitted, nothing was rolled: say only that a new
+search cannot begin now, continue ordinary play and never retry it
+repeatedly. On discovery_attempt_unavailable, say neutrally that this find
+can no longer be completed, re-orient and claim nothing about why. On
+discovery_request_conflict, never silently edit or reuse the id.
+
 Never reveal whether an unavailable subject or Trait was nonexistent,
 remote, stale, duplicated, the actor, no longer present or controlled by a
 User. Never silently invent a replacement key or type, a Trait identity, a

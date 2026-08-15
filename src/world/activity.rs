@@ -281,19 +281,42 @@ pub(super) fn interaction_fingerprint(input: &NormalizedSubmitInteraction) -> Ve
     hash.finalize().to_vec()
 }
 
-fn fingerprint_field(hash: &mut Sha256, field: &[u8]) {
+pub(super) async fn find_placed_entity(
+    transaction: &mut Transaction<'_, Postgres>,
+    entity_id: EntityId,
+    place_entity_id: EntityId,
+    operation: &'static str,
+) -> Result<Option<Entity>, WorldError> {
+    sqlx::query_as::<_, Entity>(
+        r#"
+        SELECT entity.id, entity.name, entity.description,
+               entity.introduced_by_user_id, entity.introduced_at
+        FROM entity_location
+        JOIN entity ON entity.id = entity_location.entity_id
+        WHERE entity_location.entity_id = $1
+          AND entity_location.place_entity_id = $2
+        "#,
+    )
+    .bind(entity_id.0)
+    .bind(place_entity_id.0)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(|error| storage_error(operation, error))
+}
+
+pub(super) fn fingerprint_field(hash: &mut Sha256, field: &[u8]) {
     hash.update((field.len() as u64).to_be_bytes());
     hash.update(field);
 }
 
-fn fingerprint_property_input(hash: &mut Sha256, property: &[PropertyInput]) {
+pub(super) fn fingerprint_property_input(hash: &mut Sha256, property: &[PropertyInput]) {
     for property in property {
         fingerprint_field(hash, property.key.as_bytes());
         fingerprint_property_value(hash, &property.value);
     }
 }
 
-fn fingerprint_trait_input(hash: &mut Sha256, r#trait: &[TraitInput]) {
+pub(super) fn fingerprint_trait_input(hash: &mut Sha256, r#trait: &[TraitInput]) {
     for r#trait in r#trait {
         fingerprint_field(hash, r#trait.statement.as_bytes());
     }
@@ -570,22 +593,9 @@ pub(super) async fn find_accepted_action(
                 .find(|reference| reference.role == ActivityEntityRole::Subject)
                 .map(|reference| reference.entity.id)
                 .ok_or_else(invalid_stored_relation)?;
-            let entity = sqlx::query_as::<_, Entity>(
-                r#"
-                SELECT entity.id, entity.name, entity.description,
-                       entity.introduced_by_user_id, entity.introduced_at
-                FROM entity_location
-                JOIN entity ON entity.id = entity_location.entity_id
-                WHERE entity_location.entity_id = $1
-                  AND entity_location.place_entity_id = $2
-                "#,
-            )
-            .bind(subject_id.0)
-            .bind(location_id.0)
-            .fetch_optional(&mut **transaction)
-            .await
-            .map_err(|error| storage_error(operation, error))?
-            .ok_or_else(invalid_stored_relation)?;
+            let entity = find_placed_entity(transaction, subject_id, location_id, operation)
+                .await?
+                .ok_or_else(invalid_stored_relation)?;
             AcceptedActionConsequence::IntroduceEntity(entity)
         }
         Some("change_entity_property") if !activity.property_change.is_empty() => {

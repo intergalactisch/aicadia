@@ -398,3 +398,61 @@ async fn http_and_mcp_share_canonical_capability_errors(pool: PgPool) {
         assert_eq!(mcp_error(&limit_mcp), limit_http);
     }
 }
+
+#[sqlx::test(migrations = "./migration")]
+async fn http_and_mcp_share_investigation_start_errors(pool: PgPool) {
+    let world = World::new(pool);
+    let owner = world.create_user().await.expect("setup User should exist");
+    let bystander = world
+        .create_user()
+        .await
+        .expect("Character-less User should exist");
+    let server = TestServer::start(world).await;
+
+    let response = server
+        .client
+        .post(format!("{}/api/investigation", server.base_url))
+        .header(USER_CONTEXT_HEADER, bystander.id.0.to_string())
+        .json(&json!({"request_id": Uuid::new_v4()}))
+        .send()
+        .await
+        .expect("Character-less investigation should send");
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let no_character_http: Value = response.json().await.expect("error should be JSON");
+    let no_character_mcp = server
+        .tool(
+            "start_investigation",
+            json!({"request_id": Uuid::new_v4()}),
+            Some(bystander.id.0),
+        )
+        .await;
+    assert_eq!(error_code(&no_character_http), "character_not_found");
+    assert_eq!(mcp_error(&no_character_mcp), no_character_http);
+
+    server
+        .tool(
+            "create_character",
+            json!({"name": "Mara Venn", "description": "A surveyor."}),
+            Some(owner.id.0),
+        )
+        .await;
+    let response = server
+        .client
+        .post(format!("{}/api/investigation", server.base_url))
+        .header(USER_CONTEXT_HEADER, owner.id.0.to_string())
+        .json(&json!({"request_id": Uuid::new_v4()}))
+        .send()
+        .await
+        .expect("unplaced investigation should send");
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    let not_entered_http: Value = response.json().await.expect("error should be JSON");
+    let not_entered_mcp = server
+        .tool(
+            "start_investigation",
+            json!({"request_id": Uuid::new_v4()}),
+            Some(owner.id.0),
+        )
+        .await;
+    assert_eq!(error_code(&not_entered_http), "character_not_entered");
+    assert_eq!(mcp_error(&not_entered_mcp), not_entered_http);
+}

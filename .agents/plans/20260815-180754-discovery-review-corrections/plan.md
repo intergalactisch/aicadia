@@ -1,9 +1,9 @@
 ---
-status: draft
+status: complete
 created_at: "2026-08-15T18:07:54+02:00"
-updated_at: "2026-08-15T18:07:54+02:00"
-accepted_at: null
-completed_at: null
+updated_at: "2026-08-15T22:25:00+02:00"
+accepted_at: "2026-08-15T20:56:59+02:00"
+completed_at: "2026-08-15T22:25:00+02:00"
 ---
 
 # Discovery loop review corrections
@@ -36,8 +36,8 @@ The intended evidence claim is:
   values, hoarding rule, payload content, confirmation boundary or operation names.
 - No reopening of the reaccepted "positive = permission, then re-read" payload.
 - No compatibility path for the corrected discovery fingerprint: the discovery
-  build is uncommitted, has never run outside disposable/local databases and has no
-  shipped rows (Current Means Current).
+  build exists only in local commit `60ce27c`, has never run outside
+  disposable/local databases and has no shipped rows (Current Means Current).
 - No refactor of pre-existing Action/Interaction fingerprints, tests or docs beyond
   the touched seams; no server-wide restructuring beyond the composition nits named.
 - No paid model call.
@@ -51,7 +51,7 @@ The intended evidence claim is:
 | `AGENTS.md` — Singular Domain Names, One Home Per Truth, Earn Your Spot, Current Means Current, Agent Capability Parity | `limits` is the only plural Aicadia field; parameters in four doc homes; two dead branches; unproven public error | Named corrections below |
 | `docs/game/agent.md` (fixed tool template) | `tool/start_investigation.md` invents labels and lacks `Input meaning`; recovery for the three new codes duplicated in three places | Conform to the template; one recovery owner |
 | `src/wire/test.rs:149-207`, `src/server/error.rs:35` | Hand-maintained code list without exhaustiveness; `_ =>` wildcard maps unknown codes to 400 | Make both compiler-checked |
-| Working tree | Discovery delivery (T1–T5 of the accepted plan) is uncommitted on top of `6f95ee2` | The User decides whether to commit before or after this correction; T0 records the choice |
+| Commit `60ce27c` | The discovery delivery is committed on top of `6f95ee2`; working tree clean | Corrections land as a reviewable diff on that fixed baseline |
 
 ## Alignment
 
@@ -67,9 +67,10 @@ The corrections, by owner:
 
 1. **Fingerprint (P1 + P2-3):** `discovery_fingerprint` uses the existing
    `fingerprint_field`, `fingerprint_property_input` and `fingerprint_trait_input`
-   helpers (widened to `pub(super)`), emits a fixed length-prefixed tag before each
-   list (`property`, then `trait`) so lists can never run into each other and an
-   empty list stays distinguishable, and keeps its own domain tag
+   helpers (widened to `pub(super)`), emits a fixed length-prefixed tag **and the
+   item count** before each list (`property`, then `trait`) so the field sequence is
+   self-delimiting—a bare tag is not enough because a Property key may be `trait`
+   and a Trait statement `text`—and keeps its own domain tag
    `aicadia-submit-discovery-fingerprint-v1`. The Action scheme's conditional
    `initial_trait_v1` tag is a historical-compatibility shape and is not copied. A
    World test proves the reported collision pair now conflicts.
@@ -77,10 +78,13 @@ The corrections, by owner:
    returns the outcome so resolution lives in the chance component; the orchestrator
    drops the unreachable draw-range check and the redundant Place comparison; a test
    proves an in-window discovery lowers the outcome (draw 0.49 → Zero); the exact
-   `now − 1 hour` boundary and the actual hoarding/admission statements are proved
-   through production SQL (constants exposed to the schema tests like
-   `CURRENT_ENTITY_STATE_SQL`); `commit.rs` reuses the existing placed-Entity lookup;
-   `Cargo.toml` dependency order restored.
+   rolling-hour window and the actual hoarding/admission statements are proved
+   through production SQL constants from crate-internal tests (the existing
+   `property_query_count_test` pattern; `tests/world/` sees no private SQL and no
+   public World surface is added); the exact microsecond inclusivity is not
+   reachable through `statement_timestamp()` and is protected by the shared constant
+   instead; `commit.rs` reuses the existing placed-Entity lookup; `Cargo.toml`
+   dependency order restored.
 3. **Wire/server (P2-1, P2-2, P3):** field `limits` → `limit` in wire, OpenAPI,
    MCP schema, docs, capability doc, protocol, fake-Agent runner/schemas and
    fixture; wire error-code test becomes an exhaustive `match`; HTTP status mapping
@@ -164,7 +168,7 @@ None material.
 
 ## Execution contract
 
-Root executes sequentially; no delegation planned. No task starts while `draft`.
+Root owns scope, plan state, integration and the final claim. On 2026-08-15 the User chose delegation: T1–T3 each go to one sub-agent (T1 on the session model, T2/T3 may use Opus) with this plan path and one task id; the agent re-reads live files, changes only its owned surfaces, never edits this plan, runs the task's focused evidence and returns raw results. Root reviews the diff, reruns focused evidence and sets task state before the next task starts. No task starts while `draft`.
 
 ## Task graph
 
@@ -172,11 +176,11 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 
 | ID | State | Depends | Parallel-safe | Objective | Owned surfaces | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| T0 | pending | accepted plan | no | Baseline recorded | none | User decision on committing the discovery delivery recorded; ladder green on that tree |
-| T1 | pending | T0 | no | World corrections | `src/world/**`, `tests/world/investigation_schema.rs`, `Cargo.toml` | Collision pair conflicts; in-window saturation; boundary and production-SQL plans; `cargo test --test world`, `--lib world` green |
-| T2 | pending | T1 | no | Wire/server corrections | `src/wire/**`, `src/server/**`, `tests/server/**`, runner/schemas, fixture | Exhaustive code/status checks compile; new adapter tests green; fixture diff = rename only |
-| T3 | pending | T2 | no | Agent contract and docs | `src/agent_contract/**`, fixture, `docs/**`, old plan row | Template scans; `rg` shows one parameter home, no stale test name/label; links resolve; fixture diff = descriptions only |
-| T4 | pending | T3 | no | Ladder, trail, closure | concept log, `docs/evidence/discovery.md`, this plan | Full ladder green; log entries; plan `complete` |
+| T0 | completed | accepted plan | no | Baseline recorded | none | User committed the discovery delivery as `60ce27c` before this correction; Root's ladder (fmt, Clippy, 147/147 PostgreSQL tests, three shell suites) passed on that exact tree; working tree clean |
+| T1 | completed | T0 | no | World corrections | `src/world/**`, `tests/world/investigation_schema.rs`, `Cargo.toml` | Fingerprint = helpers + tag + item count per list; both collision pairs (original and tag-lookalike) conflict; in-window saturation lowers outcome; EXPLAIN plans on production SQL constants and rolling-hour width proved in-crate; Root reran `--lib world::investigation` 25/25, `--test world` 84/84, Action fingerprint tests unchanged, Clippy/fmt/`git diff --check` clean |
+| T2 | completed | T1 | no | Wire/server corrections | `src/wire/**`, `src/server/**`, `tests/server/**`, runner/schemas, fixture (+ World `InvestigationLimit`/`limit` rename) | Fixture diff = exactly the four `limits`→`limit` lines; wire code list and HTTP status map are wildcard-free exhaustive matches; every published discovery rejection, both start Character errors and HTTP retry 201 proven on both adapters; `server/mod.rs` composition-only; Root reran server 6/6 + 15/15, wire 5/5, agent_contract 6/6, fake-Agent suite, Clippy/fmt/`git diff --check` clean |
+| T3 | completed | T2 | no | Agent contract and docs | `src/agent_contract/**`, fixture, `docs/**`, old plan row | `tool/start_investigation.md` on the fixed template with `Input meaning`; three discovery recoveries owned by `15-recovery.md` only; `14-investigation.md` wrapped; `domain.md#investigation-chance-and-admission` is the one parameter home (values verified against code), protocol/storage/capability link to it; `## Validation` added; nine domain-only evidence obligations moved into `adapter-parity.md`; evidence pointers/labels fixed; prototype banner; old plan row corrected; fixture diff = two descriptions + rename; 92 links/anchors resolve; agent_contract 6/6, server protocol 6/6, fake-Agent suite green |
+| T4 | completed | T3 | no | Ladder, trail, closure | concept log, `docs/evidence/discovery.md`, `tools/trait-playtest-schema/live-candidate.sha256`, this plan | Full ladder green: fmt, Clippy, `git diff --check`, 152/152 PostgreSQL tests (51 lib, 2 helper, 15 server, 84 World), fake-Agent, Trait (digest refrozen for changed sources) and local suites; concept example on current spelling; log entry; evidence section; plan `complete` |
 
 ## Task details
 
