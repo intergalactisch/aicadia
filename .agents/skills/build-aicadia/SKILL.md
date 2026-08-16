@@ -45,8 +45,12 @@ Do not write files or delegate work yet. Wait for the user to accept, reject, or
 - Look for an existing `active` plan before creating one. Keep at most one active plan for the current edge; resume it when the request remains inside its accepted outcome.
 - Before making a consequential change to code, schema, executable behavior, authoritative documentation or operations, read `assets/plan-template.md` completely and create `.agents/plans/<YYYYMMDD-HHMMSS>-<short-kebab-slug>/plan.md` from it. Use local time. Keep the plan proportional: one task is valid for a small planned build.
 - Ground the plan in current repository evidence. Align the strategic player or World outcome, the tactical smallest complete slice and the technical implementation seams. State the exact evidence claim, non-goals, affected authorities and next concrete risk.
+- For every experiment or smoke, name which seams are real and which are simulated. Keep deterministic authorization, privacy and state-correctness evidence separate from direct protocol, model-comprehension and presentation evidence; each claim is limited to the exact implementation and fixture exercised, so a simulated World never proves production World behavior and one layer never proves an unexercised property of the other.
+- When a project designates an implementation language for technical labs, use it for state, concurrency, ordering and integration experiments. Reserve a visual prototype medium for questions whose evidence is human interaction; carry productionward the proven invariants, scenarios and measurements, never copied experimental code.
 - Make every task independently executable: give it a stable id, dependencies, state, objective, owned surfaces, concrete actions, invariants, focused evidence and stop conditions. Mark parallel work safe only when write surfaces do not overlap and evidence is independent.
-- Keep the plan `draft` while a material question could change the player outcome, domain meaning, actor, action, state, ownership, nomenclature, public contract, irreversible data, external side effect, token spend, material cost or evidence claim. Grill the user until the required choices are explicit; maintain the active concept record required by root instructions.
+- Present every material Aicadia option in two layers: an understandable player/World outcome first, then its exact technical state, ownership, transaction, contention and cost implications. Explicitly apply the million-User and deliberately hot-subject Terry gate; never make the User decode implementation jargon to choose.
+- Keep semantic intelligence and command composition in explicitly invoked User-owned Agents. An Agent may name exact intended state, claimed causal dependencies and affected spatial scope; World may validate only structural facts it owns and must reject anything unbounded or structurally unjustified rather than infer meaning from prose, Entity names or Property content. A validated capability or collective ratification can authorize Agent-authored meaning without making World understand it. If a desired outcome requires semantic judgment, plan a bounded Agent-facing proposal or collective-deliberation capability with deterministic World admission and settlement instead of adding a server ontology, heuristic or LLM. Subscriptions may carry hints but never Agent invocation or authority.
+- Keep the plan `draft` while a material question could change the player outcome, domain meaning, actor, action, state, ownership, nomenclature, public contract, irreversible data, external side effect, token spend, material cost or evidence claim. Grill the user until the required choices are explicit. Follow any explicit User cadence, including exactly one question per turn, and use the recording procedure below between questions.
 - Present the complete plan and wait for explicit user acceptance. On acceptance, set `status: active` and `accepted_at`. Do not implement while the plan is `draft`.
 
 ## Execute the accepted plan
@@ -61,17 +65,23 @@ Do not write files or delegate work yet. Wait for the user to accept, reject, or
 
 ## Record every choice once
 
-Recording is part of making a choice, not end-of-task cleanup. As soon as a product,
-domain, behavior, architecture, implementation, evidence or operational choice
-crystallizes, record its accepted, rejected, deferred, corrected or superseded
-status, material reason and affected scope in `docs/concept/log/README.md`. During an
-unfinished grill or design session, update one active concept record after each
-answer and keep confirmed direction separate from open decisions. Record development
-history, not shell commands. In the same change, update, correct or remove every
-affected authority so no known-stale documentation remains:
+Recording is part of making a choice, not end-of-task cleanup. Repository state, not
+conversation memory, carries work across turns. On starting or resuming a grill,
+design or research-led decision, reread the active plan, active concept record and
+applicable log, research and game authorities. After each material answer and before
+the next question, update the active concept record's confirmed direction and open
+decisions, then record the accepted, rejected, deferred, corrected or superseded
+choice, material reason and affected scope in the current period file of
+`docs/concept/log/` according to its README. Record development history, not shell
+commands. In the same change, update, correct or remove every affected authority so
+no known-stale documentation remains:
 
-- Put accepted behavior and implementation in `docs/game/`; put sourced research in `docs/research/` and update its index.
-- Put canonical vocabulary in `CONTEXT.md`; keep meaningful exploration history in the concept log.
+- Put current exploration state in one active concept record and full decision history in the current period concept log; link rather than duplicating rationale.
+- Put sourced facts and Aicadia implications in `docs/research/` and update its index; research informs a choice but never makes one.
+- Put only accepted current behavior and implementation in `docs/game/`; an unresolved or exploratory direction does not change the build contract.
+- Put experiment questions, fixtures, observations and bounded verdicts in a project-designated `lab/`. Lab artifacts never own choices or become production dependencies; retained artifacts remain experimental and production logic is redesigned separately.
+- Record the real-versus-simulated seam boundary beside every lab verdict. Use a real database, protocol or Agent only when that seam is the remaining uncertainty, and limit the claim to what that direct run observed.
+- Put canonical vocabulary in `CONTEXT.md`.
 - Change `AGENTS.md` only for an explicitly accepted, compact rule that should govern work across tasks.
 - Write the full choice once in its authority and refer to it elsewhere instead of duplicating it.
 - Keep `.agents/backlog/README.md` and the current item aligned with material scope, status, dependencies and completion evidence. The backlog points to authoritative choices; it does not duplicate them.

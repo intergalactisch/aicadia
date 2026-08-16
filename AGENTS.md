@@ -138,7 +138,11 @@ The world may become abstract; development communication may not. Explain every
 proposal with the concrete actor, input, action, stored result and boundary cases.
 Do not use a slogan, metaphor or broad principle as if it were a decision. If an
 abstract phrase is useful, immediately translate it into specific allowed and rejected
-examples that a future builder can implement and test.
+examples that a future builder can implement and test. Present every material option
+in two adjacent layers: first the understandable player or World consequence, then
+the technical state, ownership, transaction, contention and cost consequence. State
+what happens with millions of Users and one deliberately hot subject; never ask the
+User to choose between unexplained implementation terms.
 
 ### Game And Server Vocabulary
 
@@ -189,6 +193,12 @@ authoritative readback and verified cleanup. Do not build a permanent runner,
 multi-phase harness or broad fake matrix unless repeated evidence or one concrete
 risk requires it. Prompt, output schema and validator must demand the same observable
 result; a controller mismatch is inconclusive and may never be blamed on the model.
+Name every real and simulated seam in the evidence claim. Deterministic checks prove
+authorization, privacy and state correctness only for the exact World implementation
+and fixture they execute; an in-memory or simulated World never proves production
+World behavior. A direct Agent/MCP smoke proves only the exercised integration and
+Agent interpretation. Neither layer may borrow claims from the other merely because
+both appear in one lab.
 
 ### Deferred Means Absent
 
@@ -197,10 +207,27 @@ or projection are undecided and outside the current MVP. Do not add their tables
 types, fields, interfaces or abstractions until `docs/game/` explicitly introduces
 required current behavior.
 
-### Dumb And Strict Server
+### Agent Intelligence, Dumb And Strict World
 
-No LLM calls server-side. Validation is deterministic. Intelligence lives in the
-connected agents; the server is the authoritative world-state processor.
+All semantic intelligence lives in explicitly invoked User-owned Agents. World never
+infers kinds, physics, causality, destructive impact, affected spatial scope or a
+preferred outcome from prose, Entity names, Property keys/values or model judgment.
+The Agent composes one bounded typed proposal: exact subjects, intended state,
+claimed causal dependencies and, when the behavior needs it, explicit affected
+Places or other scope. World validates only the structural truth it owns—identity,
+control, placement, explicit spatial relations, authority, current versions, bounds,
+idempotency and atomic history—and rejects a proposal when its required structural
+basis, authority, bounds or freshness cannot be deterministically validated. A
+validated capability or collective ratification may authorize Agent-authored meaning;
+it does not make World understand that meaning. Never add a server ontology,
+heuristic or LLM merely to understand Agent-authored World content.
+
+When a legitimate game decision requires semantic judgment, expose a bounded
+Agent-facing way for eligible, explicitly invoked Agents to propose, deliberate or
+choose, individually or collectively. Their intelligence supplies candidate meaning;
+World remains authority over admission, deadlines, stored inputs, deterministic
+settlement, state and Activity. A subscription may announce durable change or an
+accepted proposal, but never invokes an Agent, proves understanding or spends tokens.
 
 ### No Unconscious Token Burn
 
@@ -230,18 +257,27 @@ behavior, architecture, implementation, evidence or operation is incomplete unti
 recorded when it crystallizes. Record accepted, rejected, deferred, corrected and
 superseded choices with their material reason, current status and affected scope in
 the current period file of `docs/concept/log/` (per its README); omit
-shell-command trivia. During an unfinished grill or
-design session, maintain one active concept record that separates confirmed
-direction from open decisions instead of waiting for implementation or final
-agreement. In the same change, update, correct or remove every affected authority so
-known-stale documentation is never left behind: current behavior and implementation
-in `docs/game/`, sourced research plus its index in `docs/research/`, canonical
-vocabulary in `CONTEXT.md`, delivery and evidence history plus evidence-machinery
-operation contracts in `docs/evidence/`, development history in the concept log,
-and placement roles and boundaries in `docs/README.md`. Write the full choice once
-in its authority and link to it elsewhere. `docs/concept/` cannot override
-`docs/game/` or this file. Amend this file only for an explicitly accepted, compact
-rule that should govern work across tasks.
+shell-command trivia. Repository records, not conversation memory, carry design and
+research forward. Start or resume by rereading the owning repository trail. During
+an unfinished grill or design session, maintain one active concept record that
+separates confirmed direction from open decisions. Before asking the next material
+grill question, update that record, append the crystallized choice to the current
+period concept log and reread the resulting state. Follow any explicit User cadence,
+including exactly one question per turn.
+
+In the same change, update, correct or remove every affected authority so known-stale
+documentation is never left behind. Keep the homes distinct: the active concept
+record owns current exploration state; the concept log owns decision history;
+`docs/research/` plus its index owns sourced facts and implications; `docs/game/`
+owns only accepted current behavior and implementation; `CONTEXT.md` owns canonical
+vocabulary; `docs/evidence/` owns delivery and evidence history plus evidence-machine
+operation contracts; and `docs/README.md` owns placement. A project-designated
+`lab/` owns non-authoritative experiments and bounded verdicts, never choices.
+Retained lab artifacts remain experimental and may not be imported, copied or
+promoted directly into production. Write the full choice once in its authority and
+link to it elsewhere. `docs/concept/` cannot override `docs/game/` or this file.
+Amend this file only for an explicitly accepted, compact rule that should govern
+work across tasks.
 
 ### Every World Action Leaves History
 

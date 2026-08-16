@@ -24,8 +24,8 @@ derive meaning from planning, exploration or delivery history.
 The development side governs how Aicadia is understood, researched, chosen, planned
 and built. It includes `docs/README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`,
 `docs/concept/` with its log and archive, `docs/research/` with its archive,
-`.agents/backlog/`, `.agents/plans/`, `.agents/skills/`, `tools/*-playtest` and
-`tests/*-playtest.sh`.
+`.agents/backlog/`, `.agents/plans/`, `.agents/skills/`, `lab/`,
+`tools/*-playtest` and `tests/*-playtest.sh`.
 
 Development material may explain or cite the running product, but it never becomes a
 second source for the current game contract or executable behavior.
@@ -55,6 +55,7 @@ only through the static delivery-status pointer defined below.
 | `.agents/backlog/` | Development | Ordered forward planning state | `.agents/backlog/README.md` and the current item | At most one active edge, later concrete outcomes and dependencies | Current product contract or duplicated decision rationale | Edge order, state, dependency or completion evidence changes |
 | `.agents/plans/` | Development | Proportional build execution state | Each plan | Accepted outcome, task graph, invariants and exact evidence claim | Current product truth or reusable build rules | A consequential build is planned or its accepted execution state changes |
 | `.agents/skills/` | Development | Reusable Agent workflow | Each skill's `SKILL.md` | Skill-specific procedure and routing | Project contract or duplicated global build rules | A reusable workflow changes |
+| `lab/` | Development | Retained experimental workbench | `lab/README.md` and each track index | Small decision-oriented experiments, rough reproducible artifacts, bounded observations and verdicts | Current product truth, production dependencies, sourced research authority, secrets or proof beyond the experiment's stated scope | An experiment, verdict, artifact status or track boundary changes |
 | `tools/agent-playtest`, `tools/trait-playtest` | Development | Evidence-producing runners | The runner and its evidence operation contract in `docs/evidence/runner/` | Executable playtest orchestration | Game-contract rules or delivery-status narrative | Runner behavior or its operation contract changes |
 | `tests/agent-playtest.sh`, `tests/trait-playtest.sh` | Development | Runner regression suites | The matching test script | Token-free checks of evidence machinery | Runtime game tests or delivery narratives | Evidence machinery behavior changes |
 | `docs/evidence/` | Bridge | Delivery and evidence history | Its index, per-slice records and `runner/` operation contracts | Status, runs, audits, digests, proof links and evidence-machine operations | Game-contract rules, planning state or concept rationale | Evidence is produced, reviewed, corrected or superseded |

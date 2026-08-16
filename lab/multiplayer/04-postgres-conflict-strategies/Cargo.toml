@@ -1,0 +1,16 @@
+[package]
+name = "postgres-conflict-strategies-lab"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "macros",
+    "migrate",
+    "postgres",
+    "runtime-tokio",
+    "uuid",
+] }
+tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+uuid = { version = "1.24.1", features = ["v4"] }

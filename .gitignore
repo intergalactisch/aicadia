@@ -1,4 +1,5 @@
 /target/
+/lab/**/target/
 /.aicadia-playtest/
 /.aicadia-trait-playtest/
 /.aicadia-local/

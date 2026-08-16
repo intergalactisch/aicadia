@@ -12,7 +12,8 @@ their own AI Agents.
 **World**:
 The single persistent shared space in which every Entity exists. World is the sole
 authority that deterministically accepts or rejects game commands and creates or
-changes durable state.
+changes durable state; it validates structural truth but never interprets
+Agent-authored content to infer semantic meaning, causality or preferred outcomes.
 _Avoid_: Universe, shard, world instance
 
 **User**:
@@ -22,8 +23,10 @@ _Avoid_: Player, account, character
 
 **Agent**:
 The User's LLM client, which inspects World state, reasons, proposes actions and
-submits commands on the User's behalf. It has no durable identity or write authority
-inside the World; only World may accept and apply its proposals.
+composes bounded commands on the User's behalf, including intended state and claimed
+causal or spatial scope. It may contribute semantic judgment to an explicit
+collective decision, but has no durable identity or write authority inside the World;
+only World may validate and apply its proposals.
 _Avoid_: User, Character, narrator
 
 **Character**:
