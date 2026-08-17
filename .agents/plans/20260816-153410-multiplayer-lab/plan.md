@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-16T15:34:10+02:00"
-updated_at: "2026-08-16T21:13:21+02:00"
+updated_at: "2026-08-17T06:59:06+02:00"
 accepted_at: "2026-08-16T16:03:48+02:00"
 completed_at: null
 ---
@@ -236,6 +236,20 @@ must not duplicate its state machine.
   may hold one pending stale signal and refetch current state plus bounded recent
   Activities instead of accumulating an unbounded per-Activity delivery backlog.
   World stores each Activity once and no Agent invocation follows from delivery.
+- Pause the grill with Q8 undecided and compare all credible interest strategies in
+  the retained lab — User requested real PostgreSQL and real MCP seams for every
+  variant rather than selecting from explanation. The comparison includes global
+  firehose, Place, exact-only, flat hybrid and structural World/area/Place/exact
+  hybrid forms under one fixture and metric set.
+- Keep a genuine World-scope change possible from the core without designing its
+  caller — User expects a later admin to use this power but explicitly deferred all
+  roles, rights and admission. The lab injects the change at its experimental World
+  seam and tests only storage and delivery, exposing no player or admin tool.
+- Close the two concrete interest-lab risks before returning to simultaneous Entity
+  mutations — User explicitly accepted the proposed small follow-up first. It tests
+  hot-resource versus quiet-resource router isolation and fatal PostgreSQL-listener
+  recovery; only after that does T3 resume with concurrent requests against one
+  Entity.
 
 ### Reversible assumptions
 
@@ -257,10 +271,15 @@ must not duplicate its state machine.
   without turning a Place into the conflict unit?
 - Which consequences must be atomic with the action, and which may become later
   domain-specific actions with causal references?
-- Does gameplay require lossless ordered occurrence catch-up, or only authoritative
-  current state plus bounded recent context?
-- What promise does subscription make: coalescible change hint, typed occurrence,
-  cursor progression, or some combination?
+- What bounded recent Activity window and reconnect response best implement Q7's
+  accepted current-state-plus-coalescible-live promise?
+- Which global, Place, exact-only, flat-hybrid or structural-scope-hybrid interest
+  strategy gives the best game coverage and bounded fan-out under the shared lab
+  matrix, and does the structural lab candidate earn acceptance as current product
+  behavior despite its still-unproved hosted-client and current-Gateway integration
+  seams?
+- Which later caller may invoke a World-scope change remains outside this experiment;
+  the core must preserve the capability without prebuilding roles or rights.
 - Are the coarse Entity/Place resources that should trigger a refetch distinct from
   the exact facts whose changed versions must reject an Action at commit?
 - What overload behavior is fair and legible when one Entity becomes hot while quiet
@@ -293,6 +312,7 @@ must not duplicate its state machine.
 | `lab/README.md` | Defines the cross-topic lab charter and status vocabulary. | Keep decision ownership outside the lab as experiments are added. | The home can later contain tracks beyond multiplayer without changing its authority. |
 | `lab/multiplayer/README.md` | Indexes the current multiplayer experiment track. | Add only earned experiments and bounded verdicts. | Rough code is allowed; each experiment has a bounded question and verdict. |
 | `lab/multiplayer/<NN>-<slug>/` | Contains retained observation and subject-conflict experiments. | Add only decision-earned experiments and a concise record per experiment. | No runtime imports, production dependency or secret material. |
+| `lab/multiplayer/05-postgres-mcp-interest-strategies/` | Retained kept experiment with an overall `inconclusive` verdict; structural interest is the only supported direct-tier candidate. | Preserve the real-seam, synthetic and focused follow-up evidence for the next product choice. | No production imports or schema; one shared implementation and fixture hold every variant comparable; actual and synthetic scale evidence stay distinct. |
 | `docs/concept/concurrency-and-world-dynamics.md` | Active exploration record. | Update confirmed direction and remaining frontier after material answers or findings. | It cannot override `docs/game/`. |
 | `docs/concept/log/2026-08.md` | Records current multiplayer exploration. | Record crystallized accepted, rejected, deferred or corrected choices. | One choice is written fully in one owning authority. |
 | `AGENTS.md` | Requires a trail but does not yet say that repository state replaces conversation memory between grill questions or place retained lab evidence. | Add one compact cross-task repository-memory and lab-authority rule under `Every Choice Leaves A Trail`. | Keep volatile multiplayer choices out of the always-loaded constitution. |
@@ -331,10 +351,10 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T1 | completed | — | no | Establish the general retained lab home and its first multiplayer track. | `docs/README.md`, `lab/README.md`, `lab/multiplayer/README.md`, active concept/log | Placement review and `git diff --check`. |
 | T1M | completed | T1 | no | Make repository-backed decision memory, retained experimental separation, honest evidence layers and project-language technical labs reusable build methodology. | `AGENTS.md`, `build-aicadia`, global `grilling`, global `prototype`, `lab/README.md`, concept log | Both changed skills validate; project-language and no-direct-promotion wording is consistent across the full referenced procedure. |
 | T2 | completed | T1, T1M | no | Resolve presence, attention and sensory semantics one question per turn; keep the earned observation lab in the accepted technical medium. | Active concept/log, `lab/multiplayer/01-observation-ownership` | Q1–Q4 are accepted; one dependency-free Rust fixture passes all eight ownership scenarios with no real-seam overclaim. |
-| T3 | in_progress | T2 | no | Resolve subject-scoped transaction, Agent-authored causality and the activation boundary for collective intent assembly; run focused semantic labs only if earned. | Active concept/log, `lab/multiplayer/02-*`, `lab/multiplayer/03-*`, `lab/multiplayer/04-*`, intent/deliberation research | Q5/Q6 select operation-scoped freshness and exact Property coordination; research defines the bounded Agent-package/strict-World seam, while activation and eligibility remain open. |
-| T4 | pending | T3 | no | Resolve the required live board/resource-interest contract, recovery and Agent-knowledge promises; run direct host/MCP smokes only if earned. | Active concept/log, optional next numbered lab | Q7 permits per-resource coalescing; every supported active host must receive prompt live change signals and recover bounded authoritative truth after pressure, loss or reconnect without automatic Agent invocation. |
-| T5 | pending | T4 | no | Resolve overload, fairness and honest scale evidence; run bounded hotspot simulation only if earned. | Active concept/log, optional next numbered lab | Hot-subject failure is isolated and every scale claim is explicitly bounded. |
-| T6 | pending | T5 | no | Produce and present a decision-complete production build plan. | Future production plan, affected planning/docs surfaces | Terry review, no material open production question, explicit User acceptance requested separately. |
+| T3 | pending | T2 | no | Resume unresolved subject-scoped transaction, Agent-authored causality and collective-authority questions after the requested subscription experiment. | Active concept/log, `lab/multiplayer/02-*`, `lab/multiplayer/03-*`, `lab/multiplayer/04-*`, intent/deliberation research | Q5/Q6 and retained evidence remain current; activation and eligibility stay open rather than blocking the independent interest comparison. |
+| T4 | completed | T2 | no | Compare required live resource-interest strategies through one real PostgreSQL and MCP lab before asking Q8 again. | `lab/multiplayer/05-postgres-mcp-interest-strategies`, lab index, active concept/log, this plan | Five variants ran through the same real 32-client/two-gateway/100-commit seam; structural alone had no stipulated coverage miss or noise, while the separate million-record mapper and all nonclaims remain explicit. |
+| T5 | completed | T4 | no | Close the small interest follow-up: isolate quiet resources from maximum local hot fan-out and prove fatal PostgreSQL-listener recovery through reconnect plus baseline. | `lab/multiplayer/05-postgres-mcp-interest-strategies`, lab index, active concept/log, this plan | Equal-capacity 1/8/64-stripe variants preserved exact bounded routing; the 64-stripe candidate crossed real rmcp, while real fatal PgListener loss ended the stream and replacement listen-then-baseline recovered current state plus the missed Activity. |
+| T6 | pending | T3, T5 | no | Produce and present a decision-complete multiplayer build plan. | Future production plan, affected planning/docs surfaces | Terry review, no material open production question, explicit User acceptance requested separately. |
 
 ## Task details
 
@@ -483,64 +503,133 @@ reconnect, without mistaking transport for World authority or Agent knowledge.
 **Actions:**
 
 1. Apply Q7's accepted prompt-live, per-resource-coalescible delivery guarantee.
-2. Grill and compare global-board, Place discovery and exact Entity focus as views over
-   one authoritative-read/required-live-interest substrate, not separate systems.
-3. Prove how Claude Code, ChatGPT desktop, ChatGPT web and later hosts can maintain
-   that live contract through native MCP listen or a semantically equivalent adapter.
-4. Run a token-free Rust delivery simulation and a focused PostgreSQL listener lab
-   only when their measured behavior can decide the scope or propagation shape.
-5. Only if protocol or Agent comprehension remains uncertain, run the smallest direct
-   host/MCP smoke with explicit pre-announced call and token bounds, authoritative
-   readback and verified cleanup.
-6. Record every real and simulated seam separately and limit deterministic, database,
-   MCP, host and Agent verdicts to the exact implementation each layer exercises.
+2. Build one standalone Rust 2024 crate with a scratch migration, SQLx `0.8.6`, real
+   transactions plus one Activity, post-commit `pg_notify`, a dedicated `PgListener`,
+   `rmcp` `3.1.1` server/client over loopback Streamable HTTP, exact subscription
+   acknowledgments, resource-update notifications and authoritative resource reads.
+3. Hold implementation and workload constant while comparing five routing forms:
+   global firehose, Place board, exact Entity only, Place plus exact Entity, and a
+   declared World/area/Place scope chain plus exact Entities. The World-scope case is
+   injected directly by the fixture; caller authority is deliberately absent.
+4. Exercise the same scenarios for every form: selected Tree change, unselected local
+   Entity change, new Entity discovery, bomb affecting Places A/B, regional effect,
+   one world-wide effect, movement A→B, hot
+   Entity burst, hot Place, quiet Place isolation, slow consumer, lost host
+   subscription and reconnect/refetch. Fatal PostgreSQL-listener loss was deliberately
+   left to and then closed by T5 rather than mixed into this comparison.
+5. Use two evidence sizes. The direct integration tier uses one writer, two gateway
+   listeners, 32 real MCP subscribers and 100 committed changes per strategy, run
+   sequentially with a 30-second bound per strategy. The scale tier streams one
+   million synthetic host-interest records and 10,000 fixed skewed changes through
+   the same strategy key-selection code, folds the full population into cohort
+   counts and retains a bounded executable recipient sample. It does not use one
+   million Gateway records and claims no million sockets, database clients or
+   supported Users.
+6. Capture mutation and notification latency p50/p95/p99, database notification and
+   query counts, `pg_notification_queue_usage`, accepted resource filters, raw and
+   coalesced outbound hints, peak pending keys, refetch count/rows/bytes, irrelevant
+   wake-ups, subscription churn and quiet-subject latency. Timing is descriptive;
+   correctness, coverage and boundedness gate every comparison before speed.
+7. Record a result matrix and explicit falsifiers in the experiment README, keep each
+   real and simulated seam separate, index the active artifact and update the concept
+   trail before Q8 resumes.
+8. After scope evidence, separately prove how Claude Code, ChatGPT desktop, ChatGPT
+   web and later hosts can maintain the chosen live contract; no lab SDK client result
+   is relabeled as host support.
 
 **Invariants:**
 
 - Hints may coalesce or disappear; authoritative refetch establishes truth.
-- A global logical board never requires one global invalidation, revision or cursor.
+- No global logical board requires one globally mutated database row, revision or
+  cursor; the firehose comparison may still route a logical Global invalidation.
+- A World-scope effect updates one scope resource, not every Place row; different
+  per-Place consequences remain unbounded and outside this experiment.
+- World-scope caller authority is absent; the experiment may prove the core delivery
+  shape but no role, right, admin operation or player permission.
 - No MCP notification or server event triggers an Agent model call.
 - Commit ordering is not inferred from `(occurred_at, id)` without evidence.
 
 **Evidence:**
 
-- A client that misses or duplicates a hint converges through the accepted bounded
-  read contract; any model claim is limited to the exact direct smoke.
+- `DATABASE_URL=postgres://localhost/postgres cargo test --manifest-path lab/multiplayer/05-postgres-mcp-interest-strategies/Cargo.toml -- --test-threads=1` — all real database/MCP scenario assertions pass.
+- The experiment's release comparison command emits the complete fixed metric matrix
+  for five strategies and distinguishes actual connections from the synthetic
+  million-interest strategy-key/cohort workload.
+- A separate ignored SQLx cleanup audit finds no registered database for the eight
+  owned test paths; `cargo fmt --check`, `cargo check --tests` and `git diff --check`
+  pass.
 
 **Stop conditions:**
 
-- Stop before any unannounced model call, external persistent side effect or permanent
-  runner/harness.
+- Stop if a strategy cannot use the same real seam and fixture without changing the
+  compared game promise, if the test needs production code/schema, or if an SDK
+  client result would be mistaken for Claude/ChatGPT host support.
+- Stop before any unannounced model call, remote service, role/right system or
+  persistent external side effect.
 
 ### T5 — Resolve overload and scale evidence
 
-**Objective:** The accepted design states what happens when one Entity is extremely
-hot, how quiet subjects remain usable and which bounded proof supports its first
-production claim.
+**Objective:** The interest lab determines whether one maximally hot resource causes
+head-of-line delay for unrelated quiet resources and proves that a fatal real
+PostgreSQL listener loss becomes a visible reconnect-and-baseline condition rather
+than a silently stale live stream.
 
 **Actions:**
 
-1. Grill fairness, admission, backpressure, retry and degraded-observation behavior.
-2. If needed, simulate one hot subject and many independent subjects locally using
-   fixed bounded workloads.
-3. Separate semantic correctness, local throughput, topology projection and actual
-   production capacity claims.
+1. Extend experiment 05 rather than create a second copy of its World/MCP fixture.
+2. Compare one, eight and sixty-four resource-lock stripes through one Rust router
+   implementation and identical bounded registration, hot-fan-out and quiet-route
+   workloads. Use 4,096 hot recipients, independent quiet resources, concurrent hot
+   producers and repeated runs; record quiet p50/p95/p99/max, hot throughput,
+   coalescing and exact delivery counts. The router capacity counts exact
+   resource-recipient pairs, not the existing Gateway's separate host admission;
+   timing remains descriptive.
+3. Put the strongest bounded lock setting behind one minimal real rmcp
+   `subscriptions/listen` → resource update → authoritative read smoke so the result
+   proves protocol integration rather than only a fast in-memory router.
+4. Run one real SQLx/PostgreSQL/rmcp failure scenario with a dedicated listener pool:
+   establish listen plus baseline, close that pool so `PgListener::recv` fails,
+   require the existing MCP subscription to end, commit while no listener exists,
+   create a replacement gateway/listen and verify its authoritative baseline contains
+   the missed committed Activity and current state.
+5. Keep the World, Activity mapping, subscription bounds and no-Agent/no-token rule
+   from experiment 05 unchanged; update only the experiment record, plan and concept
+   trail with the bounded observation.
+6. After this task completes, resume T3 with a separately planned experiment for
+   simultaneous requests against one Entity, as the User explicitly requested.
 
 **Invariants:**
 
 - Overload is explicit and bounded; it never spreads via an unbounded queue.
-- A hot Entity may serialize, but unrelated Entities and Places do not share its lock.
+- One hot resource may retain its unavoidable O(local subscribers) fan-out, but a
+  candidate isolation design may not make an unrelated resource share that lock.
+- Listener failure must never leave a healthy-looking active subscription that has
+  silently stopped receiving hints.
+- Reconnect follows listen-then-authoritative-baseline ordering; notification replay
+  is neither required nor claimed.
+- No production code, host product, Agent, remote service or role/right system enters
+  the fixture.
 - No local benchmark is extrapolated into an unsupported million-user claim.
 
 **Evidence:**
 
-- The lab verdict reports workload, limits, results and non-claims; the production
-  plan names the next stronger gate rather than pretending it has passed.
+- Focused correctness tests prove exact delivery/coalescing for every lock setting
+  and bounded teardown state.
+- An ignored release matrix prints the fixed workload and descriptive lock-wait and
+  quiet-latency distributions for one, eight and sixty-four stripes.
+- A real SQLx test proves listener failure → MCP stream end → offline commit → new
+  listener/listen → authoritative recovery, followed by the explicit cleanup audit.
+- A focused real rmcp smoke proves the strongest fixed-fixture lock setting preserves
+  the exercised one-client listen/update/coalesce/read success path; it does not
+  prove overload, failed-read restoration or Claude/ChatGPT host support.
+- `cargo fmt --check`, `cargo check --tests`, `cargo clippy --tests -- -D warnings`,
+  focused tests and `git diff --check` pass.
 
 **Stop conditions:**
 
-- Stop if meaningful evidence would require production infrastructure or material
-  external spend not covered by a newly accepted plan.
+- Stop if resource sharding requires changing the World or subscription promise, if
+  fatal-listener recovery cannot be surfaced through current rmcp semantics, or if
+  meaningful evidence would require production infrastructure or external spend.
 
 ### T6 — Synthesize the production plan
 

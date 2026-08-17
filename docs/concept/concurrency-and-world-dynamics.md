@@ -651,6 +651,84 @@ lab evidence. No semantic priority is inferred by World: the delivery layer merg
 repeated dirtiness by resource, while the Agent interprets the bounded authoritative
 result.
 
+#### Q8 deferred to comparative real-seam lab
+
+The User ended the grill before choosing global, Place or exact-Entity interest and
+requested that credible forms be developed and compared empirically. The comparison
+must use real PostgreSQL transactions and notifications plus real MCP resource reads
+and `subscriptions/listen`, not only an in-memory router. Production World, auth,
+host products, LLMs and million live sockets remain separate seams and may not borrow
+claims from that fixture.
+
+The scenario challenge expands the matrix beyond the three initial options. Exact
+Entity interest alone can miss a relevant occurrence on an unselected local Entity;
+a current-Place resource can expose that bounded public-local change. Conversely,
+invalidating one global board for every local mutation creates a global firehose. A
+fourth candidate therefore follows a bounded structural scope chain—World, admitted
+area ancestors, current Place and Agent-selected exact Entities—through the same
+resource-interest primitive. A change invalidates only the explicit affected scopes
+and Entities, not every ancestor automatically.
+
+This yields concrete cases without requiring World semantic inference:
+
+- painting a selected Tree may stale its exact Entity and the local Place chronicle;
+- an unselected Tree falling still stales the current Place chronicle;
+- a bomb call that explicitly affects Places A and B stales A, B and its exact
+  changed Entities;
+- a regional effect stales one admitted area resource rather than every descendant
+  Place row; and
+- a genuinely world-wide effect stales one World-scope resource and necessarily
+  fans out to every active host following that World.
+
+The last case is powerful and necessarily creates global delivery fan-out. The core
+must be able to accept one explicitly World-scoped change without rewriting every
+Place. The User expects a later admin to be one possible caller, but deliberately
+keeps roles, rights and admission outside this experiment. The lab injects a bounded
+World-scope change directly at its experimental World seam and tests only storage,
+invalidation, fan-out, coalescing and refetch. It neither grants this call to a
+player nor designs the later authority mechanism. Distinct per-Place global
+consequences would still be an unbounded write and are not made cheap by one
+notification.
+
+#### Comparative result: structural interest is the strongest lab candidate
+
+The retained [PostgreSQL/MCP interest experiment](../../lab/multiplayer/05-postgres-mcp-interest-strategies/README.md)
+completed the comparison without choosing Q8 on the User's behalf. Across one fixed
+real tier—32 concurrent rmcp clients, two gateway/PgListener instances and 100 real
+PostgreSQL commits per strategy—the structural World/area/current-Place/exact-Entity
+chain was the only form with no stipulated live miss, reconnect miss or irrelevant
+wake-up. The global firehose also covered every required host but woke 2,242
+irrelevant hosts in the small direct fixture; Place, exact-only and flat hybrid each
+missed required cases.
+
+The experiment also corrected two false forms of boundedness before accepting its
+result. `LIMIT 32` originally allowed a dormant resource read to scan tens of
+thousands of unrelated Activities; one bounded `activity_resource` mapping per
+Activity/resource now gives each World, area, Place and Entity an ordered direct
+read path without recipient rows. A full gateway sink originally dropped a distinct
+dirty resource silently; overload now ends that host subscription so reconnect plus
+an authoritative baseline is required instead of leaving a healthy-looking stale
+stream.
+
+This supports structural interest as the next product candidate, not as a production
+scale claim. The million-record tier folds interests into cohorts and retains 8,192
+executable recipients; it is not one million Gateway subscriptions. Fatal
+`PgListener` recovery, public Claude/ChatGPT host behavior, authentication, maximal
+hot-resource fan-out, replicated notification cost across additional gateways, quiet
+isolation under that fan-out and concurrent write capacity remain unproved. The
+gateway's instance-wide routing mutex is therefore a specific next risk, and the
+Agent-declared affected scope remains a simulated input rather than World semantic
+inference.
+
+The User accepted one small follow-up before returning to simultaneous Entity
+mutation requests. The retained interest lab first compares resource-lock isolation
+under one maximum local hot fan-out plus unrelated quiet resources, then closes a
+real PostgreSQL listener connection and requires the existing MCP stream to end. A
+replacement gateway must listen before its authoritative baseline and recover the
+state and Activity committed during the listener gap. This tests delivery isolation
+and recovery only; concurrent World mutation semantics resume afterward as a
+separate experiment.
+
 ### Confirmed scope: collective settlement is an explicit special authority
 
 The User proposed turning extreme contention into gameplay: interested Agents could
@@ -1075,8 +1153,14 @@ focus can still share one substrate rather than become separate systems.
 
 Q7 settles the live delivery promise: rapid notifications for one resource may
 coalesce while authoritative current state and bounded recent context remain
-recoverable. The next one-question grill must choose the first active interest
-scope—global World board, current Place, exact Entity or one bounded combination.
-That determines discovery precision, fan-out and movement behavior before a concrete
-transport or gateway lab is meaningful. Overload fairness, collective settlement
-and abandoned-Character behavior remain downstream decisions.
+recoverable. Q8 is deliberately unanswered after the comparative lab: structural
+interest is the only supported direct-tier candidate. Its focused follow-up now
+supports a 64-resource-lock candidate under an equal-capacity local hot/quiet fixture,
+proves that candidate can drive a real rmcp listen/update/read exchange, and proves
+fatal real PostgreSQL-listener loss can terminate the stale stream and converge via
+replacement listen-then-baseline. This still does not prove current-Gateway
+integration, production host support, public networking or million-subscriber
+capacity. Per the User's requested sequence, the next experiment returns to
+simultaneous requests that try to modify one Entity; Q8 remains open rather than
+being selected by this infrastructure result. Collective settlement and
+abandoned-Character behavior remain downstream decisions.
