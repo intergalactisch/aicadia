@@ -1,3 +1,7 @@
+---
+status: Deterministic evidence complete; the fresh paid flow reached exact World, HTTP and independent-observer content but terminal-failed on a valid optional observer limit; current controller corrected and pinned token-free, no retry authority
+---
+
 # Entity Property evidence
 
 > **Role / side:** Property delivery and evidence history / evidence bridge.

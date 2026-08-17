@@ -1,3 +1,8 @@
+---
+status: load-bearing
+era: August Activity-Property-Trait
+---
+
 # Idempotent action delivery and Place freshness
 
 > **Role / side:** sourced research report / development side.

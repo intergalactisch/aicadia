@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # MCP subscriptions and collective Agent intents
 
 > **Role / side:** sourced research report / development side.

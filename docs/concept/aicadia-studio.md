@@ -1,11 +1,12 @@
+---
+status: active
+---
+
 # Aicadia Studio direction
 
 > **Role / side:** active development-interface exploration / development side.
 > **Authority:** owns the confirmed Aicadia Studio direction, rationale and open design decisions.
 > **Excludes:** current game behavior, delivery evidence and final production implementation; see `docs/game/`, `docs/evidence/` and an accepted build plan.
-
-Status: selected direction delivered; a convention-driven development-environment
-extension is proposed and under grill.
 
 ## Question
 

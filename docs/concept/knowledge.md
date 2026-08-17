@@ -1,3 +1,7 @@
+---
+status: live
+---
+
 # Character-grounded knowledge
 
 > **Role / side:** live concept exploration of what one Character can know / development side.

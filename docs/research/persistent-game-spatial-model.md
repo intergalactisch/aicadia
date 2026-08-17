@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Spatial models for a very large persistent game world
 
 > **Role / side:** sourced research report / development side.

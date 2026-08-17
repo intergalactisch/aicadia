@@ -1,12 +1,17 @@
+---
+question: Can Q1–Q4 remain one World occurrence with transient host attention and Agent presentation only after World authorization?
+verdict: supported
+status: kept
+real_seam: [Rust compiler, test runner, committed in-memory state machine in src/lib.rs]
+simulated_seam: [World, host, hint delivery, Agent state]
+informs: .agents/plans/20260816-153410-multiplayer-lab/plan.md
+---
+
 # Observation ownership experiment
 
 > **Role / side:** retained observation-ownership experiment / development side.
 > **Authority:** records this fixture, its bounded observations, verdict and artifact status.
 > **Excludes:** current game behavior, production ordering, delivery guarantees, scale proof and implementation design.
-
-Status: `kept`
-
-Verdict: `supported`
 
 ## Pending decision
 

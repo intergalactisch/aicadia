@@ -1,3 +1,7 @@
+---
+status: Deterministic creation and combined Action delivery complete across World, HTTP and MCP; no new paid/model call
+---
+
 # Uniform Entity-state package evidence
 
 > **Role / side:** uniform Property/Trait creation and Action delivery record / evidence bridge.

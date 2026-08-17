@@ -45,8 +45,8 @@ performs no roll. Only a newly inserted positive attempt can cause the oldest li
 positive to be voided once the per-User live-positive bound is exceeded; the
 candidate must be a prior live positive with `id <> new_attempt_id`, so the new
 attempt never voids itself. Every window, admission and chance value is owned by
-[Domain contract](../domain.md#investigation-chance-and-admission) and stays an
-operational fact, never a player-visible mechanic or input.
+[Investigation attempt](../model/investigation-attempt/README.md#investigation-chance-and-admission)
+and stays an operational fact, never a player-visible mechanic or input.
 
 The returned attempt id, stored outcome and immutable limit are the complete
 result. They contain no mutable Place context, counts, odds, server prose, seed or
@@ -68,8 +68,8 @@ create an Entity, Activity or current state.
 A missing Character returns `character_not_found` and an unplaced Character returns
 `character_not_entered`; a full per-User admission window returns
 `investigation_not_admitted` before any roll and stores nothing. Admission and chance
-values are owned by [Domain
-contract](../domain.md#investigation-chance-and-admission), canonical errors by
+values are owned by [Investigation
+attempt](../model/investigation-attempt/README.md#investigation-chance-and-admission), canonical errors by
 [Protocol contract](../protocol.md#canonical-errors) and start retry identity by
 [Protocol contract](../protocol.md#investigation-retry-identity).
 

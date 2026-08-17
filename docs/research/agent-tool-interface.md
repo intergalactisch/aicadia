@@ -1,3 +1,8 @@
+---
+status: load-bearing
+era: August Activity-Property-Trait
+---
+
 # Agent tool interface
 
 > **Role / side:** sourced research report / development side.

@@ -1,3 +1,8 @@
+---
+status: load-bearing
+era: August Activity-Property-Trait
+---
+
 # ChatGPT access to local and hosted Aicadia over stateless MCP
 
 > **Role / side:** sourced research report / development side.
@@ -82,7 +87,7 @@ depend on it.
 These facts come from [Local play](../game/local-play.md),
 [Agent play contract](../game/agent.md),
 [the local player adapter](../../tools/aicadia-agent),
-[the MCP server implementation](../../src/server.rs) and
+[the MCP server implementation](../../src/server/mcp.rs) and
 [Current MCP Agent guidance](current-mcp-agent-guidance.md).
 
 ## What the OpenAI surfaces establish
@@ -325,7 +330,7 @@ legacy facade; add a thin skill only after evidence shows a real workflow gap.
 - [Aicadia local play](../game/local-play.md)
 - [Aicadia local Codex adapter](../../tools/aicadia-agent)
 - [Aicadia current MCP Agent guidance](current-mcp-agent-guidance.md)
-- [Aicadia server implementation](../../src/server.rs)
+- [Aicadia server implementation](../../src/server/mod.rs)
 - [OpenAI: Codex MCP configuration shared by desktop app and CLI](https://learn.chatgpt.com/docs/extend/mcp)
 - [OpenAI: ChatGPT Developer mode](https://developers.openai.com/api/docs/guides/developer-mode)
 - [OpenAI: plugins](https://learn.chatgpt.com/docs/plugins)

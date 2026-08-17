@@ -20,13 +20,20 @@ async fn studio_root_serves_one_source_backed_get_only_application(pool: PgPool)
     );
     let html = response.text().await.expect("Studio should be text");
     assert!(html.contains("Aicadia Studio"));
-    assert!(html.contains("data-app-shell"));
-    assert_eq!(html.matches("data-section-link=").count(), 2);
-    assert!(!html.contains("data-variant="));
-    assert!(!html.contains("prototype-switcher"));
-    assert!(html.contains("^#user_id="));
-    assert!(html.contains("sessionStorage.setItem"));
-    assert!(html.contains("history.replaceState"));
+    assert!(html.contains("State of Aicadia"));
+    // The four primary sections are server-rendered links, not browser state.
+    for section in [
+        "href=\"/\"",
+        "href=\"/game\"",
+        "href=\"/development\"",
+        "href=\"/live\"",
+    ] {
+        assert!(html.contains(section), "Studio should link {section}");
+    }
+    assert!(html.contains("aria-current=\"page\""));
+    // The only form is the GET jump box.
+    assert_eq!(html.matches("<form").count(), 1);
+    assert!(html.contains("method=\"get\""));
     assert_eq!(
         html.matches("<button").count(),
         html.matches("type=\"button\"").count()
@@ -41,25 +48,17 @@ async fn studio_root_serves_one_source_backed_get_only_application(pool: PgPool)
         .text()
         .await
         .expect("Studio script should be text");
-    assert!(script.contains("fetch(path, { method: \"GET\", headers })"));
-    assert!(script.contains("/studio/api/catalog"));
-    assert!(script.contains("/studio/api/live/character"));
-    assert!(script.contains("/studio/api/live/place"));
-    assert!(script.contains("/studio/api/live/storage"));
-    assert!(script.contains("/studio/api/live/storage/snapshot"));
-    assert!(script.contains("/studio/api/live/activity/"));
-    assert!(script.contains("/api/world"));
-    assert!(script.contains("/api/entity?"));
-    assert!(script.contains("/api/activity?"));
+    assert!(script.contains("data-copy"));
+    assert!(script.contains("menu-toggle"));
 
     for forbidden in [
-        "<form",
-        "<input",
         "<textarea",
         "<select",
         "contenteditable",
         "onclick=",
         "onsubmit=",
+        "fetch(",
+        "XMLHttpRequest",
         "method: \"POST\"",
         "method: \"PUT\"",
         "method: \"PATCH\"",
@@ -72,30 +71,6 @@ async fn studio_root_serves_one_source_backed_get_only_application(pool: PgPool)
             "Studio must not contain forbidden mutation surface: {forbidden}"
         );
     }
-
-    let catalog: Value = server
-        .client
-        .get(format!("{}/studio/api/catalog", server.base_url))
-        .send()
-        .await
-        .expect("Studio catalog request should send")
-        .json()
-        .await
-        .expect("Studio catalog should be JSON");
-    assert_eq!(catalog["tool"].as_array().map(Vec::len), Some(15));
-    assert_eq!(catalog["model"].as_array().map(Vec::len), Some(9));
-    assert_eq!(catalog["model"][2]["id"].as_str(), Some("entity"));
-    assert_eq!(
-        catalog["model"][2]["storage_table"]
-            .as_array()
-            .map(Vec::len),
-        Some(1)
-    );
-    assert!(catalog["document"][0]["heading"][0]["id"].is_string());
-    assert_eq!(
-        catalog["world_support"].as_str(),
-        Some("One connected local World; durable multiple-World identity is not delivered.")
-    );
 
     let storage: Value = server
         .client

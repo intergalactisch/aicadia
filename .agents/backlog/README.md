@@ -37,13 +37,16 @@ must be corrected in the same change.
 | Done | [Uniform Entity creation and state-change packages](items/uniform-entity-state-packages.md) | Done | Every Entity role can be created with multiple Properties and Traits, and one Action can later change both atomically in one Activity. |
 | Done | [Sol-medium combined Entity-state live validation](items/sol-medium-combined-state-validation.md) | Done | One clean-room Sol-medium smoke test grounded through MCP and committed one combined Property/Trait Action; HTTP proved both changes in one Activity. |
 | Done | [First complete investigation and discovery loop](items/first-investigation-discovery-loop.md) | Done | Delivery history and current status: see [discovery evidence](../../docs/evidence/discovery.md). |
+| Done | [Exact-Place established-state read](items/exact-place-established-state.md) | Dropped | Supporting scope inside Agent-mediated World action instead of a separate outcome; its combined read/write plan was dropped. |
+| Done | [Meta-steward Entity acceptance](items/meta-steward-entity-acceptance.md) | Dropped | Rejected privileged administrator path; the corrected direction is recorded in the item. |
 | Later | Place-neighborhood context | Queued | An Agent can inspect a bounded set of explicit containing and adjacent Places through composable typed reads, without geometry or a monolithic context response. |
 | Later | Place expansion and movement | Queued | Discoveries establish further Places and connections; Characters move through validated transitions while past locations remain queryable. |
 | Later | Rich domain change | Queued | Flora, fauna, materials, partial boundaries and temporal processes gain concrete models only when selected gameplay needs them. |
 
 A `Now` row is the one selected current edge. When no row is `Now`, the next edge has
 not been accepted yet. `Next` and `Later` preserve sequence and dependency context;
-they do not authorize implementation or promise a specific schema.
+they do not authorize implementation or promise a specific schema. This table is the
+single home of backlog order and item state; item files carry no status line.
 
 ## Item states
 

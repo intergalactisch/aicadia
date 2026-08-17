@@ -1,3 +1,8 @@
+---
+status: load-bearing
+era: August Activity-Property-Trait
+---
+
 # Current MCP Agent guidance
 
 > **Role / side:** sourced research report / development side.

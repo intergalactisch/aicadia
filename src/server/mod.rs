@@ -33,6 +33,8 @@ mod mcp;
 use error::{HttpError, user_context};
 use mcp::AicadiaMcp;
 
+pub(crate) use http::openapi_document;
+
 pub(crate) fn mcp_tool_catalog(world: World) -> Vec<rmcp::model::Tool> {
     AicadiaMcp::new(world).catalog()
 }

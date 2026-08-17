@@ -1,3 +1,7 @@
+---
+status: Complete, including retained live proof
+---
+
 # World-entry evidence
 
 > **Role / side:** World-entry delivery and evidence history / evidence bridge.

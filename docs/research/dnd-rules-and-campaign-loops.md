@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # D&D rules and durable campaign loops
 
 > **Role / side:** sourced research report / development side.

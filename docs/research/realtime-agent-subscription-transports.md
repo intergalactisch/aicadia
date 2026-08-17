@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Realtime Agent subscription transports
 
 > **Role / side:** sourced research report / development side.

@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Multi-Agent deliberation and consensus
 
 > **Role / side:** sourced research report / development side.

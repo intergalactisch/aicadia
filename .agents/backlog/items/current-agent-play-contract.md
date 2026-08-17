@@ -4,8 +4,6 @@
 > **Authority:** records this outcome's backlog state, dependencies and completion pointers.
 > **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
 
-Status: Done
-
 ## Outcome
 
 Every conforming interactive Agent host receives one current, provider- and
@@ -54,4 +52,4 @@ evidence and limitations are recorded in
 
 ## Completion evidence
 
-Delivery history and current status: see [Agent contract evidence](../../../docs/evidence/README.md#agent-contract-delivery).
+Delivery history and current status: see [Agent contract evidence](../../../docs/evidence/agent-contract.md).

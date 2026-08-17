@@ -1,8 +1,8 @@
 # Aicadia lab
 
 > **Role / side:** retained experimental workbench / development side.
-> **Authority:** governs lab-wide experiment boundaries, artifact status and track placement.
-> **Excludes:** current game behavior, production implementation, sourced research authority and delivery proof; see `docs/game/`, runtime sources, `docs/research/` and `docs/evidence/`.
+> **Authority:** governs lab-wide experiment boundaries, the artifact-status vocabulary and track placement.
+> **Excludes:** each track's and experiment's own status and verdict, which live in their front matter; current game behavior, production implementation, sourced research authority and delivery proof; see `docs/game/`, runtime sources, `docs/research/` and `docs/evidence/`.
 
 `lab/` preserves small experiments that help Aicadia make a concrete product or
 technical decision. The code may be rough, narrow and intentionally incomplete. It
@@ -21,9 +21,9 @@ current behavior in `docs/game/`.
 
 ## Tracks
 
-| Track | Status | Purpose | Index |
-| --- | --- | --- | --- |
-| Multiplayer | Active | Multiplayer semantics, subject-scoped concurrency, observation, delivery and overload | [`multiplayer/README.md`](multiplayer/README.md) |
+Each track carries its own status in its index front matter.
+
+- [Multiplayer](multiplayer/README.md) — multiplayer semantics, subject-scoped concurrency, observation, delivery and overload.
 
 New tracks require a concrete current question. `lab/` is not limited to
 multiplayer, but empty speculative track directories do not earn a place here.

@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Stochastic discovery and bad-luck protection
 
 > **Role / side:** sourced research report / development side.

@@ -1,12 +1,17 @@
+---
+question: Do affected-Entity locks preserve exact conflicts while every disjoint same-Place path is wholly independent from the Place row?
+verdict: refuted
+status: kept
+real_seam: [Rust compiler, test runner, Tokio scheduling, SQLx pool and disposable-database machinery, local PostgreSQL server, SQL transactions, FOR UPDATE and foreign-key row locks, lock timeouts, current/absence rechecks, unique root/successor indexes, foreign keys, commit and rollback]
+simulated_seam: [World operations, Character ownership and placement, input normalization, canonical fingerprinting, authorization, privacy, HTTP, MCP, Agents, LLMs, retry transport, production connection pooling, admission]
+informs: .agents/plans/20260816-153410-multiplayer-lab/plan.md#t3--prove-one-unified-semantic-change-kernel
+---
+
 # PostgreSQL subject-conflict experiment
 
 > **Role / side:** retained PostgreSQL subject-conflict experiment / development side.
 > **Authority:** records this fixture, its bounded observations, verdict and artifact status.
 > **Excludes:** current game behavior, production schema or transaction design, migration approval and scale proof.
-
-Status: `kept`
-
-Verdict: `refuted`
 
 ## Pending decision
 

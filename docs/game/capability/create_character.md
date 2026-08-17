@@ -22,8 +22,10 @@ call `create_character(context.user_id, input)`; HTTP `POST /api/character`; MCP
 ## Validation
 
 The User may own at most one Character. Initial Trait items contain only one
-`statement` and establish new World-assigned lineages. Shared name, description,
-Property and Trait rules are in [Domain contract](../domain.md#shared-value-validation).
+`statement` and establish new World-assigned lineages. Shared name and description
+rules are in [Domain contract](../domain.md#shared-value-validation); Property and
+Trait rules are in [Property](../model/property/README.md) and
+[Trait](../model/trait/README.md).
 
 ## Result
 

@@ -1,3 +1,7 @@
+---
+status: Deterministic delivery and complete paid establish/develop/independent-observer validation succeed; exact seven-call candidate, lineage, both HTTP gates and ownership-safe cleanup passed
+---
+
 # Entity Trait evidence
 
 > **Role / side:** Trait delivery, validation and evidence history / evidence bridge.

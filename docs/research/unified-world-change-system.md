@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Unified World change system
 
 > **Role / side:** sourced architecture research / development side.

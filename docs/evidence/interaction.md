@@ -1,3 +1,7 @@
+---
+status: Deterministic evidence complete; no paid-model Interaction claim
+---
+
 # Character-grounded Interaction evidence
 
 > **Role / side:** Interaction delivery and evidence history / evidence bridge.

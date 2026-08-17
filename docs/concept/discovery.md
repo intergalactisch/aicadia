@@ -1,3 +1,7 @@
+---
+status: live
+---
+
 # Discovery and investigation
 
 > **Role / side:** live concept exploration of investigation and stochastic discovery rolls / development side.

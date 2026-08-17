@@ -162,7 +162,7 @@ reads only a bounded tail of Activities at the derived Place. After insertion, o
 new positive beyond the live-positive bound voids the oldest prior live positive with
 `id <> new_attempt_id`, ordered by `(created_at ASC, id ASC)`, and records the
 now-existing new attempt in `voided_by_attempt_id`. Zero never voids another attempt.
-Each bound is owned by [Domain contract](domain.md#investigation-chance-and-admission).
+Each bound is owned by [Investigation attempt](model/investigation-attempt/README.md#investigation-chance-and-admission).
 These are per-User and per-Place access paths; no global row, lock or counter exists.
 
 The migration extends the closed `activity.operation` check and prose/request

@@ -1,3 +1,8 @@
+---
+status: load-bearing
+era: August Activity-Property-Trait
+---
+
 # Character identity and control in persistent worlds
 
 > **Role / side:** sourced research report / development side.

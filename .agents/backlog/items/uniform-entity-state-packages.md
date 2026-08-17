@@ -4,8 +4,6 @@
 > **Authority:** records the uniform Entity-state outcome's backlog state, dependencies and completion pointer.
 > **Excludes:** current executable behavior and detailed rationale/evidence; see `docs/game/`, `docs/concept/entity-state.md` and `docs/evidence/`.
 
-Status: Done
-
 ## Outcome
 
 Every Entity role can be created atomically with multiple initial Properties and

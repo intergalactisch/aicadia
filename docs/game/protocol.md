@@ -93,7 +93,7 @@ attempt. Rate rejection occurs before rolling and inserts nothing. Only a newly 
 positive that takes the User beyond the live-positive bound voids the oldest prior live
 positive satisfying `id <> new_attempt_id`, ordered by `(created_at ASC, id ASC)`, with the
 new attempt as provenance. The new attempt can never void itself. Zero never triggers
-voiding. Chance and admission values live in [Domain contract](domain.md#investigation-chance-and-admission).
+voiding. Chance and admission values live in [Investigation attempt](model/investigation-attempt/README.md#investigation-chance-and-admission).
 
 The attempt namespace is separate from the shared Activity request-id namespace. A
 UUID may therefore identify one start attempt and, separately, one state-changing

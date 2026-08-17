@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Massively concurrent dynamic World architecture
 
 > **Role / side:** sourced research report / development side.

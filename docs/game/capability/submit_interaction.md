@@ -107,7 +107,7 @@ The accepted `submit_interaction` target accepts exactly:
 
 ## Validation
 
-Validation is specified in the contract above and uses the shared value rules in [Domain contract](../domain.md#shared-value-validation), canonical errors in [Protocol contract](../protocol.md#canonical-errors), and freshness/retry rules in [Protocol contract](../protocol.md#delivery-identity-and-exact-place-freshness).
+Validation is specified in the contract above and uses the shared value rules in [Domain contract](../domain.md#shared-value-validation), [Property](../model/property/README.md) and [Trait](../model/trait/README.md), canonical errors in [Protocol contract](../protocol.md#canonical-errors), and freshness/retry rules in [Protocol contract](../protocol.md#delivery-identity-and-exact-place-freshness).
 
 ## Result
 

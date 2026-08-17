@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Agent-authored bounded World intents
 
 > **Role / side:** sourced research report / development side.

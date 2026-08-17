@@ -1,12 +1,17 @@
+---
+question: Which bounded coordinator preserves operation-scoped present, absent and mixed dependencies without false Place- or lock-class conflicts?
+verdict: refuted
+status: kept
+real_seam: [Rust/Tokio execution, SQLx pools and disposable databases, local PostgreSQL, READ COMMITTED, SERIALIZABLE SSI, FOR UPDATE and foreign-key row locks, controlled concurrent connections, lock timeout SQLSTATE 55P03, serialization SQLSTATE 40001, uniqueness constraints, commit and rollback]
+simulated_seam: [World authority, User and Character authority, placement-version checks, normalized public input, request fingerprints, retry admission, HTTP, MCP, Agents, LLMs, hosted pooling, load distribution, operations]
+informs: .agents/plans/20260816-153410-multiplayer-lab/plan.md#t3--prove-one-unified-semantic-change-kernel
+---
+
 # PostgreSQL conflict-strategy comparison
 
 > **Role / side:** retained comparative PostgreSQL experiment / development side.
 > **Authority:** records this fixture, its bounded matrix, verdict and artifact status.
 > **Excludes:** current game behavior, a production transaction/schema choice, migration approval and scale proof.
-
-Status: `kept`
-
-Verdict: `refuted`
 
 ## Pending decision
 

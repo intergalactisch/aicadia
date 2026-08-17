@@ -19,7 +19,7 @@ answer where a Character was, what it did, and which Characters, Places and othe
 Entities were involved.
 
 This vertical slice is complete. Its executable authority is recorded in
-`docs/game/domain.md` and `docs/game/agent.md`.
+`docs/game/domain.md`, `docs/game/model/` and `docs/game/agent.md`.
 
 ## Why now
 

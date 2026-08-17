@@ -4,8 +4,6 @@
 > **Authority:** records this validation outcome's backlog state, dependencies and completion pointers.
 > **Excludes:** game behavior, decision rationale and detailed evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
 
-Status: Done
-
 ## Outcome
 
 The retained Property and Trait playtest controllers bind the current published

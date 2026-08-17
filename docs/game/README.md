@@ -6,16 +6,29 @@
 
 Aicadia has one current game contract. Read it in this order:
 
-1. [Domain contract](domain.md) — subjects, current state, value invariants and Activity.
-2. [Capability catalog](#capability-catalog) and the linked per-capability contracts.
-3. [Protocol contract](protocol.md) — request context, wire shapes, freshness, HTTP/MCP and errors.
-4. [Adapter parity contract](adapter-parity.md) — cross-adapter and cross-contract proof obligations.
-5. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
-6. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
-7. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
-8. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only Studio.
+1. [Domain contract](domain.md) — domain overview, shared value validation, error taxonomy and the domain-wide evidence obligation.
+2. [Model contracts](#model-contracts) (`model/`) — one folder per durable subject, role, seam and state.
+3. [Capability catalog](#capability-catalog) and the linked per-capability contracts.
+4. [Protocol contract](protocol.md) — request context, wire shapes, freshness, HTTP/MCP and errors.
+5. [Adapter parity contract](adapter-parity.md) — cross-adapter and cross-contract proof obligations.
+6. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
+7. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
+8. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
+9. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only Studio.
 
 The current contract is authoritative over exploration history.
+
+## Model contracts
+
+- [World seam](model/world/README.md)
+- [User](model/user/README.md)
+- [Entity](model/entity/README.md)
+- [Character](model/character/README.md)
+- [Place](model/place/README.md)
+- [Activity](model/activity/README.md)
+- [Property](model/property/README.md)
+- [Trait](model/trait/README.md)
+- [Investigation attempt](model/investigation-attempt/README.md)
 
 ## Capability catalog
 

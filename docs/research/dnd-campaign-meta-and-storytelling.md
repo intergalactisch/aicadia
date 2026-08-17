@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # D&D campaign meta-layers and storytelling for Aicadia
 
 > **Role / side:** sourced research report / development side.

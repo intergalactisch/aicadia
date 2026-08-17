@@ -1,3 +1,7 @@
+---
+status: live
+---
+
 # Spatial direction
 
 > **Role / side:** live concept exploration of Place and sparse spatial meaning / development side.

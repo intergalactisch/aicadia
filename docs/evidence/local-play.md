@@ -1,3 +1,7 @@
+---
+status: Deterministic launcher, handoff, persistence, source projection and browser proof complete
+---
+
 # Local play and Studio evidence
 
 > **Role / side:** local launcher, Agent handoff, ledger and Studio delivery history / evidence bridge.

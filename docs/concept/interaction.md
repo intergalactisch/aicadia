@@ -1,3 +1,7 @@
+---
+status: retained
+---
+
 # Interaction participation rationale
 
 > **Role / side:** live concept rationale for asymmetric Entity participation / development side.

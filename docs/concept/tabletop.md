@@ -1,3 +1,7 @@
+---
+status: retained
+---
+
 # Tabletop-derived play heuristics
 
 > **Role / side:** live concept heuristics derived from tabletop play / development side.

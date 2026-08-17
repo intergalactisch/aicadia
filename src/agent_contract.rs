@@ -2,30 +2,84 @@ use std::sync::LazyLock;
 
 use rmcp::handler::server::router::tool::ToolRouter;
 
-const INSTRUCTION_SECTION: [&str; 16] = [
-    include_str!("agent_contract/instruction/00-contract.md"),
-    include_str!("agent_contract/instruction/01-role.md"),
-    include_str!("agent_contract/instruction/02-authority.md"),
-    include_str!("agent_contract/instruction/03-world.md"),
-    include_str!("agent_contract/instruction/04-property.md"),
-    include_str!("agent_contract/instruction/05-trait.md"),
-    include_str!("agent_contract/instruction/06-knowledge.md"),
-    include_str!("agent_contract/instruction/07-target.md"),
-    include_str!("agent_contract/instruction/08-storytelling.md"),
-    include_str!("agent_contract/instruction/09-workshop.md"),
-    include_str!("agent_contract/instruction/10-entry.md"),
-    include_str!("agent_contract/instruction/11-orientation.md"),
-    include_str!("agent_contract/instruction/12-action.md"),
-    include_str!("agent_contract/instruction/13-interaction.md"),
-    include_str!("agent_contract/instruction/14-investigation.md"),
-    include_str!("agent_contract/instruction/15-recovery.md"),
+const INSTRUCTION_SECTION: [(&str, &str); 16] = [
+    (
+        "src/agent_contract/instruction/00-contract.md",
+        include_str!("agent_contract/instruction/00-contract.md"),
+    ),
+    (
+        "src/agent_contract/instruction/01-role.md",
+        include_str!("agent_contract/instruction/01-role.md"),
+    ),
+    (
+        "src/agent_contract/instruction/02-authority.md",
+        include_str!("agent_contract/instruction/02-authority.md"),
+    ),
+    (
+        "src/agent_contract/instruction/03-world.md",
+        include_str!("agent_contract/instruction/03-world.md"),
+    ),
+    (
+        "src/agent_contract/instruction/04-property.md",
+        include_str!("agent_contract/instruction/04-property.md"),
+    ),
+    (
+        "src/agent_contract/instruction/05-trait.md",
+        include_str!("agent_contract/instruction/05-trait.md"),
+    ),
+    (
+        "src/agent_contract/instruction/06-knowledge.md",
+        include_str!("agent_contract/instruction/06-knowledge.md"),
+    ),
+    (
+        "src/agent_contract/instruction/07-target.md",
+        include_str!("agent_contract/instruction/07-target.md"),
+    ),
+    (
+        "src/agent_contract/instruction/08-storytelling.md",
+        include_str!("agent_contract/instruction/08-storytelling.md"),
+    ),
+    (
+        "src/agent_contract/instruction/09-workshop.md",
+        include_str!("agent_contract/instruction/09-workshop.md"),
+    ),
+    (
+        "src/agent_contract/instruction/10-entry.md",
+        include_str!("agent_contract/instruction/10-entry.md"),
+    ),
+    (
+        "src/agent_contract/instruction/11-orientation.md",
+        include_str!("agent_contract/instruction/11-orientation.md"),
+    ),
+    (
+        "src/agent_contract/instruction/12-action.md",
+        include_str!("agent_contract/instruction/12-action.md"),
+    ),
+    (
+        "src/agent_contract/instruction/13-interaction.md",
+        include_str!("agent_contract/instruction/13-interaction.md"),
+    ),
+    (
+        "src/agent_contract/instruction/14-investigation.md",
+        include_str!("agent_contract/instruction/14-investigation.md"),
+    ),
+    (
+        "src/agent_contract/instruction/15-recovery.md",
+        include_str!("agent_contract/instruction/15-recovery.md"),
+    ),
 ];
 
-static ASSEMBLED_INSTRUCTIONS: LazyLock<String> = LazyLock::new(|| INSTRUCTION_SECTION.join("\n"));
+static ASSEMBLED_INSTRUCTIONS: LazyLock<String> =
+    LazyLock::new(|| INSTRUCTION_SECTION.map(|(_, text)| text).join("\n"));
 
 /// The complete play contract published through `server/discover`.
 pub fn instructions() -> &'static str {
     &ASSEMBLED_INSTRUCTIONS
+}
+
+/// Every published instruction section as `(repository path, exact bytes)`, in order.
+pub(crate) fn instruction_section() -> impl Iterator<Item = (&'static str, &'static str)> {
+    INSTRUCTION_SECTION.into_iter()
 }
 
 const TOOL_DESCRIPTION: [(&str, &str); 15] = [

@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Entity and Place interest subscriptions at scale
 
 > **Role / side:** sourced research report / development side.

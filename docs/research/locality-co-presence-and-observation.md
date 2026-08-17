@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Locality, co-presence and observation in shared worlds
 
 > **Role / side:** sourced research report / development side.

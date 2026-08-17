@@ -84,8 +84,13 @@ pub(super) fn routes() -> Router<World> {
 )]
 struct ApiDocument;
 
+/// The compiled OpenAPI document; Studio reads its routes instead of copying them.
+pub(crate) fn openapi_document() -> OpenApiDocument {
+    ApiDocument::openapi()
+}
+
 async fn openapi() -> HttpJson<OpenApiDocument> {
-    HttpJson(ApiDocument::openapi())
+    HttpJson(openapi_document())
 }
 
 #[utoipa::path(

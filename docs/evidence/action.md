@@ -1,3 +1,7 @@
+---
+status: Deterministic delivery and bounded live proof complete
+---
+
 # Character-grounded Action evidence
 
 > **Role / side:** Action delivery and evidence history / evidence bridge.

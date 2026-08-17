@@ -4,8 +4,6 @@
 > **Authority:** records the requested live-validation outcome, state and completion pointer.
 > **Excludes:** executable behavior and detailed evidence; see `docs/game/`, the build plan and `docs/evidence/`.
 
-Status: Done
-
 ## Outcome
 
 One pinned Sol-medium clean-room Agent grounds through current Aicadia MCP and, after

@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Multiplayer concurrency and World observation
 
 > **Role / side:** sourced research report / development side.
@@ -81,11 +86,11 @@ authoritative bounded context on the next explicit read. Never wake one million 
 The present contract already establishes several important foundations:
 
 - `World` is the sole deterministic behavior seam; calls are stateless and no server
-  invokes an Agent ([domain](../game/domain.md#world-seam));
+  invokes an Agent ([World seam](../game/model/world/README.md));
 - one accepted mutation writes current state and one immutable Activity atomically;
-  current state is not rebuilt by replay ([Activity](../game/domain.md#activity));
+  current state is not rebuilt by replay ([Activity](../game/model/activity/README.md));
 - exact-local Activity is stored once and read through personal or Place lenses;
-  lens-specific prose is not copied ([Activity](../game/domain.md#activity));
+  lens-specific prose is not copied ([Activity](../game/model/activity/README.md));
 - current Place history includes non-Interaction Activity, but a bystander cannot
   currently see an Interaction merely by being co-present
   ([Place Activity](../game/capability/list_activity_at_current_place.md#result));
@@ -254,8 +259,8 @@ The sentence "Mara lets a large stone fall" hides five different contracts:
 ### Consequence cannot come from prose alone
 
 **Evidence.** Current Aicadia Activity never infers Property or Trait state from
-prose, and Traits are non-executable ([domain](../game/domain.md#entity),
-[Activity](../game/domain.md#activity)).
+prose, and Traits are non-executable ([Entity](../game/model/entity/README.md),
+[Activity](../game/model/activity/README.md)).
 
 **Inference.** The server cannot decide that a "large" stone makes a loud sound,
 that a deaf Character cannot hear it or that a wall occludes it unless those are

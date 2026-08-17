@@ -1,12 +1,17 @@
+---
+question: Can independent same-Place intents avoid a Place revision while true placement, Property, absence and retry conflicts remain deterministic?
+verdict: supported
+status: kept
+real_seam: [Rust compiler, test runner, dependency sorting, validations, state transitions, accepted-request records, assertions in this crate]
+simulated_seam: [World, transaction boundary, lock acquisition, storage, Character authority, request fingerprint construction, Activity persistence]
+informs: .agents/plans/20260816-153410-multiplayer-lab/plan.md#t3--prove-one-unified-semantic-change-kernel
+---
+
 # Subject conflict experiment
 
 > **Role / side:** retained subject-conflict candidate experiment / development side.
 > **Authority:** records this fixture, its bounded observations, verdict and artifact status.
 > **Excludes:** current game behavior, a selected production transaction contract, PostgreSQL design, concurrency or scale proof.
-
-Status: `kept`
-
-Verdict: `supported`
 
 ## Pending decision
 

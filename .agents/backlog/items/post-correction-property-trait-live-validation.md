@@ -4,8 +4,6 @@
 > **Authority:** records this fresh validation outcome's backlog state, dependencies and completion pointers.
 > **Excludes:** game behavior, detailed spend boundary and evidence history; see `docs/game/`, the linked plan and `docs/evidence/`.
 
-Status: Done
-
 ## Outcome
 
 The bounded one-shot validation is closed after preserving both previous terminal

@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # World time and sparse simulation in persistent worlds
 
 > **Role / side:** sourced research report / development side.

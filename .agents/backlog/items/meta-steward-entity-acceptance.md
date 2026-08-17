@@ -4,8 +4,6 @@
 > **Authority:** records this outcome's backlog state, dependencies and completion pointers.
 > **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/log/` and `docs/evidence/`.
 
-Status: Dropped
-
 ## Outcome
 
 An administrator consciously invokes a meta Agent, explicitly confirms one complete

@@ -4,8 +4,6 @@
 > **Authority:** records this outcome's backlog state, dependencies and completion pointers.
 > **Excludes:** current product contracts, decision rationale and detailed delivery evidence; see `docs/game/`, `docs/concept/` and `docs/evidence/`.
 
-Status: Done
-
 ## Outcome
 
 An entered Character's Agent grounds one investigation at the exact current Place.

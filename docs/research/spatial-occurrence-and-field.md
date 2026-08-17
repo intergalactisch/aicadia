@@ -1,3 +1,8 @@
+---
+status: historical
+era: July scene-claim
+---
+
 > **Era:** July scene-claim research; its scene/claim vocabulary predates the 2026-08-07 game reframe.
 
 # Spatial occurrence and field

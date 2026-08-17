@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # Tabletop narrative and meta patterns beyond D&D
 
 > **Role / side:** sourced research report / development side.

@@ -1,3 +1,7 @@
+---
+status: Deterministic World/HTTP/MCP delivery, real restart-stable retry and executed token-free Agent orchestration complete; no paid/model discovery call
+---
+
 # Investigation and discovery evidence
 
 > **Role / side:** first complete investigation/discovery delivery record / evidence bridge.
@@ -137,7 +141,7 @@ values, payload or operation names:
   published discovery rejection, both start Character errors and HTTP retry `201`
   are proved on both adapters; `src/server/mod.rs` is composition-only;
 - `tool/start_investigation.md` follows the fixed template, `15-recovery.md` owns
-  the three discovery recoveries, `domain.md#investigation-chance-and-admission` is
+  the three discovery recoveries, `model/investigation-attempt/README.md#investigation-chance-and-admission` is
   the one home of chance/admission values, and stale evidence pointers were fixed.
 
 The rerun ladder on the corrected tree passed: `cargo fmt --all -- --check`,

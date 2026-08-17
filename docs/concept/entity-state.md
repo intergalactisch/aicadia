@@ -1,3 +1,7 @@
+---
+status: retained
+---
+
 # Entity state rationale
 
 > **Role / side:** live concept rationale for Entity-owned Property and Trait state / development side.
@@ -43,7 +47,7 @@ narrator or prose interpreter.
 
 ## Current behavior boundary
 
-Current Property/Trait behavior, validation and persistence are defined by the [game domain](../game/domain.md), [capability contracts](../game/README.md#capability-contracts) and [storage contract](../game/storage.md). This concept record does not duplicate their delivery detail.
+Current Property/Trait behavior, validation and persistence are defined by the [Property](../game/model/property/README.md) and [Trait](../game/model/trait/README.md) model contracts, [capability contracts](../game/README.md#capability-contracts) and [storage contract](../game/storage.md). This concept record does not duplicate their delivery detail.
 
 ## Accepted uniform state edge
 

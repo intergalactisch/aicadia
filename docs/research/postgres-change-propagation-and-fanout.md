@@ -1,3 +1,8 @@
+---
+status: pending
+era: August Activity-Property-Trait
+---
+
 # PostgreSQL change propagation and subscription fan-out
 
 > **Role / side:** sourced research report / development side.

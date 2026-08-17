@@ -1,10 +1,14 @@
+---
+status: active
+---
+
 # Mass concurrency and living World direction
 
 > **Role / side:** active concept exploration of crowd concurrency, sparse World change and scale progression / development side.
 > **Authority:** current rationale, candidate direction and open decisions for a large living Aicadia World.
 > **Excludes:** accepted game behavior, implementation contracts, delivery claims and sourced technical findings; see `docs/game/`, `docs/evidence/` and `docs/research/`.
 
-Status: active exploration; no candidate direction below is accepted game behavior.
+No candidate direction below is accepted game behavior.
 
 ## Question
 

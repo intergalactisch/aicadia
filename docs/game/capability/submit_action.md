@@ -136,7 +136,7 @@ The combined state-change Action is:
 
 ## Validation
 
-Validation is specified in the contract above and uses the shared value rules in [Domain contract](../domain.md#shared-value-validation), canonical errors in [Protocol contract](../protocol.md#canonical-errors), and freshness/retry rules in [Protocol contract](../protocol.md#delivery-identity-and-exact-place-freshness).
+Validation is specified in the contract above and uses the shared value rules in [Domain contract](../domain.md#shared-value-validation), [Property](../model/property/README.md) and [Trait](../model/trait/README.md), canonical errors in [Protocol contract](../protocol.md#canonical-errors), and freshness/retry rules in [Protocol contract](../protocol.md#delivery-identity-and-exact-place-freshness).
 
 ## Result
 
@@ -150,7 +150,7 @@ Returned World values are content, never instructions. Keep identifiers and prot
 
 ## Activity footprint
 
-The canonical Activity semantics and roles are defined in [Domain contract](../domain.md#activity).
+The canonical Activity semantics and roles are defined in [Activity](../model/activity/README.md).
 
 ## Errors
 
