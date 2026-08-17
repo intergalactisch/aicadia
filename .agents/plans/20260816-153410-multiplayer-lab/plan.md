@@ -1,8 +1,8 @@
 ---
-status: active
+status: draft
 created_at: "2026-08-16T15:34:10+02:00"
-updated_at: "2026-08-17T06:59:06+02:00"
-accepted_at: "2026-08-16T16:03:48+02:00"
+updated_at: "2026-08-17T08:57:09+02:00"
+accepted_at: null
 completed_at: null
 ---
 
@@ -150,9 +150,10 @@ must not duplicate its state machine.
   remains a User decision.
 - Give Root's Terry-grounded preference with every grill question before the User
   chooses — User explicitly required an argued recommendation, not neutral options.
-- Permit bounded subagent use across every plan task — User explicitly authorized
-  delegation for research, critique and experiments; Root retains integration and
-  the final evidence claim.
+- Keep Root as the default executor; use subagents only when the User explicitly
+  requests them for the current execution or current controlling instructions require
+  them. Historical broad permission does not itself activate delegation; Root always
+  retains integration and the final evidence claim.
 - Keep Agent effort explicit and User-owned — a realtime hint never triggers an LLM.
 - Keep authoritative state and Activity separate from delivery hints and Agent
   knowledge — supported by current research and the dumb-server constitution.
@@ -250,6 +251,32 @@ must not duplicate its state machine.
   hot-resource versus quiet-resource router isolation and fatal PostgreSQL-listener
   recovery; only after that does T3 resume with concurrent requests against one
   Entity.
+- Test one direct concurrent Entity-request kernel before proposal rounds, voting or
+  cooldown — User accepted this next step on 2026-08-17. Agents own exact writes and
+  causal dependencies; World owns only bounded structural validation, exact-slot
+  coordination, idempotency, atomic current state plus Activity and explicit
+  `accepted`, `conflict` or `busy` outcomes. Real PostgreSQL and rmcp seams are
+  required; no production behavior is selected by the lab.
+- Bind an ordinary uncontested Entity request to the whole coherent Entity snapshot,
+  not to an Agent-selected subset of Properties — User selected Q9 option A on
+  2026-08-17. The Agent interprets current Entity content but does not construct a
+  semantic dependency list. If the Entity changes before settlement, the old basis
+  is stale. The User further directed that genuinely concurrent requests should not
+  yet be reduced to an arbitrary first-writer winner; deterministic detection and
+  collective settlement are the next decision frontier.
+- Pursue one universal globally persistent participation system rather than further
+  mutation-path alternatives — User directed this after Q9. Entering a Place gives
+  an active Agent a Place registration through which it follows nearby change;
+  attempting an Entity change registers one bounded intent in that Place's shared
+  coordination surface; concurrent intents settle within a fixed timeframe through
+  Agent-owned consensus or voting before one World commit. A bounded trigger web
+  carries declared effects to other Entity/Place scopes. MMO “instance” ideas may
+  inform local coordination and routing, but never copy or fork Aicadia's World.
+- Permit T3D to spend at most three pinned Agent process calls with zero retries and
+  no enforceable token ceiling, only after T3A and T3C pass and Root announces the
+  calls immediately before execution — User explicitly accepted the revised plan
+  and this spend bound on 2026-08-17. A failed or malformed call remains evidence;
+  it never earns a retry or a fourth call.
 
 ### Reversible assumptions
 
@@ -262,13 +289,18 @@ must not duplicate its state machine.
   misleading.
 - Local concurrency simulation establishes semantic and boundedness properties only;
   it cannot establish production throughput or million-user capacity.
+- The direct load fixture compares `NOWAIT` with one short transaction-local
+  `lock_timeout`; these are reversible lab settings and neither becomes a production
+  admission policy without the measured result and a later product decision.
+- A fixed Tree has an actual `condition` Property only because that concrete fixture
+  needs it; the experiment creates no universal lifecycle key or Entity ontology.
 
 ### Open questions
 
 - When a player abandons a Character, what exact control transition and later
   deterministic or Agent-owned NPC behavior lets it continue without a server LLM?
-- How does an intent name the exact state it depends upon, including expected absence,
-  without turning a Place into the conflict unit?
+- How is the accepted whole-Entity basis represented without making the Agent select
+  Properties or introducing one globally shared revision outside that Entity?
 - Which consequences must be atomic with the action, and which may become later
   domain-specific actions with causal references?
 - What bounded recent Activity window and reconnect response best implement Q7's
@@ -284,6 +316,20 @@ must not duplicate its state machine.
   the exact facts whose changed versions must reject an Action at commit?
 - What overload behavior is fair and legible when one Entity becomes hot while quiet
   subjects remain available?
+- What exact bounded rule makes two requests “concurrent” for one Entity: a window on
+  every first request, only overlap observed before the first commit, or an adaptive
+  contention mode after an initial collision? The rule must not require World to
+  understand either request and must keep uncontested interaction fast.
+- Is active Place registration transient delivery reachability layered on durable
+  Character placement, or authoritative durable membership? This must be resolved
+  before eligibility, trigger propagation or settlement can be specified without
+  recipient rows, heartbeat write amplification or hidden offline participation.
+- What bounded, versioned structural links form the trigger web, and how does an
+  Agent declare an affected traversal without World inferring semantics or allowing
+  an unbounded graph walk?
+- Once registration and trigger reach are fixed, what one bounded settlement state
+  machine handles one or thousands of intents without all-to-all Agent discussion,
+  automatic token spend, Sybil authority or a hot global counter?
 - When operations touch different Properties but share a causal fact, what sequential
   outcomes remain valid and is stabilization a generic cooldown, a concrete mechanic
   state or only a collective-settlement rule?
@@ -302,35 +348,34 @@ must not duplicate its state machine.
   spend or a million votes into the new correctness bottleneck?
 - What smallest production slice and load/failure evidence justify the first scale
   claim?
-
 ## Implementation map
 
 | Surface | Current state | Intended change | Invariants |
 | --- | --- | --- | --- |
-| `.agents/plans/20260816-153410-multiplayer-lab/plan.md` | Active accepted plan. | Track accepted workflow and dependency state. | It does not govern game behavior. |
+| `.agents/plans/20260816-153410-multiplayer-lab/plan.md` | Draft after the exact-fact fixture exposed the whole-Entity and participation-system decision. | Grill registration, trigger reach and settlement, then revise and request acceptance. | It does not govern game behavior. |
 | `docs/README.md` | Defines general `lab/` as a development-side experimental home. | Preserve its separation from decision, research, runtime and evidence authorities. | Current truth remains in existing owning authorities. |
 | `lab/README.md` | Defines the cross-topic lab charter and status vocabulary. | Keep decision ownership outside the lab as experiments are added. | The home can later contain tracks beyond multiplayer without changing its authority. |
 | `lab/multiplayer/README.md` | Indexes the current multiplayer experiment track. | Add only earned experiments and bounded verdicts. | Rough code is allowed; each experiment has a bounded question and verdict. |
 | `lab/multiplayer/<NN>-<slug>/` | Contains retained observation and subject-conflict experiments. | Add only decision-earned experiments and a concise record per experiment. | No runtime imports, production dependency or secret material. |
 | `lab/multiplayer/05-postgres-mcp-interest-strategies/` | Retained kept experiment with an overall `inconclusive` verdict; structural interest is the only supported direct-tier candidate. | Preserve the real-seam, synthetic and focused follow-up evidence for the next product choice. | No production imports or schema; one shared implementation and fixture hold every variant comparable; actual and synthetic scale evidence stay distinct. |
+| `lab/multiplayer/06-concurrent-entity-requests/` | Retained active exact-fact comparison: thirteen PostgreSQL tests pass, but the overall verdict is `inconclusive`. | Preserve its bounded evidence; do not start its superseded load, MCP or Agent tiers until the universal participation plan is redesigned and accepted. | No production import, Entity ontology, automatic Agent invocation or foundation claim. |
 | `docs/concept/concurrency-and-world-dynamics.md` | Active exploration record. | Update confirmed direction and remaining frontier after material answers or findings. | It cannot override `docs/game/`. |
 | `docs/concept/log/2026-08.md` | Records current multiplayer exploration. | Record crystallized accepted, rejected, deferred or corrected choices. | One choice is written fully in one owning authority. |
-| `AGENTS.md` | Requires a trail but does not yet say that repository state replaces conversation memory between grill questions or place retained lab evidence. | Add one compact cross-task repository-memory and lab-authority rule under `Every Choice Leaves A Trail`. | Keep volatile multiplayer choices out of the always-loaded constitution. |
-| `.agents/skills/build-aicadia/SKILL.md` | Records choices but has a stale log destination and no explicit reread-before-next-question sequence. | Make repository reread, per-answer recording, User cadence and lab separation procedural. | Project placement remains owned by `docs/README.md` and `AGENTS.md`. |
-| `/Users/sanderjansma/.agents/skills/grilling/SKILL.md` | Defaults unconditionally to the whole frontier and unconditional factual delegation. | Respect explicit round-size overrides and project-owned repository trails; guard delegation by current authority. | Stay project-generic and keep User decisions distinct from facts. |
-| `/Users/sanderjansma/.agents/skills/prototype/SKILL.md` | Treats throwaway as mandatory off-main disposal and says to fold a validated decision into real code. | Define throwaway as experimental quality/no direct promotion and allow a project-designated retained lab. | A retained prototype remains unsupported evidence and never owns a choice. |
+| `AGENTS.md` | Repository memory, retained-lab separation and exact evidence claims are current build rules. | No T3 change. | Keep volatile multiplayer choices out of the always-loaded constitution. |
+| `.agents/skills/build-aicadia/SKILL.md` | Current workflow requires repository reread, plan acceptance and separated real/simulated evidence. | Apply it; do not modify it for T3. | Project placement remains owned by `docs/README.md` and `AGENTS.md`. |
+| `/Users/sanderjansma/.agents/skills/grilling/SKILL.md` | Supports explicit one-question cadence and project-owned trails. | No T3 change. | Stay project-generic and keep User decisions distinct from facts. |
+| `/Users/sanderjansma/.agents/skills/prototype/SKILL.md` | Supports retained project-language labs without direct promotion. | Apply its technical-concurrency branch; do not modify it for T3. | A retained prototype remains unsupported evidence and never owns a choice. |
 | Future `.agents/plans/<timestamp>-multiplayer-foundation/plan.md` | Absent. | Synthesize the accepted production outcome, tasks and exact evidence claim. | It remains draft until separately accepted by User. |
 
 ## Execution contract
 
 Root owns the question order, scope, experiment gates, plan state, documentation
-alignment and final evidence claim. The User authorizes subagents across every task.
-Root may delegate a bounded dependency-ready research, adversarial critique or
-experiment task whenever it improves decision quality or latency; delegation is not
-ceremony and does not replace Root judgment. Each subagent must read this plan, work
-only in its assigned surface and return raw evidence. Root reviews and integrates
-every result. Parallel work is allowed only for independent factual questions and
-never replaces the one-at-a-time User grill.
+alignment and final evidence claim. Root executes tasks directly unless the User
+explicitly requests subagents for the current execution or current controlling
+instructions require them. Any authorized subagent must read this plan, receive one
+dependency-ready task and owned surface, and return raw evidence for Root review.
+Parallel-safe labels express technical independence only; they do not authorize
+delegation and never replace the one-at-a-time User grill.
 
 Every experiment record must contain:
 
@@ -351,10 +396,14 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T1 | completed | — | no | Establish the general retained lab home and its first multiplayer track. | `docs/README.md`, `lab/README.md`, `lab/multiplayer/README.md`, active concept/log | Placement review and `git diff --check`. |
 | T1M | completed | T1 | no | Make repository-backed decision memory, retained experimental separation, honest evidence layers and project-language technical labs reusable build methodology. | `AGENTS.md`, `build-aicadia`, global `grilling`, global `prototype`, `lab/README.md`, concept log | Both changed skills validate; project-language and no-direct-promotion wording is consistent across the full referenced procedure. |
 | T2 | completed | T1, T1M | no | Resolve presence, attention and sensory semantics one question per turn; keep the earned observation lab in the accepted technical medium. | Active concept/log, `lab/multiplayer/01-observation-ownership` | Q1–Q4 are accepted; one dependency-free Rust fixture passes all eight ownership scenarios with no real-seam overclaim. |
-| T3 | pending | T2 | no | Resume unresolved subject-scoped transaction, Agent-authored causality and collective-authority questions after the requested subscription experiment. | Active concept/log, `lab/multiplayer/02-*`, `lab/multiplayer/03-*`, `lab/multiplayer/04-*`, intent/deliberation research | Q5/Q6 and retained evidence remain current; activation and eligibility stay open rather than blocking the independent interest comparison. |
+| T3A | blocked | T2, T5 | no | Determine whether the passing exact-fact concurrent Entity-request kernel is the foundation or only one high-concurrency variant after the default snapshot-basis grill is resolved. | `lab/multiplayer/06-concurrent-entity-requests/{Cargo.toml,Cargo.lock,migration/,src/world.rs,tests/semantic_matrix.rs}` | The exact-fact matrix is retained; no broader foundation verdict or further tier begins until the reopened semantic-completeness choice is accepted. |
+| T3B | pending | T3A | no | Compare `NOWAIT` and short `lock_timeout` admission under hot-fact, same-Entity/different-fact and quiet-Entity workloads. | `lab/multiplayer/06-concurrent-entity-requests/src/load.rs`, `tests/load_matrix.rs` | Exact result/Activity counts, held-lock isolation, query plans and descriptive latency/pool metrics share one fixed workload. |
+| T3C | pending | T3A | no | Cross the accepted mutation and observation shape through real rmcp tools, resource listen, transactional PostgreSQL hint and authoritative read. | `lab/multiplayer/06-concurrent-entity-requests/src/mcp.rs`, `src/gateway.rs`, `tests/mcp_chain.rs` | Multiple real rmcp clients submit concurrent packages; coalesced updates and baseline read converge on committed state and Activity. |
+| T3D | pending | T3A, T3C | no | Test whether real User-owned Agents author three semantically distinct bounded Tree dependency packages through the lab MCP read surface. | Bounded disposable Agent workspaces/evidence under experiment 06; no production or private prompt surface | At most three pinned calls, zero retries; validated packages and independent World readback separate comprehension from correctness. |
+| T3E | pending | T3B, T3C, T3D | no | Adversarially review, record and index experiment 06 without selecting production behavior. | Experiment README, lab index, active concept/log, this plan | Verdict, real/simulated seams, falsifiers, exact metrics, cleanup and all nonclaims agree. |
 | T4 | completed | T2 | no | Compare required live resource-interest strategies through one real PostgreSQL and MCP lab before asking Q8 again. | `lab/multiplayer/05-postgres-mcp-interest-strategies`, lab index, active concept/log, this plan | Five variants ran through the same real 32-client/two-gateway/100-commit seam; structural alone had no stipulated coverage miss or noise, while the separate million-record mapper and all nonclaims remain explicit. |
 | T5 | completed | T4 | no | Close the small interest follow-up: isolate quiet resources from maximum local hot fan-out and prove fatal PostgreSQL-listener recovery through reconnect plus baseline. | `lab/multiplayer/05-postgres-mcp-interest-strategies`, lab index, active concept/log, this plan | Equal-capacity 1/8/64-stripe variants preserved exact bounded routing; the 64-stripe candidate crossed real rmcp, while real fatal PgListener loss ended the stream and replacement listen-then-baseline recovered current state plus the missed Activity. |
-| T6 | pending | T3, T5 | no | Produce and present a decision-complete multiplayer build plan. | Future production plan, affected planning/docs surfaces | Terry review, no material open production question, explicit User acceptance requested separately. |
+| T6 | pending | T3E, T5 | no | Produce and present a decision-complete multiplayer build plan. | Future production plan, affected planning/docs surfaces | Terry review, no material open production question, explicit User acceptance requested separately. |
 
 ## Task details
 
@@ -463,36 +512,237 @@ specific Character may know about one concrete stone-drop Activity.
 - Stop and return to the User when a gameplay preference—not a technical fact—would
   decide the model.
 
-### T3 — Resolve transactions and causality
+### T3A — Build the deterministic concurrent-request kernel
 
-**Objective:** Exact dependency and conflict rules permit independent same-Place
-actions while serializing or rejecting truly conflicting hot-Entity actions.
+> **Current planning status:** the detailed T3A–T3E contract below is retained as the
+> previously accepted exact-fact branch. Its T3A fixture ran; Q9 then refuted its
+> unstated claim to be the default foundation. While this plan is `draft`, none of
+> these remaining tasks is executable. Registration, trigger reach and the universal
+> settlement lifecycle must replace or deliberately preserve each task before new
+> acceptance.
+
+**Objective:** One standalone Rust lab proves that Agent-authored exact writes and
+dependencies can settle simultaneous requests against one Entity without making the
+Entity or Place the universal conflict unit.
 
 **Actions:**
 
-1. Grill dependency declaration, expected state/absence, idempotency and atomic
-   consequence choices one at a time.
-2. If needed, model simultaneous stone, door and vegetation actions in memory before
-   selecting the production contract.
-3. Record which delayed consequence, if any, earns a domain-specific later action.
+1. Create `lab/multiplayer/06-concurrent-entity-requests/` with one scratch migration
+   and one `World` seam. Store bounded Character placement, Entity, exact Property
+   slot/current/history, accepted request identity and Activity state.
+2. Define one bounded request package: request id and fingerprint; actor placement
+   expectation; at most sixteen sorted `Current` or `Absent` exact dependencies; at
+   most sixteen exact Property writes; 1–64-byte lower-snake-case keys; typed values
+   with at most 4,096 stored bytes; at most 128 operation bytes; and at most 64 KiB
+   serialized input. Agents choose the dependency set; World derives no semantic
+   dependency from names, prose or values.
+3. In one short transaction, establish the request-id coordinator, materialize and
+   lock exact slots in canonical `(entity_id, property_key)` order, revalidate every
+   submitted and mandatory structural dependency, apply all writes, append history
+   and exactly one Activity, then persist the canonical accepted result. Rejection
+   rolls the coordinator row back; equal accepted retries replay; changed
+   fingerprints conflict.
+4. Exercise the concrete Tree matrix with two actual Properties, `color` and
+   `condition`: blue versus red on `color`; blue versus felled without a cross-fact
+   dependency; blue-only-while-standing versus felled in both commit orders; two
+   expected-absent writes; different Entities; moved actor; equal/changed retry; and
+   injected failure after Activity insertion.
+5. Prove rejected, stale and busy expected-absence requests leave no slot, accepted
+   request or Activity residue. Report the persistent slot cost of accepted unique
+   absent dependencies explicitly; do not relabel a per-request bound as a lifetime
+   Entity-cardinality solution.
+6. Add a 100,000-row adversarial history/slot fixture and `EXPLAIN (ANALYZE, BUFFERS)`
+   gates proving each exact read and lock follows its bounded key/index path rather
+   than scanning Entity or World history.
 
 **Invariants:**
 
-- No exclusive semantic Place-wide mutation lock or revision, global counter or
-  blockchain consensus; compatible PostgreSQL integrity locks may still protect a
-  referenced Place key.
-- Accepted current state and its one Activity commit atomically.
-- Retries do not duplicate accepted effects or Activity.
+- The fixture Tree's `condition` is concrete content, not a mandatory lifecycle key;
+  another Entity needs no `condition`, `form`, `shape`, `exists` or ontology.
+- No exclusive Place/Entity mutation lock, global revision/counter, last-write-wins,
+  CRDT or semantic server inference enters the kernel.
+- All dependencies and writes are known and bounded before locking; one request
+  cannot expand its lock set inside the transaction.
+- One newly accepted request yields one complete current-state result and one
+  Activity or nothing; retries never duplicate either.
 
 **Evidence:**
 
-- The same fixtures produce deterministic accepted, stale, conflict and replay
-  outcomes with the expected number of Activities.
+- `DATABASE_URL=postgres://localhost/postgres cargo test --locked --manifest-path lab/multiplayer/06-concurrent-entity-requests/Cargo.toml --test semantic_matrix -- --test-threads=1` — every real concurrent interleaving, rollback and idempotency assertion has exact state and Activity counts.
+- Retained adversarial query plans show work proportional to the package bounds and
+  page limit, independent of 100,000 unrelated rows.
 
 **Stop conditions:**
 
-- Stop if the candidate requires a generic event abstraction currently deferred by
-  `docs/game/deferred.md`.
+- Stop if correctness requires a generic event/proposal abstraction, a semantic
+  Entity taxonomy, unbounded dependency discovery, a Place/Entity-wide coordinator
+  or persistent rejected-attempt history.
+
+### T3B — Compare bounded hot-subject admission
+
+**Objective:** The lab distinguishes unavoidable serialization on one exact fact
+from accidental pool or lock contention that delays different facts and quiet
+Entities.
+
+**Actions:**
+
+1. Hold the kernel and fixed workload constant while comparing two transaction-local
+   policies only: exact-slot `FOR UPDATE NOWAIT`, and exact-slot `FOR UPDATE` with a
+   fixed 10 ms `lock_timeout`. `SKIP LOCKED` is excluded because canonical state may
+   not be silently skipped.
+2. Run seven isolated repeats through two independent `World` instances/pools against
+   one database, each with a maximum sixteen connections and a controller-wide
+   maximum of sixty-four in-flight requests: 4,096 attempts on one hot Tree fact;
+   4,096 attempts distributed across sixty-four facts of that same Tree; and 4,096
+   quiet requests distributed across independent Entities. Use the same fixed pool,
+   task and request bounds for both policies.
+3. Add deterministic held-lock tests proving a quiet Entity and a disjoint exact fact
+   complete before the hot lock is released. Bound every hot attempt to
+   `accepted`, `conflict` or `busy` inside a fixed outer timeout; `busy` writes no
+   Activity and retry advice is bounded data, never an automatic retry loop.
+4. Record accepted/conflict/busy/replay counts, exact Activities, pool-acquire and
+   transaction p50/p95/p99/max, lock errors, quiet-control versus hot-load latency,
+   database statements, connections and final pending work. Timing is descriptive;
+   correctness and structural isolation gate any candidate preference.
+
+**Invariants:**
+
+- Both policies receive identical data, pools, workloads and result definitions.
+- No process-local state decides correctness or requires gateway/server affinity.
+- One million requests to one exact fact are acknowledged as one canonical lane;
+  scalability means bounded shed/conflict behavior and quiet isolation, not one
+  million simultaneous accepted truths.
+- The fixture makes no million-user throughput or hosted-capacity claim.
+
+**Evidence:**
+
+- `cargo test --release --locked --manifest-path lab/multiplayer/06-concurrent-entity-requests/Cargo.toml --test load_matrix -- --ignored --nocapture --test-threads=1` — fixed workload, exact counts and descriptive comparison are emitted.
+- Focused held-lock tests deterministically prove disjoint progress without relying
+  on noisy percentile thresholds.
+
+**Stop conditions:**
+
+- Stop if the comparison changes semantics between policies, needs an unbounded
+  retry/queue, exhausts machine resources outside the accepted fixed bounds or turns
+  local timing into a production scale claim.
+
+### T3C — Cross the kernel through real MCP and live interest
+
+**Objective:** Multiple real rmcp clients can submit concurrent packages while
+interested hosts receive only coalescible stale hints and converge through an
+authoritative Entity read.
+
+**Actions:**
+
+1. Add the smallest test-only rmcp `2026-07-28` server over loopback Streamable HTTP:
+   one bounded submit tool, exact Entity resource listen/read and the same semantic
+   input/result contract as the lab `World`.
+2. Enqueue one compact `pg_notify` naming the changed Entity resource inside the
+   mutation transaction so PostgreSQL exposes it only after commit; one real
+   `PgListener` routes the lossy hint to bounded transient subscribers. Never store a
+   recipient row or call an Agent.
+3. Use four rmcp mutation clients and eight subscribed clients for the Tree matrix.
+   Assert exact tool outcomes, coalescing under repeated hot change, authoritative
+   current state plus bounded recent Activity, disconnect/relisten/baseline recovery
+   and zero pending teardown state.
+4. Keep this implementation independent from experiment 05; reuse its proven
+   invariants and scenarios, never its code as a production or lab dependency.
+
+**Invariants:**
+
+- MCP, PostgreSQL hints and resources are transport/read seams, never mutation
+  authority, delivery replay or Agent knowledge.
+- Listen happens before the recovery baseline; notification loss cannot lose
+  accepted current state or Activity.
+- Tool/resource payloads, subscriptions, pending keys and response bytes are hard
+  bounded.
+
+**Evidence:**
+
+- `DATABASE_URL=postgres://localhost/postgres cargo test --locked --manifest-path lab/multiplayer/06-concurrent-entity-requests/Cargo.toml --test mcp_chain -- --test-threads=1` — real SQLx commit, `pg_notify`, `PgListener`, rmcp submit/listen/update/read and cleanup form one asserted chain.
+
+**Stop conditions:**
+
+- Stop if the seam needs production code, one database connection or durable row per
+  subscriber, notification replay, automatic model invocation or an unbounded
+  delivery queue.
+
+### T3D — Run the bounded real-Agent dependency smoke
+
+**Objective:** Real User-owned Agents can read the lab Entity and author three
+different exact request packages whose dependencies match explicit User meaning.
+
+**Actions:**
+
+1. Only after T3A and T3C pass, announce and run at most three pinned Agent process
+   calls, zero retries, isolated workspaces and one disposable owned lab database.
+   Record model identity, actual usage when available and the absence of an
+   enforceable token ceiling.
+2. Each Agent may use only the lab MCP read surface and a strict output schema; no
+   web, source, shell, database or fallback authority. The three instructions are:
+   make the Tree blue only while standing; fell the Tree; and make it blue regardless
+   of whether it is felled.
+3. Validate the resulting packages independently. The first must depend on current
+   `condition=standing` and write `color=blue`; the second must write the concrete
+   `condition=felled` consequence while depending on its current standing value; the
+   third must write blue without claiming the standing dependency. A deterministic
+   controller submits the valid packages through the lab World/MCP seam and performs
+   authoritative readback.
+
+**Invariants:**
+
+- Agent output can support comprehension and package-authorship claims only; it
+  cannot prove transaction correctness, authorization, fairness or scale.
+- No notification triggers an Agent and no failed call is retried or replaced.
+- Model prose and private reasoning are not World history; only an accepted bounded
+  request produces Activity.
+
+**Evidence:**
+
+- One retained manifest records the three-call maximum, actual calls, tool trace,
+  strict package validation, authoritative outcomes and verified database/process/
+  workspace cleanup.
+
+**Stop conditions:**
+
+- Stop before the first call unless this revised plan is explicitly accepted. Stop
+  the tier as `inconclusive` on unavailable model/auth, schema failure, tool escape,
+  missing cleanup ownership or any need for a retry/fourth call.
+
+### T3E — Review and record the bounded verdict
+
+**Objective:** Experiment 06 remains a reproducible lab answer with no borrowed
+production, host, Agent or scale claim.
+
+**Actions:**
+
+1. Adversarially review lock ordering, expected absence, request-id races, rollback,
+   pool isolation, query boundedness, MCP dirty-state races, cleanup and metric
+   definitions against the live files and raw runs.
+2. Record question, bounds, real/simulated seams, observations, falsifiers, verdict
+   and `kept`/`discarded` status in the experiment README; index it in
+   `lab/multiplayer/README.md` and update current concept/log plus this plan.
+3. State the next product question explicitly: whether direct request evidence is
+   sufficient or one separately authorized collective proposal/cooldown experiment
+   is now earned. Do not answer it by benchmark score.
+
+**Invariants:**
+
+- Lab code is never imported, copied or promoted into production.
+- `docs/game/`, runtime, backlog and capability surfaces remain unchanged because no
+  production behavior is selected.
+- Independent exact-fact settlement remains distinct from optional collective
+  authority, discussion and cooldown.
+
+**Evidence:**
+
+- `cargo fmt --check`, `cargo check --tests --locked`, `cargo clippy --tests --locked -- -D warnings`, focused/debug tests, the isolated release matrix, exact SQLx cleanup audit, `git diff --check` and focused review all pass.
+
+**Stop conditions:**
+
+- Stop and return the plan to `draft` if evidence requires production changes,
+  changes Agent/World ownership, broadens into proposal/voting/cooldown state or
+  alters the accepted call/cost bound.
 
 ### T4 — Resolve delivery and Agent knowledge
 
@@ -662,12 +912,16 @@ with exact player behavior, World contract, implementation seams and honest evid
 ## Validation ladder
 
 1. **Focused:** Each experiment reproduces its exact fixture and records a bounded
-   verdict; each documentation edit passes focused search/review.
-2. **Contract:** Candidate semantics satisfy current World/Activity invariants and
-   preserve HTTP/MCP parity requirements without prematurely changing them.
-3. **Outcome:** The final production plan demonstrates, with concrete scenarios, how
-   independent same-Place actions coexist and how a relevant stone-drop change can
-   reach an attentive host and later Agent turn without becoming false authority.
+   verdict; experiment 06 separately proves semantic, overload, MCP and Agent tiers;
+   each documentation edit passes focused search/review.
+2. **Contract:** Candidate semantics preserve exact Agent/World ownership, bounded
+   request shape, atomic current state plus one Activity, durable idempotency and the
+   accepted coalescible-hint/authoritative-read contract without changing
+   `docs/game/` or production surfaces.
+3. **Outcome:** The Tree scenarios demonstrate that concurrent same-fact requests
+   conflict or shed boundedly, different facts can compose, an Agent-declared causal
+   dependency changes the valid outcome, quiet Entities remain structurally
+   independent and subscribed hosts converge on committed truth.
 4. **Integrity:** `git diff --check`, focused diff review, explicit review of retained
    lab status and confirmation that unrelated User changes remain intact.
 
@@ -681,7 +935,7 @@ changes the promised final artifact.
 
 ## Completion conditions
 
-- T1, T1M and T2–T6 are `completed` and the validation ladder passes;
+- T1, T1M, T2, T3A–T3E and T4–T6 are `completed` and the validation ladder passes;
 - the one-at-a-time grill has resolved every material production choice;
 - retained lab artifacts are indexed with explicit verdict and status;
 - a separate decision-complete production plan has been presented for acceptance;

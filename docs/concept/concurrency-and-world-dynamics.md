@@ -1164,3 +1164,79 @@ capacity. Per the User's requested sequence, the next experiment returns to
 simultaneous requests that try to modify one Entity; Q8 remains open rather than
 being selected by this infrastructure result. Collective settlement and
 abandoned-Character behavior remain downstream decisions.
+
+### Confirmed next experiment: concurrent Entity requests
+
+The User accepted one direct concurrent-request lab before any new proposal round,
+vote or cooldown. The concrete player case is one Tree receiving simultaneous exact
+Agent-authored requests. Blue versus red on the same `color` fact must yield one
+accepted canonical value plus a bounded conflict or busy result. A `color=blue`
+write and a concrete `condition=felled` write may both settle into a felled blue Tree
+when neither package declares the other fact causal. If the painting instruction is
+explicitly “only while standing”, its Agent must add the Tree's actual current
+`condition` as a dependency; a felled-first order then makes the paint package stale.
+World never knows that felling is destructive or more important.
+
+The planned retained Rust experiment uses real scratch PostgreSQL concurrency and a
+real rmcp submit/listen/read chain. It compares immediate `NOWAIT` with one short
+`lock_timeout`, proves quiet-Entity and different-fact isolation, retains exactly one
+Activity per accepted request, and keeps every package, lock and response bounded.
+No generic request board, durable proposal, voting, cooldown, Entity ontology or
+production behavior enters this slice. A final direct comprehension tier may use at
+most three pinned Agent calls with zero retries. The User explicitly accepted that
+bound with the revised plan; the calls still remain blocked until the deterministic
+PostgreSQL and MCP tiers pass and Root announces them immediately before execution.
+
+### Reopened decision: what state is an Agent's commit basis?
+
+The first exact-fact PostgreSQL variant passed its bounded Tree matrix, but the User
+then exposed a premise the variant cannot prove: an unmentioned concurrent fact may
+change whether the Agent's intended action still makes sense. A listener can make
+that change available quickly, but cannot close the final read-to-commit race. A dumb
+World can reject only a declared deterministic boundary.
+
+The Agent must reason from current state; the open choice is whether the host/World
+automatically binds its request to the whole coherent Entity snapshot or whether the
+Agent may bind only selected facts. Whole-Entity freshness prevents silent unknown
+changes but makes a hot Entity one canonical settlement lane. Exact-fact freshness
+preserves independent concurrency but necessarily permits unmentioned changes to
+compose. A generic Property cannot implicitly relocate an Entity: canonical
+placement remains explicit structural World state in either model. Experiment 06 is
+paused as a comparison artifact and the plan is back in `draft` until this default
+boundary is chosen. No MCP, load or Agent-call tier may start meanwhile.
+
+The User selected the whole coherent Entity snapshot as the default basis for an
+uncontested request. The Agent sees and interprets current Entity content, while the
+request carries one mechanical snapshot basis rather than an Agent-curated Property
+dependency list. A changed Entity makes that basis stale. This supersedes exact-fact
+freshness as the default candidate; the passing exact-fact fixture remains a useful
+high-concurrency comparison only.
+
+The selection includes a material qualifier: when another request is genuinely
+concurrent for the same Entity, World should not silently make arrival order the game
+designer. Those requests need a bounded Agent-owned settlement path. The still-open
+prerequisite is how a dumb World detects that concurrent set without delaying every
+ordinary request or allowing an unbounded queue.
+
+### Confirmed direction: one globally persistent participation system
+
+The User rejected further alternative mutation paths and selected one structural
+system intended to cover ordinary action, hot Entities and spatial consequences.
+Aicadia remains one globally persistent World: “instance-like” behavior means a
+local coordination and interest scope, never a copied Place or forked state.
+
+When an Agent actively enters a Place, it registers there to follow nearby Activity
+and open action rounds. Before changing an Entity it registers one bounded intent in
+that Place. A short fixed timeframe lets other registered Agents discover and join
+the same Entity round. One intent should settle faster than thousands, but both use
+the same lifecycle; concurrent intent settlement is Agent-owned consensus or voting,
+followed by one deterministic World validation and commit against the coherent
+Entity basis.
+
+An intent may declare effects beyond its containing Place through a bounded trigger
+web of Entity/Place scopes. World may validate current identities, placement and
+stored structural links, but never infer from prose that a bomb crosses a window or
+that felling outweighs painting. Registration ownership, trigger-link shape,
+deadlines, scalable settlement reduction and failure recovery remain open internal
+choices of this single direction. Experiment 06 stays paused and the plan remains
+`draft` until those prerequisites form a decision-complete lab revision.

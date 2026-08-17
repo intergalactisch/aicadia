@@ -9,7 +9,7 @@ created only when a concrete observation can change the next decision about
 presence, perception, same-subject conflict, causality, catch-up, subscriptions,
 Agent knowledge, overload or fairness.
 
-The current execution contract is the accepted
+The current exploration contract is the draft
 [`multiplayer-lab` plan](../../.agents/plans/20260816-153410-multiplayer-lab/plan.md).
 The active product exploration remains
 [`concurrency-and-world-dynamics.md`](../../docs/concept/concurrency-and-world-dynamics.md).
@@ -23,6 +23,7 @@ The active product exploration remains
 | [03 — PostgreSQL subject conflict](03-postgres-subject-conflict/README.md) | Do affected-Entity locks preserve exact conflicts while every disjoint same-Place path is wholly independent from the Place row? | `refuted` for total Place-row independence because placement foreign keys take `KEY SHARE`; narrower subject isolation and current/absence correctness are supported in five scratch-schema tests | `kept` |
 | [04 — PostgreSQL conflict strategies](04-postgres-conflict-strategies/README.md) | Which bounded coordinator preserves operation-scoped present, absent and mixed dependencies without false Place- or lock-class conflicts? | `refuted` for the initial hybrid candidate; an exact Property slot is strongest within ten focused scratch-schema tests, while `SERIALIZABLE` remains partial | `kept` |
 | [05 — PostgreSQL/MCP interest strategies](05-postgres-mcp-interest-strategies/README.md) | Which global, Place, exact or structural-hybrid interest form gives the strongest required live coverage with bounded database, gateway, MCP and refetch cost? | `inconclusive` overall; structural topology remains strongest, while a focused follow-up separately supports 64-stripe quiet isolation, its exercised one-client rmcp success path and listen-then-baseline recovery after a forced-fatal PgListener-pool loss | `kept` |
+| [06 — Concurrent Entity requests](06-concurrent-entity-requests/README.md) | Can exact-fact dependencies preserve independent concurrency without losing semantic validity when an unmentioned Entity fact changes? | `inconclusive`; thirteen scratch-PostgreSQL tests support the exact-fact mechanics, but the User selected a whole-Entity basis and one universal participation/settlement direction instead of this variant as the foundation | `active` |
 
 ## Multiplayer-specific boundaries
 
