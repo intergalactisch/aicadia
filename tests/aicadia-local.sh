@@ -154,8 +154,8 @@ first_stderr="$TEST_ROOT/first.stderr"
 start_launcher "$first_stdout" "$first_stderr"
 first_user_id="$(sed -n "s/^AICADIA_USER_ID='\([^']*\)' AICADIA_PORT='$PORT' \.\/tools\/aicadia-agent$/\1/p" "$first_stdout")"
 [[ "$first_user_id" =~ ^[0-9a-f-]{36}$ ]] || fail 'first start did not print the exact Agent handoff'
-grep -Fx "Ledger URL: http://127.0.0.1:$PORT/#user_id=$first_user_id" "$first_stdout" >/dev/null \
-    || fail 'first start did not print the exact ledger URL'
+grep -Fx "Studio URL: http://127.0.0.1:$PORT/#user_id=$first_user_id" "$first_stdout" >/dev/null \
+    || fail 'first start did not print the exact Studio URL'
 grep -Fx "MCP URL: http://127.0.0.1:$PORT/mcp" "$first_stdout" >/dev/null \
     || fail 'first start did not print the MCP URL'
 [[ "$(user_count | tail -1)" == 1 ]] || fail 'first start did not provision exactly one User'

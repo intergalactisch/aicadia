@@ -651,6 +651,97 @@ lab evidence. No semantic priority is inferred by World: the delivery layer merg
 repeated dirtiness by resource, while the Agent interprets the bounded authoritative
 result.
 
+#### Confirmed unification direction — one change substrate
+
+The User rejected continuing as though concurrency coordination, Entity mutation,
+Activity, listeners, scoped World change and collective assembly were separate
+systems. The target is one lightweight but powerful substrate through which every
+Entity creation or change is submitted, settled, recorded and made available to
+active Agents. It may have several internal components and may introduce new Agent
+tools when required, but those components cannot create parallel identities or
+authorities for the same accepted World change.
+
+The new [unified-system research](../research/unified-world-change-system.md) finds
+one coherent candidate: an Agent authors one bounded change package; World validates
+and atomically settles it once; that transaction writes current state, one Activity
+and the exact resource identities made dirty. Resource reads, MCP live hints,
+reconnect recovery and any optional collective assembly all point back to that same
+package and authoritative state. A proposal round may assemble the package, but may
+not become an alternate Entity mutation path or truth system.
+
+This direction also separates huge scoped change from huge materialized rewrite.
+“A World-wide condition now makes everything appear blue” can be one structurally
+World-scoped effect delivered through the same substrate. “Rewrite the own `color`
+Property of every existing Entity” remains intrinsically proportional to Entity
+count and cannot be represented as instant atomic work without lying about state and
+history. Exact scoped-effect semantics remain an open product decision.
+
+The prior exact-fact, Activity, coalescible-live-interest and Agent-intelligence
+choices remain candidate constraints inside this single substrate. The earlier next
+question about selecting one listener scope is superseded: the next accepted work
+must first prove that create, change, concurrent conflict, scoped effect, Activity
+and dirty-resource derivation can share one change kernel without importing a
+generic event or rule engine.
+
+#### Confirmed correction — compact structural reach, Agent-owned noticing
+
+The User rejected a design in which an Agent must enumerate every Place covered by
+one large effect. If a sound, storm or other occurrence reaches one thousand houses,
+its accepted package must be able to name one compact, structurally verifiable
+selection instead of one thousand Place ids. The User explicitly rejected adding a
+mandatory `district`, containing `Area` or another map hierarchy merely to carry that
+selection: those are hypothetical content structures, not an earned World primitive.
+The strongest open candidate is one exact Place or one bounded World-evaluated reach
+starting from an Entity or Place over explicit current structural relations. The
+current World does not yet own those relations or that query surface. `Reach` is a
+working term, not canonical vocabulary; arbitrary prose and an unbounded dynamic
+query are not authority.
+
+World owns only structural result membership, authorization, bounds and freshness.
+The submitting Agent owns why that reach is meaningful. One accepted occurrence over
+that reach is stored once and makes its shared resource dirty; it does not create an
+occurrence, Activity or delivery row for every matched house or Character. Active
+hosts whose authorized interest intersects that reach may receive one coalescible
+stale hint and refetch. A compact reach is not a free materialized rewrite: if the intended result
+changes the own state of one thousand houses or their contents, those independent
+mutations remain proportional bounded work.
+
+The User also selected Agent-owned sensory interpretation inside the already
+authorized structural reach. An originating Agent may state, for example, “this
+music is noticeable only by Characters that can hear.” World does not interpret
+`hearing`, search Trait prose or evaluate a Property as a sensory rule. A receiving
+Agent inside the admitted scope receives the occurrence together with the
+authoritative Character Property/Trait context it needs, decides whether its own
+Character noticed it and may silently do nothing when the Character is deaf. No
+World mutation, response or explicit player-facing denial is required. This does not
+weaken World-owned privacy: private or targeted content is still filtered before an
+unrelated Agent receives it, and an Agent outside the structural scope does not gain
+the occurrence merely by claiming it can hear.
+
+The exact representation of compact reach, how its result is versioned, and which
+historical Character state a later read should use remain open experiment and
+product questions. The ownership direction is fixed: World filters structural and
+private eligibility; Agent-authored meaning plus receiving Agent interpretation owns
+fictional sight, hearing and other noticing.
+
+#### Confirmed reset — flat game model before mechanisms
+
+The User rejected the proposed `Affordance`, causal-link and mechanical-runtime
+direction as too large, abstract and premature. That direction is withdrawn from
+the current exploration. It supplies no candidate architecture, canonical term or
+next experiment.
+
+Exploration returns to the existing game nouns: World game-state, Entities,
+Relations, Actions, Interactions and Consequences. `Relation` and `Consequence` are
+still unresolved working words, not accepted implementation concepts. Before any
+propagation, subscription or concurrency mechanism is designed, one smallest scene
+must make the following concrete: who acts, what state exists beforehand, what the
+Agent submits, what changes immediately, what another Agent may still influence and
+what final state and history World retains.
+
+Root asks exactly one concrete gameplay question at a time and updates this record
+before advancing. No replacement architecture is implied by this reset.
+
 ### Confirmed scope: collective settlement is an explicit special authority
 
 The User proposed turning extreme contention into gameplay: interested Agents could
@@ -1065,18 +1156,11 @@ may earn PostgreSQL partitioning, replicas, caching or operational sharding.
 
 ## Immediate decision gate
 
-The User has now confirmed that **full active multiplayer requires live resource
-interest and change delivery**. An explicit bounded read remains the authority and
-recovery mechanism, but no-push interaction is not equivalent full play. Cross-host
-support therefore means proving a native MCP listen path or a semantically equivalent
-live adapter for each supported host; it cannot mean silently lowering the game to
-turn-time polling. A bounded global board, current-Place discovery and exact Entity
-focus can still share one substrate rather than become separate systems.
+The next gate is not acceptance of a broad change kernel, propagation mechanism or
+experiment route. Root and User first resolve one small game scene using only the
+current game vocabulary: actor, initial game-state, Action or Interaction, immediate
+Consequence, any later Agent response, resulting state and retained history.
 
-Q7 settles the live delivery promise: rapid notifications for one resource may
-coalesce while authoritative current state and bounded recent context remain
-recoverable. The next one-question grill must choose the first active interest
-scope—global World board, current Place, exact Entity or one bounded combination.
-That determines discovery precision, fan-out and movement behavior before a concrete
-transport or gateway lab is meaningful. Overload fairness, collective settlement
-and abandoned-Character behavior remain downstream decisions.
+Only after that scene is unambiguous may the draft lab plan be rewritten around the
+smallest system it actually requires. `docs/game/`, `CONTEXT.md`, code and production
+behavior remain unchanged.

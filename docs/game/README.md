@@ -13,7 +13,7 @@ Aicadia has one current game contract. Read it in this order:
 5. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
 6. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
 7. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
-8. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only ledger.
+8. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only Studio.
 
 The current contract is authoritative over exploration history.
 
@@ -42,7 +42,7 @@ Catalog order is deterministic:
 `create_user` is deliberately absent. Database creation, migration, diagnostics,
 administration and every other operational action are not Agent capabilities.
 Loopback `GET /api/entity` and `GET /api/entity/{entity_id}` remain available only
-to the supported local operator ledger during this build and are deliberately absent
+to the supported local Studio Live view during this build and are deliberately absent
 from MCP and this catalog.
 
 ## Capability contracts

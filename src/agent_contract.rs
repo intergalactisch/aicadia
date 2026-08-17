@@ -88,6 +88,10 @@ const TOOL_DESCRIPTION: [(&str, &str); 15] = [
     ),
 ];
 
+pub(crate) fn tool_names() -> impl Iterator<Item = &'static str> {
+    TOOL_DESCRIPTION.iter().map(|(name, _)| *name)
+}
+
 pub(crate) fn apply<S>(router: &mut ToolRouter<S>) {
     assert_eq!(
         router.map.len(),

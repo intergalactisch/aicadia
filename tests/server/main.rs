@@ -70,6 +70,31 @@ impl TestServer {
         }
     }
 
+    async fn start_studio(world: World, pool: PgPool) -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("loopback listener should bind");
+        let address = listener
+            .local_addr()
+            .expect("loopback listener should have an address");
+        let router = server::app(world.clone(), address)
+            .expect("loopback app should build")
+            .merge(aicadia::studio::app(world, pool));
+        let task = tokio::spawn(async move {
+            axum::serve(listener, router)
+                .await
+                .expect("Studio test server should run");
+        });
+        let origin = format!("http://{address}");
+
+        Self {
+            base_url: origin.clone(),
+            origin,
+            client: Client::new(),
+            task,
+        }
+    }
+
     async fn mcp(
         &self,
         method: &str,

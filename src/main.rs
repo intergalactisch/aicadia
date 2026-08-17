@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use aicadia::{World, server};
+use aicadia::{World, server, studio};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 
 #[tokio::main]
@@ -28,7 +28,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = tokio::net::TcpListener::bind((Ipv4Addr::LOCALHOST, port)).await?;
     let address: SocketAddr = listener.local_addr()?;
-    let app = server::app(World::new(pool), address)?;
+    let world = World::new(pool.clone());
+    let app = server::app(world.clone(), address)?.merge(studio::app(world, pool));
     println!(
         "{}",
         serde_json::json!({"event": "server_ready", "address": address.to_string()})

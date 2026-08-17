@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="antialiased">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>Aicadia World ledger</title>
+    <meta name="theme-color" content="#f8f8f5">
+    <title>Aicadia Studio</title>
     <script>
       (() => {
         const key = "aicadia.user_id";
@@ -14,9 +15,7 @@
         try {
           if (fragmentUserId) sessionStorage.setItem(key, fragmentUserId);
         } catch {}
-        if (location.hash) {
-          history.replaceState(null, "", `${location.pathname}${location.search}`);
-        }
+        if (location.hash) history.replaceState(null, "", `${location.pathname}${location.search}`);
         try {
           const stored = sessionStorage.getItem(key);
           window.__aicadiaUserId = stored && new RegExp(`^${uuid}$`, "i").test(stored)
@@ -27,752 +26,88 @@
         }
       })();
     </script>
-    <style>
-      :root {
-        color: #27272a;
-        background: #fafafa;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        font-synthesis: none;
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: antialiased;
-        --page: #fafafa;
-        --surface: #ffffff;
-        --text: #27272a;
-        --muted: #71717a;
-        --faint: #a1a1aa;
-        --line: rgba(39, 39, 42, 0.12);
-        --accent: #3f6f58;
-        --accent-soft: #edf4f0;
-        --danger: #9f3a38;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        min-width: 20rem;
-        min-height: 100dvh;
-        margin: 0;
-        background: var(--page);
-        color: var(--text);
-        font-size: 1rem;
-        line-height: 1.55;
-      }
-
-      button,
-      summary {
-        font: inherit;
-      }
-
-      button {
-        min-height: 3rem;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid var(--line);
-        border-radius: 0.25rem;
-        color: var(--text);
-        background: var(--surface);
-        cursor: pointer;
-      }
-
-      button:hover:not(:disabled) {
-        border-color: rgba(63, 111, 88, 0.5);
-        color: var(--accent);
-      }
-
-      button:disabled {
-        color: var(--faint);
-        cursor: wait;
-      }
-
-      button:focus-visible,
-      summary:focus-visible,
-      .skip-link:focus-visible {
-        outline: 2px solid #2563eb;
-        outline-offset: 2px;
-      }
-
-      code,
-      time,
-      .machine {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-variant-numeric: tabular-nums;
-        overflow-wrap: anywhere;
-      }
-
-      .skip-link {
-        position: fixed;
-        top: 0.5rem;
-        left: 0.5rem;
-        z-index: 1;
-        padding: 0.5rem 0.75rem;
-        color: var(--surface);
-        background: var(--text);
-        transform: translateY(-150%);
-      }
-
-      .skip-link:focus {
-        transform: translateY(0);
-      }
-
-      .page {
-        width: min(100%, 74rem);
-        margin: 0 auto;
-        padding: 1.25rem 1rem 4rem;
-      }
-
-      .masthead {
-        display: flex;
-        min-width: 0;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .masthead-copy {
-        min-width: 0;
-      }
-
-      h1,
-      h2,
-      h3,
-      p {
-        margin: 0;
-      }
-
-      h1 {
-        max-width: 28ch;
-        font-size: clamp(1.75rem, 5vw, 2.25rem);
-        font-weight: 600;
-        letter-spacing: -0.025em;
-      }
-
-      h2 {
-        font-size: 1.25rem;
-        font-weight: 600;
-      }
-
-      h3 {
-        font-size: 1rem;
-        font-weight: 600;
-      }
-
-      .lede,
-      .section-copy,
-      .status-copy {
-        max-width: 72ch;
-        color: var(--muted);
-      }
-
-      .lede {
-        padding-top: 0.25rem;
-      }
-
-      .connection {
-        display: inline-flex;
-        flex: 0 0 auto;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--muted);
-        white-space: nowrap;
-      }
-
-      .connection::before {
-        width: 0.55rem;
-        height: 0.55rem;
-        border-radius: 50%;
-        background: var(--faint);
-        content: "";
-      }
-
-      .connection[data-state="connected"] {
-        color: var(--accent);
-      }
-
-      .connection[data-state="connected"]::before {
-        background: var(--accent);
-      }
-
-      .connection[data-state="disconnected"] {
-        color: var(--danger);
-      }
-
-      .connection[data-state="disconnected"]::before {
-        background: var(--danger);
-      }
-
-      main {
-        isolation: isolate;
-      }
-
-      .section {
-        padding: 2rem 0;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .section:last-child {
-        border-bottom: 0;
-      }
-
-      .section-heading {
-        display: flex;
-        min-width: 0;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-bottom: 1.25rem;
-      }
-
-      .section-copy {
-        padding-top: 0.25rem;
-      }
-
-      .status-copy {
-        padding: 1rem 0;
-      }
-
-      .status-copy.error {
-        color: var(--danger);
-      }
-
-      .table-scroll {
-        margin: -0.5rem -1rem;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-
-      .table-inner {
-        display: inline-block;
-        min-width: 100%;
-        padding: 0.5rem 1rem;
-        vertical-align: middle;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-      }
-
-      th {
-        padding: 0.625rem 0.75rem 0.625rem 0;
-        color: var(--muted);
-        font-weight: 500;
-        white-space: nowrap;
-      }
-
-      td {
-        padding: 0.875rem 0.75rem 0.875rem 0;
-        border-top: 1px solid var(--line);
-        vertical-align: top;
-      }
-
-      th:last-child,
-      td:last-child {
-        padding-right: 0;
-      }
-
-      .entity-name {
-        min-width: 14rem;
-        font-weight: 500;
-      }
-
-      .entity-id {
-        color: var(--muted);
-      }
-
-      details {
-        white-space: normal;
-      }
-
-      summary {
-        color: var(--accent);
-        cursor: pointer;
-        white-space: nowrap;
-      }
-
-      .detail-body {
-        width: min(38rem, calc(100vw - 3rem));
-        padding-top: 1rem;
-      }
-
-      dl {
-        display: grid;
-        grid-template-columns: minmax(7rem, 0.32fr) minmax(0, 1fr);
-        gap: 0.5rem 1rem;
-        margin: 0;
-      }
-
-      dt {
-        color: var(--text);
-        font-weight: 500;
-      }
-
-      dd {
-        min-width: 0;
-        margin: 0;
-        color: var(--muted);
-        overflow-wrap: anywhere;
-      }
-
-      .pager {
-        padding-top: 1rem;
-      }
-
-      .activity-list,
-      .reference-list {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-
-      .activity-record {
-        padding: 1.5rem 0;
-        border-top: 1px solid var(--line);
-      }
-
-      .activity-record:first-child {
-        padding-top: 0;
-        border-top: 0;
-      }
-
-      .activity-header {
-        display: flex;
-        min-width: 0;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-bottom: 1rem;
-      }
-
-      .activity-header time {
-        flex: 0 0 auto;
-        color: var(--muted);
-      }
-
-      .prose {
-        max-width: 78ch;
-        margin-bottom: 1rem;
-        color: var(--text);
-        line-height: 1.75;
-        white-space: pre-wrap;
-      }
-
-      .reference-list li + li {
-        padding-top: 0.375rem;
-      }
-
-      .role {
-        color: var(--text);
-        font-weight: 500;
-      }
-
-      [hidden] {
-        display: none !important;
-      }
-
-      @media (min-width: 40rem) {
-        body {
-          font-size: 0.875rem;
-        }
-
-        button {
-          min-height: 2.125rem;
-          padding: 0.375rem 0.75rem;
-          font-size: 0.875rem;
-        }
-
-        .page {
-          padding: 2rem 1.5rem 5rem;
-        }
-
-        .table-scroll {
-          margin-right: -1.5rem;
-          margin-left: -1.5rem;
-        }
-
-        .table-inner {
-          padding-right: 1.5rem;
-          padding-left: 1.5rem;
-        }
-      }
-
-      @media (max-width: 39.99rem) {
-        .masthead,
-        .section-heading,
-        .activity-header {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-
-        .section-heading button {
-          width: 100%;
-        }
-
-        dl {
-          grid-template-columns: 1fr;
-          gap: 0.125rem;
-        }
-
-        dd + dt {
-          padding-top: 0.625rem;
-        }
-      }
-
-      @media (pointer: coarse) {
-        button {
-          min-height: 3rem;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          scroll-behavior: auto !important;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/assets/studio.css">
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to ledger</a>
-    <div class="page">
-      <header class="masthead">
-        <div class="masthead-copy">
-          <h1 id="world-name">Aicadia</h1>
-          <p class="lede">Read-only local World ledger.</p>
-        </div>
-        <output id="connection" class="connection" data-state="loading" aria-live="polite">Connecting</output>
-      </header>
+    <a class="skip-link" href="#studio-content">Skip to content</a>
 
-      <main id="main">
-        <section class="section" aria-labelledby="entity-heading">
-          <div class="section-heading">
-            <div>
-              <h2 id="entity-heading">Shared Entity</h2>
-              <p class="section-copy">Persistent referents, newest first. Expand a row for its record detail.</p>
-            </div>
-            <button id="refresh" type="button">Refresh</button>
-          </div>
-          <p id="entity-status" class="status-copy" role="status" aria-live="polite">Loading Entity records.</p>
-          <div id="entity-table" class="table-scroll" hidden>
-            <div class="table-inner">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Entity</th>
-                    <th scope="col">Entity id</th>
-                    <th scope="col">Full record</th>
-                  </tr>
-                </thead>
-                <tbody id="entity-rows"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="pager">
-            <button id="entity-older" type="button" hidden>Load older Entity</button>
-          </div>
-        </section>
-
-        <section class="section" aria-labelledby="activity-heading">
-          <div class="section-heading">
-            <div>
-              <h2 id="activity-heading">Personal Activity and prose</h2>
-              <p class="section-copy">Immutable accepted World actions involving the local Character, newest first.</p>
-            </div>
-          </div>
-          <p id="activity-status" class="status-copy" role="status" aria-live="polite">Loading personal Activity.</p>
-          <ol id="activity-list" class="activity-list" role="list" hidden></ol>
-          <div class="pager">
-            <button id="activity-older" type="button" hidden>Load older Activity</button>
-          </div>
-        </section>
-      </main>
+    <div class="loading-screen" data-loading role="status">
+      <div class="loading-mark" aria-hidden="true">A</div>
+      <p>Reading the current game and local World.</p>
     </div>
 
-    <script>
-      (() => {
-        "use strict";
+    <div class="studio-app isolate" data-app-shell>
+      <header class="app-header">
+        <div class="header-start">
+          <button
+            class="mobile-menu-button"
+            type="button"
+            data-action="toggle-mobile-nav"
+            aria-controls="mobile-navigation"
+            aria-expanded="false"
+          >
+            Menu
+          </button>
+          <a class="brand" href="/" aria-label="Homepage">
+            <span class="brand-mark" aria-hidden="true">A</span>
+            <span class="brand-copy">
+              <strong>Aicadia</strong>
+              <small>Studio</small>
+            </span>
+          </a>
+        </div>
 
-        const userId = window.__aicadiaUserId;
-        const elements = {
-          worldName: document.querySelector("#world-name"),
-          connection: document.querySelector("#connection"),
-          refresh: document.querySelector("#refresh"),
-          entityStatus: document.querySelector("#entity-status"),
-          entityTable: document.querySelector("#entity-table"),
-          entityRows: document.querySelector("#entity-rows"),
-          entityOlder: document.querySelector("#entity-older"),
-          activityStatus: document.querySelector("#activity-status"),
-          activityList: document.querySelector("#activity-list"),
-          activityOlder: document.querySelector("#activity-older"),
-        };
-        const state = {
-          entityNext: null,
-          activityNext: null,
-          refreshing: false,
-          generation: 0,
-        };
+        <nav class="primary-nav" aria-label="Studio section">
+          <a href="/?section=game&amp;view=overview" data-section-link="game">Game</a>
+          <a href="/?section=live&amp;view=overview" data-section-link="live">Live</a>
+        </nav>
 
-        function node(tag, text, className) {
-          const element = document.createElement(tag);
-          if (text !== undefined) element.textContent = text;
-          if (className) element.className = className;
-          return element;
-        }
+        <div class="header-actions">
+          <div class="connection-state" data-state="loading">
+            <span class="connection-dot" aria-hidden="true"></span>
+            <span data-mount="connection">Reading</span>
+          </div>
+          <time class="read-time" data-mount="read-time" hidden></time>
+          <button class="button button-secondary" type="button" data-action="refresh">Refresh</button>
+        </div>
+      </header>
 
-        function field(list, term, detail) {
-          list.append(node("dt", term));
-          const value = node("dd");
-          if (detail instanceof Node) value.append(detail);
-          else value.textContent = detail;
-          list.append(value);
-        }
+      <div class="mobile-navigation" id="mobile-navigation" hidden>
+        <div data-mount="mobile-nav"></div>
+      </div>
 
-        function machine(value) {
-          return node("code", value ?? "None");
-        }
+      <div class="app-frame">
+        <aside class="sidebar" aria-label="Current section navigation">
+          <div class="sidebar-context" data-mount="sidebar-context"></div>
+          <nav data-mount="side-nav"></nav>
+        </aside>
 
-        function entityReference(entity) {
-          const wrapper = node("span");
-          wrapper.append(node("span", `${entity.name} `));
-          wrapper.append(machine(entity.id));
-          return wrapper;
-        }
+        <main class="main-content" id="studio-content" tabindex="-1">
+          <div data-mount="page"></div>
+        </main>
+      </div>
+    </div>
 
-        function canonicalError(error, fallback) {
-          if (error?.payload?.error) {
-            const detail = error.payload.error;
-            return `${detail.code}: ${detail.message}`;
-          }
-          return fallback;
-        }
+    <div class="copy-overlay" data-copy-fallback hidden>
+      <section
+        class="copy-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="copy-fallback-title"
+        aria-describedby="copy-fallback-description"
+      >
+        <div>
+          <h2 id="copy-fallback-title">Copy reference</h2>
+          <p id="copy-fallback-description">Automatic clipboard access is unavailable. Copy the selected text below.</p>
+        </div>
+        <pre data-copy-fallback-value tabindex="0" aria-label="Reference to copy"></pre>
+        <div class="inline-actions">
+          <button class="button button-primary" type="button" data-action="close-copy-fallback">Done</button>
+        </div>
+      </section>
+    </div>
 
-        async function getJson(path, contextual = false) {
-          const headers = new Headers();
-          if (contextual && userId) headers.set("Aicadia-User-Id", userId);
-          let response;
-          try {
-            response = await fetch(path, { method: "GET", headers });
-          } catch (cause) {
-            throw { cause, network: true };
-          }
-          const payload = await response.json().catch(() => null);
-          if (!response.ok) throw { status: response.status, payload };
-          return payload;
-        }
-
-        function setConnection(stateName, text) {
-          elements.connection.dataset.state = stateName;
-          elements.connection.textContent = text;
-        }
-
-        function setStatus(element, text, isError = false) {
-          element.textContent = text;
-          element.classList.toggle("error", isError);
-          element.hidden = false;
-        }
-
-        async function loadWorld(generation) {
-          try {
-            const world = await getJson("/api/world");
-            if (generation !== state.generation) return;
-            elements.worldName.textContent = world.name;
-            document.title = `${world.name} World ledger`;
-            setConnection("connected", "Connected");
-          } catch (error) {
-            if (generation !== state.generation) return;
-            elements.worldName.textContent = "Aicadia";
-            setConnection("disconnected", canonicalError(error, "Disconnected"));
-          }
-        }
-
-        function entityRow(entity) {
-          const row = node("tr");
-          const nameCell = node("td", entity.name, "entity-name");
-          const idCell = node("td", undefined, "entity-id");
-          idCell.append(machine(entity.id));
-          const detailCell = node("td");
-          const details = node("details");
-          const summary = node("summary", "View full record");
-          const body = node("div", undefined, "detail-body");
-          body.append(node("p", "Open to load the complete Entity record.", "status-copy"));
-          details.append(summary, body);
-          details.addEventListener("toggle", async () => {
-            if (!details.open || details.dataset.loading === "true" || details.dataset.loaded === "true") return;
-            details.dataset.loading = "true";
-            body.replaceChildren(node("p", "Loading full Entity record.", "status-copy"));
-            try {
-              const record = await getJson(`/api/entity/${encodeURIComponent(entity.id)}`);
-              const list = node("dl");
-              field(list, "Name", record.name);
-              field(list, "Description", record.description);
-              field(list, "Entity id", machine(record.id));
-              field(list, "Introduced at", machine(record.introduced_at));
-              field(list, "Introduced by User", "User context is intentionally not displayed.");
-              body.replaceChildren(list);
-              details.dataset.loaded = "true";
-            } catch (error) {
-              body.replaceChildren(node("p", canonicalError(error, "Full Entity record is unavailable. Close and reopen to retry."), "status-copy error"));
-            } finally {
-              details.dataset.loading = "false";
-            }
-          });
-          detailCell.append(details);
-          row.append(nameCell, idCell, detailCell);
-          return row;
-        }
-
-        async function loadEntityPage(cursor, append, generation) {
-          if (!append) {
-            setStatus(elements.entityStatus, "Loading Entity records.");
-            elements.entityTable.hidden = true;
-            elements.entityRows.replaceChildren();
-          }
-          elements.entityOlder.disabled = true;
-          const query = new URLSearchParams({ limit: "100" });
-          if (cursor) query.set("cursor", cursor);
-          try {
-            const page = await getJson(`/api/entity?${query}`);
-            if (generation !== state.generation) return;
-            const rows = page.entity.map(entityRow);
-            elements.entityRows.append(...rows);
-            state.entityNext = page.next;
-            elements.entityOlder.hidden = !state.entityNext;
-            elements.entityTable.hidden = elements.entityRows.children.length === 0;
-            if (elements.entityRows.children.length === 0) {
-              setStatus(elements.entityStatus, "No shared Entity records exist yet.");
-            } else {
-              elements.entityStatus.hidden = true;
-            }
-          } catch (error) {
-            if (generation !== state.generation) return;
-            setStatus(elements.entityStatus, canonicalError(error, "Entity records are unavailable. Check the local server and refresh."), true);
-          } finally {
-            if (generation === state.generation) elements.entityOlder.disabled = false;
-          }
-        }
-
-        function activityRecord(activity) {
-          const item = node("li", undefined, "activity-record");
-          const article = node("article");
-          const header = node("header", undefined, "activity-header");
-          header.append(node("h3", activity.operation));
-          const time = node("time", activity.occurred_at);
-          time.dateTime = activity.occurred_at;
-          header.append(time);
-          article.append(header);
-
-          if (activity.prose) {
-            article.append(node("p", activity.prose, "prose"));
-          }
-
-          const list = node("dl");
-          field(list, "Activity id", machine(activity.id));
-          field(list, "Operation", machine(activity.operation));
-          field(list, "Occurred at", machine(activity.occurred_at));
-          field(list, "Actor Character", activity.actor_character ? entityReference(activity.actor_character) : "None");
-          if (activity.context_place) {
-            const context = node("span");
-            context.append(entityReference(activity.context_place.entity));
-            context.append(node("span", ` · Entry Place: ${activity.context_place.is_entry ? "Yes" : "No"}`));
-            field(list, "Context Place", context);
-          } else {
-            field(list, "Context Place", "None");
-          }
-          const references = node("ul", undefined, "reference-list");
-          references.setAttribute("role", "list");
-          for (const reference of activity.involved_entity) {
-            const entry = node("li");
-            entry.append(node("span", `${reference.role}: `, "role"));
-            entry.append(entityReference(reference.entity));
-            references.append(entry);
-          }
-          field(list, "Involved Entity roles", activity.involved_entity.length ? references : "None");
-          if (!activity.prose) field(list, "Canonical prose", "None");
-          article.append(list);
-          item.append(article);
-          return item;
-        }
-
-        async function loadActivityPage(cursor, append, generation) {
-          if (!userId) {
-            elements.activityList.hidden = true;
-            elements.activityOlder.hidden = true;
-            setStatus(elements.activityStatus, "Personal Activity is unavailable. Open this page from the local launcher to provide development context.");
-            return;
-          }
-          if (!append) {
-            setStatus(elements.activityStatus, "Loading personal Activity.");
-            elements.activityList.hidden = true;
-            elements.activityList.replaceChildren();
-          }
-          elements.activityOlder.disabled = true;
-          const query = new URLSearchParams({ limit: "100" });
-          if (cursor) query.set("cursor", cursor);
-          try {
-            const page = await getJson(`/api/activity?${query}`, true);
-            if (generation !== state.generation) return;
-            elements.activityList.append(...page.activity.map(activityRecord));
-            state.activityNext = page.next;
-            elements.activityOlder.hidden = !state.activityNext;
-            elements.activityList.hidden = elements.activityList.children.length === 0;
-            if (elements.activityList.children.length === 0) {
-              setStatus(elements.activityStatus, "No accepted Activity involving this Character exists yet.");
-            } else {
-              elements.activityStatus.hidden = true;
-            }
-          } catch (error) {
-            if (generation !== state.generation) return;
-            state.activityNext = null;
-            elements.activityOlder.hidden = true;
-            if (error?.payload?.error?.code === "character_not_found") {
-              elements.activityList.hidden = true;
-              setStatus(elements.activityStatus, "No Character exists yet. Continue onboarding in the Agent conversation; accepted Activity will appear here.");
-            } else {
-              setStatus(elements.activityStatus, canonicalError(error, "Personal Activity is unavailable. Check the local server and refresh."), true);
-            }
-          } finally {
-            if (generation === state.generation) elements.activityOlder.disabled = false;
-          }
-        }
-
-        async function refresh() {
-          if (state.refreshing) return;
-          state.refreshing = true;
-          const generation = ++state.generation;
-          elements.refresh.disabled = true;
-          elements.refresh.textContent = "Refreshing";
-          state.entityNext = null;
-          state.activityNext = null;
-          setConnection("loading", "Connecting");
-          await Promise.all([
-            loadWorld(generation),
-            loadEntityPage(null, false, generation),
-            loadActivityPage(null, false, generation),
-          ]);
-          if (generation === state.generation) {
-            state.refreshing = false;
-            elements.refresh.disabled = false;
-            elements.refresh.textContent = "Refresh";
-          }
-        }
-
-        elements.refresh.addEventListener("click", refresh);
-        elements.entityOlder.addEventListener("click", () => {
-          if (state.entityNext) void loadEntityPage(state.entityNext, true, state.generation);
-        });
-        elements.activityOlder.addEventListener("click", () => {
-          if (state.activityNext) void loadActivityPage(state.activityNext, true, state.generation);
-        });
-        window.addEventListener("focus", () => {
-          if (document.visibilityState === "visible") void refresh();
-        });
-
-        void refresh();
-      })();
-    </script>
+    <div class="toast" data-toast role="status" aria-live="polite" hidden></div>
+    <script src="/assets/studio.js" defer></script>
   </body>
 </html>

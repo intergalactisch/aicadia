@@ -41,6 +41,17 @@ impl AicadiaMcp {
         Self { world, tool_router }
     }
 
+    pub(super) fn catalog(&self) -> Vec<rmcp::model::Tool> {
+        agent_contract::tool_names()
+            .map(|name| {
+                self.tool_router
+                    .get(name)
+                    .cloned()
+                    .expect("the fixed player capability catalog must be registered")
+            })
+            .collect()
+    }
+
     fn error(error: ErrorOutput) -> CallToolResult {
         let value = serde_json::to_string(&error)
             .expect("the fixed wire error contract is always JSON serializable");
@@ -466,31 +477,7 @@ impl ServerHandler for AicadiaMcp {
         _request: Option<rmcp::model::PaginatedRequestParams>,
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<rmcp::model::ListToolsResult, rmcp::ErrorData> {
-        let tools = [
-            "get_world",
-            "get_user",
-            "get_character",
-            "create_character",
-            "create_entry_place",
-            "enter_world",
-            "list_activity",
-            "create_entity",
-            "list_entity_at_current_place",
-            "list_activity_at_current_place",
-            "get_entity_at_current_place",
-            "start_investigation",
-            "submit_action",
-            "submit_interaction",
-            "submit_discovery",
-        ]
-        .into_iter()
-        .map(|name| {
-            self.tool_router
-                .get(name)
-                .cloned()
-                .expect("the fixed player capability catalog must be registered")
-        })
-        .collect();
+        let tools = self.catalog();
         Ok(rmcp::model::ListToolsResult {
             result_type: Some(rmcp::model::ResultType::COMPLETE),
             tools,

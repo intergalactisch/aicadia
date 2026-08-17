@@ -1,13 +1,14 @@
 # Local play
 
-> **Role / side:** Supported local launcher, isolated Agent adapter and read-only ledger contract / runtime side.
+> **Role / side:** Supported local launcher, isolated Agent adapter and read-only Studio operation contract / runtime side.
 > **Authority:** Local development operation at the game-contract boundary.
-> **Excludes:** Remote deployment, browser gameplay, authentication and delivery evidence.
+> **Excludes:** Remote deployment, browser gameplay, authentication, Studio product rationale and delivery evidence; see `docs/concept/aicadia-studio.md` and `docs/evidence/local-play.md`.
 
 Aicadia's supported local loop is one persistent World, one stable hidden
-development User, one User-owned Agent conversation and one read-only browser
-ledger. The Agent is the only conversational game interface. The ledger only
-inspects accepted World, Entity and Activity/prose data.
+development User, one User-owned Agent conversation and one read-only **Aicadia
+Studio**. The Agent is the only conversational game interface. Studio helps the
+developer inspect accepted game sources and the local World but never supplies
+player knowledge, proposes gameplay or mutates the World.
 
 ## Start
 
@@ -17,20 +18,20 @@ From the trusted repository root, with local PostgreSQL available, run:
 cargo dev
 ```
 
-The launcher uses database `aicadia_local`, starts the server on loopback port
-`3000`, provisions a User only on the first start, opens the ledger and prints its
-URL, the MCP URL and the exact Agent command. `cargo dev` is the Cargo alias for the
-owned `tools/aicadia-local` launcher. When PostgreSQL was installed as a keg-only
-Homebrew formula, the launcher discovers its client commands without requiring a
-shell `PATH` change. Supply another PostgreSQL
-administration connection when the local default does not apply:
+The launcher uses database `aicadia_local`, starts one Rust process on loopback
+port `3000`, provisions a User only on the first start, opens Aicadia Studio and
+prints its URL, the MCP URL and the exact Agent command. `cargo dev` is the Cargo
+alias for the owned `tools/aicadia-local` launcher. When PostgreSQL was installed
+as a keg-only Homebrew formula, the launcher discovers its client commands without
+requiring a shell `PATH` change. Supply another PostgreSQL administration
+connection when the local default does not apply:
 
 ```sh
 DATABASE_URL='postgres://localhost/postgres' cargo dev
 ```
 
-Use `cargo dev --no-open` to leave the browser closed. The launcher
-stores only the selected database name and stable User UUID in the ignored private
+Use `cargo dev --no-open` to leave the browser closed. The launcher stores only
+the selected database name and stable User UUID in the ignored private
 `.aicadia-local/profile.json`; it stores no credentials or conversation.
 
 ## Start the Agent conversation
@@ -42,19 +43,16 @@ printed by the launcher:
 AICADIA_USER_ID='<stable-uuid>' AICADIA_PORT='3000' ./tools/aicadia-agent
 ```
 
-The adapter first verifies the local profile and server, then fetches the
-published player contract from that running server through one stateless
-`server/discover` call and fails closed when it cannot. It then starts Codex with
-an empty workspace and isolated home/configuration outside the development
-repository, copies only available authentication into that private transient home,
-enables current MCP `2026-07-28`, makes the local Aicadia connection required and
-injects exactly the served player contract — the one delivery of that text, so an
-outdated local copy is impossible. That keeps repository instructions,
-personal skills, extra MCP servers and source code out of the game context and
-prevents a failed Aicadia connection from silently becoming a coding task or
-direct-API substitute. The entire owned temporary root, including its authentication
-copy and conversation state, is removed when Codex exits; the source authentication
-is never changed.
+The adapter first verifies the local profile and server, then fetches the published
+player contract from that running server through one stateless `server/discover`
+call and fails closed when it cannot. It starts Codex with an empty workspace and
+isolated home/configuration outside the development repository, copies only
+available authentication into that private transient home, enables current MCP
+`2026-07-28`, makes the local Aicadia connection required and injects exactly the
+served player contract. Repository instructions, personal skills, extra MCP servers
+and source code stay out of the game context. The entire owned temporary root,
+including its authentication copy and conversation state, is removed when Codex
+exits; the source authentication is never changed.
 
 The launcher only prints this command. It never runs the adapter, Codex, an OpenAI
 API or a model, so starting a token-spending Agent conversation remains an explicit
@@ -62,38 +60,72 @@ User action. The UUID is untrusted request context, not a login, account or
 authorization token.
 
 When no Character exists, the Agent follows the private workshop in
-[Agent play contract](agent.md): exactly three candidates, selection and
-optional steering, a complete natural preview in the User's language, explicit
-confirmation and then one existing creation call. Gameplay continues in permanent
-player mode through Aicadia MCP. Only accepted World changes become durable;
-proposals, drafts and confirmation remain private.
+[Agent play contract](agent.md): exactly three candidates, selection and optional
+steering, a complete natural preview in the User's language, explicit confirmation
+and then one existing creation call. Gameplay continues in permanent player mode
+through Aicadia MCP. Only accepted World changes become durable; proposals, drafts
+and confirmation remain private.
 
-## Ledger boundary
+## Studio boundary
 
-The page reads only `GET /api/world`, loopback operator
-`GET /api/entity`/`GET /api/entity/{entity_id}` and contextual
-`GET /api/activity`. The two global Entity reads exist for this trusted local ledger;
-they are out-of-world inspection, not player knowledge and not accepted MCP tools.
-The Agent may never use them as a fallback authority. The page can refresh,
-page and expand records but contains no chat, form, proposal control, confirmation,
-game mutation or model surface. Before Character creation, personal Activity is
-honestly unavailable or empty; onboarding never moves into the browser. The hidden
-User UUID is not rendered.
+Studio is served at `/` by the same loopback Rust process. Its top-level sections
+are:
 
-World connection, Entity and Activity/prose are direct regions on one page. Entity
-and Activity pages are newest first and offer `Load older` only when the existing
-typed cursor has another page; expanding an Entity reads its existing representation
-but replaces `introduced_by_user_id` with an explicit hidden-User notice. Initial
-load, explicit Refresh and returning focus re-read current state. There is no
-background polling. The launcher passes the User UUID in a URL fragment; the page
-copies it to session storage and immediately removes the fragment from the visible
-URL before using the value only as the contextual Activity header.
+- **Game**, a read-only projection of allowlisted owning repository sources,
+  including current game contracts, exact compiled MCP tools and their input
+  schemas, Entity/Property/Trait model sections, exploration, experiments, planning,
+  evidence and decision history. Rust reads and renders those sources; browser code
+  contains no authored copy of their rules, field lists or catalog.
+- **Live**, a read-only browser for the one actual local World. It shows bounded
+  Entity, Character-role, Place-role and personal Activity pages, bounded current
+  Property/Trait previews for one selected Entity, and the connected PostgreSQL
+  application's current public-schema structure. It does not expose unrestricted
+  files, arbitrary SQL or table rows.
+
+Studio has one interface. `Game` and `Live` share one primary navigation, while
+their source, model, tool, development-status, Entity, Activity and storage-table
+views leave their current selection in query parameters. A copied development
+reference combines that reload-safe URL with its owning source or durable record
+context so it can be used in an AI conversation without copying the underlying
+truth into browser assets.
+
+Game HTTP and MCP remain independent of development-document meaning. Studio-only
+`GET /studio/api/**` routes are absent from OpenAPI and MCP; they add no player
+capability. Existing loopback `GET /api/entity` and
+`GET /api/entity/{entity_id}` remain operator-only reads and are absent from MCP.
+The Agent may never use Studio or those reads as fallback authority.
+
+Every Studio list defaults to twenty-four records and accepts at most one hundred.
+Entity detail previews at most fifty current Properties and fifty current Traits;
+one Activity detail previews at most 256 explicitly involved Entities. Storage
+inspection is limited to 256 ordinary or partitioned tables in `public` and at most
+4,096 columns, non-foreign-key constraints, ordered foreign keys and indexes of each
+kind across that schema. Crossing a bound fails the complete schema read instead of
+silently presenting partial structure. The page contains no chat, form, proposal
+control, confirmation, game mutation, model invocation, automatic Agent launch or
+background polling. Initial load and explicit Refresh re-read current state.
+
+The Storage view can download one pretty-printed JSON capture from
+`GET /studio/api/live/storage/snapshot`. It includes capture time, latest successful
+migration, tables, columns, constraints, ordered foreign keys, indexes and a SHA-256
+fingerprint over the structural payload. Capture time does not affect the
+fingerprint. The capture contains no World rows and Studio does not retain, compare
+or write it automatically.
+
+Before Character creation, personal Activity is honestly unavailable. The hidden
+User UUID is not rendered. The launcher passes it in a URL fragment; the page copies
+it to session storage and immediately removes the fragment from the visible URL
+before using it only as the contextual Activity header.
+
+The game currently has one persistent World with no durable World id or `world`
+table. Studio labels one connected local World and does not present multiple Worlds
+as delivered behavior.
 
 ## Stop, restart and reset
 
 Press Ctrl-C in the launcher terminal to stop only the server process it started.
-The database and `.aicadia-local/profile.json` remain. Run `cargo dev` again to reuse
-the database and verify the same User before serving the same durable
+The database and `.aicadia-local/profile.json` remain. Run `cargo dev` again to
+reuse the database and verify the same User before serving the same durable
 Character, placement, Entities, Activity and prose. A concurrent launcher, corrupt
 profile, missing profile beside an existing selected database, missing profiled User
 or database mismatch fails visibly instead of silently provisioning a replacement.

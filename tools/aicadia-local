@@ -7,7 +7,7 @@ readonly PORT="${AICADIA_PORT:-3000}"
 readonly DATABASE_URL="${DATABASE_URL:-postgres://localhost/postgres}"
 readonly BASE_URL="http://127.0.0.1:${PORT}"
 readonly MCP_URL="${BASE_URL}/mcp"
-OPEN_LEDGER=1
+OPEN_STUDIO=1
 SERVER_PID=''
 SERVER_STDOUT=''
 SERVER_STDERR=''
@@ -43,7 +43,7 @@ trap 'exit 143' TERM
 
 case "${1:-}" in
     '') ;;
-    --no-open) OPEN_LEDGER=0 ;;
+    --no-open) OPEN_STUDIO=0 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; fail "unknown argument: $1"; exit 2 ;;
 esac
@@ -90,7 +90,7 @@ if ! command -v psql >/dev/null 2>&1 || ! command -v createdb >/dev/null 2>&1; t
 fi
 
 dependencies=(cargo psql createdb curl jq lsof)
-(( OPEN_LEDGER == 0 )) || dependencies+=(open)
+(( OPEN_STUDIO == 0 )) || dependencies+=(open)
 for dependency in "${dependencies[@]}"; do
     command -v "$dependency" >/dev/null 2>&1 \
         || { fail "required program is unavailable: $dependency"; exit 1; }
@@ -222,13 +222,13 @@ if [[ "$http_status" != 200 ]] \
 fi
 rm -f "$user_response"
 
-readonly LEDGER_URL="${BASE_URL}/#user_id=${profile_user_id}"
-printf 'Ledger URL: %s\n' "$LEDGER_URL"
+readonly STUDIO_URL="${BASE_URL}/#user_id=${profile_user_id}"
+printf 'Studio URL: %s\n' "$STUDIO_URL"
 printf 'MCP URL: %s\n' "$MCP_URL"
 printf "AICADIA_USER_ID='%s' AICADIA_PORT='%s' ./tools/aicadia-agent\n" "$profile_user_id" "$PORT"
 
-if (( OPEN_LEDGER == 1 )); then
-    open "$LEDGER_URL" || { fail 'could not open the local ledger'; exit 1; }
+if (( OPEN_STUDIO == 1 )); then
+    open "$STUDIO_URL" || { fail 'could not open Aicadia Studio'; exit 1; }
 fi
 
 if wait "$SERVER_PID"; then

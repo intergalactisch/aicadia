@@ -7,7 +7,7 @@
 ## Absent
 
 Authentication, OAuth, browser gameplay, general web UI beyond the supported local
-read-only ledger, movement, additional Places, discovery of new Places, coordinates,
+read-only Studio, movement, additional Places, discovery of new Places, coordinates,
 routes, Place containment and adjacency, metric neighborhoods, claims, generic
 Discovery or Observation models, generic action or consequence engines, more than
 one result per investigation, Entity update or

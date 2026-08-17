@@ -9,10 +9,14 @@ created only when a concrete observation can change the next decision about
 presence, perception, same-subject conflict, causality, catch-up, subscriptions,
 Agent knowledge, overload or fairness.
 
-The current execution contract is the accepted
+The current proposed execution contract is the draft
 [`multiplayer-lab` plan](../../.agents/plans/20260816-153410-multiplayer-lab/plan.md).
 The active product exploration remains
 [`concurrency-and-world-dynamics.md`](../../docs/concept/concurrency-and-world-dynamics.md).
+
+The reusable [`scenario catalogue`](scenarios.md) fixes hard narratives and fixtures
+so successive experiments test the same cases. It deliberately leaves product
+outcomes open and has no authority over current game behavior.
 
 ## Experiments
 

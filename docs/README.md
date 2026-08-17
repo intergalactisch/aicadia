@@ -12,9 +12,10 @@ the game domain and is never a name for either documentation side.
 ## Runtime side — the running product
 
 The runtime side is what builds, runs, exposes, stores or directly verifies the
-product. It includes `Cargo.toml`, `Cargo.lock`, `src/` (including
-`src/agent_contract/`), `migration/`, application test crates and fixtures under
-`tests/`, `docs/game/`, `tools/aicadia-local`, `tools/aicadia-agent` and `web/`.
+product. It includes `Cargo.toml`, `Cargo.lock`, `src/` except the local
+development projection in `src/studio/` (and including `src/agent_contract/`),
+`migration/`, runtime application tests and fixtures under `tests/`, `docs/game/`,
+`tools/aicadia-local` and `tools/aicadia-agent`.
 
 Runtime implementation fulfills the current contract in `docs/game/`; it does not
 derive meaning from planning, exploration or delivery history.
@@ -25,7 +26,8 @@ The development side governs how Aicadia is understood, researched, chosen, plan
 and built. It includes `docs/README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`,
 `docs/concept/` with its log and archive, `docs/research/` with its archive,
 `.agents/backlog/`, `.agents/plans/`, `.agents/skills/`, `lab/`,
-`tools/*-playtest` and `tests/*-playtest.sh`.
+`src/studio/`, `web/`, their development-surface tests, `tools/*-playtest` and
+`tests/*-playtest.sh`.
 
 Development material may explain or cite the running product, but it never becomes a
 second source for the current game contract or executable behavior.
@@ -61,13 +63,14 @@ only through the static delivery-status pointer defined below.
 | `docs/evidence/` | Bridge | Delivery and evidence history | Its index, per-slice records and `runner/` operation contracts | Status, runs, audits, digests, proof links and evidence-machine operations | Game-contract rules, planning state or concept rationale | Evidence is produced, reviewed, corrected or superseded |
 | `docs/game/` | Runtime | Current product contract | `docs/game/README.md` and its concern/capability documents | Accepted domain, behavior, storage, protocol, Agent and deferral contracts | Delivery status, exploration history or build planning | Accepted current product behavior or implementation changes |
 | `Cargo.toml`, `Cargo.lock` | Runtime | Rust build and dependency manifest | The manifest and lockfile | Current package, target and dependency resolution | Product requirements, rationale or delivery history | Build topology or a current dependency changes |
-| `src/` except `src/agent_contract/` | Runtime | Executable server implementation | Rust source and migrations' consumers | Current deterministic game, protocol and server behavior | Planning, research or delivery narratives | Accepted executable behavior or implementation changes |
+| `src/` except `src/agent_contract/` and `src/studio/` | Runtime | Executable game-server implementation | Rust source and migrations' consumers | Current deterministic game, protocol and server behavior | Planning, research or delivery narratives | Accepted executable behavior or implementation changes |
 | `src/agent_contract/` | Runtime | Published Agent-facing text source | Its instruction and per-tool source files | Bytes published to connected Agents | Workshop history, delivery status or internal planning | The accepted Agent-facing contract changes |
+| `src/studio/` | Development | Local read-only development projection | Its Rust module plus the local-operation boundary in `docs/game/local-play.md` | Allowlisted source rendering, exact runtime-catalog projection and bounded operator-only World/public-schema reads | Game behavior, Agent capabilities, authored copies of projected truth or delivery narrative | Supported Studio projection or inspected source set changes |
 | `migration/` | Runtime | PostgreSQL schema evolution | Ordered migration files | Current durable schema transitions | Application behavior, planning or evidence narrative | The accepted storage contract changes |
 | `tests/world*`, `tests/server*` | Runtime | Application integration tests | The named test crates | Executable proof of World and adapter behavior | Build-process policy or delivery history | Runtime behavior or its evidence obligation changes |
 | `tests/aicadia-local.sh`, `tests/agent-tool-catalog.json` | Runtime | Local-operation and published-catalog fixtures | The named fixture or script | Exact launcher and Agent catalog assertions | Product rationale or evidence-run narratives | Runtime operation or published catalog bytes change |
 | `tools/aicadia-local`, `tools/aicadia-agent` | Runtime | Local product operation | The named tool plus its contract in `docs/game/` | Launch and connection behavior | Playtest orchestration, planning or delivery status | Accepted local operation changes |
-| `web/` | Runtime | Read-only local ledger | `web/index.html` plus its contract in `docs/game/` | The accepted local ledger implementation | Browser gameplay, planning or evidence history | Accepted ledger behavior changes |
+| `web/` | Development | Aicadia Studio browser presentation | Browser assets plus the local-operation boundary in `docs/game/local-play.md` | Unified accessible navigation, deep-link and reference presentation over the Rust Studio projection | Canonical rules, models, tool catalogs, schema logic, browser gameplay or delivery history | Supported Studio presentation changes |
 
 ## Reference direction
 
@@ -120,6 +123,6 @@ when a file crosses its bound; do not compress meaning or invent abstractions me
 to hit a count.
 
 The named exemptions are designated long-form records (active concept records,
-research reports, per-month log files, plans and archives), digest-frozen runner
-scripts and the single-page ledger. An exemption permits necessary length, not mixed
-roles or duplicated truth.
+research reports, per-month log files, plans and archives) and digest-frozen runner
+scripts. An exemption permits necessary length, not mixed roles or duplicated
+truth.

@@ -1,15 +1,15 @@
 use super::*;
 
 #[sqlx::test(migrations = "./migration")]
-async fn ledger_root_serves_the_self_contained_get_only_page(pool: PgPool) {
-    let server = TestServer::start(World::new(pool)).await;
+async fn studio_root_serves_one_source_backed_get_only_application(pool: PgPool) {
+    let server = TestServer::start_studio(World::new(pool.clone()), pool).await;
 
     let response = server
         .client
         .get(format!("{}/", server.base_url))
         .send()
         .await
-        .expect("ledger request should send");
+        .expect("Studio request should send");
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(
         response
@@ -18,22 +18,39 @@ async fn ledger_root_serves_the_self_contained_get_only_page(pool: PgPool) {
             .and_then(|value| value.to_str().ok()),
         Some("text/html; charset=utf-8")
     );
-    let html = response.text().await.expect("ledger should be text");
-    assert!(html.contains("<main id=\"main\">"));
-    assert!(html.contains("Shared Entity"));
-    assert!(html.contains("Personal Activity and prose"));
+    let html = response.text().await.expect("Studio should be text");
+    assert!(html.contains("Aicadia Studio"));
+    assert!(html.contains("data-app-shell"));
+    assert_eq!(html.matches("data-section-link=").count(), 2);
+    assert!(!html.contains("data-variant="));
+    assert!(!html.contains("prototype-switcher"));
     assert!(html.contains("^#user_id="));
     assert!(html.contains("sessionStorage.setItem"));
     assert!(html.contains("history.replaceState"));
-    assert!(html.contains("fetch(path, { method: \"GET\", headers })"));
-    assert!(html.contains("/api/world"));
-    assert!(html.contains("/api/entity?"));
-    assert!(html.contains("/api/entity/${"));
-    assert!(html.contains("/api/activity?"));
     assert_eq!(
-        html.matches("<button ").count(),
+        html.matches("<button").count(),
         html.matches("type=\"button\"").count()
     );
+
+    let script = server
+        .client
+        .get(format!("{}/assets/studio.js", server.base_url))
+        .send()
+        .await
+        .expect("Studio script request should send")
+        .text()
+        .await
+        .expect("Studio script should be text");
+    assert!(script.contains("fetch(path, { method: \"GET\", headers })"));
+    assert!(script.contains("/studio/api/catalog"));
+    assert!(script.contains("/studio/api/live/character"));
+    assert!(script.contains("/studio/api/live/place"));
+    assert!(script.contains("/studio/api/live/storage"));
+    assert!(script.contains("/studio/api/live/storage/snapshot"));
+    assert!(script.contains("/studio/api/live/activity/"));
+    assert!(script.contains("/api/world"));
+    assert!(script.contains("/api/entity?"));
+    assert!(script.contains("/api/activity?"));
 
     for forbidden in [
         "<form",
@@ -47,29 +64,128 @@ async fn ledger_root_serves_the_self_contained_get_only_page(pool: PgPool) {
         "method: \"PUT\"",
         "method: \"PATCH\"",
         "method: \"DELETE\"",
-        "/api/user",
-        "/api/character",
-        "/api/place",
         "/api/action",
         "/mcp",
     ] {
         assert!(
-            !html.contains(forbidden),
-            "ledger must not contain forbidden mutation or extra-read surface: {forbidden}"
+            !html.contains(forbidden) && !script.contains(forbidden),
+            "Studio must not contain forbidden mutation surface: {forbidden}"
         );
     }
+
+    let catalog: Value = server
+        .client
+        .get(format!("{}/studio/api/catalog", server.base_url))
+        .send()
+        .await
+        .expect("Studio catalog request should send")
+        .json()
+        .await
+        .expect("Studio catalog should be JSON");
+    assert_eq!(catalog["tool"].as_array().map(Vec::len), Some(15));
+    assert_eq!(catalog["model"].as_array().map(Vec::len), Some(9));
+    assert_eq!(catalog["model"][2]["id"].as_str(), Some("entity"));
+    assert_eq!(
+        catalog["model"][2]["storage_table"]
+            .as_array()
+            .map(Vec::len),
+        Some(1)
+    );
+    assert!(catalog["document"][0]["heading"][0]["id"].is_string());
+    assert_eq!(
+        catalog["world_support"].as_str(),
+        Some("One connected local World; durable multiple-World identity is not delivered.")
+    );
+
+    let storage: Value = server
+        .client
+        .get(format!("{}/studio/api/live/storage", server.base_url))
+        .send()
+        .await
+        .expect("Studio storage request should send")
+        .json()
+        .await
+        .expect("Studio storage should be JSON");
+    assert_eq!(storage["table"].as_array().map(Vec::len), Some(14));
+    assert!(
+        storage["table"]
+            .as_array()
+            .and_then(|table| table.iter().find(|table| table["name"] == "entity"))
+            .and_then(|table| table["column"].as_array())
+            .is_some_and(|column| !column.is_empty())
+    );
+    assert!(
+        storage["relation"]
+            .as_array()
+            .is_some_and(|relation| !relation.is_empty())
+    );
+    assert!(storage["relation"].as_array().is_some_and(|relation| {
+        relation.iter().any(|relation| {
+            relation["columns"]
+                .as_array()
+                .is_some_and(|columns| columns.len() > 1)
+        })
+    }));
+    assert_eq!(storage["fingerprint"].as_str().map(str::len), Some(64));
+    assert_eq!(storage["latest_migration"].as_i64(), Some(10));
+
+    let snapshot_response = server
+        .client
+        .get(format!(
+            "{}/studio/api/live/storage/snapshot",
+            server.base_url
+        ))
+        .send()
+        .await
+        .expect("Studio schema snapshot request should send");
+    assert_eq!(snapshot_response.status(), StatusCode::OK);
+    assert_eq!(
+        snapshot_response
+            .headers()
+            .get(reqwest::header::CONTENT_DISPOSITION)
+            .and_then(|value| value.to_str().ok()),
+        Some("attachment; filename=\"aicadia-schema-snapshot.json\"")
+    );
+    let snapshot: Value = snapshot_response
+        .json()
+        .await
+        .expect("Studio schema snapshot should be JSON");
+    assert_eq!(snapshot["fingerprint"], storage["fingerprint"]);
+
+    let missing_activity = server
+        .client
+        .get(format!(
+            "{}/studio/api/live/activity/{}",
+            server.base_url,
+            Uuid::new_v4()
+        ))
+        .send()
+        .await
+        .expect("missing Studio Activity request should send");
+    assert_eq!(missing_activity.status(), StatusCode::NOT_FOUND);
+
+    let invalid_limit = server
+        .client
+        .get(format!(
+            "{}/studio/api/live/character?limit=0",
+            server.base_url
+        ))
+        .send()
+        .await
+        .expect("invalid Studio limit request should send");
+    assert_eq!(invalid_limit.status(), StatusCode::BAD_REQUEST);
 
     let response = server
         .client
         .post(format!("{}/", server.base_url))
         .send()
         .await
-        .expect("root POST boundary request should send");
+        .expect("Studio root POST boundary request should send");
     assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn ledger_reads_remain_truthful_before_character_onboarding(pool: PgPool) {
+async fn operator_reads_remain_truthful_before_character_onboarding(pool: PgPool) {
     let world = World::new(pool);
     let user = world.create_user().await.expect("setup User should exist");
     let server = TestServer::start(world).await;

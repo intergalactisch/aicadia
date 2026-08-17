@@ -1,5 +1,6 @@
 pub mod agent_contract;
 pub mod server;
+pub mod studio;
 pub mod wire;
 mod world;
 

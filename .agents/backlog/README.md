@@ -25,7 +25,7 @@ must be corrected in the same change.
 | Horizon | Item | State | Concrete outcome |
 | --- | --- | --- | --- |
 | Done | [Current immersive Agent play contract](items/current-agent-play-contract.md) | Done | Every conforming Agent keeps the complete conversation inside Aicadia, renders internal World records as concrete in-world facts and fails closed without its required MCP authority. |
-| Done | [Local Agent play and World ledger](items/local-agent-play-ledger.md) | Done | One hidden development User can return to the same local World, play only through their Agent and inspect accepted Entity and Activity/prose data in a read-only browser ledger. |
+| Done | [Local Agent play and read-only Studio](items/local-agent-play-ledger.md) | Done | One hidden development User can return to the same local World, play only through their Agent and inspect accepted game sources and bounded World data in Aicadia Studio. |
 | Done | [Agent world-entry handoff](items/agent-world-entry-handoff.md) | Done | A clean-room Agent can understand and execute World entry and Activity reads from the published MCP contract; two Agents prove shared Place state. |
 | Done | [World entry with activity history](items/world-entry-history.md) | Done | A Character may remain unplaced, later enter the shared World, and receive a durable queryable history from the first accepted game actions onward. |
 | Done | [Agent-mediated World action](items/agent-mediated-world-action.md) | Done | A User selects and steers one of three Agent proposals; the Agent submits one readable and structured action package that World accepts or rejects atomically. |

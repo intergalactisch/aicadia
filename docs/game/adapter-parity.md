@@ -1,7 +1,7 @@
 # Adapter parity contract
 
 > **Role / side:** Defines cross-adapter and cross-contract evidence obligations / runtime side.
-> **Authority:** Required executable agreement among World, HTTP, MCP, Agent guidance, local operation and read-only ledger behavior.
+> **Authority:** Required executable agreement among World, HTTP, MCP, Agent guidance, local operation and read-only Studio behavior.
 > **Excludes:** Protocol definitions, delivery status, rollout narrative and evidence results.
 
 ## Parity evidence
@@ -117,6 +117,6 @@ Automated tests require:
   concurrent or unprofiled reuse that could create a second User, and never starts
   Codex itself; its printed adapter isolates workspace, home/configuration and
   transient conversation state while requiring current Aicadia MCP; and
-- the browser ledger uses only the four accepted GET reads, hides User UUIDs, remains
-  responsive and keyboard-operable, and renders identical accepted ids and prose
-  before and after restart.
+- Aicadia Studio remains GET-only, hides User UUIDs, keeps its operator projection
+  outside OpenAPI and MCP, bounds every World/schema read and renders identical
+  accepted ids and prose before and after restart.

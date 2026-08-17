@@ -2,16 +2,12 @@ use super::*;
 
 use axum::{
     extract::{Path, Query, State, rejection::JsonRejection, rejection::QueryRejection},
-    response::Html,
     routing::{get, post},
 };
 use utoipa::{OpenApi, openapi::OpenApi as OpenApiDocument};
 
-const LEDGER_HTML: &str = include_str!("../../web/index.html");
-
 pub(super) fn routes() -> Router<World> {
     Router::new()
-        .route("/", get(ledger))
         .route("/api/world", get(get_world))
         .route("/api/user", get(get_user))
         .route("/api/character", get(get_character).post(create_character))
@@ -37,10 +33,6 @@ pub(super) fn routes() -> Router<World> {
         .route("/api/interaction", post(submit_interaction))
         .route("/api/discovery", post(submit_discovery))
         .route("/api/openapi.json", get(openapi))
-}
-
-async fn ledger() -> Html<&'static str> {
-    Html(LEDGER_HTML)
 }
 
 #[derive(OpenApi)]

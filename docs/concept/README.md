@@ -19,6 +19,7 @@ only when the owning `docs/game/` contract explicitly accepts it.
 | [Time and change](time.md) | live exploration | Continuous time and the no-background-simulation boundary |
 | [Tabletop-derived play heuristics](tabletop.md) | retained heuristics | Cross-cutting play guidance and non-import boundary |
 | [Entity state rationale](entity-state.md) | retained rationale | Property/Trait distinction and uniform authority boundary; delivery uses its static evidence pointer |
+| [Aicadia Studio](aicadia-studio.md) | active exploration | Source-backed `Game`/`Live` development interface, model/tool projection and World inspection |
 | [Discovery roll lab](discovery-roll-prototype.html) | throwaway prototype | Optimistic scope-bound roll concurrency; never a contract |
 | [Development log](log/README.md) | history | Accepted, rejected, deferred, corrected and superseded choices |
 

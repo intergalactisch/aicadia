@@ -11,7 +11,7 @@ candidate ids or audit findings.
 | Slice | Current status | Proof |
 | --- | --- | --- |
 | World entry | Complete, including retained live proof | [World-entry evidence](world-entry.md) · [Agent runner contract](runner/agent-playtest.md) |
-| Local play and ledger | Deterministic launcher, handoff, persistence and browser proof complete | [Local-play evidence](local-play.md) |
+| Local play and Studio | Deterministic launcher, handoff, persistence, source projection and browser proof complete | [Local-play evidence](local-play.md) |
 | Character-grounded Action | Deterministic delivery and bounded live proof complete | [Action evidence](action.md) · [Agent runner contract](runner/agent-playtest.md) |
 | Character-grounded Interaction | Deterministic evidence complete; no paid-model Interaction claim | [Interaction evidence](interaction.md) · [Agent runner contract](runner/agent-playtest.md) |
 | Entity Property | Deterministic evidence complete; the fresh paid flow reached exact World, HTTP and independent-observer content but terminal-failed on a valid optional observer limit; current controller corrected and pinned token-free, no retry authority | [Property evidence](property.md) · [Agent runner contract](runner/agent-playtest.md) |
@@ -56,6 +56,6 @@ The shared 2026-08-12 launcher, Agent-handoff and catalog proof is retained once
 
 The later Character-grounded Interaction build evolved this same delivery contract
 to twelve player tools: it added `submit_interaction` and removed global
-`list_entity`/`get_entity` from MCP while retaining them as loopback operator-ledger
+`list_entity`/`get_entity` from MCP while retaining them as loopback Studio Live
 HTTP reads. That historical thirteen-tool completion evidence remains accurate for
 the build at that time; current truth is in `docs/game/README.md#capability-catalog`.

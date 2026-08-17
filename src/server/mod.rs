@@ -33,6 +33,10 @@ mod mcp;
 use error::{HttpError, user_context};
 use mcp::AicadiaMcp;
 
+pub(crate) fn mcp_tool_catalog(world: World) -> Vec<rmcp::model::Tool> {
+    AicadiaMcp::new(world).catalog()
+}
+
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ServerError {
     #[error("Aicadia must bind to a loopback address")]
@@ -80,6 +84,24 @@ mod test {
             app(World::new(pool), address),
             Err(ServerError::NonLoopback)
         ));
+    }
+
+    #[tokio::test]
+    async fn studio_and_mcp_share_the_exact_compiled_tool_catalog() {
+        let pool =
+            PgPool::connect_lazy("postgresql:///unused").expect("lazy pool should not connect");
+        let tools = mcp_tool_catalog(World::new(pool));
+
+        assert_eq!(tools.len(), 15);
+        assert_eq!(
+            tools
+                .iter()
+                .map(|tool| tool.name.as_ref())
+                .collect::<Vec<_>>(),
+            crate::agent_contract::tool_names().collect::<Vec<_>>()
+        );
+        assert!(tools.iter().all(|tool| tool.description.is_some()));
+        assert!(tools.iter().all(|tool| !tool.input_schema.is_empty()));
     }
 
     #[test]
