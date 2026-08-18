@@ -110,7 +110,9 @@ outcome, decide its concrete contract, update `game/docs/`, then implement it.
 `dev/docs/README.md` is the binding placement constitution. Put each current fact in
 exactly one owning authority and link to it from every other surface; never maintain
 the same truth in parallel homes. Follow its side, evidence, reference, sweep,
-role-header and bounded-size rules.
+role-header and bounded-size rules, and write every role header and cross-reference
+as a plain sentence a building Agent can act on, by
+`dev/docs/methodology/build-text.md`.
 
 ### Singular Domain Names
 
@@ -165,6 +167,16 @@ Aicadia MCP is the sole live-game authority for an Agent; if it is unavailable,
 player interaction fails closed before mutation instead of falling back to source,
 HTTP, a database, tools, logs or remembered state. This presentation rule does not
 rename or weaken the precise internal vocabulary and deterministic World contract.
+
+### Public Text Is Product Surface
+
+Text the repository publishes verbatim to a party outside it — the served play
+contract, every tool description and every schema description — is product surface
+that every Agent pays for in context and comprehension. Write each rule once at its
+one layer, plainly and briefly, with bounds in the schema and the play loop first;
+change it only through the inventory-and-parity procedure in
+`dev/docs/methodology/public-text.md`, and regenerate the published catalog once
+per accepted change.
 
 ### Boring Infrastructure
 
@@ -319,6 +331,7 @@ story to smuggle in an unchosen concept or speculative infrastructure.
 ## Reference Docs
 
 - Documentation constitution: `dev/docs/README.md`
+- Working methods: `dev/docs/methodology/README.md`
 - Current build contract: `game/docs/`
 - Delivery and evidence history: `dev/docs/evidence/`
 - Exploration history: `dev/docs/concept/`

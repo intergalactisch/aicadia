@@ -1,0 +1,1 @@
+gpt-5.4-mini low new W4: edit=game/mcp/agent/tool/enter_world.md; usage {"input_tokens":120342,"cached_input_tokens":93184,"cache_write_input_tokens":0,"output_tokens":1511,"reasoning_output_tokens":455}

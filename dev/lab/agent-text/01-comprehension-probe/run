@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Comprehension probe: one bounded Codex call answering questions.md from one
+# instructions text and one catalog file. No World, server or database is
+# involved. Every call is explicit; nothing runs in the background.
+#
+# usage: run --confirm-token-spend --model <slug> --effort <level> \
+#            --instructions <file> --catalog <file> --label <old|new> --out <dir>
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+CONFIRM=0 MODEL='' EFFORT='' INSTRUCTIONS='' CATALOG='' LABEL='' OUT=''
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --confirm-token-spend) CONFIRM=1 ;;
+        --model) MODEL="$2"; shift ;;
+        --effort) EFFORT="$2"; shift ;;
+        --instructions) INSTRUCTIONS="$2"; shift ;;
+        --catalog) CATALOG="$2"; shift ;;
+        --label) LABEL="$2"; shift ;;
+        --out) OUT="$2"; shift ;;
+        *) echo "unknown argument: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+[[ $CONFIRM -eq 1 && -n $MODEL && -n $EFFORT && -f $INSTRUCTIONS && -f $CATALOG && -n $LABEL && -n $OUT ]] \
+    || { echo 'usage: run --confirm-token-spend --model <slug> --effort <level> --instructions <file> --catalog <file> --label <old|new> --out <dir>' >&2; exit 2; }
+mkdir -p "$OUT"
+stem="$OUT/$MODEL.$LABEL"
+prompt="$stem.prompt.txt"
+{
+    printf '%s\n\n' 'You are an Agent connected to the Aicadia MCP server. Below are exactly the server instructions and the tool catalog (name, description, input schema) that the server published to you. Answer each question strictly from those texts. Answer only "yes" or "no" per question id.'
+    printf '# Server instructions\n\n%s\n\n' "$(<"$INSTRUCTIONS")"
+    printf '# Tool catalog\n\n```json\n%s\n```\n\n' "$(jq -c '[.[] | {name, description, inputSchema}]' "$CATALOG")"
+    printf '# Questions\n\n'
+    awk -F'|' 'NR>7 && $2 ~ /Q[0-9]+/ { gsub(/^ +| +$/, "", $2); gsub(/^ +| +$/, "", $3); printf "%s: %s\n", $2, $3 }' "$HERE/questions.md"
+} >"$prompt"
+codex --ask-for-approval never exec --ephemeral --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check \
+    --json --output-schema "$HERE/answer.schema.json" --output-last-message "$stem.answer.json" \
+    --sandbox read-only --model "$MODEL" \
+    --config "model_reasoning_effort=\"$EFFORT\"" \
+    --config 'web_search="disabled"' --config 'tools.web_search=false' \
+    "$(<"$prompt")" <"/dev/null" >"$stem.events.jsonl"
+jq -r '.answer[] | "\(.id) \(.answer)"' "$stem.answer.json" >"$stem.answers.txt"
+expected="$(awk -F'|' 'NR>7 && $2 ~ /Q[0-9]+/ { gsub(/^ +| +$/, "", $2); gsub(/^ +| +$/, "", $4); printf "%s %s\n", $2, $4 }' "$HERE/questions.md")"
+score="$(comm -12 <(sort "$stem.answers.txt") <(sort <<<"$expected") | wc -l | tr -d ' ')"
+usage="$(jq -c 'select(.type=="turn.completed") | .usage' "$stem.events.jsonl" | tail -1)"
+printf '%s %s %s: %s/16 correct; usage %s\n' "$MODEL" "$EFFORT" "$LABEL" "$score" "$usage" | tee "$stem.score.txt"

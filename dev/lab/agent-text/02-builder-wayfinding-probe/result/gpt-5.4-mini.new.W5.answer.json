@@ -1,0 +1,1 @@
+{"opened":["CLAUDE.md","AGENTS.md","game/docs/README.md","game/docs/protocol.md"],"edit":"game/docs/protocol.md","reason":"`game/docs/protocol.md` owns the canonical errors table and HTTP mapping, so the new `character_already_entered` code belongs there."}

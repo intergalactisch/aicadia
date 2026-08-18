@@ -417,6 +417,27 @@ pub static HOME: &[Home] = &[
         index: Index::Fixed("dev/docs/evidence/README.md"),
     },
     Home {
+        id: "methodology-index",
+        side: Side::Development,
+        rule: Rule::Exact("dev/docs/methodology/README.md"),
+        frozen: Frozen::No,
+        role_header: RoleHeaderRule::Required,
+        vocabulary: Vocabulary::None,
+        index: Index::None,
+    },
+    Home {
+        id: "methodology-record",
+        side: Side::Development,
+        rule: Rule::Leaf {
+            prefix: "dev/docs/methodology",
+            depth: 0,
+        },
+        frozen: Frozen::No,
+        role_header: RoleHeaderRule::Required,
+        vocabulary: Vocabulary::None,
+        index: Index::Fixed("dev/docs/methodology/README.md"),
+    },
+    Home {
         id: "backlog-index",
         side: Side::Development,
         rule: Rule::Exact("dev/backlog/README.md"),

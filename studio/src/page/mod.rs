@@ -577,6 +577,8 @@ pub(super) fn home_label(home_id: &str) -> &'static str {
         "research-index" => "Research index",
         "research-report" => "Research report",
         "research-archive" => "Research archive",
+        "methodology-index" => "Methodology index",
+        "methodology-record" => "Working method",
         "evidence-index" => "Evidence index",
         "evidence-slice" => "Evidence slice",
         "runner-contract" => "Runner contract",

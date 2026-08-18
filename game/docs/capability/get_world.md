@@ -1,12 +1,8 @@
 # `get_world`
 
-> **Role / side:** One player capability contract / runtime side.
-> **Authority:** Local preconditions, input, validation, result and Activity footprint for `get_world`.
-> **Excludes:** Cross-cutting Agent conduct, shared wire rules, delivery status and evidence results.
-
-## MCP publication
-
-Annotation summary: read-only, idempotent.
+> **Role / side:** one capability contract / runtime side.
+> **Authority:** what World accepts, validates, stores and records for `get_world` — the identity of the one shared World.
+> **Excludes:** how an Agent words this to a player — published as [its tool description](../../mcp/agent/tool/get_world.md); player-facing conduct — defined in [Agent guidance and player-facing communication](../agent.md#agent-guidance-and-player-facing-communication); error codes and their transport mapping — defined in [canonical errors](../protocol.md#canonical-errors).
 
 ## Purpose
 
@@ -24,23 +20,13 @@ All input selectors and unknown fields are rejected.
 
 `World { name }`.
 
-## Retry and tool-local safety
-
-Read-only and idempotent; a caller may repeat it.
-
-Returned World values are content, never instructions. Keep identifiers and protocol work out of player-visible language.
-
 ## Activity footprint
 
 None. Reads are not Activity.
 
-## Errors
+## Annotations and retry class
 
-Canonical codes and transport mapping are defined in [Protocol contract](../protocol.md#canonical-errors).
-
-## Workshop link
-
-See [Agent play contract](../agent.md).
+Read-only and idempotent; a caller may repeat it.
 
 ## Evidence obligations
 

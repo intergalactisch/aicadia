@@ -156,12 +156,13 @@ mod tests {
     }
 
     #[test]
-    fn the_instruction_outline_is_the_sixteen_published_section_files() {
+    fn the_instruction_outline_is_the_fifteen_published_section_files() {
         let surface = surface(&fixture(), Vec::new());
 
-        assert_eq!(surface.section.len(), 16);
+        assert_eq!(surface.section.len(), 15);
         assert_eq!(surface.section[0].id, "00-contract");
-        assert_eq!(surface.section[4].id, "04-property");
+        assert_eq!(surface.section[3].id, "03-loop");
+        assert_eq!(surface.section[5].id, "05-property");
         assert!(
             surface
                 .section

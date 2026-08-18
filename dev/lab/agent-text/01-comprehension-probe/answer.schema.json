@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["answer"],
+  "properties": {
+    "answer": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "answer"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^Q([1-9]|1[0-6])$" },
+          "answer": { "type": "string", "enum": ["yes", "no"] }
+        }
+      }
+    }
+  }
+}

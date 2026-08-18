@@ -26,6 +26,7 @@ derive meaning from planning, exploration or delivery history.
 The development side governs how Aicadia is understood, researched, chosen, planned
 and built. It includes `dev/docs/README.md`, `AGENTS.md`, `CLAUDE.md`, `dev/CONTEXT.md`,
 `dev/docs/concept/` with its log and archive, `dev/docs/research/` with its archive,
+`dev/docs/methodology/`,
 `dev/backlog/`, `dev/plans/`, `dev/skills/`, `dev/lab/`, `dev/playtest/`,
 `dev/tests/`, and all of `studio/` except where the home table names a runtime
 operation fixture.
@@ -55,6 +56,7 @@ only through the static delivery-status pointer defined below.
 | `dev/docs/concept/archive/` | Development | Frozen concept history | Each archived record | Superseded concept generations with archive banners | Current authority or silently revived decisions | A concept record is superseded and archived |
 | `dev/docs/research/` | Development | Live sourced research | Each report and `dev/docs/research/README.md` | Questions, sources, findings, standing and implications | Product decisions or implementation contracts | Research begins, changes standing or completes |
 | `dev/docs/research/archive/` | Development | Frozen research history | Each archived report | Superseded or historical research with banners | Current research standing or product authority | A report is superseded and archived |
+| `dev/docs/methodology/` | Development | Reusable working methods | `dev/docs/methodology/README.md` and each method record | How a class of work is written, changed and checked; sizes and procedures | Product contracts, published text, decision history or delivery status | A working method is adopted, sharpened or retired |
 | `dev/backlog/` | Development | Ordered forward planning state | `dev/backlog/README.md` and the current item | At most one active edge, later concrete outcomes and dependencies | Current product contract or duplicated decision rationale | Edge order, state, dependency or completion evidence changes |
 | `dev/plans/` | Development | Proportional build execution state | Each plan | Accepted outcome, task graph, invariants and exact evidence claim | Current product truth or reusable build rules | A consequential build is planned or its accepted execution state changes |
 | `dev/skills/` | Development | Reusable Agent workflow | Each skill's `SKILL.md` | Skill-specific procedure and routing | Project contract or duplicated global build rules | A reusable workflow changes |
@@ -87,6 +89,16 @@ References point toward the owning authority. A summary must not become a second
 authority: shorten it to a pointer whenever a change to the owned fact would
 otherwise require editing both homes.
 
+A pointer is a sentence, not a bare link: it names the fact, its relation to the
+citing file (*defined in*, *constrained by*, *published as*, *narrowed here* or
+*recorded in*) and the owner, so a building Agent knows what it will find before it
+follows the link. Body text links only upward, at the point of use; an index links
+downward to its records; the role header alone links sideways to the sibling that
+owns an excluded topic. No other link kind — no "see also", no back-link, no link
+on a term the reader is not asked to act on. The form and the relation words are
+the build-facing text method's — defined in
+[build-facing text](methodology/build-text.md#the-pointer-sentence).
+
 ## Sweep scope
 
 Frozen history—concept-log entries, `complete`, `superseded` or `dropped` plans and archived
@@ -118,6 +130,12 @@ Every authority file starts with a two- or three-line role header that states:
 Indexes and frozen records may place the header immediately below their title or
 archive banner. A header identifies ownership; it does not summarize the owned
 content.
+
+The three labels are fixed; their content routes the reader. *Authority* says in
+plain words which facts the file owns; *Excludes* names each topic a reader might
+expect here but will not find, with its relation and a link to the owner. Files
+adopt this form when they are next edited — the wayfinding header is defined in
+[build-facing text](methodology/build-text.md#the-wayfinding-header).
 
 ## Record metadata
 

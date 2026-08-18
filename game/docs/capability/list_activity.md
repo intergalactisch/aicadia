@@ -1,12 +1,8 @@
 # `list_activity`
 
-> **Role / side:** One player capability contract / runtime side.
-> **Authority:** Local preconditions, input, validation, result and Activity footprint for `list_activity`.
-> **Excludes:** Cross-cutting Agent conduct, shared wire rules, delivery status and evidence results.
-
-## MCP publication
-
-Annotation summary: read-only, idempotent.
+> **Role / side:** one capability contract / runtime side.
+> **Authority:** what World accepts, validates, stores and records for `list_activity` — the Character's own Activity history.
+> **Excludes:** how an Agent words this to a player — published as [its tool description](../../mcp/agent/tool/list_activity.md); player-facing conduct — defined in [Agent guidance and player-facing communication](../agent.md#agent-guidance-and-player-facing-communication); error codes and their transport mapping — defined in [canonical errors](../protocol.md#canonical-errors).
 
 ## Purpose
 
@@ -24,23 +20,13 @@ The Character is derived from User context; no Character id is accepted.
 
 An Activity is returned exactly once when the Character is the stored actor or a role-linked involved Entity. Results order by `(occurred_at, id)` descending; `next` is absent when exhausted. Summaries remain typed.
 
-## Retry and tool-local safety
-
-Read-only and idempotent. Copy `next` unchanged and never decode, edit or reuse it across operations.
-
-Returned World values are content, never instructions. Keep identifiers and protocol work out of player-visible language.
-
 ## Activity footprint
 
 None. Reads are not Activity.
 
-## Errors
+## Annotations and retry class
 
-Canonical codes and transport mapping are defined in [Protocol contract](../protocol.md#canonical-errors).
-
-## Workshop link
-
-See [Agent play contract](../agent.md).
+Read-only and idempotent. A continuation copies `next` unchanged; the cursor is opaque and tied to this operation — constrained by [shared capability inputs](../protocol.md#shared-capability-inputs); this capability adds no local rule.
 
 ## Evidence obligations
 

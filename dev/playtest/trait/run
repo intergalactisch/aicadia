@@ -99,9 +99,9 @@ validate_token_free_contract() {
         type=="array" and [.[]|.name]==$expected and length==15
         and all(.[];(.description|type)=="string" and (.description|length)>0
             and (.inputSchema|type)=="object" and (.outputSchema|type)=="object")
-        and (map(select(.name=="get_entity_at_current_place"))[0].description|contains("Property and Trait"))
-        and (map(select(.name=="submit_action"))[0].description|contains("0–100 Trait establishments/developments"))
-        and (map(select(.name=="submit_interaction"))[0].description|contains("target-authored"))
+        and (map(select(.name=="get_entity_at_current_place"))[0].description|contains("Properties and Traits"))
+        and (map(select(.name=="submit_action"))[0].description|contains("change Properties and Traits"))
+        and (map(select(.name=="submit_interaction"))[0].description|contains("Properties and Traits of only the actor and those targets"))
     ' "$TOOL_CATALOG" >/dev/null || fail 'the fixed Trait-aware fifteen-tool catalog is invalid.' || return
     jq -n -e --argjson all "$CAPABILITIES" --argjson ar "$ACTION_READ_TOOLS" \
         --argjson ac "$ACTION_COMMIT_TOOLS" --argjson ir "$INTERACTION_READ_TOOLS" \

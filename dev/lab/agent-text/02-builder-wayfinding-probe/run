@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Builder wayfinding probe: one bounded Codex call per task and tree. The model
+# reads the given repository copy read-only, starting from CLAUDE.md, and reports
+# the files it opened and the one file it would edit. No World, server or database
+# is involved; nothing runs in the background; nothing is written to the tree.
+#
+# usage: run --confirm-token-spend --model <slug> --effort <level> \
+#            --tree <repository-copy> --label <old|new> --task <W1..W6> --out <dir>
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+CONFIRM=0 MODEL='' EFFORT='' TREE='' LABEL='' TASK='' OUT=''
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --confirm-token-spend) CONFIRM=1 ;;
+        --model) MODEL="$2"; shift ;;
+        --effort) EFFORT="$2"; shift ;;
+        --tree) TREE="$2"; shift ;;
+        --label) LABEL="$2"; shift ;;
+        --task) TASK="$2"; shift ;;
+        --out) OUT="$2"; shift ;;
+        *) echo "unknown argument: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+[[ $CONFIRM -eq 1 && -n $MODEL && -n $EFFORT && -d $TREE && -n $LABEL && -n $TASK && -n $OUT ]] \
+    || { echo 'usage: run --confirm-token-spend --model <slug> --effort <level> --tree <dir> --label <old|new> --task <id> --out <dir>' >&2; exit 2; }
+task_text="$(awk -F'|' -v id="$TASK" '$2 ~ id { gsub(/^ +| +$/, "", $3); print $3; exit }' "$HERE/tasks.md")"
+[[ -n $task_text ]] || { echo "unknown task $TASK" >&2; exit 2; }
+mkdir -p "$OUT"
+stem="$OUT/$MODEL.$LABEL.$TASK"
+prompt="$stem.prompt.txt"
+cat >"$prompt" <<PROMPT
+You are a building Agent working in this repository, which is available to you read-only. A User asks for this change:
+
+  "$task_text"
+
+Do not make the change. Your job is only to find where it belongs. Start by reading CLAUDE.md, follow the repository's own guidance and its cross-references, and stop as soon as you are confident. Then report, through the output schema: the repository-relative paths of the files you opened, in the order you opened them; the ONE file you would edit first because it owns this change; and one sentence why. Do not edit, create or delete anything.
+PROMPT
+codex --ask-for-approval never exec --ephemeral --ignore-user-config --ignore-rules --strict-config --skip-git-repo-check \
+    --json --output-schema "$HERE/answer.schema.json" --output-last-message "$stem.answer.json" \
+    --sandbox read-only --cd "$TREE" --model "$MODEL" \
+    --config "model_reasoning_effort=\"$EFFORT\"" \
+    --config 'web_search="disabled"' --config 'tools.web_search=false' \
+    "$(<"$prompt")" <"/dev/null" >"$stem.events.jsonl"
+usage="$(jq -c 'select(.type=="turn.completed") | .usage' "$stem.events.jsonl" | tail -1)"
+printf '%s %s %s %s: edit=%s; usage %s\n' "$MODEL" "$EFFORT" "$LABEL" "$TASK" "$(jq -r .edit "$stem.answer.json")" "$usage" | tee "$stem.summary.txt"

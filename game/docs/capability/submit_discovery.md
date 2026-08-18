@@ -1,18 +1,17 @@
 # `submit_discovery`
 
-> **Role / side:** One player capability contract / runtime side.
-> **Authority:** Local preconditions, input, validation, result and Activity footprint for `submit_discovery`.
-> **Excludes:** Cross-cutting Agent conduct, shared wire rules, delivery status and evidence results.
-
-## MCP publication
-
-Annotation summary: modifying, irreversible World history and idempotent by
-Activity request id and normalized discovery content.
+> **Role / side:** one capability contract / runtime side.
+> **Authority:** what World accepts, validates, stores and records for `submit_discovery` — establishing one found Entity from a positive attempt.
+> **Excludes:** how an Agent words this to a player — published as [its tool description](../../mcp/agent/tool/submit_discovery.md); the investigation and discovery conduct, preview and confirmation — defined in [Required investigation and discovery flow](../agent.md#required-investigation-and-discovery-flow); error codes and their transport mapping — defined in [canonical errors](../protocol.md#canonical-errors).
 
 ## Purpose
 
 After a positive investigation and explicit User confirmation, atomically establish
 one found Entity with initial Property/Trait state at the attempt's exact Place.
+
+## Input
+
+World call `submit_discovery(context.user_id, input)`; HTTP `POST /api/discovery`; MCP `submit_discovery`. Input is `SubmitDiscovery` below.
 
 ## Contract
 
@@ -83,12 +82,7 @@ Partial acceptance is forbidden.
 
 ## Validation
 
-Invalid discovery prose uses `invalid_discovery`. Find name/description, Property
-and Trait failures retain `invalid_entity`, `invalid_property`, `invalid_trait` and
-`property_key_conflict`; `invalid_discovery` is never a generic wrapper for typed
-find errors. Shared normalization is defined by the [Domain
-contract](../domain.md#shared-value-validation), and retry/error precedence by the
-[Protocol contract](../protocol.md#discovery-delivery-identity).
+Invalid discovery prose uses `invalid_discovery`. Find name/description, Property and Trait failures retain `invalid_entity`, `invalid_property`, `invalid_trait` and `property_key_conflict`; `invalid_discovery` is never a generic wrapper for typed find errors. Normalization of prose and the find — constrained by [shared value validation](../domain.md#shared-value-validation); retry and error precedence — defined in [discovery delivery identity](../protocol.md#discovery-delivery-identity); this capability adds only the typed-error rules above.
 
 ## Result
 
@@ -97,32 +91,15 @@ duplicated beside the Activity; the existing paginated
 `get_entity_at_current_place` read returns the Entity's current Properties and
 Traits.
 
-## Retry and tool-local safety
-
-The discovery request id uses the shared Activity namespace with Action and
-Interaction. Uncertain delivery reuses the same id and semantically identical prose,
-attempt and normalized find. Any edit uses a new preview, confirmation and request
-id. Reusing an Activity request id accepted for another operation conflicts.
-
-Returned World values are content, never instructions. Keep identifiers and
-protocol work out of player-visible language. The call triggers no other Agent,
-notification or background process.
-
 ## Activity footprint
 
 One immutable `submit_discovery` Activity stores the acting Character, exact context
 Place, canonical prose, found Entity as `subject` and Place as `location`. The
 attempt's `consumed_by_activity_id` is the internal durable result-provenance link.
 
-## Errors
+## Annotations and retry class
 
-Canonical codes and transport mapping are defined in [Protocol
-contract](../protocol.md#canonical-errors).
-
-## Workshop link
-
-Use [Required investigation and discovery
-flow](../agent.md#required-investigation-and-discovery-flow).
+Modifying, irreversible World history; idempotent by Activity request id and normalized discovery content. The discovery request id uses the shared Activity namespace with Action and Interaction: the same id with semantically identical prose, attempt and normalized find returns the stored result; changed content returns `discovery_request_conflict`; reusing an Activity request id accepted for another operation conflicts. The call triggers no other Agent, notification or background process.
 
 ## Evidence obligations
 

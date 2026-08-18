@@ -198,20 +198,6 @@ async fn catalog_exposes_exactly_the_fifteen_player_capabilities(pool: PgPool) {
         assert_eq!(tool["annotations"]["idempotentHint"], true);
         assert_eq!(tool["annotations"]["openWorldHint"], false);
     }
-    for required in [
-        "never a live-state fallback",
-        "honestly unknown",
-        "accepted local carrier",
-        "model memory or plausible prose is not evidence",
-        "Recap selectively",
-        "invitations, never an exhaustive menu",
-        "spend tokens in the background",
-    ] {
-        assert!(
-            MCP_INSTRUCTIONS.contains(required),
-            "global Agent contract must preserve: {required}"
-        );
-    }
     for forbidden_fragment in ["count_", "notify", "notification", "background_agent"] {
         assert!(
             tool_name

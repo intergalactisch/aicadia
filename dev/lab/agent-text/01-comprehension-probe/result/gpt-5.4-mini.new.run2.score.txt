@@ -1,0 +1,1 @@
+gpt-5.4-mini low new: 16/16 correct; usage {"input_tokens":22836,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":180,"reasoning_output_tokens":19}

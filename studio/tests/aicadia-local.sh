@@ -8,6 +8,9 @@ readonly ADMIN_DATABASE_URL="${DATABASE_URL:-postgres://localhost:5433/postgres}
 readonly TEST_ROOT="$(mktemp -d)"
 readonly STATE_DIR="$TEST_ROOT/state"
 readonly FAKE_BIN="$TEST_ROOT/bin"
+readonly RESOLUTION_BIN="$TEST_ROOT/resolution-bin"
+readonly RESOLUTION_BREW_ROOT="$TEST_ROOT/resolution-brew"
+readonly RESOLUTION_STATE_DIR="$TEST_ROOT/resolution-state"
 readonly SOURCE_CODEX_HOME="$TEST_ROOT/source-codex-home"
 readonly DATABASE_NAME="aicadia_local_test_${$}_$(date +%s)"
 readonly PORT="$((43000 + ($$ % 10000)))"
@@ -26,7 +29,7 @@ cleanup() {
         wait "$LAUNCHER_PID" 2>/dev/null || true
     fi
     if (( DATABASE_CLEANUP_ARMED == 1 )); then
-        dropdb --if-exists --maintenance-db="$ADMIN_DATABASE_URL" "$DATABASE_NAME" >/dev/null 2>&1 || true
+        dropdb --no-password --if-exists --maintenance-db="$ADMIN_DATABASE_URL" "$DATABASE_NAME" >/dev/null 2>&1 || true
     fi
     rm -rf "$TEST_ROOT"
     exit "$status"
@@ -43,7 +46,136 @@ cargo_dev_help="$(cd "$REPO_DIR" && cargo dev --help)"
 [[ "$cargo_dev_help" == 'Usage: cargo dev [--no-open]' ]] \
     || fail 'cargo dev did not invoke the supported local launcher'
 
-existing_test_database="$(psql "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+mkdir -p "$RESOLUTION_BIN" "$RESOLUTION_BREW_ROOT/opt/postgresql@18/bin" \
+    "$RESOLUTION_BREW_ROOT/var/postgresql@18"
+cat >"$RESOLUTION_BIN/psql" <<'FAKE_PSQL'
+#!/usr/bin/env bash
+set -eu
+url=''
+sql=''
+previous=''
+no_password=0
+for argument in "$@"; do
+    [[ "$argument" == --no-password ]] && no_password=1
+    case "$argument" in postgres://*) url="$argument" ;; esac
+    [[ "$previous" == --command ]] && sql="$argument"
+    previous="$argument"
+done
+(( no_password == 1 )) || exit 96
+printf '%s\t%s\n' "$url" "$sql" >>"$AICADIA_LOCAL_TEST_PSQL_RECORD"
+if [[ "$sql" != 'SELECT 1' ]]; then
+    printf 'unexpected\n'
+    exit 0
+fi
+case "$url" in
+    postgres://explicit/postgres) exit 0 ;;
+    postgres://localhost:5432/postgres)
+        if [[ "${AICADIA_LOCAL_TEST_STANDARD:-fail}" == success ]]; then exit 0; else exit 1; fi
+        ;;
+    postgres://localhost:5433/postgres)
+        if [[ "${AICADIA_LOCAL_TEST_HOMEBREW:-fail}" == success ]]; then exit 0; else exit 1; fi
+        ;;
+    *) exit 95 ;;
+esac
+FAKE_PSQL
+cat >"$RESOLUTION_BIN/brew" <<'FAKE_BREW'
+#!/usr/bin/env bash
+set -eu
+printf '%s\n' "$*" >>"$AICADIA_LOCAL_TEST_BREW_RECORD"
+case "${1:-}" in
+    --prefix)
+        if [[ $# == 1 ]]; then
+            printf '%s\n' "$AICADIA_LOCAL_TEST_BREW_ROOT"
+        elif [[ "${2:-}" == postgresql@18 ]]; then
+            printf '%s\n' "$AICADIA_LOCAL_TEST_BREW_ROOT/opt/postgresql@18"
+        else
+            exit 1
+        fi
+        ;;
+    list)
+        [[ "${2:-}" == --formula ]] || exit 1
+        printf '%s\n' postgresql@18
+        ;;
+    services)
+        [[ "${2:-}" == info && "${3:-}" == postgresql@18 && "${4:-}" == --json ]] || exit 1
+        printf '%s\n' '[{"name":"postgresql@18","running":true}]'
+        ;;
+    *) exit 1 ;;
+esac
+FAKE_BREW
+cat >"$RESOLUTION_BREW_ROOT/opt/postgresql@18/bin/postgres" <<'FAKE_POSTGRES'
+#!/usr/bin/env bash
+[[ "$*" == *'-C port'* ]] || exit 1
+printf '%s\n' 5433
+FAKE_POSTGRES
+chmod +x "$RESOLUTION_BIN/psql" "$RESOLUTION_BIN/brew" \
+    "$RESOLUTION_BREW_ROOT/opt/postgresql@18/bin/postgres"
+
+resolution_psql_record="$TEST_ROOT/resolution-psql.log"
+resolution_brew_record="$TEST_ROOT/resolution-brew.log"
+resolution_env=(
+    env
+    -u DATABASE_URL
+    "PATH=$RESOLUTION_BIN:$PATH"
+    "AICADIA_DATABASE_NAME=$DATABASE_NAME"
+    "AICADIA_PORT=$SECOND_PORT"
+    AICADIA_LOCAL_TESTING=1
+    "AICADIA_LOCAL_TEST_STATE_DIR=$RESOLUTION_STATE_DIR"
+    "AICADIA_LOCAL_TEST_PSQL_RECORD=$resolution_psql_record"
+    "AICADIA_LOCAL_TEST_BREW_RECORD=$resolution_brew_record"
+    "AICADIA_LOCAL_TEST_BREW_ROOT=$RESOLUTION_BREW_ROOT"
+)
+
+if "${resolution_env[@]}" AICADIA_LOCAL_TEST_STANDARD=fail \
+    AICADIA_LOCAL_TEST_HOMEBREW=success "$LAUNCHER" --no-open \
+    >"$TEST_ROOT/resolution.stdout" 2>"$TEST_ROOT/resolution.stderr"; then
+    fail 'resolved test database unexpectedly passed the guarded database lookup'
+fi
+if ! grep -F 'PostgreSQL returned an unexpected database lookup result' \
+    "$TEST_ROOT/resolution.stderr" >/dev/null; then
+    cat "$TEST_ROOT/resolution.stderr" >&2
+    [[ ! -f "$resolution_psql_record" ]] || cat "$resolution_psql_record" >&2
+    [[ ! -f "$resolution_brew_record" ]] || cat "$resolution_brew_record" >&2
+    fail 'automatic local PostgreSQL resolution did not reach the selected database'
+fi
+grep -F $'postgres://localhost:5433/postgres\tSELECT count(*) FROM pg_database' \
+    "$resolution_psql_record" >/dev/null \
+    || fail 'automatic local PostgreSQL resolution did not select the Homebrew candidate'
+
+: >"$resolution_psql_record"
+: >"$resolution_brew_record"
+if "${resolution_env[@]}" DATABASE_URL=postgres://explicit/postgres \
+    AICADIA_LOCAL_TEST_STANDARD=success AICADIA_LOCAL_TEST_HOMEBREW=success \
+    "$LAUNCHER" --no-open >"$TEST_ROOT/explicit.stdout" 2>"$TEST_ROOT/explicit.stderr"; then
+    fail 'explicit test database unexpectedly passed the guarded database lookup'
+fi
+grep -F $'postgres://explicit/postgres\tSELECT count(*) FROM pg_database' \
+    "$resolution_psql_record" >/dev/null \
+    || fail 'explicit DATABASE_URL did not remain authoritative'
+[[ ! -s "$resolution_brew_record" ]] || fail 'explicit DATABASE_URL still invoked local discovery'
+
+: >"$resolution_psql_record"
+: >"$resolution_brew_record"
+if "${resolution_env[@]}" AICADIA_LOCAL_TEST_STANDARD=fail \
+    AICADIA_LOCAL_TEST_HOMEBREW=fail "$LAUNCHER" --no-open \
+    >"$TEST_ROOT/no-database.stdout" 2>"$TEST_ROOT/no-database.stderr"; then
+    fail 'missing local PostgreSQL unexpectedly succeeded'
+fi
+grep -F 'no passwordless local PostgreSQL service is reachable' "$TEST_ROOT/no-database.stderr" >/dev/null \
+    || fail 'missing local PostgreSQL failure was not explicit'
+
+: >"$resolution_psql_record"
+: >"$resolution_brew_record"
+if "${resolution_env[@]}" AICADIA_LOCAL_TEST_STANDARD=success \
+    AICADIA_LOCAL_TEST_HOMEBREW=success "$LAUNCHER" --no-open \
+    >"$TEST_ROOT/multiple-database.stdout" 2>"$TEST_ROOT/multiple-database.stderr"; then
+    fail 'ambiguous local PostgreSQL resolution unexpectedly succeeded'
+fi
+grep -F 'multiple passwordless local PostgreSQL services are reachable' \
+    "$TEST_ROOT/multiple-database.stderr" >/dev/null \
+    || fail 'ambiguous local PostgreSQL failure was not explicit'
+
+existing_test_database="$(psql --no-password "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
     --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'")"
 [[ "$existing_test_database" == 0 ]] || fail "refusing to reuse disposable database $DATABASE_NAME"
 DATABASE_CLEANUP_ARMED=1
@@ -138,13 +270,13 @@ stop_launcher() {
 }
 
 user_count() {
-    psql "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+    psql --no-password "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
         --command "\\connect \"$DATABASE_NAME\"" --command 'SELECT count(*) FROM "user"'
 }
 
 investigation_attempt_count() {
     local user_id="$1"
-    psql "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+    psql --no-password "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
         --command "\\connect \"$DATABASE_NAME\"" \
         --command "SELECT count(*) FROM investigation_attempt WHERE requested_by_user_id = '$user_id' AND request_id = '$INVESTIGATION_REQUEST_ID'"
 }
@@ -281,7 +413,7 @@ lsof -nP -iTCP:"$SECOND_PORT" -sTCP:LISTEN 2>/dev/null | grep -q . \
 [[ "$(user_count | tail -1)" == 1 ]] || fail 'concurrent attempt provisioned another User'
 
 stop_launcher
-database_after_stop="$(psql "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+database_after_stop="$(psql --no-password "$ADMIN_DATABASE_URL" --no-psqlrc --tuples-only --no-align \
     --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'")"
 [[ "$database_after_stop" == 1 ]] || fail 'normal stop removed the database'
 

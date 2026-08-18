@@ -24,6 +24,7 @@ current behavior in `game/docs/`.
 Each track carries its own status in its index front matter.
 
 - [Multiplayer](multiplayer/README.md) — multiplayer semantics, subject-scoped concurrency, observation, delivery and overload.
+- [Agent text](agent-text/README.md) — bounded comprehension checks of the texts published to Agents.
 
 New tracks require a concrete current question. `dev/lab/` is not limited to
 multiplayer, but empty speculative track directories do not earn a place here.

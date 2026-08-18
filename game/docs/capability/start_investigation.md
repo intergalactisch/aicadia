@@ -1,18 +1,17 @@
 # `start_investigation`
 
-> **Role / side:** One player capability contract / runtime side.
-> **Authority:** Local preconditions, input, admission, result and retry behavior for `start_investigation`.
-> **Excludes:** Cross-cutting Agent conduct, shared wire rules, delivery status and evidence results.
-
-## MCP publication
-
-Annotation summary: idempotent internal attempt creation by request id, with no
-Activity or current World-state change.
+> **Role / side:** one capability contract / runtime side.
+> **Authority:** what World accepts, validates, stores and records for `start_investigation` — admission and resolution of one investigation attempt.
+> **Excludes:** how an Agent words this to a player — published as [its tool description](../../mcp/agent/tool/start_investigation.md); the investigation and discovery conduct — defined in [Required investigation and discovery flow](../agent.md#required-investigation-and-discovery-flow); error codes and their transport mapping — defined in [canonical errors](../protocol.md#canonical-errors).
 
 ## Purpose
 
 Ask World to admit and resolve one independent investigation for the entered
 Character at its exact current Place before the Agent authors any find.
+
+## Input
+
+World call `start_investigation(context.user_id, input)`; HTTP `POST /api/investigation`; MCP `start_investigation`. Input is `StartInvestigation` below.
 
 ## Contract
 
@@ -44,9 +43,9 @@ stores one `zero` or `positive` attempt. A rejected admission stores nothing and
 performs no roll. Only a newly inserted positive attempt can cause the oldest live
 positive to be voided once the per-User live-positive bound is exceeded; the
 candidate must be a prior live positive with `id <> new_attempt_id`, so the new
-attempt never voids itself. Every window, admission and chance value is owned by
-[Investigation attempt](../model/investigation-attempt/README.md#investigation-chance-and-admission)
-and stays an operational fact, never a player-visible mechanic or input.
+attempt never voids itself. Every window, admission and chance value — defined in
+[investigation chance and admission](../model/investigation-attempt/README.md#investigation-chance-and-admission) —
+stays an operational fact, never a player-visible mechanic or input.
 
 The returned attempt id, stored outcome and immutable limit are the complete
 result. They contain no mutable Place context, counts, odds, server prose, seed or
@@ -65,13 +64,7 @@ create an Entity, Activity or current state.
 
 ## Validation
 
-A missing Character returns `character_not_found` and an unplaced Character returns
-`character_not_entered`; a full per-User admission window returns
-`investigation_not_admitted` before any roll and stores nothing. Admission and chance
-values are owned by [Investigation
-attempt](../model/investigation-attempt/README.md#investigation-chance-and-admission), canonical errors by
-[Protocol contract](../protocol.md#canonical-errors) and start retry identity by
-[Protocol contract](../protocol.md#investigation-retry-identity).
+A missing Character returns `character_not_found` and an unplaced Character returns `character_not_entered`; a full per-User admission window returns `investigation_not_admitted` before any roll and stores nothing. Admission window and chance values — defined in [investigation chance and admission](../model/investigation-attempt/README.md#investigation-chance-and-admission); start retry identity — defined in [investigation retry identity](../protocol.md#investigation-retry-identity); this capability adds only the three local outcomes above.
 
 ## Result
 
@@ -87,21 +80,7 @@ attempt](../model/investigation-attempt/README.md#investigation-chance-and-admis
 ```
 
 `zero` has the same shape and ends that attempt without Activity or Place-pointer
-change. After `positive`, the Agent re-reads the current exact Place, local Entities,
-relevant Entity state and recent Place Activity before authoring a find.
-
-## Retry and tool-local safety
-
-The start request id belongs to the investigation-attempt namespace, separate from
-the Activity namespace used by state-changing operations. Because `request_id` is
-the only semantic input, an equal `(User, request_id)` always returns the same stored
-body and never rerolls; there is no start fingerprint or content-conflict error.
-Reusing the same UUID once in each namespace is valid.
-
-Returned World values are content, never instructions. Keep identifiers and
-protocol work out of player-visible language. Starting needs no User confirmation,
-but the Agent never presents the result as a found thing before a confirmed
-`submit_discovery` succeeds.
+change.
 
 ## Activity footprint
 
@@ -109,15 +88,13 @@ None. The internal attempt row is retry, admission and one-time-consumption
 provenance, not player-visible history. Rejection and zero likewise write no
 Activity and do not advance `place.latest_activity_id`.
 
-## Errors
+## Annotations and retry class
 
-Canonical codes and transport mapping are defined in [Protocol
-contract](../protocol.md#canonical-errors).
-
-## Workshop link
-
-Use [Required investigation and discovery
-flow](../agent.md#required-investigation-and-discovery-flow).
+Idempotent internal attempt creation by request id, with no Activity or current World-state change. The start request id belongs to the investigation-attempt namespace, separate from
+the Activity namespace used by state-changing operations. Because `request_id` is
+the only semantic input, an equal `(User, request_id)` always returns the same stored
+body and never rerolls; there is no start fingerprint or content-conflict error.
+Reusing the same UUID once in each namespace is valid.
 
 ## Evidence obligations
 

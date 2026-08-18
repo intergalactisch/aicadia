@@ -1,0 +1,1 @@
+gpt-5.4-mini low old W5: edit=game/docs/protocol.md; usage {"input_tokens":92771,"cached_input_tokens":72704,"cache_write_input_tokens":0,"output_tokens":827,"reasoning_output_tokens":244}

@@ -1,0 +1,1 @@
+gpt-5.4-mini low old W2: edit=game/docs/capability/create_character.md; usage {"input_tokens":101171,"cached_input_tokens":84480,"cache_write_input_tokens":0,"output_tokens":1050,"reasoning_output_tokens":393}

@@ -1,0 +1,1 @@
+gpt-5.4-mini low new W3: edit=game/docs/capability/enter_world.md; usage {"input_tokens":91759,"cached_input_tokens":65536,"cache_write_input_tokens":0,"output_tokens":1132,"reasoning_output_tokens":394}

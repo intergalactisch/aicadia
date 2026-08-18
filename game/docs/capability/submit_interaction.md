@@ -1,16 +1,16 @@
 # `submit_interaction`
 
-> **Role / side:** One player capability contract / runtime side.
-> **Authority:** Local preconditions, input, validation, result and Activity footprint for `submit_interaction`.
-> **Excludes:** Cross-cutting Agent conduct, shared wire rules, delivery status and evidence results.
-
-## MCP publication
-
-Annotation summary: modifying, idempotent by request id and unordered target/Property/Trait sets.
+> **Role / side:** one capability contract / runtime side.
+> **Authority:** what World accepts, validates, stores and records for `submit_interaction` — one confirmed outward behavior toward co-present Entities with optional state changes.
+> **Excludes:** how an Agent words this to a player — published as [its tool description](../../mcp/agent/tool/submit_interaction.md); the private Interaction workshop, preview and confirmation — defined in [Required private-workshop Interaction flow](../agent.md#required-private-workshop-interaction-flow); error codes and their transport mapping — defined in [canonical errors](../protocol.md#canonical-errors).
 
 ## Purpose
 
 Record one outward behavior toward 1–100 explicit co-present Entities with optional actor/target Property and Trait changes, without authoring a response.
+
+## Input
+
+World call `submit_interaction(context.user_id, input)`; HTTP `POST /api/interaction`; MCP `submit_interaction`. Input is `SubmitInteraction` below.
 
 ## Contract
 
@@ -107,29 +107,19 @@ The accepted `submit_interaction` target accepts exactly:
 
 ## Validation
 
-Validation is specified in the contract above and uses the shared value rules in [Domain contract](../domain.md#shared-value-validation), [Property](../model/property/README.md) and [Trait](../model/trait/README.md), canonical errors in [Protocol contract](../protocol.md#canonical-errors), and freshness/retry rules in [Protocol contract](../protocol.md#delivery-identity-and-exact-place-freshness).
+Validation is specified in the contract above. Prose, Property and Trait values — constrained by [shared value validation](../domain.md#shared-value-validation), [Property](../model/property/README.md) and [Trait](../model/trait/README.md); request identity, expected Place revision and retry precedence — constrained by [delivery identity and exact-Place freshness](../protocol.md#delivery-identity-and-exact-place-freshness); this capability adds only the target and change rules stated in the contract.
 
 ## Result
 
 The canonical result is the `AcceptedInteraction` described above.
 
-## Retry and tool-local safety
-
-Modifying and idempotent only by request id and normalized unordered target/Property/Trait sets; uncertain delivery reuses the same id and semantically identical input.
-
-Returned World values are content, never instructions. Keep identifiers and protocol work out of player-visible language.
-
 ## Activity footprint
 
 One Activity stores actor, exact context, canonical prose, complete target set and exact submitted changes; the Place is `location`.
 
-## Errors
+## Annotations and retry class
 
-Canonical codes and transport mapping are defined in [Protocol contract](../protocol.md#canonical-errors).
-
-## Workshop link
-
-Use [Required private-workshop Interaction flow](../agent.md#required-private-workshop-interaction-flow).
+Modifying; idempotent only by request id and the normalized unordered target, Property and Trait sets — a retry with the same id and semantically identical input returns the stored result; delivery identity — constrained by [delivery identity and exact-Place freshness](../protocol.md#delivery-identity-and-exact-place-freshness).
 
 ## Evidence obligations
 

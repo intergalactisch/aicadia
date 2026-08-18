@@ -1,5 +1,5 @@
 ---
-status: Deterministic launcher, handoff, persistence and convention-driven Studio proof complete
+status: Deterministic passwordless launcher, handoff, persistence and convention-driven Studio proof complete
 ---
 
 # Local play and Studio evidence
@@ -22,6 +22,34 @@ key or leading index except for the explicitly labeled D6 global World-chronicle
 sort; tables without a primary key fail closed. This evidence proves local
 development visibility and persistence, not model output quality, public hosting,
 retained schema history/diffing or multiple-World delivery.
+
+## Passwordless local PostgreSQL startup — 2026-08-18
+
+- Focused deterministic resolution cases proved that an explicit `DATABASE_URL`
+  bypasses discovery, one reachable Homebrew candidate is selected after the
+  conventional endpoint fails, no candidate fails explicitly and two distinct
+  candidates fail as ambiguous. The `psql` test double rejects every probe or
+  operation without `--no-password`; shipped `psql` and `createdb` invocations all
+  use their non-interactive option.
+- The complete disposable real-PostgreSQL launcher and isolated Agent lifecycle
+  passed after the change: first start, stable restart User and investigation retry,
+  normal-stop persistence, and missing, concurrent, corrupt, stale-profile and
+  occupied-port failures remained exact. Its owned database and state were cleaned;
+  `codex_invoked=false` and no model or token-spending path ran.
+- A direct plain `cargo dev --no-open` smoke with `DATABASE_URL` absent selected the
+  one started Homebrew service on configured port 5433 without a prompt, reused
+  existing User `1324e164-4872-4cd3-adc8-703cbb3d5f89`, printed the Studio, MCP and
+  Agent handoff, and returned HTTP 200 from `/`, `/brief` and the profiled User read.
+  Stateless MCP discovery returned assembled string instructions. Ctrl-C stopped
+  only the smoke process; port 3000 and the launcher lock were clear afterward.
+- Independent readback before profile recovery found exactly one `aicadia_local`
+  database and exactly that one User. The ignored profile was restored with mode
+  `0600` and exact version, database and User fields; no credential is present and
+  the database was not written to perform the recovery.
+- Final validation passed Bash syntax, Rust formatting, the launcher lifecycle,
+  118 Studio tests, documentation projection and diff integrity. This proves the
+  exercised local macOS/Homebrew selection and retained explicit-URL path; it does
+  not prove remote databases, credential provisioning or arbitrary service layouts.
 
 ## Three-root repository topology completion — 2026-08-17
 

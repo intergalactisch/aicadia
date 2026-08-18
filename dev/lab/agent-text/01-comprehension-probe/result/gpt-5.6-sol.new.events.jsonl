@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a013f0-2f30-7dd1-b88a-b8084787c07b"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"answer\":[{\"id\":\"Q1\",\"answer\":\"no\"},{\"id\":\"Q2\",\"answer\":\"no\"},{\"id\":\"Q3\",\"answer\":\"yes\"},{\"id\":\"Q4\",\"answer\":\"no\"},{\"id\":\"Q5\",\"answer\":\"no\"},{\"id\":\"Q6\",\"answer\":\"no\"},{\"id\":\"Q7\",\"answer\":\"yes\"},{\"id\":\"Q8\",\"answer\":\"no\"},{\"id\":\"Q9\",\"answer\":\"no\"},{\"id\":\"Q10\",\"answer\":\"no\"},{\"id\":\"Q11\",\"answer\":\"yes\"},{\"id\":\"Q12\",\"answer\":\"yes\"},{\"id\":\"Q13\",\"answer\":\"no\"},{\"id\":\"Q14\",\"answer\":\"no\"},{\"id\":\"Q15\",\"answer\":\"no\"},{\"id\":\"Q16\",\"answer\":\"yes\"}]}"}}
+{"type":"turn.completed","usage":{"input_tokens":25788,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":244,"reasoning_output_tokens":83}}

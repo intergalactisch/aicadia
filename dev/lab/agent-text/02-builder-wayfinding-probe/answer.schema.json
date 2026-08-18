@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["opened", "edit", "reason"],
+  "properties": {
+    "opened": {
+      "type": "array",
+      "description": "Repository-relative paths of the files you opened, in the order you opened them.",
+      "items": {"type": "string"}
+    },
+    "edit": {
+      "type": "string",
+      "description": "Repository-relative path of the one file you would edit first as the owner of the change."
+    },
+    "reason": {
+      "type": "string",
+      "description": "One sentence: why that file owns the change."
+    }
+  }
+}

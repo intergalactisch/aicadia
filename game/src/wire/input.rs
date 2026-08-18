@@ -27,9 +27,9 @@ const fn default_page_limit() -> i64 {
 #[schemars(deny_unknown_fields)]
 #[into_params(parameter_in = Query)]
 pub struct ListActivityInput {
-    /// Opaque cursor returned as `next` by a previous activity page.
+    /// Cursor from a previous page's `next`.
     pub cursor: Option<String>,
-    /// Page size. Defaults to 25. The World accepts values from 1 through 100.
+    /// Page size.
     #[serde(default = "default_page_limit")]
     #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
     #[param(default = 25, minimum = 1, maximum = 100)]
@@ -65,9 +65,9 @@ impl ListActivityInput {
 #[schemars(deny_unknown_fields)]
 #[into_params(parameter_in = Query)]
 pub struct ListEntityAtCurrentPlaceInput {
-    /// Opaque cursor returned as `next` by a previous exact-Place Entity page.
+    /// Cursor from a previous page's `next`.
     pub cursor: Option<String>,
-    /// Page size. Defaults to 25. The World accepts values from 1 through 100.
+    /// Page size.
     #[serde(default = "default_page_limit")]
     #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
     #[param(default = 25, minimum = 1, maximum = 100)]
@@ -103,9 +103,9 @@ impl ListEntityAtCurrentPlaceInput {
 #[schemars(deny_unknown_fields)]
 #[into_params(parameter_in = Query)]
 pub struct ListActivityAtCurrentPlaceInput {
-    /// Opaque cursor returned as `next` by a previous exact-Place Activity page.
+    /// Cursor from a previous page's `next`.
     pub cursor: Option<String>,
-    /// Page size. Defaults to 25. The World accepts values from 1 through 100.
+    /// Page size.
     #[serde(default = "default_page_limit")]
     #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
     #[param(default = 25, minimum = 1, maximum = 100)]
@@ -141,9 +141,9 @@ impl ListActivityAtCurrentPlaceInput {
 #[schemars(deny_unknown_fields)]
 #[into_params(parameter_in = Query)]
 pub struct GetEntityCurrentStateInput {
-    /// Opaque cursor returned by the same full-Entity fetch.
+    /// Cursor from the previous current-state page.
     pub cursor: Option<String>,
-    /// Combined Property/Trait page size. Defaults to 25; World accepts 1 through 100.
+    /// Current-state page size.
     #[serde(default = "default_page_limit")]
     #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
     #[param(default = 25, minimum = 1, maximum = 100)]
@@ -195,12 +195,12 @@ impl GetEntityCurrentStateInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct GetEntityAtCurrentPlaceInput {
-    /// Stable id selected from compact exact-current-Place orientation.
+    /// Entity id from the current-Place Entity list.
     pub entity_id: Uuid,
-    /// Opaque cursor returned by this same scoped Entity fetch.
+    /// Cursor from this Entity's previous current-state page.
     #[serde(default)]
     pub cursor: Option<String>,
-    /// Combined Property/Trait page size. Defaults to 25; World accepts 1 through 100.
+    /// Current-state page size.
     #[serde(default = "default_page_limit")]
     #[schemars(default = "default_page_limit", range(min = 1, max = 100))]
     #[schema(default = 25, minimum = 1, maximum = 100)]
@@ -221,11 +221,11 @@ impl GetEntityAtCurrentPlaceInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CreateEntityInput {
-    /// Display name. The World trims it and accepts 1 through 120 Unicode characters.
+    /// Display name.
     #[schemars(length(min = 1, max = 120))]
     #[schema(min_length = 1, max_length = 120)]
     pub name: String,
-    /// Description. The World trims it and accepts 1 through 4,000 Unicode characters.
+    /// Description.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
@@ -254,11 +254,11 @@ impl From<CreateEntityInput> for CreateEntity {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CreateCharacterInput {
-    /// Display name. The World trims it and accepts 1 through 120 Unicode characters.
+    /// Display name.
     #[schemars(length(min = 1, max = 120))]
     #[schema(min_length = 1, max_length = 120)]
     pub name: String,
-    /// Description. The World trims it and accepts 1 through 4,000 Unicode characters.
+    /// Description.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
@@ -287,11 +287,11 @@ impl From<CreateCharacterInput> for CreateCharacter {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CreateEntryPlaceInput {
-    /// Display name. The World trims it and accepts 1 through 120 Unicode characters.
+    /// Display name.
     #[schemars(length(min = 1, max = 120))]
     #[schema(min_length = 1, max_length = 120)]
     pub name: String,
-    /// Description. The World trims it and accepts 1 through 4,000 Unicode characters.
+    /// Description.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
@@ -320,13 +320,13 @@ impl From<CreateEntryPlaceInput> for CreateEntryPlace {
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub enum ActionConsequenceInput {
-    /// Introduce one new Entity and establish it at the derived current Place.
+    /// Introduce one new Entity at the current Place.
     IntroduceEntity {
-        /// Display name. World trims it and accepts 1 through 120 Unicode characters.
+        /// Display name.
         #[schemars(length(min = 1, max = 120))]
         #[schema(min_length = 1, max_length = 120)]
         name: String,
-        /// Description. World trims it and accepts 1 through 4,000 Unicode characters.
+        /// Description.
         #[schemars(length(min = 1, max = 4000))]
         #[schema(min_length = 1, max_length = 4000)]
         description: String,
@@ -339,7 +339,7 @@ pub enum ActionConsequenceInput {
         #[schema(max_items = 100)]
         r#trait: Vec<TraitInput>,
     },
-    /// Change Properties and/or Traits of exact local Entities atomically.
+    /// Change Properties and Traits of local Entities in one package.
     ChangeEntityState {
         #[serde(default)]
         #[schemars(length(max = 100))]
@@ -356,16 +356,15 @@ pub enum ActionConsequenceInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct SubmitActionInput {
-    /// Agent-generated UUID for this one intended action. Reuse only for an
-    /// uncertain delivery retry of byte-equivalent semantic input.
+    /// Fresh UUID for this one Action; reuse only to retry an uncertain delivery.
     pub request_id: Uuid,
-    /// Opaque exact-Place revision copied unchanged from a grounded Place read.
+    /// The `place_revision` from your grounding reads, unchanged.
     pub expected_place_revision: String,
-    /// Exact canonical English prose previewed and explicitly confirmed by the User.
+    /// English prose the User confirmed.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub prose: String,
-    /// The one closed first-slice consequence.
+    /// Introduce one Entity, or change Properties and Traits.
     pub consequence: ActionConsequenceInput,
 }
 
@@ -404,28 +403,24 @@ impl SubmitActionInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct SubmitInteractionInput {
-    /// Agent-generated UUID for this one intended Interaction. Reuse only for an
-    /// uncertain delivery retry of semantically identical input.
+    /// Fresh UUID for this one Interaction; reuse only to retry an uncertain delivery.
     pub request_id: Uuid,
-    /// Opaque exact-Place revision copied unchanged from a grounded Place read.
+    /// The `place_revision` from your grounding reads, unchanged.
     pub expected_place_revision: String,
-    /// Exact canonical English outward behavior previewed and explicitly confirmed
-    /// by the User. It never authors a target's response, thought or private intent.
+    /// English outward behavior the User confirmed.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub prose: String,
-    /// Unordered set of 1 through 100 distinct target Entity ids selected from the
-    /// current exact-Place Entity read.
+    /// Distinct target Entity ids from the current-Place Entity list.
     #[schemars(length(min = 1, max = 100))]
     #[schema(min_items = 1, max_items = 100)]
     pub target_entity_id: Vec<Uuid>,
-    /// Optional typed changes to the actor or explicit targets.
+    /// Property changes of the actor or targets.
     #[serde(default)]
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
     pub property_change: Vec<EntityPropertyChangeInput>,
-    /// Optional mixed establishment/development of Traits owned by the actor or
-    /// explicit targets. This may coexist atomically with Property changes.
+    /// Trait establishments and developments of the actor or targets.
     #[serde(default)]
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
@@ -449,11 +444,9 @@ impl SubmitInteractionInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct AcceptedInteractionOutput {
-    /// Immutable accepted Interaction with actor, location, targets and canonical
-    /// outward behavior.
+    /// The accepted Interaction Activity.
     pub activity: ActivityOutput,
-    /// Flat safe id, name and description of the exact Place at which the
-    /// Interaction was accepted; complete Entity provenance and entry status are omitted.
+    /// The Place where the Interaction was accepted.
     pub place: CurrentPlaceOutput,
 }
 

@@ -1,0 +1,1 @@
+gpt-5.4-mini low old W3: edit=game/src/world/mutation.rs; usage {"input_tokens":135024,"cached_input_tokens":100864,"cache_write_input_tokens":0,"output_tokens":1128,"reasoning_output_tokens":293}

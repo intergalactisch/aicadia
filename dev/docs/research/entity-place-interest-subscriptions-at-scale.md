@@ -518,7 +518,7 @@ Entity, inside one repeatable-read transaction.
 **Evidence.** Current Agent guidance explicitly says to fetch one selected local
 Entity only when it matters and stores no per-observer Property/Trait copy. The
 published exact-Entity tool accepts no semantic-relevance selector.
-[Agent knowledge contract](../../../game/mcp/agent/instruction/06-knowledge.md),
+[Agent knowledge contract](../../../game/mcp/agent/instruction/07-knowledge.md),
 [`get_entity_at_current_place`](../../../game/mcp/agent/tool/get_entity_at_current_place.md)
 
 **Inference.** Those are good read and eligibility seams for a future resource

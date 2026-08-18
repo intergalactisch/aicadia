@@ -1,0 +1,1 @@
+{"opened":["CLAUDE.md","game/docs/README.md","game/docs/capability/enter_world.md","game/docs/agent.md","game/docs/protocol.md","game/docs/adapter-parity.md"],"edit":"game/docs/agent.md","reason":"`game/docs/agent.md` owns the player-facing Agent communication rules, so it is the first place to change how the Agent tells the player that `enter_world` failed."}

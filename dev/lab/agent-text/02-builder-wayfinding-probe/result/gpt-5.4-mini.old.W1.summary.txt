@@ -1,0 +1,1 @@
+gpt-5.4-mini low old W1: edit=game/docs/domain.md; usage {"input_tokens":103433,"cached_input_tokens":71680,"cache_write_input_tokens":0,"output_tokens":1133,"reasoning_output_tokens":358}

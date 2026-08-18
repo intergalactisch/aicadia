@@ -287,6 +287,7 @@ fn development(context: &Context) -> Vec<Group> {
         repository
             .in_home("skill")
             .into_iter()
+            .chain(repository.in_home("methodology-record"))
             .map(|record| Leaf::link(&record.title, doc_href(&record.path))),
     );
     let rule_count = rule.len();

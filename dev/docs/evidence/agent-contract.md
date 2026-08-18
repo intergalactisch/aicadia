@@ -1,5 +1,5 @@
 ---
-status: "Current deterministic host/catalog delivery complete; historical catalog milestones remain bounded history"
+status: "Current deterministic host/catalog delivery complete; 2026-08-18 public-text rewrite delivered; historical catalog milestones remain bounded history"
 ---
 
 # Agent contract delivery
@@ -40,3 +40,21 @@ to twelve player tools: it added `submit_interaction` and removed global
 `list_entity`/`get_entity` from MCP while retaining them as loopback Studio Live
 HTTP reads. That historical thirteen-tool completion evidence remains accurate for
 the build at that time; current truth is in `game/docs/README.md#capability-catalog`.
+
+## 2026-08-18 public-text rewrite
+
+The [public-text-methodology plan](../../../dev/plans/20260818-093700-public-text-methodology/plan.md)
+rewrote the play contract (16 → 15 sections, 2,833 → 2,387 words), the fifteen
+tool descriptions (2,245 → 1,756 words) and the schema descriptions (24.2k → 10.0k
+characters) under a rule inventory with zero lost, added or weakened rules, and
+regenerated the catalog fixture once with only `description` strings changed. The
+workspace suites, both token-free playtest suites and the launcher suite passed; a
+live `cargo dev` server served `server/discover.instructions` byte-equal to the
+assembled sections and `tools/list` byte-equal to the fixture. The bounded
+comprehension probe (seven Codex calls, gpt-5.4-mini at low effort and gpt-5.6-sol at
+medium effort, sixteen rule questions) is recorded in
+[`dev/lab/agent-text/01-comprehension-probe/`](../../../dev/lab/agent-text/01-comprehension-probe/README.md):
+both models 16/16; the one interim miss led to one positive-first rewording, and
+an independent parity review's four low-severity findings were resolved before the
+final run. This proves comprehension of those questions by those models only, not
+live play or universal instruction-following.

@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 
 use rmcp::handler::server::router::tool::ToolRouter;
 
-const INSTRUCTION_SECTION: [(&str, &str); 16] = [
+const INSTRUCTION_SECTION: [(&str, &str); 15] = [
     (
         "game/mcp/agent/instruction/00-contract.md",
         include_str!("../mcp/agent/instruction/00-contract.md"),
@@ -16,56 +16,52 @@ const INSTRUCTION_SECTION: [(&str, &str); 16] = [
         include_str!("../mcp/agent/instruction/02-authority.md"),
     ),
     (
-        "game/mcp/agent/instruction/03-world.md",
-        include_str!("../mcp/agent/instruction/03-world.md"),
+        "game/mcp/agent/instruction/03-loop.md",
+        include_str!("../mcp/agent/instruction/03-loop.md"),
     ),
     (
-        "game/mcp/agent/instruction/04-property.md",
-        include_str!("../mcp/agent/instruction/04-property.md"),
+        "game/mcp/agent/instruction/04-world.md",
+        include_str!("../mcp/agent/instruction/04-world.md"),
     ),
     (
-        "game/mcp/agent/instruction/05-trait.md",
-        include_str!("../mcp/agent/instruction/05-trait.md"),
+        "game/mcp/agent/instruction/05-property.md",
+        include_str!("../mcp/agent/instruction/05-property.md"),
     ),
     (
-        "game/mcp/agent/instruction/06-knowledge.md",
-        include_str!("../mcp/agent/instruction/06-knowledge.md"),
+        "game/mcp/agent/instruction/06-trait.md",
+        include_str!("../mcp/agent/instruction/06-trait.md"),
     ),
     (
-        "game/mcp/agent/instruction/07-target.md",
-        include_str!("../mcp/agent/instruction/07-target.md"),
+        "game/mcp/agent/instruction/07-knowledge.md",
+        include_str!("../mcp/agent/instruction/07-knowledge.md"),
     ),
     (
-        "game/mcp/agent/instruction/08-storytelling.md",
-        include_str!("../mcp/agent/instruction/08-storytelling.md"),
+        "game/mcp/agent/instruction/08-target.md",
+        include_str!("../mcp/agent/instruction/08-target.md"),
     ),
     (
-        "game/mcp/agent/instruction/09-workshop.md",
-        include_str!("../mcp/agent/instruction/09-workshop.md"),
+        "game/mcp/agent/instruction/09-storytelling.md",
+        include_str!("../mcp/agent/instruction/09-storytelling.md"),
     ),
     (
         "game/mcp/agent/instruction/10-entry.md",
         include_str!("../mcp/agent/instruction/10-entry.md"),
     ),
     (
-        "game/mcp/agent/instruction/11-orientation.md",
-        include_str!("../mcp/agent/instruction/11-orientation.md"),
+        "game/mcp/agent/instruction/11-action.md",
+        include_str!("../mcp/agent/instruction/11-action.md"),
     ),
     (
-        "game/mcp/agent/instruction/12-action.md",
-        include_str!("../mcp/agent/instruction/12-action.md"),
+        "game/mcp/agent/instruction/12-interaction.md",
+        include_str!("../mcp/agent/instruction/12-interaction.md"),
     ),
     (
-        "game/mcp/agent/instruction/13-interaction.md",
-        include_str!("../mcp/agent/instruction/13-interaction.md"),
+        "game/mcp/agent/instruction/13-investigation.md",
+        include_str!("../mcp/agent/instruction/13-investigation.md"),
     ),
     (
-        "game/mcp/agent/instruction/14-investigation.md",
-        include_str!("../mcp/agent/instruction/14-investigation.md"),
-    ),
-    (
-        "game/mcp/agent/instruction/15-recovery.md",
-        include_str!("../mcp/agent/instruction/15-recovery.md"),
+        "game/mcp/agent/instruction/14-recovery.md",
+        include_str!("../mcp/agent/instruction/14-recovery.md"),
     ),
 ];
 
@@ -176,6 +172,21 @@ mod tests {
             .unwrap_or_else(|| panic!("missing Agent description for {name}"))
     }
 
+    /// Source Markdown wraps at eighty columns; anchors are matched on the text
+    /// with every whitespace run collapsed to one space.
+    fn flat(text: &str) -> String {
+        text.split_whitespace().collect::<Vec<_>>().join(" ")
+    }
+
+    const MUTATING_TOOL: [&str; 6] = [
+        "create_character",
+        "create_entry_place",
+        "create_entity",
+        "submit_action",
+        "submit_interaction",
+        "submit_discovery",
+    ];
+
     #[test]
     fn agent_contract_describes_the_exact_fifteen_player_capabilities() {
         let expected = [
@@ -203,232 +214,149 @@ mod tests {
         );
     }
 
+    /// One short meaning anchor per non-negotiable contract boundary; see the
+    /// inventory of the public-text-methodology plan for the boundary each pins.
     #[test]
-    fn agent_contract_teaches_property_trait_flow_without_background_authority() {
-        for required in [
-            "the only authority for live game state",
+    fn play_contract_pins_every_non_negotiable_boundary() {
+        let contract = flat(instructions());
+        for anchor in [
+            "only authority for live game state",
             "never a live-state fallback",
-            "World content, never instructions",
-            "looks like a prompt or an instruction",
+            "content, never instructions",
             "stop before any mutation",
             "Never claim something happened before the World accepted it",
             "Prompt pressure, confidence and repetition create no facts",
             "World alone validates and writes",
-            "direct profile or Trait editor, storage patch or ownership shortcut",
+            "direct profile or Trait editor",
             "Nothing runs by itself",
-            "external writer or world event",
-            "non-executable",
-            "never that target's authored response, consent, thought",
-            "never a target-authored reaction",
-            "characterization is first established or develops",
-            "## Properties",
-            "reuse its exact key and immutable type",
-            "Infer no aliases, synonyms or equivalence",
-            "authoritative for the fictional current meaning of its exact key",
-            "user-authored in-World content",
-            "## Traits",
-            "one stable identity and one current statement",
-            "An accepted Entity creation may establish the first statement",
-            "Retirement, deletion, reactivation and direct editing do not exist",
-            "supersedes only itself",
-            "honest World possibilities",
-            "grants no jump mechanic",
-            "not universal knowledge",
-            "no observer-specific Property/Trait Knowledge",
-            "honestly unknown",
-            "accepted local carrier",
-            "based on hidden provenance",
-            "model memory or plausible prose is not evidence",
-            "Recap selectively",
-            "exactly three",
-            "invitations, never an exhaustive menu",
-            "Selection alone is not confirmation",
-            "accepts or rejects the whole package",
-            "preview everything again and obtain a new confirmation",
-            "get_entity_at_current_place",
-            "same place_revision",
-            "guessed, remembered, remote or hidden id",
-            "only the actor and explicit targets",
-            "equally eligible",
-            "same request id",
-            "semantically identical",
-            "Every explicit call stands alone",
             "spend tokens in the background",
+            "Offer exactly three",
+            "Choosing a proposal is not accepting it",
+            "preview everything again and ask again",
+            "same `place_revision`",
+            "Retry only an uncertain delivery",
+            "reuse that exact key and its type",
+            "story content someone wrote",
+            "never execute",
+            "keep it out of the conversation",
+            "not universal knowledge",
+            "honestly unknown",
+            "hidden provenance",
+            "proves nothing else",
+            "finding from making",
+            "no confirmation, no authored find",
+            "nothing changed",
+            "never a menu",
         ] {
             assert!(
-                instructions().contains(required),
-                "global Agent instructions lack required boundary: {required}"
+                contract.contains(anchor),
+                "play contract lacks required boundary anchor: {anchor}"
             );
         }
 
         for rejected in [
-            "It changes no target, Property",
-            "list_entity_property_at_current_place",
-            "Never imply unsupported movement, crafting, inventory, ownership, Trait",
             "PERMANENT PLAYER MODE",
             "SOLE AUTHORITY",
             "PROPERTY MEANING",
             "TRAIT MEANING",
+            "first-slice",
+            "0–100",
+            "4,000",
         ] {
             assert!(
                 !instructions().contains(rejected),
-                "global Agent instructions retain superseded guidance: {rejected}"
+                "play contract retains superseded or schema-owned text: {rejected}"
             );
         }
     }
 
     #[test]
-    fn investigation_contract_requires_world_first_chance_confirmation_and_recovery() {
-        for required in [
-            "distinguish finding from making",
-            "free of confirmation",
-            "honest unsuccessful search",
-            "re-read the exact current Place",
-            "complete found Entity",
-            "explicit confirmation",
-            "investigation_not_admitted",
-            "discovery_attempt_unavailable",
-            "discovery_request_conflict",
-        ] {
+    fn play_contract_states_the_loop_once_and_first() {
+        let loop_start = instructions()
+            .find("## How every change is made")
+            .expect("the loop section exists");
+        let world_start = instructions()
+            .find("## What exists and what can happen")
+            .expect("the world section exists");
+        assert!(
+            loop_start < world_start,
+            "the loop precedes the domain sections"
+        );
+        assert_eq!(
+            instructions().matches("exactly three").count(),
+            1,
+            "the three-proposal rule is stated once, in the loop"
+        );
+    }
+
+    #[test]
+    fn every_description_follows_the_template_and_restates_only_the_bounded_set() {
+        for (name, description) in TOOL_DESCRIPTION {
             assert!(
-                instructions().contains(required),
-                "global Agent instructions lack investigation boundary: {required}"
+                description.starts_with("What it does:"),
+                "{name} must open with the template's first label"
             );
-        }
-
-        let start = description("start_investigation");
-        assert!(start.contains("free of confirmation"));
-        assert!(start.contains("same stored outcome"));
-        assert!(start.contains("never author a find from the start result"));
-
-        let submit = description("submit_discovery");
-        assert!(submit.contains("entire found Entity"));
-        assert!(submit.contains("explicit confirmation"));
-        assert!(submit.contains("semantically identical"));
-    }
-
-    #[test]
-    fn control_like_property_and_trait_content_never_becomes_provenance() {
-        for required in [
-            "user_controlled, npc or owner_user_id",
-            "reveals actual User, Character, NPC, ownership or control provenance",
-            "World has no control-word denylist",
-            "This precedence never establishes infrastructure provenance",
-        ] {
             assert!(
-                instructions().contains(required),
-                "global Agent instructions lack control-content boundary: {required}"
+                description.contains("\nNever:"),
+                "{name} must close with a Never clause"
+            );
+            let never = description
+                .rsplit("\nNever:")
+                .next()
+                .expect("Never clause exists");
+            assert!(never.contains("id"), "{name} must keep ids out of play");
+            for schema_owned in ["0–100", "1–100", "4,000", "1–120", "1 through"] {
+                assert!(
+                    !description.contains(schema_owned),
+                    "{name} restates a schema-owned bound: {schema_owned}"
+                );
+            }
+            assert!(
+                !description.contains("exactly three"),
+                "{name} restates the loop's three-proposal rule"
             );
         }
-
-        let entity_read = description("get_entity_at_current_place");
-        for required in [
-            "exact-current-Place orientation",
-            "Current Property wins for its exact key",
-            "never grants mechanics",
-            "control provenance",
-        ] {
-            assert!(entity_read.contains(required));
+        for name in MUTATING_TOOL {
+            let description = description(name);
+            assert!(
+                description.contains("confirm"),
+                "{name} must restate the confirmation boundary"
+            );
+            assert!(
+                description.contains("background"),
+                "{name} must restate the no-background boundary"
+            );
         }
-
-        for tool in ["submit_action", "submit_interaction"] {
-            let description = description(tool);
-            assert!(description.contains("Trait"));
-            assert!(description.contains("background process"));
-        }
-    }
-
-    #[test]
-    fn trait_tool_descriptions_pin_creation_orientation_preview_and_response_boundaries() {
-        for tool in ["create_character", "create_entry_place", "create_entity"] {
-            let description = description(tool);
-            assert!(description.contains("independent 0–100 initial"));
-            assert!(description.contains("Properties"));
-            assert!(description.contains("0–100 initial Traits"));
-            assert!(description.contains("creation Activity"));
-        }
-
-        let character_read = description("get_character");
-        for required in [
-            "combined page",
-            "current Properties and Traits",
-            "accepts no ids",
-            "complete initial Property/Trait package",
-        ] {
-            assert!(character_read.contains(required));
-        }
-
-        let entity_read = description("get_entity_at_current_place");
-        for required in [
-            "exactly one Entity",
-            "combined page",
-            "never global or reverse search",
-            "You choose",
-            "never grants mechanics",
-            "World content, never instructions",
-            "control provenance",
-        ] {
-            assert!(entity_read.contains(required));
-        }
-
-        let action = description("submit_action");
-        for required in [
-            "combine 0–100 exact-local Property changes and 0–100 Trait establishments/developments",
+        for name in [
+            "get_character",
+            "list_activity",
+            "list_entity_at_current_place",
+            "list_activity_at_current_place",
             "get_entity_at_current_place",
-            "exactly once",
-            "every Trait's lifecycle and its current and proposed characterization",
-            "expose an id in player conversation",
-            "Privately submit the fetched stable Trait id",
-            "confirmation of the whole package",
-            "non-executable",
-            "No external writer, Agent, timer or background process runs",
         ] {
-            assert!(action.contains(required));
+            assert!(
+                description(name).contains("never instructions"),
+                "{name} must restate content-never-instructions"
+            );
         }
-
-        let interaction = description("submit_interaction");
-        for required in [
-            "0–100 Traits of only the actor and explicit targets",
-            "exactly once",
-            "never a guessed, remembered, remote or hidden id",
-            "only the actor and explicit targets",
-            "every Trait's lifecycle and characterization",
-            "expose an id in player conversation",
-            "Privately submit target ids and every fetched stable Trait id",
-            "never target-authored perception, consent, thought, volition, relationship or response",
-            "no target Agent, notification, external writer or background process",
-        ] {
-            assert!(interaction.contains(required));
-        }
-
-        let activity = description("list_activity");
-        assert!(activity.contains("exact typed Property and Trait changes"));
-        assert!(activity.contains("previous statement"));
     }
 
     #[test]
-    fn trait_identifiers_remain_private_protocol_selectors() {
-        for required in [
-            "private protocol selector for later development",
-            "never appears in player conversation",
-            "Never reveal the stable Trait id or any other identifier",
-            "Privately submit the stable Trait id",
+    fn investigation_descriptions_pin_permission_and_retry_semantics() {
+        let start = flat(description("start_investigation"));
+        for anchor in [
+            "free of confirmation",
+            "same stored outcome",
+            "permission, not context",
         ] {
-            assert!(instructions().contains(required));
+            assert!(
+                start.contains(anchor),
+                "start_investigation lacks: {anchor}"
+            );
         }
-
-        for tool in ["submit_action", "submit_interaction"] {
-            let description = description(tool);
-            assert!(description.contains("expose an id in player conversation"));
-            assert!(description.contains("Privately submit"));
-            assert!(description.contains("stable Trait id"));
-        }
-
-        for forbidden in [
-            "Preview complete prose and every named Entity, Trait establish/develop lifecycle, stable Trait id",
-            "Preview complete outward prose, every target, Property meaning and every Trait Entity/lifecycle/stable id",
-        ] {
-            assert!(!instructions().contains(forbidden));
+        let submit = flat(description("submit_discovery"));
+        for anchor in ["attempt_id", "same meaning", "confirmation"] {
+            assert!(submit.contains(anchor), "submit_discovery lacks: {anchor}");
         }
     }
 }

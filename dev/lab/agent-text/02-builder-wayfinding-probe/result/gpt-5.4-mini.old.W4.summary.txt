@@ -1,0 +1,1 @@
+gpt-5.4-mini low old W4: edit=game/docs/agent.md; usage {"input_tokens":145776,"cached_input_tokens":119296,"cache_write_input_tokens":0,"output_tokens":1779,"reasoning_output_tokens":478}

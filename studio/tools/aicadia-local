@@ -4,9 +4,13 @@ set -euo pipefail
 readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly DATABASE_NAME="${AICADIA_DATABASE_NAME:-aicadia_local}"
 readonly PORT="${AICADIA_PORT:-3000}"
-readonly DATABASE_URL="${DATABASE_URL:-postgres://localhost/postgres}"
 readonly BASE_URL="http://127.0.0.1:${PORT}"
 readonly MCP_URL="${BASE_URL}/mcp"
+if [[ ${DATABASE_URL+x} ]]; then
+    DATABASE_URL_IS_EXPLICIT=1
+else
+    DATABASE_URL_IS_EXPLICIT=0
+fi
 OPEN_STUDIO=1
 SERVER_PID=''
 SERVER_STDOUT=''
@@ -66,7 +70,9 @@ readonly LOCK_DIR="$STATE_DIR/launcher.lock"
     || { fail 'AICADIA_DATABASE_NAME must start with a lowercase letter and contain only lowercase letters, digits or underscores (63 bytes maximum)'; exit 1; }
 [[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) \
     || { fail 'AICADIA_PORT must be an integer from 1 through 65535'; exit 1; }
-[[ -n "$DATABASE_URL" ]] || { fail 'DATABASE_URL must not be empty'; exit 1; }
+if (( DATABASE_URL_IS_EXPLICIT == 1 )); then
+    [[ -n "$DATABASE_URL" ]] || { fail 'DATABASE_URL must not be empty'; exit 1; }
+fi
 
 add_homebrew_postgresql_to_path() {
     local formula prefix
@@ -95,6 +101,78 @@ for dependency in "${dependencies[@]}"; do
     command -v "$dependency" >/dev/null 2>&1 \
         || { fail "required program is unavailable: $dependency"; exit 1; }
 done
+
+database_url_is_reachable() {
+    psql --no-password "$1" --no-psqlrc --quiet --tuples-only --no-align \
+        --command 'SELECT 1' >/dev/null 2>&1
+}
+
+resolve_local_database_url() {
+    local brew_root candidate candidate_index candidates_count duplicate existing formula formula_prefix port service_json
+    local -a candidates=()
+    candidates_count=0
+
+    candidate='postgres://localhost:5432/postgres'
+    if database_url_is_reachable "$candidate"; then
+        candidates[candidates_count]="$candidate"
+        candidates_count=$((candidates_count + 1))
+    fi
+
+    if command -v brew >/dev/null 2>&1; then
+        brew_root="$(brew --prefix 2>/dev/null)" || brew_root=''
+        if [[ -n "$brew_root" ]]; then
+            while IFS= read -r formula; do
+                case "$formula" in
+                    postgresql|postgresql@*) ;;
+                    *) continue ;;
+                esac
+                service_json="$(brew services info "$formula" --json 2>/dev/null)" || continue
+                jq -e 'length == 1 and .[0].running == true' <<<"$service_json" >/dev/null 2>&1 \
+                    || continue
+                formula_prefix="$(brew --prefix "$formula" 2>/dev/null)" || continue
+                [[ -x "$formula_prefix/bin/postgres" && -d "$brew_root/var/$formula" ]] \
+                    || continue
+                port="$("$formula_prefix/bin/postgres" -D "$brew_root/var/$formula" -C port 2>/dev/null)" \
+                    || continue
+                [[ "$port" =~ ^[0-9]+$ ]] && (( port >= 1 && port <= 65535 )) || continue
+                candidate="postgres://localhost:${port}/postgres"
+                database_url_is_reachable "$candidate" || continue
+                duplicate=0
+                for ((candidate_index = 0; candidate_index < candidates_count; candidate_index++)); do
+                    existing="${candidates[candidate_index]}"
+                    if [[ "$existing" == "$candidate" ]]; then
+                        duplicate=1
+                        break
+                    fi
+                done
+                if (( duplicate == 0 )); then
+                    candidates[candidates_count]="$candidate"
+                    candidates_count=$((candidates_count + 1))
+                fi
+            done < <(brew list --formula 2>/dev/null)
+        fi
+    fi
+
+    case "$candidates_count" in
+        0)
+            fail 'no passwordless local PostgreSQL service is reachable; start PostgreSQL or set DATABASE_URL'
+            return 1
+            ;;
+        1) printf '%s\n' "${candidates[0]}" ;;
+        *)
+            fail 'multiple passwordless local PostgreSQL services are reachable; set DATABASE_URL explicitly'
+            return 1
+            ;;
+    esac
+}
+
+if (( DATABASE_URL_IS_EXPLICIT == 1 )); then
+    database_url_is_reachable "$DATABASE_URL" \
+        || { fail 'cannot connect with DATABASE_URL without prompting for a password'; exit 1; }
+else
+    DATABASE_URL="$(resolve_local_database_url)" || exit 1
+fi
+readonly DATABASE_URL
 
 if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | grep -q .; then
     fail "loopback port $PORT is already occupied"
@@ -135,7 +213,7 @@ if [[ -e "$PROFILE" ]]; then
         || { fail "$PROFILE contains an invalid User UUID"; exit 1; }
 fi
 
-database_exists="$(psql "$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+database_exists="$(psql --no-password "$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
     --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'" 2>/dev/null)" \
     || { fail 'cannot connect to PostgreSQL with DATABASE_URL'; exit 1; }
 case "$database_exists" in
@@ -146,8 +224,8 @@ case "$database_exists" in
     0)
         [[ -z "$profile_user_id" ]] \
             || { fail "profile expects missing database $DATABASE_NAME"; exit 1; }
-        if ! createdb --maintenance-db="$DATABASE_URL" --encoding=UTF8 --template=template0 "$DATABASE_NAME"; then
-            database_exists="$(psql "$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
+        if ! createdb --no-password --maintenance-db="$DATABASE_URL" --encoding=UTF8 --template=template0 "$DATABASE_NAME"; then
+            database_exists="$(psql --no-password "$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
                 --command "SELECT count(*) FROM pg_database WHERE datname = '$DATABASE_NAME'" 2>/dev/null)" \
                 || { fail "could not verify database $DATABASE_NAME after a creation race"; exit 1; }
             if [[ "$database_exists" == 1 ]]; then
@@ -161,7 +239,7 @@ case "$database_exists" in
     *) fail 'PostgreSQL returned an unexpected database lookup result'; exit 1 ;;
 esac
 
-database_identity="$(psql "$DATABASE_URL" --no-psqlrc --quiet --tuples-only --no-align \
+database_identity="$(psql --no-password "$DATABASE_URL" --no-psqlrc --quiet --tuples-only --no-align \
     --command "\\connect \"$DATABASE_NAME\"" --command 'SELECT current_database()' 2>/dev/null)" \
     || { fail "cannot connect to selected database $DATABASE_NAME"; exit 1; }
 [[ "$database_identity" == "$DATABASE_NAME" ]] \

@@ -51,6 +51,8 @@ fn every_governed_home_that_must_exist_has_records() {
         "decision-register",
         "research-index",
         "research-report",
+        "methodology-index",
+        "methodology-record",
         "evidence-index",
         "evidence-slice",
         "runner-contract",

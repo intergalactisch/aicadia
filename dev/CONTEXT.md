@@ -170,6 +170,23 @@ same subject again. A word, substance, amount, property or incidental detail is 
 an Entity merely because it appears in a description.
 _Avoid_: Object, item, record
 
+**Public-facing text**:
+Text the repository publishes verbatim to a party outside it: the served play
+contract, every tool description and every schema description. It is product surface
+that every Agent pays for in context and comprehension, written once per rule at one
+layer under `dev/docs/methodology/public-text.md`. Builder documentation, Studio pages
+and repository records are not public-facing text.
+_Avoid_: Prompt, system prompt, docs, copy
+
+**Build-facing text**:
+Every Markdown document a building Agent reads before it changes code, schema,
+contract or records: `AGENTS.md`, `CLAUDE.md`, this vocabulary, `game/docs/`,
+`dev/docs/`, the backlog, plans, lab and skills. Each file states what it owns and
+routes the reader to what it does not; every reference is a sentence naming the
+fact, its relation and its owner, under `dev/docs/methodology/build-text.md`. It is
+never published to a playing Agent.
+_Avoid_: Internal docs, wiki, comments
+
 **Introduction**:
 The act in which an Agent submits an Entity candidate on a User's behalf and World
 accepts it, gives it stable identity and stores it in the shared World. A rejected or

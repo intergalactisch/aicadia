@@ -1,0 +1,1 @@
+{"opened":["CLAUDE.md","AGENTS.md","game/docs/local-play.md","studio/tools/aicadia-local","studio/tests/aicadia-local.sh"],"edit":"studio/tools/aicadia-local","reason":"That launcher script owns the automatic local PostgreSQL selection logic, including the branch that chooses between reachable services, so the preference change belongs there first."}

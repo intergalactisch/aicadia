@@ -1,0 +1,16 @@
+Q1 no
+Q2 no
+Q3 yes
+Q4 yes
+Q5 no
+Q6 no
+Q7 yes
+Q8 no
+Q9 no
+Q10 no
+Q11 yes
+Q12 yes
+Q13 no
+Q14 no
+Q15 no
+Q16 yes

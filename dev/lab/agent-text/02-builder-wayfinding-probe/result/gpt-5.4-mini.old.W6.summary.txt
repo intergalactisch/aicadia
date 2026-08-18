@@ -1,0 +1,1 @@
+gpt-5.4-mini low old W6: edit=studio/tools/aicadia-local; usage {"input_tokens":157393,"cached_input_tokens":113152,"cache_write_input_tokens":0,"output_tokens":1734,"reasoning_output_tokens":366}

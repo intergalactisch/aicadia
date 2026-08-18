@@ -4,8 +4,7 @@ use super::*;
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct StartInvestigationInput {
-    /// Agent-generated UUID for one investigation attempt. Reuse only to recover
-    /// the same stored attempt result after uncertain delivery.
+    /// Fresh UUID for this one attempt; reuse only to retry an uncertain delivery.
     pub request_id: Uuid,
 }
 
@@ -51,11 +50,11 @@ impl From<DiscoveryKind> for DiscoveryKindOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct InvestigationLimitOutput {
-    /// Maximum number of results permitted by a positive attempt; exactly one.
+    /// Number of results a positive attempt permits: one.
     #[schemars(range(min = 1, max = 1))]
     #[schema(minimum = 1, maximum = 1)]
     pub result_count: u8,
-    /// Kind of result permitted by this attempt.
+    /// Kind of result permitted.
     pub kind: DiscoveryKindOutput,
 }
 
@@ -72,11 +71,11 @@ impl From<InvestigationLimit> for InvestigationLimitOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct InvestigationResultOutput {
-    /// Stable identity of the stored investigation attempt.
+    /// Attempt id.
     pub attempt_id: Uuid,
-    /// Server-resolved result of this investigation attempt.
+    /// Outcome: zero or positive.
     pub outcome: InvestigationOutcomeOutput,
-    /// Immutable bounds on what a positive attempt permits.
+    /// What a positive attempt permits.
     pub limit: InvestigationLimitOutput,
 }
 
@@ -94,20 +93,20 @@ impl From<InvestigationResult> for InvestigationResultOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct DiscoveryFindInput {
-    /// Display name. World trims it and accepts 1 through 120 Unicode characters.
+    /// Display name.
     #[schemars(length(min = 1, max = 120))]
     #[schema(min_length = 1, max_length = 120)]
     pub name: String,
-    /// Description. World trims it and accepts 1 through 4,000 Unicode characters.
+    /// Description.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub description: String,
-    /// Initial typed Properties of the one found Entity.
+    /// Initial Properties of the found Entity.
     #[serde(default)]
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
     pub property: Vec<PropertyInput>,
-    /// Initial Traits of the one found Entity.
+    /// Initial Traits of the found Entity.
     #[serde(default)]
     #[schemars(length(max = 100))]
     #[schema(max_items = 100)]
@@ -129,17 +128,15 @@ impl From<DiscoveryFindInput> for DiscoveryFind {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct SubmitDiscoveryInput {
-    /// Agent-generated UUID for this one intended discovery acceptance. Reuse only
-    /// for an uncertain delivery retry of semantically identical input.
+    /// Fresh UUID for this one discovery; reuse only to retry an uncertain delivery.
     pub request_id: Uuid,
-    /// Positive investigation attempt being consumed exactly once.
+    /// The positive attempt this discovery completes.
     pub attempt_id: Uuid,
-    /// Exact canonical English discovery prose previewed and explicitly confirmed
-    /// by the User.
+    /// English discovery prose the User confirmed.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub prose: String,
-    /// Exactly one Entity found through this investigation.
+    /// The one found Entity.
     pub find: DiscoveryFindInput,
 }
 
@@ -158,11 +155,11 @@ impl From<SubmitDiscoveryInput> for SubmitDiscovery {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct AcceptedDiscoveryOutput {
-    /// Immutable accepted discovery Activity with canonical prose and exact roles.
+    /// The accepted discovery Activity.
     pub activity: ActivityOutput,
-    /// Complete newly found Entity.
+    /// The found Entity.
     pub entity: EntityOutput,
-    /// Complete Place at which the Entity was found and established.
+    /// The Place where the Entity was found.
     pub place: PlaceOutput,
 }
 

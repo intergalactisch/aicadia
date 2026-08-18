@@ -1,0 +1,5 @@
+You are a building Agent working in this repository, which is available to you read-only. A User asks for this change:
+
+  "Raise the maximum length of an Entity `name` from 120 to 160 characters."
+
+Do not make the change. Your job is only to find where it belongs. Start by reading CLAUDE.md, follow the repository's own guidance and its cross-references, and stop as soon as you are confident. Then report, through the output schema: the repository-relative paths of the files you opened, in the order you opened them; the ONE file you would edit first because it owns this change; and one sentence why. Do not edit, create or delete anything.

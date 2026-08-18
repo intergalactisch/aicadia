@@ -330,7 +330,7 @@ mod tests {
             aicadia::server::mcp_tool_catalog(World::new(pool)),
         );
 
-        assert_eq!(surface.section.len(), 16);
+        assert_eq!(surface.section.len(), 15);
         assert_eq!(surface.tool.len(), 15);
         for tool in &surface.tool {
             assert!(

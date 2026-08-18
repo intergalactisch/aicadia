@@ -4,7 +4,7 @@ use super::*;
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct WorldOutput {
-    /// Stable name of the one persistent shared World.
+    /// Name of the one shared World.
     pub name: String,
 }
 
@@ -18,9 +18,9 @@ impl From<WorldView> for WorldOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct UserOutput {
-    /// Stable id of the User represented by the request context.
+    /// User id.
     pub id: Uuid,
-    /// Time at which this durable User was provisioned.
+    /// When the User was provisioned.
     pub created_at: DateTime<Utc>,
 }
 
@@ -37,15 +37,15 @@ impl From<User> for UserOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntityOutput {
-    /// Stable Entity id used by every concrete role of this referent.
+    /// Entity id; also the id of its Character or Place role.
     pub id: Uuid,
-    /// Current semantic name of this shared referent.
+    /// Current name.
     pub name: String,
-    /// Current semantic description of this shared referent.
+    /// Current description.
     pub description: String,
-    /// User whose accepted request first introduced this Entity.
+    /// User who introduced this Entity.
     pub introduced_by_user_id: Uuid,
-    /// Time at which this Entity was introduced into the shared World.
+    /// When the Entity was introduced.
     pub introduced_at: DateTime<Utc>,
 }
 
@@ -65,13 +65,11 @@ impl From<Entity> for EntityOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CharacterOutput {
-    /// Complete shared Entity that also has the Character role. Its Entity id is
-    /// the Character's only id.
+    /// The Character's Entity; its id is the Character id.
     pub entity: EntityOutput,
-    /// User that exclusively owns this Character role.
+    /// User who owns this Character.
     pub owner_user_id: Uuid,
-    /// Complete current Place. Null means the Character exists but has not entered
-    /// the World; create_character deliberately returns null.
+    /// Current Place, or null while the Character has not entered the World.
     #[schemars(schema_with = "nullable_place_schema", required)]
     #[schema(required = true, nullable = true)]
     pub current_place: Option<PlaceOutput>,
@@ -96,10 +94,9 @@ fn nullable_place_schema(generator: &mut SchemaGenerator) -> Schema {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct PlaceOutput {
-    /// Complete shared Entity that also has the Place role. Its Entity id is the
-    /// Place's only id.
+    /// The Place's Entity; its id is the Place id.
     pub entity: EntityOutput,
-    /// True only for the one server-recognized World entry Place.
+    /// True only for the one entry Place.
     pub is_entry: bool,
 }
 
@@ -116,10 +113,9 @@ impl From<Place> for PlaceOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntitySummaryOutput {
-    /// Stable Entity id, including when the Entity also has a Character or Place
-    /// role.
+    /// Entity id.
     pub id: Uuid,
-    /// Current semantic name of the Entity.
+    /// Current name.
     pub name: String,
 }
 
@@ -127,11 +123,11 @@ pub struct EntitySummaryOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceEntityOutput {
-    /// Stable id of this selectable local Entity.
+    /// Entity id.
     pub id: Uuid,
-    /// Safe current name of this selectable local Entity.
+    /// Current name.
     pub name: String,
-    /// Safe current description of this selectable local Entity.
+    /// Current description.
     pub description: String,
 }
 
@@ -139,11 +135,11 @@ pub struct CurrentPlaceEntityOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceOutput {
-    /// Stable id of the exact current Place Entity.
+    /// Place id.
     pub id: Uuid,
-    /// Safe current name of the exact current Place.
+    /// Current name.
     pub name: String,
-    /// Safe current description of the exact current Place.
+    /// Current description.
     pub description: String,
 }
 
@@ -180,14 +176,14 @@ impl From<EntitySummary> for EntitySummaryOutput {
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub enum PropertyValueInput {
-    /// Bounded current text established for the canonical key.
+    /// Text value.
     Text {
-        /// World trims this value and accepts 1 through 4,000 non-NUL characters.
+        /// Text.
         #[schemars(length(min = 1, max = 4000))]
         #[schema(min_length = 1, max_length = 4000)]
         text: String,
     },
-    /// Signed whole-number current value established for the canonical key.
+    /// Integer value.
     Integer { integer: i64 },
 }
 
@@ -204,9 +200,9 @@ impl From<PropertyValueInput> for PropertyValue {
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub enum PropertyValueOutput {
-    /// Canonical current text value.
+    /// Text value.
     Text { text: String },
-    /// Canonical current signed whole-number value.
+    /// Integer value.
     Integer { integer: i64 },
 }
 
@@ -223,12 +219,11 @@ impl From<PropertyValue> for PropertyValueOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct PropertyInput {
-    /// Canonical English lower-snake-case key. World accepts 1 through 64 ASCII
-    /// characters, starting with a letter.
+    /// English lower_snake_case key starting with a letter.
     #[schemars(length(min = 1, max = 64))]
     #[schema(min_length = 1, max_length = 64)]
     pub key: String,
-    /// One strict tagged text or integer value.
+    /// Text or integer value.
     pub value: PropertyValueInput,
 }
 
@@ -245,7 +240,7 @@ impl From<PropertyInput> for WorldPropertyInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct TraitInput {
-    /// Exact English statement for one new World-assigned Trait lineage.
+    /// English statement of one new Trait.
     #[schemars(length(min = 1, max = 4000))]
     #[schema(min_length = 1, max_length = 4000)]
     pub statement: String,
@@ -263,13 +258,13 @@ impl From<TraitInput> for WorldTraitInput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntityPropertyChangeInput {
-    /// Exact local Entity selected from current grounded context.
+    /// Local Entity id from your grounding reads.
     pub entity_id: Uuid,
-    /// Canonical English lower-snake-case key.
+    /// English lower_snake_case key starting with a letter.
     #[schemars(length(min = 1, max = 64))]
     #[schema(min_length = 1, max_length = 64)]
     pub key: String,
-    /// One strict tagged text or integer value.
+    /// Text or integer value.
     pub value: PropertyValueInput,
 }
 
@@ -287,14 +282,14 @@ impl From<EntityPropertyChangeInput> for WorldPropertyChange {
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub enum EntityTraitChangeInput {
-    /// Establish the first immutable statement of a World-assigned Trait lineage.
+    /// Establish a new Trait with its first statement.
     Establish {
         entity_id: Uuid,
         #[schemars(length(min = 1, max = 4000))]
         #[schema(min_length = 1, max_length = 4000)]
         statement: String,
     },
-    /// Advance one stable Trait lineage to a new immutable current statement.
+    /// Develop an existing Trait to a new current statement.
     Develop {
         trait_id: Uuid,
         #[schemars(length(min = 1, max = 4000))]
@@ -328,11 +323,11 @@ impl From<EntityTraitChangeInput> for WorldTraitChange {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntityPropertyOutput {
-    /// Safe summary of the Entity whose current state changed or is being read.
+    /// The Entity this Property belongs to.
     pub entity: EntitySummaryOutput,
-    /// Canonical Property key; no internal key id is exposed.
+    /// Property key.
     pub key: String,
-    /// Exact typed value established by the Activity or held currently.
+    /// Value.
     pub value: PropertyValueOutput,
 }
 
@@ -350,9 +345,9 @@ impl From<EntityPropertyChange> for EntityPropertyOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntityCurrentPropertyOutput {
-    /// Canonical Property key; the internal Property-key identity is never exposed.
+    /// Property key.
     pub key: String,
-    /// Exact current typed value.
+    /// Current value.
     pub value: PropertyValueOutput,
 }
 
@@ -360,9 +355,9 @@ pub struct EntityCurrentPropertyOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntityTraitOutput {
-    /// World-assigned stable identity of one Trait lineage.
+    /// Trait id.
     pub id: Uuid,
-    /// Current non-executable statement for this Trait lineage.
+    /// Current statement.
     pub statement: String,
 }
 
@@ -379,12 +374,12 @@ impl From<EntityTrait> for EntityTraitOutput {
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub enum ActivityTraitChangeOutput {
-    /// This Activity established the first immutable version of a new Trait.
+    /// This Activity established a new Trait.
     Establish {
         entity: EntitySummaryOutput,
         r#trait: EntityTraitOutput,
     },
-    /// This Activity advanced an existing Trait lineage to a new immutable version.
+    /// This Activity developed an existing Trait.
     Develop {
         entity: EntitySummaryOutput,
         r#trait: EntityTraitOutput,
@@ -444,9 +439,9 @@ impl From<EntityCurrentAssociation> for EntityCurrentAssociationOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct EntityCurrentStatePageOutput {
-    /// Combined bounded current state, Properties before Traits.
+    /// Current Properties, then Traits.
     pub association: Vec<EntityCurrentAssociationOutput>,
-    /// Opaque operation-specific continuation, or null when complete.
+    /// Cursor for the next page, or null.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub next: Option<String>,
@@ -493,9 +488,9 @@ impl From<CharacterEntityStatePage> for CharacterEntityStatePageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct PlaceSummaryOutput {
-    /// Shared Entity summary for this Place; the Entity id is also the Place id.
+    /// The Place's Entity; its id is the Place id.
     pub entity: EntitySummaryOutput,
-    /// True only for the one server-recognized World entry Place.
+    /// True only for the one entry Place.
     pub is_entry: bool,
 }
 
@@ -562,13 +557,9 @@ impl From<ActivityEntityRole> for ActivityEntityRoleOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct ActivityEntityReferenceOutput {
-    /// Shared Entity involved in this immutable accepted Activity.
+    /// Involved Entity.
     pub entity: EntitySummaryOutput,
-    /// Server-owned meaning of this Entity in the Activity: subject is what an
-    /// action introduced or acted on; destination is where entry placed the
-    /// Character; location is where the Activity happened; target is where the
-    /// actor directed Interaction behavior and never establishes perception,
-    /// consent, agreement, thought or response.
+    /// Role of this Entity in the Activity: subject, destination, location or target.
     pub role: ActivityEntityRoleOutput,
 }
 
@@ -585,36 +576,29 @@ impl From<ActivityEntityReference> for ActivityEntityReferenceOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct ActivityOutput {
-    /// Stable id of this immutable accepted World Activity.
+    /// Activity id.
     pub id: Uuid,
-    /// Server-owned name of the accepted World operation.
+    /// Name of the accepted operation.
     pub operation: ActivityOperationOutput,
-    /// Character that performed the action in the World, or null when no Character
-    /// actor existed yet. This is an Entity summary because Character is an Entity
-    /// role.
+    /// Acting Character, or null when none existed yet.
     #[schemars(schema_with = "nullable_entity_summary_schema", required)]
     #[schema(required = true, nullable = true)]
     pub actor_character: Option<EntitySummaryOutput>,
-    /// Place at which World accepted the action, or null when the Character was
-    /// unplaced or no Character actor existed. This historical context does not
-    /// change when the Character later moves.
+    /// Place where the action was accepted, or null; it never changes later.
     #[schemars(schema_with = "nullable_place_summary_schema", required)]
     #[schema(required = true, nullable = true)]
     pub context_place: Option<PlaceSummaryOutput>,
-    /// Shared Entities linked to the action with explicit server-owned roles.
+    /// Entities involved, each with its role.
     pub involved_entity: Vec<ActivityEntityReferenceOutput>,
-    /// Exact typed Property changes established by this Activity, sorted by Entity
-    /// id and canonical key. Empty when this Activity changed no Property.
+    /// Property changes made by this Activity.
     pub property_change: Vec<EntityPropertyOutput>,
-    /// Exact Trait establishments/developments caused by this Activity. Entity
-    /// references remain compact and current state is not recursively hydrated.
+    /// Trait establishments and developments made by this Activity.
     pub trait_change: Vec<ActivityTraitChangeOutput>,
-    /// Canonical readable text accepted with submit_action, submit_interaction or
-    /// submit_discovery, or null for every other operation.
+    /// Prose accepted with the action, or null.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub prose: Option<String>,
-    /// Time at which World accepted this action.
+    /// When the World accepted this action.
     pub occurred_at: DateTime<Utc>,
 }
 
@@ -648,11 +632,9 @@ impl From<Activity> for ActivityOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct ActivityPageOutput {
-    /// Activities involving the current Character, newest to oldest. Involvement
-    /// includes acting or being linked by an explicit role.
+    /// Activities involving the current Character, newest first.
     pub activity: Vec<ActivityOutput>,
-    /// Opaque cursor for the following page, or null when no following page exists.
-    /// Copy it unchanged into list_activity.cursor.
+    /// Cursor for the next page, or null.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub next: Option<String>,
@@ -671,16 +653,13 @@ impl From<ActivityPage> for ActivityPageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceEntityPageOutput {
-    /// Flat safe id, name and description of the exact current Place derived from
-    /// the current Character; complete Entity provenance and entry status are omitted.
+    /// The current Place: id, name and description.
     pub place: CurrentPlaceOutput,
-    /// Opaque strong revision for this exact Place representation. Copy it
-    /// unchanged into submit_action.expected_place_revision or
-    /// submit_interaction.expected_place_revision.
+    /// Revision of the current Place; copy it unchanged into expected_place_revision.
     pub place_revision: String,
-    /// Safe target facts for other Characters and ordinary Entities at this exact Place.
+    /// Other Entities present at the current Place.
     pub entity: Vec<CurrentPlaceEntityOutput>,
-    /// Opaque cursor for the following page, or null when no following page exists.
+    /// Cursor for the next page, or null.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub next: Option<String>,
@@ -701,15 +680,13 @@ impl From<CurrentPlaceEntityPage> for CurrentPlaceEntityPageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceActivityPageOutput {
-    /// Flat safe id, name and description of the exact current Place derived from
-    /// the current Character; complete Entity provenance and entry status are omitted.
+    /// The current Place: id, name and description.
     pub place: CurrentPlaceOutput,
-    /// Opaque strong revision for this exact Place representation. Pages used to
-    /// ground one action must agree on this value.
+    /// Revision of the current Place; every page used for one proposal must match.
     pub place_revision: String,
-    /// Canonical Activity at or involving this exact Place, newest first.
+    /// Activity at the current Place, newest first.
     pub activity: Vec<ActivityOutput>,
-    /// Opaque cursor for the following page, or null when no following page exists.
+    /// Cursor for the next page, or null.
     #[schemars(schema_with = "nullable_string_schema", required)]
     #[schema(required = true, nullable = true)]
     pub next: Option<String>,
@@ -730,13 +707,13 @@ impl From<CurrentPlaceActivityPage> for CurrentPlaceActivityPageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct CurrentPlaceEntityStatePageOutput {
-    /// Safe exact current Place derived from the current Character.
+    /// The current Place.
     pub place: CurrentPlaceOutput,
-    /// Opaque strong revision shared by exact-current-Place reads.
+    /// Revision of the current Place.
     pub place_revision: String,
-    /// One selected exact-local Entity with compact safe fields.
+    /// The selected Entity.
     pub entity: CurrentPlaceEntityOutput,
-    /// One combined bounded current Property/Trait association page.
+    /// One page of current Properties and Traits.
     pub current_state: EntityCurrentStatePageOutput,
 }
 
@@ -757,11 +734,11 @@ impl From<CurrentPlaceEntityStatePage> for CurrentPlaceEntityStatePageOutput {
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
 pub struct AcceptedActionOutput {
-    /// One immutable Activity containing the canonical accepted prose.
+    /// The accepted Activity with its prose.
     pub activity: ActivityOutput,
-    /// Exact tagged consequence accepted by World.
+    /// The accepted consequence.
     pub consequence: AcceptedActionConsequenceOutput,
-    /// Exact Place at which World accepted the Action.
+    /// The Place where the Action was accepted.
     pub place: PlaceOutput,
 }
 

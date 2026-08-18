@@ -21,14 +21,25 @@ cargo dev
 The launcher uses database `aicadia_local`, starts one Rust process on loopback
 port `3000`, provisions a User only on the first start, opens Aicadia Studio and
 prints its URL, the MCP URL and the exact Agent command. `cargo dev` is the Cargo
-alias for the owned `studio/tools/aicadia-local` launcher. When PostgreSQL was installed
-as a keg-only Homebrew formula, the launcher discovers its client commands without
-requiring a shell `PATH` change. Supply another PostgreSQL administration
-connection when the local default does not apply:
+alias for the owned `studio/tools/aicadia-local` launcher. Without `DATABASE_URL`,
+the launcher checks the conventional loopback PostgreSQL endpoint and each installed,
+started Homebrew `postgresql` service at its configured port. It selects exactly one
+reachable local administration connection; none or multiple fail visibly. The
+bounded selection never scans arbitrary ports, and every launcher-owned PostgreSQL
+client call is non-interactive, so it never opens a password prompt.
+
+When PostgreSQL was installed as a keg-only Homebrew formula, the launcher also
+discovers its client commands without requiring a shell `PATH` change. Supply
+another PostgreSQL administration connection when automatic local selection does
+not apply:
 
 ```sh
 DATABASE_URL='postgres://localhost/postgres' cargo dev
 ```
+
+An explicit `DATABASE_URL` is authoritative and is never replaced by an automatic
+fallback. It must connect non-interactively, using credentials supplied outside the
+launcher when credentials are required. The launcher never stores credentials.
 
 Use `cargo dev --no-open` to leave the browser closed. The launcher stores only
 the selected database name and stable User UUID in the ignored private

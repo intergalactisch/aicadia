@@ -18,6 +18,23 @@ Aicadia has one current game contract. Read it in this order:
 
 The current contract is authoritative over exploration history.
 
+## Reading paths by change
+
+Before changing one of these, read the named files in this order; the last column
+is the file that owns the change. Every other file on the path is read for the
+facts it owns and is edited only when its own fact changes.
+
+| Change | Read in this order | Owner to edit |
+| --- | --- | --- |
+| One capability's input, validation, result, Activity footprint or annotation class | [its capability contract](#capability-contracts) → the model contracts it is constrained by ([model contracts](#model-contracts)) → [shared value validation](domain.md#shared-value-validation) → [wire shapes](protocol.md#wire-shapes) and [canonical errors](protocol.md#canonical-errors) → [adapter parity](adapter-parity.md) → the owning flow in [Agent play contract](agent.md) → its description in `../mcp/agent/tool/<tool>.md` | `capability/<tool>.md`, then `../src/`, `../tests/world/`, `../tests/server/` |
+| A model's fields, roles, uniqueness or storage | [its model contract](#model-contracts) → [domain contract](domain.md) → [storage contract](storage.md) → `../migration/` → every capability contract that names the model | `model/<model>/README.md`, then `storage.md` and a new migration |
+| Request context, delivery identity, wire shape, HTTP mapping or error code | [protocol contract](protocol.md) → [adapter parity](adapter-parity.md) → `../src/wire/*.rs` → [MCP publication invariants](protocol.md#mcp-publication-invariants) → `../mcp/tool-catalog.json` | `protocol.md`, then `../src/wire/`, one catalog regeneration |
+| What a playing Agent is told — the play contract, a tool description or a schema description | [instruction layering](agent.md#instruction-layering) → `../mcp/agent/instruction/*.md` → `../mcp/agent/tool/*.md` → doc comments in `../src/wire/*.rs` → pins in `../src/agent_contract.rs` → `../mcp/tool-catalog.json` | the one source file of that layer, then one catalog regeneration |
+| How the local product starts, connects or resets | [local play](local-play.md) → `../../studio/tools/aicadia-local` → `../tools/aicadia-agent` → `../../studio/tests/aicadia-local.sh` | `local-play.md`, then the named tool and its fixture |
+
+Development-side surfaces — Studio pages, runners, records — are not on this
+table; the documentation constitution's home table names their owning files.
+
 ## Model contracts
 
 - [World seam](model/world/README.md)

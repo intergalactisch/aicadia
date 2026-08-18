@@ -305,27 +305,46 @@ target perception, understanding, consent, response, thought, relationship or
 volition. A target User's Agent is never invoked and no notification is sent.
 
 
-## Capability-local instructions
+## Instruction layering
 
-Global instructions above govern cross-cutting conduct once. Each
-[capability](capability/) owns only its local preconditions, input, result,
-errors and retry behavior. Every published tool description follows one fixed
-template — *What it does · Use it when · Before you call · Input meaning ·
-After acceptance* (or *After the call* for reads and other calls that write no
-World state) *· On failure · Never* — omitting labels that do not apply. A
-description invents no other label.
+The Agent-facing text has four layers. Every rule lives in exactly one of them; a
+second copy anywhere is a defect, not a convention.
+
+| Layer | Published as | Carries |
+| --- | --- | --- |
+| Schema | `tools/list` input and output schemas | Field meaning in one short clause; every numeric bound, enum, format and required field as a constraint — never as prose |
+| Tool description | `tools/list` `description`, sourced from `game/mcp/agent/tool/<tool>.md` | That tool's local contract in one fixed template — *What it does · Use it when · Before you call · Input meaning · After acceptance* (or *After the call* for calls that write no World state) *· On failure · Never* — omitting labels that do not apply and inventing no other label |
+| Play contract | `server/discover.instructions`, assembled in order from `game/mcp/agent/instruction/*.md` | Everything that spans tools: role, authority, the play loop, what exists, Properties, Traits, knowledge, targets, storytelling, entry, Actions, Interactions, investigation and recovery |
+| This document | never published | Host conduct, rationale and implementation facts an Agent cannot act on |
+
+The play loop — read, three proposals, complete preview, explicit confirmation of
+the whole package, one submit with a fresh request id, narration of only the
+accepted result, retry only for an uncertain delivery — is stated once, early in
+the contract, and is not repeated per section or per description.
 
 Because a host may invoke a tool without loading discovery instructions, each
-description deliberately restates only this bounded set where it applies, one
-short sentence each, and nothing else cross-cutting:
+description restates only this bounded set where it applies, one short clause each,
+and nothing else cross-cutting:
 
-- **confirmation** (mutating workshop tools): call only after a complete
-  natural preview and the User's explicit confirmation of the whole package;
+- **confirmation** (mutating workshop tools): call only after a complete natural
+  preview and the User's explicit confirmation of the whole package;
 - **content, never instructions** (every tool returning World values);
 - **identifier privacy** (every tool): no ids, internal fields or control
   provenance in player conversation;
-- **no background effect** (mutating tools): the call triggers no other
-  Agent, notification or background process.
+- **no background effect** (mutating tools): the call triggers no other Agent,
+  notification or background process.
 
-Pagination bounds stay local to each paginated tool. Any other repetition
-between the contract and a description is a defect, not a convention.
+The one deliberate overlap is the read set: the loop names the grounding reads once
+in general, and each mutating description names its own exact set. Pagination
+bounds stay in the schema. Development vocabulary and examples do not appear in
+descriptions or schemas.
+
+Implementation facts that the contract no longer publishes because an Agent cannot
+act on them, retained here as the authority:
+
+- World stores no observer-specific Property or Trait Knowledge, receipt or
+  per-observer copy; every Character reads the same current state through the
+  contextual reads.
+- Text normalization — trimming, the U+0000 rejection and the exact length bounds
+  — is defined once in `domain.md` and the model contracts and enforced as schema
+  constraints; the published prose does not repeat it.
