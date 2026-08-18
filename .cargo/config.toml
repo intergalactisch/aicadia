@@ -1,2 +1,3 @@
 [alias]
-dev = "run --quiet --bin aicadia-dev --"
+dev = "run --quiet -p aicadia-studio --bin aicadia-dev --"
+brief = "run --quiet -p aicadia-studio --bin aicadia-brief --"

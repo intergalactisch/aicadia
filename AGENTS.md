@@ -2,13 +2,13 @@
 
 > **Role / side:** always-loaded build constitution / development side.
 > **Authority:** governs compact cross-task build rules.
-> **Excludes:** volatile game scope and delivery status; see `docs/game/` and `docs/evidence/`.
+> **Excludes:** volatile game scope and delivery status; see `game/docs/` and `dev/docs/evidence/`.
 
 Aicadia is an MMO-like shared-world discovery and settlement game. Human users
 connect their own AI agents over MCP to inspect and extend one persistent shared
 world. The game server is dumb and strict; all inference spends the user's own
 tokens. Keep this file compact — always-on build rules only. The current build
-contract lives in `docs/game/`. `docs/concept/` is exploration history: it may inform
+contract lives in `game/docs/`. `dev/docs/concept/` is exploration history: it may inform
 discussion but never governs current implementation.
 
 ## Terry
@@ -22,7 +22,7 @@ actor, action, state, ownership and nomenclature agree; is this the smallest saf
 build needed now; and does the evidence prove exactly the claim being made? Terry
 does not require speculative completeness or perfection. Development may remain
 deliberately incomplete when its current boundary, evidence claim and next concrete
-risk are explicit; `docs/game/` remains the current truth.
+risk are explicit; `game/docs/` remains the current truth.
 
 ## Build Heuristics
 
@@ -35,13 +35,13 @@ validation, cleanup, plumbing or documentation work does not win merely because 
 is bounded; it may be next only when it unlocks a meaningful game capability or
 retires a concrete blocker or risk on the selected edge. A working slice is not a
 reason to keep polishing it: when its contract no longer contains the highest-value
-advance, decide the next concrete game behavior, update `docs/game/`, then build it.
+advance, decide the next concrete game behavior, update `game/docs/`, then build it.
 
 ### Plan Before Build
 
 Before a non-trivial build changes code, schema, executable behavior, authoritative
 docs or operations, create one proportional plan at
-`.agents/plans/<YYYYMMDD-HHMMSS>-<slug>/plan.md`. Align the strategic player or
+`dev/plans/<YYYYMMDD-HHMMSS>-<slug>/plan.md`. Align the strategic player or
 World outcome, tactical smallest complete slice, technical seams and exact evidence;
 keep material questions in `draft` and grill until resolved. Present the plan and
 wait for explicit User acceptance before implementation. Keep accepted plans as
@@ -100,14 +100,14 @@ ordering or uniqueness rule.
 
 The complete current MVP contract—including domain shape, capability surface,
 provisioning and operator boundaries, and explicit deferrals—lives only in
-`docs/game/`. Code may not exceed that contract until a next player or World behavior
+`game/docs/`. Code may not exceed that contract until a next player or World behavior
 is explicitly accepted there. Next-work selection is not limited to the current
 surface: once its value is sufficiently proved, choose the next missing game
-outcome, decide its concrete contract, update `docs/game/`, then implement it.
+outcome, decide its concrete contract, update `game/docs/`, then implement it.
 
 ### One Home Per Truth
 
-`docs/README.md` is the binding placement constitution. Put each current fact in
+`dev/docs/README.md` is the binding placement constitution. Put each current fact in
 exactly one owning authority and link to it from every other surface; never maintain
 the same truth in parallel homes. Follow its side, evidence, reference, sweep,
 role-header and bounded-size rules.
@@ -204,7 +204,7 @@ both appear in one lab.
 
 `claim`, `world_event`, `rule`, event sourcing and every related status
 or projection are undecided and outside the current MVP. Do not add their tables,
-types, fields, interfaces or abstractions until `docs/game/` explicitly introduces
+types, fields, interfaces or abstractions until `game/docs/` explicitly introduces
 required current behavior.
 
 ### Agent Intelligence, Dumb And Strict World
@@ -256,7 +256,7 @@ Every Aicadia choice that changes or constrains product direction, domain model,
 behavior, architecture, implementation, evidence or operation is incomplete until
 recorded when it crystallizes. Record accepted, rejected, deferred, corrected and
 superseded choices with their material reason, current status and affected scope in
-the current period file of `docs/concept/log/` (per its README); omit
+the current period file of `dev/docs/concept/log/` (per its README); omit
 shell-command trivia. Repository records, not conversation memory, carry design and
 research forward. Start or resume by rereading the owning repository trail. During
 an unfinished grill or design session, maintain one active concept record that
@@ -268,14 +268,14 @@ including exactly one question per turn.
 In the same change, update, correct or remove every affected authority so known-stale
 documentation is never left behind. Keep the homes distinct: the active concept
 record owns current exploration state; the concept log owns decision history;
-`docs/research/` plus its index owns sourced facts and implications; `docs/game/`
-owns only accepted current behavior and implementation; `CONTEXT.md` owns canonical
-vocabulary; `docs/evidence/` owns delivery and evidence history plus evidence-machine
-operation contracts; and `docs/README.md` owns placement. A project-designated
-`lab/` owns non-authoritative experiments and bounded verdicts, never choices.
+`dev/docs/research/` plus its index owns sourced facts and implications; `game/docs/`
+owns only accepted current behavior and implementation; `dev/CONTEXT.md` owns canonical
+vocabulary; `dev/docs/evidence/` owns delivery and evidence history plus evidence-machine
+operation contracts; and `dev/docs/README.md` owns placement. The project-designated
+`dev/lab/` owns non-authoritative experiments and bounded verdicts, never choices.
 Retained lab artifacts remain experimental and may not be imported, copied or
 promoted directly into production. Write the full choice once in its authority and
-link to it elsewhere. `docs/concept/` cannot override `docs/game/` or this file.
+link to it elsewhere. `dev/docs/concept/` cannot override `game/docs/` or this file.
 Amend this file only for an explicitly accepted, compact rule that should govern
 work across tasks.
 
@@ -292,9 +292,9 @@ current state and each concrete domain result keep their own simplest model.
 
 ### The Backlog Is Forward State
 
-`.agents/backlog/README.md` orders the current development edge and later concrete
+`dev/backlog/README.md` orders the current development edge and later concrete
 game outcomes. It is planning state, never an implementation contract and never a
-replacement for `docs/game/` or the concept log. Keep at most one item active. Update
+replacement for `game/docs/` or the concept log. Keep at most one item active. Update
 an item's current scope, status, dependencies and completion evidence when material
 insight or implementation changes it; record the underlying product or architecture
 choice once in its proper authority and link to it. Do not turn every idea into an
@@ -318,8 +318,8 @@ story to smuggle in an unchosen concept or speculative infrastructure.
 
 ## Reference Docs
 
-- Documentation constitution: `docs/README.md`
-- Current build contract: `docs/game/`
-- Delivery and evidence history: `docs/evidence/`
-- Exploration history: `docs/concept/`
-- Research: `docs/research/`
+- Documentation constitution: `dev/docs/README.md`
+- Current build contract: `game/docs/`
+- Delivery and evidence history: `dev/docs/evidence/`
+- Exploration history: `dev/docs/concept/`
+- Research: `dev/docs/research/`

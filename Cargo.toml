@@ -1,16 +1,21 @@
-[package]
-name = "aicadia"
+[workspace]
+members = ["game", "dev", "studio"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
-default-run = "aicadia"
 
-[dependencies]
+[workspace.dependencies]
+aicadia = { package = "aicadia-game", path = "game" }
+aicadia-studio = { path = "studio" }
 axum = "0.8.6"
 base64 = "0.22.1"
 chrono = { version = "0.4.45", features = ["serde"] }
 maud = { version = "0.27", default-features = false }
 pulldown-cmark = "0.13.4"
 rand = { version = "0.9.5", default-features = false, features = ["os_rng"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["json"] }
 rmcp = { version = "=3.1.1", default-features = false, features = ["server", "macros", "schemars", "transport-streamable-http-server"] }
 schemars = { version = "1.2.2", features = ["chrono04", "uuid1"] }
 serde = { version = "1.0.228", features = ["derive"] }
@@ -28,6 +33,3 @@ thiserror = "2.0.19"
 tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "net", "signal"] }
 utoipa = { version = "5.5.0", features = ["axum_extras", "chrono", "uuid"] }
 uuid = { version = "1.23.4", features = ["serde", "v4"] }
-
-[dev-dependencies]
-reqwest = { version = "0.13.4", default-features = false, features = ["json"] }

@@ -12,14 +12,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "aicadia"
+name = "aicadia-dev-tools"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
+ "tokio",
+]
+
+[[package]]
+name = "aicadia-game"
 version = "0.1.0"
 dependencies = [
  "axum",
  "base64 0.22.1",
  "chrono",
- "maud",
- "pulldown-cmark",
  "rand 0.9.5",
  "reqwest",
  "rmcp",
@@ -29,6 +35,27 @@ dependencies = [
  "sha2",
  "sqlx",
  "thiserror",
+ "tokio",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "aicadia-studio"
+version = "0.1.0"
+dependencies = [
+ "aicadia-game",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "maud",
+ "pulldown-cmark",
+ "reqwest",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sqlx",
  "tokio",
  "utoipa",
  "uuid",

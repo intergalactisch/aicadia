@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Entity · Models · Aicadia Studio</title>
+<link rel="stylesheet" href="studio.css?v=4">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="bar">
+  <button class="menu-toggle" type="button" aria-label="Open section navigation" aria-expanded="false" aria-controls="tree">☰</button>
+  <a class="mark" href="#"><span class="mark-glyph" aria-hidden="true">A</span><span class="mark-name">Aicadia <small>Studio</small></span></a>
+  <nav class="sections" aria-label="Studio sections">
+    <a href="#">Overview</a>
+    <a href="#" aria-current="page">Game</a>
+    <a href="#">Development</a>
+    <a href="#">Live</a>
+  </nav>
+  <div class="bar-end">
+    <form class="jump" role="search" aria-label="Jump to a resource">
+      <span class="jump-glyph" aria-hidden="true">⌕</span>
+      <input type="search" name="q" placeholder="Jump to a model, capability, record, table or id…" aria-label="Jump to">
+      <kbd>/</kbd>
+    </form>
+    <div class="pulse" data-state="connected"><span class="pulse-dot" aria-hidden="true"></span><span><b>aicadia_local</b> · read 16:07</span></div>
+    <button class="btn btn-quiet" type="button">Refresh</button>
+  </div>
+</header>
+
+<div class="frame">
+  <nav class="tree" id="tree" aria-label="Game">
+    <p class="tree-title">Runtime side<b>Game</b></p>
+    <ul>
+      <li><a href="#">Overview</a></li>
+    </ul>
+    <div class="tree-group">
+      <p class="tree-label">Models</p>
+      <ul>
+        <li><a href="#">World seam</a></li>
+        <li><a href="#">User</a></li>
+        <li><a href="#" aria-current="page">Entity <small>2 tables</small></a></li>
+        <li><a href="#">Character</a></li>
+        <li><a href="#">Place</a></li>
+        <li><a href="#">Activity <small>2 tables</small></a></li>
+        <li><a href="#">Property <small>3 tables</small></a></li>
+        <li><a href="#">Trait <small>3 tables</small></a></li>
+        <li><a href="#">Investigation attempt</a></li>
+      </ul>
+    </div>
+    <div class="tree-group">
+      <p class="tree-label">Capabilities <span class="sr">15</span></p>
+      <ul>
+        <li><a href="#">get_world</a></li>
+        <li><a href="#">get_user</a></li>
+        <li><a href="#">get_character</a></li>
+        <li><a href="#">create_character</a></li>
+        <li><a href="#">create_entry_place</a></li>
+        <li><a href="#">enter_world</a></li>
+        <li><a href="#">list_activity</a></li>
+        <li><a href="#">create_entity</a></li>
+        <li><a href="#">list_entity_at_current_place</a></li>
+        <li><a href="#">list_activity_at_current_place</a></li>
+        <li><a href="#">get_entity_at_current_place</a></li>
+        <li><a href="#">start_investigation</a></li>
+        <li><a href="#">submit_action</a></li>
+        <li><a href="#">submit_interaction</a></li>
+        <li><a href="#">submit_discovery</a></li>
+      </ul>
+    </div>
+    <div class="tree-group">
+      <p class="tree-label">Agent surface</p>
+      <ul>
+        <li><a href="#">Play contract <small>16 sections</small></a></li>
+        <li><a href="#">Tool catalog <small>15</small></a></li>
+        <li><a href="#">Host requirements</a></li>
+      </ul>
+    </div>
+    <div class="tree-group">
+      <p class="tree-label">Contract</p>
+      <ul>
+        <li><a href="#">Domain overview</a></li>
+        <li><a href="#">Protocol</a></li>
+        <li><a href="#">Adapter parity</a></li>
+        <li><a href="#">Agent play</a></li>
+        <li><a href="#">Storage <small>10 migrations</small></a></li>
+        <li><a href="#">Deferred</a></li>
+        <li><a href="#">Local play</a></li>
+        <li><a href="#">Vocabulary <small>21 terms</small></a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main" id="content" tabindex="-1">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="#">Game</a><span class="sep">/</span><a href="#">Models</a><span class="sep">/</span><span class="here">Entity</span>
+    </nav>
+
+    <header class="head">
+      <div class="seals">
+        <span class="seal seal-moss">Current contract</span>
+        <span class="seal seal-plain">Subject</span>
+        <span class="seal seal-plain">Runtime side</span>
+      </div>
+      <h1>Entity</h1>
+      <p class="lede">One durable World subject that later participants must be able to refer to again. Names are display text, not identifiers.</p>
+      <div class="plate">
+        <div class="plate-row">
+          <span class="plate-key">Home</span><span>Model contract</span>
+          <span class="plate-key">Path</span><code class="fact">game/docs/model/entity/README.md</code>
+          <span class="plate-key">Tables</span><code class="fact">entity · entity_location</code>
+          <span class="plate-key">Referenced by</span><span>14 records</span>
+        </div>
+        <div class="plate-actions">
+          <button class="btn btn-small" type="button">Copy reference</button>
+          <button class="btn btn-small btn-quiet" type="button">Copy path</button>
+        </div>
+        <p class="plate-authority">Authority: current Entity subject semantics — identity, description, what an Entity may carry and its optional current Place relation — independent of adapters and storage layout.</p>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="content">
+        <article class="prose">
+<pre><code>struct Entity {
+    id: EntityId,
+    name: String,
+    description: String,
+    introduced_by_user_id: UserId,
+    introduced_at: DateTime&lt;Utc&gt;,
+}</code></pre>
+<p>An Entity is one durable World subject that later participants must be able to refer to again. Names are display text, not identifiers, and are not unique. Entity has no type, kind, taxonomy, ownership or discovery claim. <code>introduced_by_user_id</code> says who introduced the record, not who fictionally created, owns or discovered the subject.</p>
+<p>Every Entity may carry zero or more Properties without changing or revealing its role. A Property is one Entity-owned canonical <code>key = value</code>; its value is text or a signed 64-bit integer. Characters, Places, furniture, flora, fauna and ordinary Entities use the same model. Property is not ownership, control provenance, a score, a Trait or prose.</p>
+<p>Every Entity may also carry zero or more Traits without changing or revealing its role. A Trait has one World-assigned stable id, belongs to exactly one Entity and stores one current non-executable statement through an immutable predecessor-linked version lineage. Its unique root version is the sole establishing Activity provenance; development retains the same Trait id and advances only its current pointer.</p>
+<h2 id="authority-split">Authority split <a class="anchor" href="#authority-split">#</a></h2>
+<p>A User never receives a direct profile or Property-storage edit. The User steers and confirms the complete meaning, the Agent proposes exact initial state or an Action/Interaction consequence, and World alone validates and writes. No accepted Property input identifies which Entities are User-controlled. There is no direct Trait editor.</p>
+<p>Property keys and values are user-authored in-World content, including keys or text such as <code>user_controlled</code>, <code>npc</code> or <code>owner_user_id</code>. They may make fictional claims, but never establish or reveal actual User, Character, NPC, ownership or control provenance.</p>
+<h2 id="placement">Placement <a class="anchor" href="#placement">#</a></h2>
+<p>An ordinary Entity may have zero or one explicit current Place relation. Absence is valid and is never inferred from prose or Activity.</p>
+        </article>
+
+        <section class="section" aria-labelledby="storage">
+          <h2 id="storage">Realized storage</h2>
+          <p class="section-note">Introspected from the connected <code>aicadia_local</code> schema at 16:07 · migration 10 · fingerprint <code class="fact">3f9c…b41e</code></p>
+          <h3 class="subhead"><a href="#">public.entity</a></h3>
+          <div class="data-wrap">
+          <table class="data">
+            <thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Default</th><th>Constraint</th></tr></thead>
+            <tbody>
+              <tr><td class="fact">id</td><td class="fact">uuid</td><td class="mute">no</td><td class="mute">—</td><td class="mute">primary key</td></tr>
+              <tr><td class="fact">name</td><td class="fact">text</td><td class="mute">no</td><td class="mute">—</td><td class="mute">1–120 chars, trimmed</td></tr>
+              <tr><td class="fact">description</td><td class="fact">text</td><td class="mute">no</td><td class="mute">—</td><td class="mute">1–4000 chars, trimmed</td></tr>
+              <tr><td class="fact">introduced_by_user_id</td><td class="fact">uuid</td><td class="mute">no</td><td class="mute">—</td><td class="mute">→ user(id)</td></tr>
+              <tr><td class="fact">introduced_at</td><td class="fact">timestamptz</td><td class="mute">no</td><td class="fact">clock_timestamp()</td><td class="mute">index (introduced_at desc, id desc)</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <h3 class="subhead"><a href="#">public.entity_location</a></h3>
+          <div class="data-wrap">
+          <table class="data">
+            <thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Default</th><th>Constraint</th></tr></thead>
+            <tbody>
+              <tr><td class="fact">entity_id</td><td class="fact">uuid</td><td class="mute">no</td><td class="mute">—</td><td class="mute">primary key · → entity(id)</td></tr>
+              <tr><td class="fact">place_entity_id</td><td class="fact">uuid</td><td class="mute">no</td><td class="mute">—</td><td class="mute">→ place(entity_id) · index (place_entity_id, entity_id)</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="relations">
+          <h2 id="relations">Relations</h2>
+          <p class="section-note">Ordered foreign keys entering or leaving this model's tables.</p>
+          <div class="data-wrap">
+          <table class="data">
+            <thead><tr><th>From</th><th>To</th><th>On delete</th><th>Model</th></tr></thead>
+            <tbody>
+              <tr><td class="fact">entity(introduced_by_user_id)</td><td class="fact">user(id)</td><td class="mute">no action</td><td><a href="#">User</a></td></tr>
+              <tr><td class="fact">entity_location(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td class="mute">this model</td></tr>
+              <tr><td class="fact">entity_location(place_entity_id)</td><td class="fact">place(entity_id)</td><td class="mute">restrict</td><td><a href="#">Place</a></td></tr>
+              <tr><td class="fact">character(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td><a href="#">Character</a></td></tr>
+              <tr><td class="fact">place(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td><a href="#">Place</a></td></tr>
+              <tr><td class="fact">activity_entity(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td><a href="#">Activity</a></td></tr>
+              <tr><td class="fact">entity_property(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td><a href="#">Property</a></td></tr>
+              <tr><td class="fact">entity_property_history(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td><a href="#">Property</a></td></tr>
+              <tr><td class="fact">entity_trait(entity_id)</td><td class="fact">entity(id)</td><td class="mute">restrict</td><td><a href="#">Trait</a></td></tr>
+            </tbody>
+          </table>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="capabilities">
+          <h2 id="capabilities">Capabilities that link here</h2>
+          <ul class="list">
+            <li><a href="#">create_entity</a><small>POST /api/entity · MCP create_entity</small></li>
+            <li><a href="#">list_entity_at_current_place</a><small>GET /api/place/current/entity</small></li>
+            <li><a href="#">get_entity_at_current_place</a><small>GET /api/place/current/entity/{entity_id}</small></li>
+            <li><a href="#">submit_action</a><small>POST /api/action · introduce_entity</small></li>
+            <li><a href="#">submit_discovery</a><small>POST /api/discovery</small></li>
+          </ul>
+        </section>
+
+        <footer class="colophon">
+          <span>Reference · <code class="fact">[Aicadia Studio · Entity model](http://127.0.0.1:3000/game/model/entity) — game/docs/model/entity/README.md; storage: entity, entity_location</code></span>
+          <button class="btn btn-small btn-quiet" type="button">Copy</button>
+        </footer>
+      </div>
+
+      <aside class="related" aria-label="Related">
+        <section class="panel">
+          <h2>Vocabulary</h2>
+          <p style="margin:0;font:400 14px/1.5 var(--voice-contract);color:var(--ink-soft)"><b style="font-weight:600;color:var(--ink)">Entity</b> — One thing or concept that needs a stable identity so participants can refer to the same subject again. <em>Avoid:</em> object, item, record. <a href="#">dev/CONTEXT.md</a></p>
+        </section>
+        <section class="panel outline">
+          <h2>On this page</h2>
+          <a href="#authority-split" data-level="2">Authority split</a>
+          <a href="#placement" data-level="2">Placement</a>
+          <a href="#storage" data-level="2">Realized storage</a>
+          <a href="#relations" data-level="2">Relations</a>
+          <a href="#capabilities" data-level="2">Capabilities</a>
+        </section>
+        <section class="panel">
+          <h2>Storage</h2>
+          <ul>
+            <li><a href="#">public.entity</a><small>5 columns</small></li>
+            <li><a href="#">public.entity_location</a><small>2 columns</small></li>
+            <li><a href="#">Browse rows</a><small>Live</small></li>
+          </ul>
+        </section>
+        <section class="panel">
+          <h2>Referenced by</h2>
+          <ul>
+            <li><a href="#">Entity state rationale</a><small>concept</small></li>
+            <li><a href="#">Character-grounded knowledge</a><small>concept</small></li>
+            <li><a href="#">Uniform Entity creation and state-change packages</a><small>plan</small></li>
+            <li><a href="#">Uniform Entity-state evidence</a><small>evidence</small></li>
+            <li><a href="#">Stable identity and sparse location</a><small>research</small></li>
+            <li><a href="#">12 decision entries</a><small>log</small></li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>

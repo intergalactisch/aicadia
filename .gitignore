@@ -1,7 +1,7 @@
 /target/
-/lab/**/target/
-/.aicadia-playtest/
-/.aicadia-trait-playtest/
-/.aicadia-local/
+/dev/lab/**/target/
+/dev/.playtest/agent/
+/dev/.playtest/trait/
+/dev/.local/
 /.idea/
 /.playwright-mcp/

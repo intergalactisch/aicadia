@@ -6,6 +6,6 @@
 
 Claude Code reads this file first. Read the always-on build constitution in
 **[AGENTS.md](./AGENTS.md)** before writing code or documentation. Use the
-**[documentation constitution](./docs/README.md)** to place repository truth, the
-**[canonical vocabulary](./CONTEXT.md)** for domain terms and the
-**[current game contract](./docs/game/README.md)** for executable behavior.
+**[documentation constitution](./dev/docs/README.md)** to place repository truth, the
+**[canonical vocabulary](./dev/CONTEXT.md)** for domain terms and the
+**[current game contract](./game/docs/README.md)** for executable behavior.

@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+readonly PORT="${AICADIA_PORT:-3000}"
+readonly BASE_URL="http://127.0.0.1:${PORT}"
+readonly MCP_URL="${BASE_URL}/mcp"
+PLAYER_DIR=''
+PLAYER_WORK_DIR=''
+PLAYER_HOME=''
+PLAYER_CODEX_HOME=''
+
+fail() {
+    printf 'aicadia-agent: %s\n' "$*" >&2
+    return 1
+}
+
+usage() {
+    printf "Usage: AICADIA_USER_ID='<stable-uuid>' ./game/tools/aicadia-agent\n"
+}
+
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    if [[ -n "$PLAYER_DIR" ]]; then
+        case "$PLAYER_DIR" in
+            "$WORK_ROOT"/aicadia-player.*)
+                [[ ! -L "$PLAYER_DIR" ]] && rm -rf -- "$PLAYER_DIR"
+                ;;
+        esac
+    fi
+    exit "$status"
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+case "${1:-}" in
+    '') ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; fail 'this command accepts no options or prompt'; exit 2 ;;
+esac
+[[ $# -eq 0 ]] || { usage >&2; fail 'this command accepts no options or prompt'; exit 2; }
+
+[[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) \
+    || { fail 'AICADIA_PORT must be an integer from 1 through 65535'; exit 1; }
+[[ "${AICADIA_USER_ID:-}" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]] \
+    || { fail 'AICADIA_USER_ID must contain the stable local User UUID'; exit 1; }
+for dependency in codex curl jq mktemp; do
+    command -v "$dependency" >/dev/null 2>&1 \
+        || { fail "required program is unavailable: $dependency"; exit 1; }
+done
+readonly CODEX_BIN="$(command -v codex)"
+
+if [[ -n "${AICADIA_LOCAL_TEST_STATE_DIR:-}" ]]; then
+    [[ "${AICADIA_LOCAL_TESTING:-0}" == 1 ]] \
+        || { fail 'AICADIA_LOCAL_TEST_STATE_DIR is available only when AICADIA_LOCAL_TESTING=1'; exit 1; }
+    [[ "$AICADIA_LOCAL_TEST_STATE_DIR" == /* ]] \
+        || { fail 'AICADIA_LOCAL_TEST_STATE_DIR must be an absolute path'; exit 1; }
+    STATE_DIR="$AICADIA_LOCAL_TEST_STATE_DIR"
+else
+    STATE_DIR="$REPO_DIR/dev/.local"
+fi
+readonly STATE_DIR
+readonly PROFILE="$STATE_DIR/profile.json"
+
+[[ -f "$PROFILE" && ! -L "$PROFILE" ]] \
+    || { fail 'the stable local profile is unavailable; start cargo dev first'; exit 1; }
+jq -e --arg user_id "$AICADIA_USER_ID" '
+    type == "object"
+    and (keys == ["database_name", "user_id", "version"])
+    and .version == 1
+    and .user_id == $user_id
+' "$PROFILE" >/dev/null 2>&1 \
+    || { fail 'AICADIA_USER_ID does not match the stable local profile'; exit 1; }
+
+user_response="$(curl --silent --show-error --fail --connect-timeout 2 --max-time 10 \
+    --header "Aicadia-User-Id: $AICADIA_USER_ID" "$BASE_URL/api/user")" \
+    || { fail 'Aicadia is not available; keep the launcher running and try again'; exit 1; }
+jq -e --arg id "$AICADIA_USER_ID" '.id == $id' <<<"$user_response" >/dev/null 2>&1 \
+    || { fail 'Aicadia returned a different local User'; exit 1; }
+
+discover_response="$(curl --silent --show-error --fail --connect-timeout 2 --max-time 10 \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/json, text/event-stream' \
+    --header 'MCP-Protocol-Version: 2026-07-28' \
+    --header 'Mcp-Method: server/discover' \
+    --data '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"aicadia-agent","version":"1"},"io.modelcontextprotocol/clientCapabilities":{}}}}' \
+    "$MCP_URL")" \
+    || { fail 'the Aicadia player contract is unavailable; keep the launcher running and try again'; exit 1; }
+contract_toml="$(jq -ec '.result.instructions | select(type == "string")' <<<"$discover_response")" \
+    || { fail 'the Aicadia player contract is unavailable'; exit 1; }
+
+WORK_ROOT="$(cd "${TMPDIR:-/tmp}" 2>/dev/null && pwd -P)" \
+    || { fail 'the temporary working directory is unavailable'; exit 1; }
+readonly WORK_ROOT
+case "$WORK_ROOT/" in
+    "$REPO_DIR/"*) fail 'the player working directory must be outside the development repository'; exit 1 ;;
+esac
+
+umask 077
+PLAYER_DIR="$(mktemp -d "$WORK_ROOT/aicadia-player.XXXXXXXX")" \
+    || { fail 'could not create the isolated player working directory'; exit 1; }
+chmod 700 "$PLAYER_DIR"
+PLAYER_WORK_DIR="$PLAYER_DIR/workspace"
+PLAYER_HOME="$PLAYER_DIR/home"
+PLAYER_CODEX_HOME="$PLAYER_HOME/.codex"
+mkdir -p "$PLAYER_WORK_DIR" "$PLAYER_CODEX_HOME"
+chmod 700 "$PLAYER_WORK_DIR" "$PLAYER_HOME" "$PLAYER_CODEX_HOME"
+
+source_codex_home="${CODEX_HOME:-$HOME/.codex}"
+if [[ -f "$source_codex_home/auth.json" && ! -L "$source_codex_home/auth.json" ]]; then
+    cp -- "$source_codex_home/auth.json" "$PLAYER_CODEX_HOME/auth.json"
+    chmod 600 "$PLAYER_CODEX_HOME/auth.json"
+fi
+
+
+codex_args=(
+    --enable mcp_2026_07_28
+    --disable shell_tool
+    --disable unified_exec
+    --disable browser_use
+    --disable browser_use_external
+    --disable in_app_browser
+    --config 'suppress_unstable_features_warning=true'
+    --config 'web_search="disabled"'
+    --config 'tools.web_search=false'
+    --config "mcp_servers.aicadia.url=\"$MCP_URL\""
+    --config 'mcp_servers.aicadia.enabled=true'
+    --config 'mcp_servers.aicadia.required=true'
+    --config 'mcp_servers.aicadia.default_tools_approval_mode="approve"'
+    --config 'mcp_servers.aicadia.env_http_headers={"Aicadia-User-Id"="AICADIA_USER_ID"}'
+    --config "developer_instructions=$contract_toml"
+)
+
+(
+    cd "$PLAYER_WORK_DIR"
+    env HOME="$PLAYER_HOME" CODEX_HOME="$PLAYER_CODEX_HOME" \
+        AICADIA_USER_ID="$AICADIA_USER_ID" "$CODEX_BIN" "${codex_args[@]}"
+)
