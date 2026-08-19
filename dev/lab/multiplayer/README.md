@@ -18,9 +18,10 @@ The current proposed execution contract is the draft
 The active product exploration remains
 [`concurrency-and-world-dynamics.md`](../../../dev/docs/concept/concurrency-and-world-dynamics.md).
 
-The reusable [`scenario catalogue`](scenarios.md) fixes hard narratives and fixtures
-so successive experiments test the same cases. It deliberately leaves product
-outcomes open and has no authority over current game behavior.
+The Multiplayer Area's reusable
+[`scenario catalogue`](../../areas/multiplayer/scenarios.md) fixes hard narratives
+and fixtures so successive experiments test the same cases. It deliberately leaves
+product outcomes open and has no authority over current game behavior.
 
 ## Experiments
 

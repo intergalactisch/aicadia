@@ -1,12 +1,17 @@
 ---
-status: live
+status: retained
 ---
 
-# Discovery and investigation
+# Retained Discovery and investigation rationale
 
-> **Role / side:** live concept exploration of investigation and stochastic discovery rolls / development side.
-> **Authority:** current discovery rationale, responsibility boundaries, roll transport, provenance, frontier decisions and prototype
-> **Excludes:** Executable behavior, delivery evidence and the separate knowledge, interaction, spatial, time and tabletop themes.
+> **Role / side:** retained rationale and exploration history for investigation and stochastic discovery rolls / development side.
+> **Authority:** preserves the responsibility reasoning, roll transport choices, corrections, prototype trail and frontier history from which the current Discovery synthesis was derived.
+> **Excludes:** current Discovery synthesis, executable behavior, delivery evidence and the separate knowledge, interaction, spatial, time and tabletop themes; see `dev/areas/discovery/`, `game/docs/` and `dev/docs/evidence/`.
+
+> Current meaning, boundaries, decisions, unresolved landscape and technical direction
+> are owned by the [Discovery Area](../../areas/discovery/README.md). Statements below
+> retain rationale and historical context; exact delivered behavior remains in the
+> game contract.
 
 This record preserves the August 2026 discovery direction. It cannot expand the executable MVP; only [the current game contract](../../../game/docs/README.md) can do that.
 
@@ -29,7 +34,7 @@ investigation and roll. What a Character makes, brings or places remains ordinar
 confirmed Action introduction. World cannot enforce the distinction; the Agent
 contract states it and deterministic Agent evidence exercises it.
 
-## Confirmed responsibility split
+## Recorded responsibility split
 
 | Actor | Confirmed responsibility | Must not do |
 |---|---|---|
@@ -41,7 +46,7 @@ contract states it and deterministic Agent evidence exercises it.
 The Agent is not a durable game actor. A different Agent or a restarted conversation
 for the same Character does not create a fresh identity or private World.
 
-## Confirmed interaction direction
+## Recorded interaction direction
 
 The direction established so far is:
 
@@ -106,7 +111,7 @@ generic Discovery table or Entity. In the first slice a positive attempt becomes
 unusable only when it is consumed, voided by the hoarding rule or the Character is no
 longer at its Place; unrelated World changes never stale it.
 
-### Ownership direction
+### Recorded ownership direction
 
 Ownership here means authoritative responsibility, not legal or player ownership.
 The existing architecture already places the public game-behavior seam at `World`;
@@ -184,7 +189,7 @@ tokens based only on unrelated state remain usable. A Character-global
 would let one conversation silently invalidate unrelated work in another. No
 replacement marker is stored merely to serialize the Character.
 
-### Post-roll grounding — reopened on 2026-08-15
+### Post-roll grounding — recorded reopening on 2026-08-15
 
 Independent T1 review proved that the earlier positive payload could not satisfy its
 own retry and scale invariants. Place state is paginated and may grow without a
@@ -394,7 +399,7 @@ allowing conversation count to increase throughput.
 Delivery history and current status: see [discovery
 evidence](../evidence/discovery.md).
 
-## Resolved design frontier after T1 correction
+## Recorded design-frontier resolution after T1 correction
 
 The grill resolved the main domain choices, then T1 review caught one incoherent
 combination: mutable Place context could not be both bounded and byte-identical on

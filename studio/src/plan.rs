@@ -173,12 +173,14 @@ pub struct OpenSection {
     pub body: String,
 }
 
-/// Every `Open …` section of live concept records, live plans and backlog items.
+/// Every durable unresolved Area section and every `Open …` section of live
+/// concept records, live plans and backlog items.
 pub fn open_section(repository: &Repository) -> Vec<OpenSection> {
     let mut open = Vec::new();
     for record in repository.record() {
         let home_id = record.home_id();
         let eligible = match home_id {
+            "development-area" => true,
             "concept-record" | "backlog-item" => !record.metadata_frozen,
             "plan" => matches!(
                 record.front_matter.scalar("status"),
@@ -190,7 +192,13 @@ pub fn open_section(repository: &Repository) -> Vec<OpenSection> {
             continue;
         }
         for heading in &record.heading {
-            if !(2..=3).contains(&heading.level) || !heading.title.starts_with("Open") {
+            let area_gap = home_id == "development-area"
+                && matches!(
+                    (heading.level, heading.title.as_str()),
+                    (3, "Not yet chosen") | (2, "Research needed")
+                );
+            let named_open = (2..=3).contains(&heading.level) && heading.title.starts_with("Open");
+            if !area_gap && !named_open {
                 continue;
             }
             let Some(body) = section(&record.body, &heading.title, heading.level) else {
@@ -370,7 +378,7 @@ mod tests {
     }
 
     #[test]
-    fn open_sections_come_from_live_concept_records_live_plans_and_backlog_items() {
+    fn open_sections_include_area_landscape_live_concepts_plans_and_backlog_items() {
         let repository = repository(&[
             ("dev/plans/20260817-studio/plan.md", PLAN),
             (
@@ -385,6 +393,10 @@ mod tests {
                 "dev/backlog/items/local.md",
                 "# Local\n\n> **Role / side:** forward-planning item / development side.\n> **Authority:** state.\n\n## Open dependency\n\nNeeds a decision.\n",
             ),
+            (
+                "dev/areas/place/README.md",
+                "# Place\n\n> **Role / side:** current Place synthesis / development side.\n> **Authority:** current synthesis.\n\n## Decisions\n\n### Not yet chosen\n\n- Boundary geometry.\n\n## Research needed\n\n- Hot Place admission.\n",
+            ),
         ]);
 
         let open = open_section(&repository)
@@ -395,6 +407,16 @@ mod tests {
         assert_eq!(
             open,
             vec![
+                (
+                    "dev/areas/place/README.md".to_owned(),
+                    "Not yet chosen".to_owned(),
+                    "- Boundary geometry.".to_owned()
+                ),
+                (
+                    "dev/areas/place/README.md".to_owned(),
+                    "Research needed".to_owned(),
+                    "- Hot Place admission.".to_owned()
+                ),
                 (
                     "dev/backlog/items/local.md".to_owned(),
                     "Open dependency".to_owned(),

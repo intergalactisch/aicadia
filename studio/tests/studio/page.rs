@@ -107,7 +107,7 @@ async fn the_overview_names_the_state_of_aicadia_and_every_section(pool: PgPool)
 
     assert!(html.contains("State of Aicadia"));
     assert!(html.contains("<title>State of Aicadia · Aicadia Studio</title>"));
-    for section in ["/game", "/development", "/live"] {
+    for section in ["/game", "/dev", "/live"] {
         assert!(
             html.contains(&format!("href=\"{section}\"")),
             "the Overview should link to {section}"
@@ -126,7 +126,7 @@ async fn every_section_landing_renders_its_own_tree(pool: PgPool) {
 
     for (path, expected) in [
         ("/game", "Models"),
-        ("/development", "Decisions"),
+        ("/dev", "Decisions"),
         ("/live", "Subjects"),
     ] {
         let html = server.html(path).await;
@@ -273,7 +273,7 @@ async fn every_link_of_every_section_tree_resolves(pool: PgPool) {
     let server = StudioServer::start(pool).await;
 
     let mut visited: HashMap<String, String> = HashMap::new();
-    for section in ["/", "/game", "/development", "/live"] {
+    for section in ["/", "/game", "/dev", "/live"] {
         let html = server.html(section).await;
         for href in tree_href(&html) {
             let (path, fragment) = href

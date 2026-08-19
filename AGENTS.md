@@ -146,6 +146,20 @@ the technical state, ownership, transaction, contention and cost consequence. St
 what happens with millions of Users and one deliberately hot subject; never ask the
 User to choose between unexplained implementation terms.
 
+### Vocabulary Is Negotiated
+
+Never introduce an Aicadia-owned product, domain, behavior, architecture or data
+term as current merely because it is convenient. First compare it with
+`dev/CONTEXT.md`, explain the concrete actor, action or state it distinguishes and
+give included and excluded examples, then negotiate it with the User. Until explicit
+acceptance, label it `working`, `candidate` or `unaccepted` in its owning exploration
+and never let it constrain an Area's `Chosen` section, a plan, `game/docs/`, schema,
+API or code. On acceptance, update `dev/CONTEXT.md` and every affected current
+authority together. If an unaccepted term is found carrying current invariants, stop
+dependent work, reopen it with the User and correct the affected current authorities;
+retained history remains history. Ordinary English and ecosystem vocabulary need no
+negotiation unless they begin carrying Aicadia-specific meaning.
+
 ### Game And Server Vocabulary
 
 Treat Aicadia as a game under development, never as a literary platform. Every term

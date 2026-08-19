@@ -25,9 +25,9 @@ use crate::{
     register::{self, Entry, Register},
 };
 
-const DEVELOPMENT_PATH: &str = "/development";
+const DEVELOPMENT_PATH: &str = "/dev";
 
-/// `/development` — one source-backed index of the development side.
+/// `/dev` — one source-backed index of the development side.
 pub(crate) async fn development(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -52,16 +52,16 @@ pub(crate) async fn development(
     let page = Page::new(Section::Development, "Development")
         .with_document_title("Development · Aicadia Studio")
         .with_lede(
-            "Direction, recorded choices, open work, research, experiments, evidence and the rules that govern every build.",
+            "Current Area syntheses, selected work, recorded choices, research, experiments, evidence and the rules that govern every build.",
         )
         .with_plate(
             Plate::new(vec![
                 PlateRow::text(
-                    "Direction",
+                    "Concept records",
                     super::count(
                         repository.in_home("concept-record").len(),
-                        "live record",
-                        "live records",
+                        "record",
+                        "records",
                     ),
                 ),
                 PlateRow::text(
@@ -92,7 +92,7 @@ pub(crate) async fn development(
     context.render(page)
 }
 
-/// `/development/direction` — every live concept record and its confirmed/open headings.
+/// `/dev/direction` — concept rationale and exploration records.
 pub(crate) async fn direction(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -103,10 +103,12 @@ pub(crate) async fn direction(
         Err(response) => return response,
     };
     let records = context.repository().in_home("concept-record");
-    let confirmed_count = records
+    let decision_count = records
         .iter()
         .flat_map(|record| &record.heading)
-        .filter(|heading| heading.title.starts_with("Confirmed"))
+        .filter(|heading| {
+            heading.title.starts_with("Confirmed") || heading.title.starts_with("Recorded")
+        })
         .count();
     let open_count = records
         .iter()
@@ -114,18 +116,18 @@ pub(crate) async fn direction(
         .filter(|heading| heading.title.starts_with("Open"))
         .count();
 
-    let page = development_page(&context, "Direction", "/development/direction")
+    let page = development_page(&context, "Direction", "/dev/direction")
         .with_lede(
-            "Live exploration records, with every confirmed and still-open section linked at its owning heading.",
+            "Exploration history and retained rationale. Development Areas own the current synthesis for their subjects.",
         )
         .with_plate(
             Plate::new(vec![
                 PlateRow::text("Records", records.len().to_string()),
-                PlateRow::text("Confirmed sections", confirmed_count.to_string()),
+                PlateRow::text("Decision sections", decision_count.to_string()),
                 PlateRow::text("Open sections", open_count.to_string()),
             ])
             .with_authority(
-                "Each status and heading is read from its concept record; accepted game behavior still lives only in game/docs/.",
+                "Each record preserves its own rationale or exploration state; Areas own current synthesis and game/docs alone owns exact behavior.",
             ),
         )
         .with_content(direction_content(&records));
@@ -142,7 +144,7 @@ pub(crate) struct DecisionFilter {
     tag: Option<String>,
 }
 
-/// `/development/decision` — the filterable append-only concept-log register.
+/// `/dev/decision` — the filterable append-only concept-log register.
 pub(crate) async fn decision(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -159,7 +161,7 @@ pub(crate) async fn decision(
     entry.retain(|(_, entry)| decision_matches(entry, &filter));
     let showing = entry.len();
 
-    let page = development_page(&context, "Decision register", "/development/decision")
+    let page = development_page(&context, "Decision register", "/dev/decision")
         .with_lede(
             "Every recorded choice, correction, rejection and deferral, filterable by its source-owned date, topic, tag and text.",
         )
@@ -169,7 +171,7 @@ pub(crate) async fn decision(
                 PlateRow::text("Showing", showing.to_string()),
                 PlateRow::text("Periods", register.len().to_string()),
             ])
-            .with_action(vec![Action::link("Clear filters", "/development/decision")])
+            .with_action(vec![Action::link("Clear filters", "/dev/decision")])
             .with_authority(
                 "The register is parsed from dev/docs/concept/log; Studio adds only facets and stable page anchors.",
             ),
@@ -195,7 +197,7 @@ pub(crate) async fn decision(
     context.render(page)
 }
 
-/// `/development/open` — every parsed live `Open …` section.
+/// `/dev/open` — durable Area gaps and every parsed live `Open …` section.
 pub(crate) async fn open(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -207,15 +209,15 @@ pub(crate) async fn open(
     };
     let open = plan::open_section(context.repository());
 
-    let page = development_page(&context, "Open questions", "/development/open")
+    let page = development_page(&context, "Open landscape", "/dev/open")
         .with_seal(vec![Seal::status("Open")])
         .with_lede(
-            "Every open section in a live concept record, draft or active plan, or backlog item, without a second question list.",
+            "Durable unresolved choices and research needs from Areas, plus every open section in a live concept, plan or backlog source.",
         )
         .with_plate(
             Plate::new(vec![PlateRow::text("Sections", open.len().to_string())])
                 .with_authority(
-                    "The heading and body remain owned by the linked source; completed and frozen plans are excluded by the projection.",
+                    "Areas own the durable landscape; Work sources alone select, order and execute it. Completed and frozen plans are excluded.",
                 ),
         )
         .with_content(open_content(context.repository(), &open))
@@ -227,7 +229,7 @@ pub(crate) async fn open(
     context.render(page)
 }
 
-/// `/development/research` — the research index; each report opens in the shared reader.
+/// `/dev/research` — the research index; each report opens in the shared reader.
 pub(crate) async fn research(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -240,13 +242,13 @@ pub(crate) async fn research(
     context.render(record_index_page(
         &context,
         "Research",
-        "/development/research",
+        "/dev/research",
         "Research reports and their source-owned standing; each report opens in the governed record reader.",
         &["research-report"],
     ))
 }
 
-/// `/development/evidence` — delivery slices and runner contracts.
+/// `/dev/evidence` — delivery slices and runner contracts.
 pub(crate) async fn evidence(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -259,13 +261,13 @@ pub(crate) async fn evidence(
     context.render(record_index_page(
         &context,
         "Evidence",
-        "/development/evidence",
+        "/dev/evidence",
         "Delivery evidence and evidence-producing runner contracts, read from their owning records.",
         &["evidence-slice", "runner-contract"],
     ))
 }
 
-/// `/development/work` — current edge, live plan boards, horizon and capability map.
+/// `/dev/work` — current edge, live plan boards, horizon and capability map.
 pub(crate) async fn work(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -287,7 +289,7 @@ pub(crate) async fn work(
         .filter(|row| row.horizon.eq_ignore_ascii_case("Now"))
         .count();
 
-    let page = development_page(&context, "Current edge and work", "/development/work")
+    let page = development_page(&context, "Current edge and work", "/dev/work")
         .with_lede(
             "The selected edge, every draft or active plan as its own task board, and the ordered backlog horizon.",
         )
@@ -315,7 +317,7 @@ pub(crate) async fn work(
     context.render(page)
 }
 
-/// `/development/lab` — every track and experiment with its complete metadata.
+/// `/dev/lab` — every track and experiment with its complete metadata.
 pub(crate) async fn lab(State(state): State<StudioState>, header: HeaderMap, uri: Uri) -> Response {
     let context = match Context::build(&state, &header, &uri).await {
         Ok(context) => context,
@@ -324,7 +326,7 @@ pub(crate) async fn lab(State(state): State<StudioState>, header: HeaderMap, uri
     let tracks = context.repository().in_home("lab-track");
     let experiments = context.repository().in_home("lab-experiment");
 
-    let page = development_page(&context, "Lab", "/development/lab")
+    let page = development_page(&context, "Lab", "/dev/lab")
         .with_lede(
             "Tracks and bounded experiments with their question, real and simulated seams, verdict, artifact status and informed decision.",
         )
@@ -342,7 +344,7 @@ pub(crate) async fn lab(State(state): State<StudioState>, header: HeaderMap, uri
     context.render(page)
 }
 
-/// `/development/rules` — every build heuristic from `AGENTS.md`.
+/// `/dev/rules` — every build heuristic from `AGENTS.md`.
 pub(crate) async fn rules(
     State(state): State<StudioState>,
     header: HeaderMap,
@@ -358,7 +360,7 @@ pub(crate) async fn rules(
         .expect("AGENTS.md is a governed required record");
     let heuristic = heuristic_headings(record);
 
-    let page = development_page(&context, "Build rules", "/development/rules")
+    let page = development_page(&context, "Build rules", "/dev/rules")
         .with_lede(
             "The build heuristics of AGENTS.md, rendered directly from the constitution that governs this repository.",
         )
@@ -414,14 +416,15 @@ fn development_index(repository: &Repository) -> Markup {
         section class="section" {
             h2 { "Explore the development side" }
             ul class="list" role="list" {
-                (index_row("Direction", "/development/direction", repository.in_home("concept-record").len(), "record", "records"))
-                (index_row("Decision register", "/development/decision", registers(repository).iter().map(|register| register.entry.len()).sum(), "entry", "entries"))
-                (index_row("Open questions", "/development/open", plan::open_section(repository).len(), "section", "sections"))
-                (index_row("Research", "/development/research", research, "report", "reports"))
-                (index_row("Current edge and work", "/development/work", plan.iter().filter(|plan| plan.is_live()).count(), "live plan", "live plans"))
-                (index_row("Lab", "/development/lab", experiment, "experiment", "experiments"))
-                (index_row("Evidence", "/development/evidence", evidence, "slice", "slices"))
-                (index_row("Build rules", "/development/rules", rules, "heuristic", "heuristics"))
+                (index_row("Current edge and work", "/dev/work", plan.iter().filter(|plan| plan.is_live()).count(), "live plan", "live plans"))
+                (index_row("Development Areas", "/dev/areas", repository.in_home("development-area").len(), "area", "areas"))
+                (index_row("Direction", "/dev/direction", repository.in_home("concept-record").len(), "record", "records"))
+                (index_row("Decision register", "/dev/decision", registers(repository).iter().map(|register| register.entry.len()).sum(), "entry", "entries"))
+                (index_row("Open landscape", "/dev/open", plan::open_section(repository).len(), "section", "sections"))
+                (index_row("Research", "/dev/research", research, "report", "reports"))
+                (index_row("Lab", "/dev/lab", experiment, "experiment", "experiments"))
+                (index_row("Evidence", "/dev/evidence", evidence, "slice", "slices"))
+                (index_row("Build rules", "/dev/rules", rules, "heuristic", "heuristics"))
             }
         }
     }
@@ -435,7 +438,7 @@ fn direction_content(records: &[&Record]) -> Markup {
     html! {
         div data-direction-record-count=(records.len()) {
             @for record in records {
-                @let confirmed = record.heading.iter().filter(|heading| heading.title.starts_with("Confirmed")).collect::<Vec<_>>();
+                @let confirmed = record.heading.iter().filter(|heading| heading.title.starts_with("Confirmed") || heading.title.starts_with("Recorded")).collect::<Vec<_>>();
                 @let open = record.heading.iter().filter(|heading| heading.title.starts_with("Open")).collect::<Vec<_>>();
                 section class="section" id=(home::file_name(&record.path).trim_end_matches(".md")) {
                     h2 { a href=(doc_href(&record.path)) { (&record.title) } }
@@ -447,8 +450,8 @@ fn direction_content(records: &[&Record]) -> Markup {
                     }
                     div class="state-grid" {
                         section class="state" {
-                            h2 { "Confirmed sections" }
-                            (heading_list(record, &confirmed, "No confirmed section is named in this record."))
+                            h2 { "Decision sections" }
+                            (heading_list(record, &confirmed, "No confirmed or recorded decision section is named in this record."))
                         }
                         section class="state" {
                             h2 { "Open sections" }
@@ -548,7 +551,7 @@ fn decision_content(
     let dates = unique(entries.iter().map(|(_, entry)| entry.date.as_str()));
 
     html! {
-        form class="toolbar" action="/development/decision" method="get" role="search" {
+        form class="toolbar" action="/dev/decision" method="get" role="search" {
             input type="search" name="q" value=[filter.q.as_deref()]
                 placeholder="Filter loaded decision text…" aria-label="Filter decision text";
             @if let Some(value) = nonempty(&filter.date) { input type="hidden" name="date" value=(value); }
@@ -749,10 +752,10 @@ fn facet_href(filter: &DecisionFilter, facet: &str, value: &str) -> String {
         }
     }
     if item.is_empty() {
-        return "/development/decision".to_owned();
+        return "/dev/decision".to_owned();
     }
     format!(
-        "/development/decision?{}",
+        "/dev/decision?{}",
         item.into_iter()
             .map(|(key, value)| format!("{key}={}", encode_query(value)))
             .collect::<Vec<_>>()
@@ -1149,7 +1152,7 @@ fn status_class(value: &str) -> &'static str {
 
 /// Render a record fragment with raw HTML escaped and governed links rewritten
 /// to the shared Studio reader. The fragment never invents headings or content.
-fn markdown(repository: &Repository, source_path: &str, source: &str) -> Markup {
+pub(super) fn markdown(repository: &Repository, source_path: &str, source: &str) -> Markup {
     let mut event = Vec::new();
     let mut disabled_link = false;
     for item in Parser::new_ext(source, Options::all()) {

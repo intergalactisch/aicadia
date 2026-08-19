@@ -1,12 +1,17 @@
 ---
-status: active
+status: retained
 ---
 
-# Mass concurrency and living World direction
+# Retained mass-concurrency and living-World rationale
 
-> **Role / side:** active concept exploration of crowd concurrency, sparse World change and scale progression / development side.
-> **Authority:** current rationale, candidate direction and open decisions for a large living Aicadia World.
-> **Excludes:** accepted game behavior, implementation contracts, delivery claims and sourced technical findings; see `game/docs/`, `dev/docs/evidence/` and `dev/docs/research/`.
+> **Role / side:** retained rationale and exploration history for crowd concurrency, sparse World change and scale progression / development side.
+> **Authority:** preserves the reasoning, candidates and decision trail from which the current Multiplayer synthesis was derived.
+> **Excludes:** current Multiplayer synthesis, accepted game behavior, implementation contracts, delivery claims and sourced technical findings; see `dev/areas/multiplayer/`, `game/docs/`, `dev/docs/evidence/` and `dev/docs/research/`.
+
+> Current meaning, boundaries, decisions, unresolved landscape and technical direction
+> are owned by the [Multiplayer Area](../../areas/multiplayer/README.md). Statements
+> retained below provide rationale and historical context; they are not a parallel
+> current-work or implementation authority.
 
 No candidate direction below is accepted game behavior.
 
@@ -22,7 +27,7 @@ distribution, hot-subject skew, latency objective, accepted rejection behavior,
 storage horizon and recovery objective. This record therefore separates semantic
 contention from total platform throughput.
 
-## Confirmed current boundaries
+## Recorded governing boundaries
 
 These facts are already governed by `AGENTS.md` and `game/docs/`; this record does
 not change them:
@@ -47,7 +52,7 @@ No current evidence makes a production-throughput, hosted availability or
 million-User claim. Several current queries return bounded pages but are not yet
 proven to perform bounded work for arbitrarily large Place occupancy or history.
 
-## Confirmed User direction
+## Recorded User direction
 
 On 2026-08-16 the User sharpened the product direction:
 
@@ -107,7 +112,7 @@ human visual or semantic interaction is itself the evidence. The first observati
 fixture is migrated rather than duplicated; lab code still cannot be copied or
 promoted directly into production.
 
-## Confirmed Q1 direction — persistent placement, dormant perception
+## Recorded Q1 choice — persistent placement, dormant perception
 
 A Character that is still held by its player remains canonically placed when the
 User or host disconnects. Disconnecting does not remove, teleport or protect it by
@@ -128,7 +133,7 @@ NPC decision source, activity cadence and safety rules remain open. This directi
 does not authorize a server LLM, a background Agent call or generic autonomous
 simulation.
 
-## Confirmed Q2 direction — explicit subscribed attention
+## Recorded Q2 choice — explicit subscribed attention
 
 For a player-controlled Character, active attention begins only after its
 authenticated host obtains an authoritative baseline for the current Character and
@@ -143,7 +148,7 @@ copy of each Activity and no LLM call. An always-connected host may keep listeni
 analogous to an online MMO client, but transport availability remains distinct from
 World truth and actual Agent knowledge.
 
-## Confirmed Q3 direction — public Place history is not personal memory
+## Recorded Q3 choice — public Place history is not personal memory
 
 A Character that arrives later at the exact Place may retrieve a bounded public
 occurrence such as the stone fall through local Place history. It may learn “the
@@ -160,7 +165,7 @@ only current aftermath was rejected because it would erase other players' durabl
 contribution from ordinary discovery; treating all local history as personal memory
 was rejected as false omniscience.
 
-## Confirmed Q4 direction — World owns eligibility, Agent owns presentation
+## Recorded Q4 choice — World owns eligibility, Agent owns presentation
 
 The User challenged typed `visible` and `audible` metadata as likely overkill and
 proposed comparing the Activity and Character locations, then letting the Agent
@@ -230,7 +235,7 @@ does not decide lossless ordering or catch-up. A real Agent smoke can later test
 whether already-authorized live context and public history are interpreted
 correctly; it cannot prove World authorization, privacy or delivery correctness.
 
-### Current real-Agent/MCP feasibility boundary
+### Recorded real-Agent/MCP feasibility boundary
 
 A read-only runtime audit found no honest live-subscription seam yet. The current
 Rust MCP server exposes stateless tools and no subscribe/listen or notification
@@ -272,7 +277,7 @@ canonical current fact simultaneously true. “Fully handles the burst” must m
 that World accepts, rejects or asks for a later attempt within explicit bounds,
 without duplicate facts, split current state, unbounded waits or retry collapse.
 
-### Current Rust mutation pressure
+### Recorded Rust mutation pressure
 
 The current implementation makes the scale blocker concrete. Both `submit_action`
 and `submit_interaction` lock the requesting User and then the current Place, compare
@@ -410,7 +415,7 @@ the precise technical consequence. Q6 was accepted only after being restated in
 those two layers. This communication requirement remains a compact
 Terry/build/grilling rule, not merely a conversational preference.
 
-### Open follow-up: cross-Property actions, listeners and cooldown
+### Recorded follow-up: cross-Property actions, listeners and cooldown
 
 The User's concrete Tree case tests the boundary of exact slots: one Agent wants to
 paint it blue while another wants to chop it. The first candidate explanation gave
@@ -438,7 +443,7 @@ communal facts could require their already-selected governance path. Whether tha
 voluntary protocol is worthwhile, who may require it, which structural actions earn
 mandatory reaction and whether stabilization is mechanic-owned remain open.
 
-### Confirmed intelligence ownership and property-agnostic calls
+### Recorded intelligence ownership and property-agnostic calls
 
 The User sharpened the boundary into a cross-task build rule: World must always stay
 semantically dumb, while explicitly invoked Agents own understanding and correct call
@@ -556,7 +561,7 @@ cooldown. Work proceeds step by step, with one concrete decision or bounded lab
 experiment at a time. No single downstream issue is promoted to “the core” before
 the complete concurrent World-change problem has been decomposed.
 
-#### Confirmed first decomposition: action-local interest and declared effect scope
+#### Recorded first decomposition: action-local interest and declared effect scope
 
 For the first concrete multiplayer case, a Character is at one Place beside a Tree
 and its Agent prepares a request to make that Tree blue. Every current World subject
@@ -636,7 +641,7 @@ million outbound deliveries when all are online; the system can share computatio
 coalesce hints and avoid automatic Agent calls, but cannot make that network work
 disappear.
 
-#### Confirmed Q7 direction — live and bounded under pressure
+#### Recorded Q7 choice — live and bounded under pressure
 
 The User selected coalescible live delivery over lossless per-recipient Activity
 delivery. During normal operation an active host should receive each relevant
@@ -655,7 +660,7 @@ lab evidence. No semantic priority is inferred by World: the delivery layer merg
 repeated dirtiness by resource, while the Agent interprets the bounded authoritative
 result.
 
-#### Confirmed unification direction — one change substrate
+#### Recorded unification direction — one change substrate
 
 The User rejected continuing as though concurrency coordination, Entity mutation,
 Activity, listeners, scoped World change and collective assembly were separate
@@ -687,7 +692,7 @@ must first prove that create, change, concurrent conflict, scoped effect, Activi
 and dirty-resource derivation can share one change kernel without importing a
 generic event or rule engine.
 
-#### Confirmed correction — compact structural reach, Agent-owned noticing
+#### Recorded correction — compact structural reach, Agent-owned noticing
 
 The User rejected a design in which an Agent must enumerate every Place covered by
 one large effect. If a sound, storm or other occurrence reaches one thousand houses,
@@ -728,7 +733,7 @@ product questions. The ownership direction is fixed: World filters structural an
 private eligibility; Agent-authored meaning plus receiving Agent interpretation owns
 fictional sight, hearing and other noticing.
 
-#### Confirmed reset — flat game model before mechanisms
+#### Recorded reset — flat game model before mechanisms
 
 The User rejected the proposed `Affordance`, causal-link and mechanical-runtime
 direction as too large, abstract and premature. That direction is withdrawn from
@@ -746,7 +751,7 @@ what final state and history World retains.
 Root asks exactly one concrete gameplay question at a time and updates this record
 before advancing. No replacement architecture is implied by this reset.
 
-### Confirmed scope: collective settlement is an explicit special authority
+### Recorded scope: collective settlement is an explicit special authority
 
 The User proposed turning extreme contention into gameplay: interested Agents could
 submit desired changes, exchange short arguments, vote or form a compromise within a
@@ -824,7 +829,7 @@ or projection state; it may never become a global World revision or semantic Pla
 identity. Exact current state plus bounded recent context may be sufficient if the
 game does not require every intermediate ambient occurrence to be recovered.
 
-### Candidate later catch-up direction — World lossless, attention bounded
+### Recorded catch-up candidate — World lossless, attention bounded
 
 The strongest current Terry recommendation is not “drop events” versus “keep
 events.” World truth and Character attention have different obligations:
@@ -861,7 +866,7 @@ bounded attention rather than lost World history. Rust can prove memory bounds,
 filtering and convergence for fixed lenses; only the User can decide whether this
 trade feels like presence rather than unfair blindness.
 
-## Candidate north-star direction
+## Recorded north-star candidate
 
 The following is a recommendation for discussion, not an accepted contract.
 
@@ -975,7 +980,7 @@ telemetry, backup/restore drills, failure injection and online migration discipl
 Only measured table size, maintenance pressure, read load or primary write capacity
 may earn PostgreSQL partitioning, replicas, caching or operational sharding.
 
-## Open decision catalogue
+## Recorded unresolved-decision catalogue
 
 ### Scale claim and admission
 
@@ -1139,7 +1144,7 @@ may earn PostgreSQL partitioning, replicas, caching or operational sharding.
 82. Which latency and loss claims apply separately to World commit, host wake-up,
     authorized refetch and eventual LLM consumption?
 
-## No-go directions
+## Recorded no-go directions
 
 - universal World ticks, per-Entity heartbeats or replay of every missed second;
 - server-generated prose, a hidden AI director, background Agent activation or

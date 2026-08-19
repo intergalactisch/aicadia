@@ -162,6 +162,30 @@ pointer sentence **when they are next edited for another reason**; no sweep rewr
 them at once. When a second document kind gets a fixed shape, it is added here as a
 subsection like the one above.
 
+### Development Area workbook
+
+The shape of `dev/areas/<area>/README.md`. The workbook owns current development
+synthesis for one flat subject lens. It may link the same underlying source as
+another Area, but never copies a fact owned by a runtime contract, research report,
+Lab, evidence record, backlog item or plan.
+
+| Section | Status | Carries |
+| --- | --- | --- |
+| Meaning | owned | a short explanation of the subject and why it matters to Aicadia |
+| Boundary → This is / This is not | owned | positive and negative scope; neither list is a decision status |
+| Decisions → Chosen / Rejected / Not yet chosen | owned | current directional disposition, with rejection distinct from absence or an unresolved choice |
+| Research needed | owned | durable questions that need sourced facts or an experiment; Work separately selects what is active |
+| Components | owned synthesis | the concepts and parts that make up the Area, with pointers where another source owns their exact meaning |
+| Technical model → Delivered / Directional / Absent | owned synthesis and pointers | executable structure by pointer, current unbuilt direction, and deliberately absent or unselected structure without presenting one as another |
+| Sources | pointer only | the owning contracts, rationale, research, Lab and evidence records a builder may need next |
+
+Every heading is present exactly once and in this order. `This is`, `This is not`,
+the three decision states and `Research needed` use explicit bullet items so Studio
+can preserve their distinctions without interpreting prose. A section with no items
+says `None.` rather than inventing a placeholder fact. The Area README never carries
+the selected current question, plan status, task state or backlog order; those are
+defined in Work sources.
+
 ## Change procedure
 
 Any change to build-facing text:

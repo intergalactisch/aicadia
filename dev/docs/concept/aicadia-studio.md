@@ -23,9 +23,39 @@ evidence in one clear interface without creating a second documentation authorit
 - `Game` projects accepted runtime documentation, domain models, exact compiled MCP
   tools, the assembled Agent surface, vocabulary, storage and deferrals from their
   owning sources.
-- `Development` projects live concept direction, decisions, source-owned open
-  sections, research, work, experiments, evidence and build rules without becoming
-  their authority.
+- `Development` projects current Area syntheses, retained concept rationale,
+  decisions, source-owned open landscape, research, work, experiments, evidence and
+  build rules without becoming their authority.
+- Within `Development`, `Areas` is the current development synthesis by durable
+  subject. Each Area work document owns what the area means, what it is and is not,
+  what has been chosen or rejected, what remains unchosen or needs research, which
+  components it contains and the current directional technical model. Exact
+  executable behavior remains defined in `game/docs/`; sourced findings, experiment
+  verdicts, delivery evidence and the selected current edge remain in Research,
+  Lab, Evidence and Work. Area overlap is allowed because Areas are flat navigation
+  lenses, but the same underlying fact still has one owner and is linked rather
+  than copied.
+- The first flat Area set is `Multiplayer`, `Place`, `Movement`, `Discovery`,
+  `Agent Play` and `World Change`. `Exploration` is not a separate Area in this set:
+  it is a player experience composed especially from Place, Movement and Discovery.
+  The singular route `/dev/areas/place` follows Aicadia's domain naming convention.
+- `Multiplayer` retains its scenario catalogue as Area-owned prepared material
+  rather than a child of the experimental Lab; relevant research, decisions and lab
+  experiments remain linked sources under their own authority.
+- Studio uses `/dev` as the canonical route for the complete `Development` section;
+  the longer `/development` prefix and compatibility aliases are absent. Its Area
+  hierarchy starts at `/dev/areas`, with `/dev/areas/multiplayer` and
+  `/dev/areas/multiplayer/scenarios` as the first overview routes. The completed
+  build and exact evidence claim are recorded in the
+  [`studio-development-areas` plan](../../plans/20260818-133015-studio-development-areas/plan.md)
+  and [local-play evidence](../evidence/local-play.md#source-backed-studio-development-areas--2026-08-18).
+- The fixed-shape current-truth workbooks and their distinct Area workspace were
+  delivered by the
+  [`area-current-truth` plan](../../plans/20260818-153439-area-current-truth/plan.md).
+  `Not yet chosen` and `Research needed` remain Area-owned durable landscape and
+  also appear under `/dev/open`; they never become current priority, plan state or
+  tasks until Work selects them. Exact projection and responsive-layout proof lives
+  in [local-play evidence](../evidence/local-play.md#current-truth-studio-area-workbooks--2026-08-18).
 - `Live` is connection-scoped. It browses one selected World's accepted records and
   storage shape read-only, with User, Character, Place, Entity, Property, Trait,
   investigation and Activity records presented as related domain views; generic

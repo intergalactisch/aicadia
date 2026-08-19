@@ -31,27 +31,40 @@ _Avoid_: User, Character, narrator
 
 **Character**:
 The User-owned role of the Entity through which player behavior enters the World. A
-Character has no identity separate from that Entity. It may be unplaced or have one
-complete current Place, and does not mean User, Agent, session or account.
+Character has no identity separate from that Entity. It may be unpositioned or have
+one complete current Position, which need not itself be a Place, and does not
+mean User, Agent, session or account.
 _Avoid_: User, Agent, avatar record with a separate identity
 
+**Position**:
+The optional exact current point of an Entity. A Place requires a Position, but a
+Position alone never makes an Entity a Place.
+_Avoid_: Transform, spatial placement, Location, Place, Anchor
+
 **Place**:
-The spatial role of an Entity. A Place uses the Entity's stable identity; it is not a
-coordinate, geometry, container or second Place id. The current World has at most one
-entry Place.
-_Avoid_: Location id, scene, node, coordinates
+The role of an Entity that World has established as an independent spatial reference
+for map, discovery, navigation or explicit spatial relationships. A Place uses the
+Entity's stable identity, requires its Position and may have an Area; the current
+World has at most one entry Place.
+_Avoid_: Position, Location id, scene, node, coordinates
+
+**Area**:
+The optional spatial coverage of a Place. It is not an Entity or exact Position and
+does not by itself establish movement, ownership, visibility or a Connection.
+_Avoid_: Position, Place, Development Area, universal containment
+
+**Connection**:
+An explicit structural fact that states which direct travel direction or directions
+exist between two Places. It is not an Entity or Route and is never inferred from
+Positions, Area overlap or proximity; a tangible door, bridge or road may be a
+separate Entity involved in it.
+_Avoid_: Entity, Route, inferred proximity, overlapping geometry
 
 **Place neighborhood**:
 A bounded view of explicit spatial relationships around one exact Place, such as
 containing and adjacent Places. It is not a metric radius, geometry, prose inference
 or automatic visibility.
 _Avoid_: Local context object, coordinate radius, everything nearby
-
-**Entity placement**:
-The optional current Place at which an ordinary Entity is established. It describes
-the Entity, not the acting Character: the target Place may differ from the Character's
-current Place and from Activity context Place.
-_Avoid_: Actor location, Activity context, ownership, discovery
 
 **Action**:
 An accepted Character-led operation whose primary game meaning is a typed World-
@@ -165,10 +178,14 @@ history. Prose is not current state or private workshop text.
 _Avoid_: Story record, mutable summary, conversation, structured consequence
 
 **Entity**:
-One thing or concept that needs a stable identity so participants can refer to the
-same subject again. A word, substance, amount, property or incidental detail is not
-an Entity merely because it appears in a description.
-_Avoid_: Object, item, record
+One durable, independently addressable subject in the World that can own state and
+history and participate in Actions, Interactions or typed relationships. Entity is
+the broad game identity, not a claim that every subject is a physical object. Every
+Entity has a name and description and may carry Properties and Traits; roles such as
+Character or Place add their own meaning and rules without creating another
+identity. A relationship, Activity, position, terrain value, spatial frame or other
+record is not an Entity merely because it has an id or refers to Entities.
+_Avoid_: Object-only meaning, item, database record
 
 **Public-facing text**:
 Text the repository publishes verbatim to a party outside it: the served play

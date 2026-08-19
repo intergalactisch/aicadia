@@ -14,6 +14,10 @@ matter.
 
 ## August Activity-Property-Trait era
 
+- [Entity and Place through a game-framework lens](entity-place-framework-boundary.md) — Can one broad game-framework Entity identity support objects, cities and named spatial subjects while typed roles and Relations keep Place, Position, Area, terrain, topology and other structural facts distinct?
+- [Spatial granularity in exploration worlds](exploration-world-spatial-granularity.md) — How do Civilization-style tiles, continuous open worlds, room graphs and hybrids represent terrain and the space between meaningful locations, and does Aicadia need spatial ground beneath Place?
+- [Spatial multiplayer foundation](spatial-multiplayer-foundation.md) — Which typed spatial, connectedness, relationship and authority truths let one sparse persistent World support open-ended exploration, creation and the complete multiplayer scenario catalogue without global contention or server inference?
+- [Spatial foundation through a five-year backcast](spatial-five-year-foundation.md) — Which spatial separations and technical pressures survive five years of million-player World growth, and what is the smallest present foundation that preserves that future without prebuilding it?
 - [D&D rules and durable campaign loops](dnd-rules-and-campaign-loops.md) — Which D&D play loops and rules make campaign play durable, and which underlying heuristics transfer to Aicadia without importing levels, scores or an omnipotent GM?
 - [D&D campaign meta-layers and storytelling](dnd-campaign-meta-and-storytelling.md) — Which D&D campaign practices sustain agency, continuity, tension and callbacks, and how can their functions remain separated across Aicadia's User, Agent, World and Activity?
 - [Tabletop narrative and meta patterns beyond D&D](tabletop-narrative-meta-beyond-dnd.md) — Which first-party tabletop techniques for authority, stakes, failure, oracles, pressure and recollection fit Aicadia, and what should not transfer unchanged?

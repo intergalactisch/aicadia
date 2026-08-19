@@ -166,7 +166,7 @@ fn overview(context: &Context) -> Vec<Group> {
                     "model",
                     "models",
                 )),
-                Leaf::link("Development", "/development").with_note(super::count(
+                Leaf::link("Development", "/dev").with_note(super::count(
                     plan::plans(repository)
                         .iter()
                         .filter(|plan| plan.is_live())
@@ -305,11 +305,11 @@ fn development(context: &Context) -> Vec<Group> {
     let direction_count = direction.len();
 
     vec![
-        Group::lead(vec![Leaf::link("Overview", "/development")]),
+        Group::lead(vec![Leaf::link("Overview", "/dev")]),
         Group::named(
             "Work",
             vec![
-                Leaf::link("Current edge", "/development/work"),
+                Leaf::link("Current edge", "/dev/work"),
                 Leaf::folder(
                     "Plans",
                     plan.iter()
@@ -324,25 +324,33 @@ fn development(context: &Context) -> Vec<Group> {
             ],
         ),
         Group::named(
+            "Areas",
+            vec![
+                Leaf::link("Overview", "/dev/areas"),
+                Leaf::folder("Development Areas", areas(context))
+                    .with_note(repository.in_home("development-area").len().to_string()),
+            ],
+        ),
+        Group::named(
             "Direction",
             vec![
-                Leaf::link("Overview", "/development/direction"),
+                Leaf::link("Overview", "/dev/direction"),
                 Leaf::folder("Records", direction).with_note(direction_count.to_string()),
             ],
         ),
         Group::named(
             "Decisions",
             vec![
-                Leaf::link("Register", "/development/decision")
+                Leaf::link("Register", "/dev/decision")
                     .with_note(super::count(entry, "entry", "entries")),
-                Leaf::link("Open questions", "/development/open")
+                Leaf::link("Open landscape", "/dev/open")
                     .with_note(super::count(open, "section", "sections")),
             ],
         ),
         Group::named(
             "Research",
             vec![
-                Leaf::link("Overview", "/development/research"),
+                Leaf::link("Overview", "/dev/research"),
                 Leaf::folder(
                     "Reports",
                     repository
@@ -357,7 +365,7 @@ fn development(context: &Context) -> Vec<Group> {
         Group::named(
             "Lab",
             vec![
-                Leaf::link("Overview", "/development/lab"),
+                Leaf::link("Overview", "/dev/lab"),
                 Leaf::folder("Tracks", lab(context))
                     .with_note(repository.in_home("lab-track").len().to_string()),
             ],
@@ -365,7 +373,7 @@ fn development(context: &Context) -> Vec<Group> {
         Group::named(
             "Evidence",
             vec![
-                Leaf::link("Overview", "/development/evidence"),
+                Leaf::link("Overview", "/dev/evidence"),
                 Leaf::folder(
                     "Slices",
                     repository
@@ -389,11 +397,58 @@ fn development(context: &Context) -> Vec<Group> {
         Group::named(
             "Rules",
             vec![
-                Leaf::link("Build rules", "/development/rules"),
+                Leaf::link("Build rules", "/dev/rules"),
                 Leaf::folder("Sources", rule).with_note(rule_count.to_string()),
             ],
         ),
     ]
+}
+
+/// Every Development Area with its direct prepared records.
+fn areas(context: &Context) -> Vec<Leaf> {
+    let repository = context.repository();
+    let records = repository.in_home("area-record");
+
+    repository
+        .in_home("development-area")
+        .into_iter()
+        .map(|area| {
+            let directory = crate::home::directory(&area.path);
+            let id = directory.rsplit('/').next().unwrap_or("");
+            let child = records
+                .iter()
+                .filter(|record| record.path.starts_with(&format!("{directory}/")))
+                .map(|record| {
+                    let href = if crate::home::file_name(&record.path) == "scenarios.md" {
+                        format!("/dev/areas/{id}/scenarios")
+                    } else {
+                        doc_href(&record.path)
+                    };
+                    let scenario_count = record
+                        .heading
+                        .iter()
+                        .filter(|heading| {
+                            let title = heading.title.as_bytes();
+                            heading.level == 2
+                                && title.len() > 4
+                                && title[0] == b'S'
+                                && title[1..3].iter().all(u8::is_ascii_digit)
+                                && title[3] == b' '
+                        })
+                        .count();
+                    let leaf = Leaf::link(&record.title, href);
+                    if scenario_count > 0 {
+                        leaf.counted(scenario_count, "scenario", "scenarios")
+                    } else {
+                        leaf
+                    }
+                })
+                .collect::<Vec<_>>();
+            Leaf::link(&area.title, format!("/dev/areas/{id}"))
+                .counted(child.len(), "record", "records")
+                .with_child(child)
+        })
+        .collect()
 }
 
 /// Every lab track with the experiments that live inside its own directory.

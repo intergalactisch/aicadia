@@ -942,6 +942,9 @@ impl Repository {
                     let directory = home::directory(&record.path);
                     format!("{}/README.md", home::directory(directory))
                 }
+                Index::DirectoryReadme => {
+                    format!("{}/README.md", home::directory(&record.path))
+                }
             };
             let Some(index) = self.get(&index_path) else {
                 finding.push(LintFinding {

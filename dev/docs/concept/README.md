@@ -15,6 +15,7 @@ its own exploration status in its front matter.
 - [Character-grounded knowledge](knowledge.md) — knowledge paths, identity ambiguity, World/Character context, shared/personal scope and retained frontier.
 - [Interaction participation rationale](interaction.md) — asymmetric participation; delivered behavior is a pointer to `game/docs/`.
 - [Spatial direction](spatial.md) — Place identity, sparse World and deliberately undecided geometry.
+- [Five-year spatial backcast](spatial-five-year-backcast.md) — complete source-backed recommendation for the long-term spatial foundation, scenario pressure, technical shape, abuse boundary and smallest present step; pending User decision.
 - [Time and change](time.md) — continuous time and the no-background-simulation boundary.
 - [Tabletop-derived play heuristics](tabletop.md) — cross-cutting play guidance and non-import boundary.
 - [Entity state rationale](entity-state.md) — Property/Trait distinction and uniform authority boundary; delivery uses its static evidence pointer.

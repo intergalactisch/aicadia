@@ -6,11 +6,12 @@ use std::{
 };
 
 /// Repository roots whose Markdown Studio projects. `target/` is never scanned.
-const GOVERNED_DIRECTORY: [&str; 8] = [
+const GOVERNED_DIRECTORY: [&str; 9] = [
     "game/docs",
     "game/mcp/agent",
     "game/migration",
     "dev/docs",
+    "dev/areas",
     "dev/backlog",
     "dev/plans",
     "dev/skills",
@@ -95,6 +96,8 @@ pub enum Index {
     Fixed(&'static str),
     /// The `README.md` of the directory above the record's own directory.
     ParentReadme,
+    /// The `README.md` beside a direct child record.
+    DirectoryReadme,
 }
 
 /// How a repository path is matched to a home.
@@ -436,6 +439,39 @@ pub static HOME: &[Home] = &[
         role_header: RoleHeaderRule::Required,
         vocabulary: Vocabulary::None,
         index: Index::Fixed("dev/docs/methodology/README.md"),
+    },
+    Home {
+        id: "area-index",
+        side: Side::Development,
+        rule: Rule::Exact("dev/areas/README.md"),
+        frozen: Frozen::No,
+        role_header: RoleHeaderRule::Required,
+        vocabulary: Vocabulary::None,
+        index: Index::None,
+    },
+    Home {
+        id: "development-area",
+        side: Side::Development,
+        rule: Rule::Readme {
+            prefix: "dev/areas",
+            depth: 1,
+        },
+        frozen: Frozen::No,
+        role_header: RoleHeaderRule::Required,
+        vocabulary: Vocabulary::None,
+        index: Index::Fixed("dev/areas/README.md"),
+    },
+    Home {
+        id: "area-record",
+        side: Side::Development,
+        rule: Rule::Leaf {
+            prefix: "dev/areas",
+            depth: 1,
+        },
+        frozen: Frozen::No,
+        role_header: RoleHeaderRule::Required,
+        vocabulary: Vocabulary::None,
+        index: Index::DirectoryReadme,
     },
     Home {
         id: "backlog-index",
@@ -792,13 +828,21 @@ mod tests {
             id("dev/skills/build-aicadia/assets/plan-template.md"),
             Some("skill-asset")
         );
+        assert_eq!(id("dev/areas/README.md"), Some("area-index"));
+        assert_eq!(
+            id("dev/areas/multiplayer/README.md"),
+            Some("development-area")
+        );
+        assert_eq!(
+            id("dev/areas/multiplayer/scenarios.md"),
+            Some("area-record")
+        );
         assert_eq!(id("dev/lab/README.md"), Some("lab-index"));
         assert_eq!(id("dev/lab/multiplayer/README.md"), Some("lab-track"));
         assert_eq!(
             id("dev/lab/multiplayer/01-a/README.md"),
             Some("lab-experiment")
         );
-        assert_eq!(id("dev/lab/multiplayer/scenarios.md"), Some("lab-record"));
         assert_eq!(id("dev/lab/multiplayer/01-a/note.md"), Some("lab-record"));
         assert_eq!(id("game/mcp/agent/README.md"), Some("agent-contract-index"));
         assert_eq!(

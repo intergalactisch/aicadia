@@ -89,9 +89,13 @@ are:
 - **Game** projects the runtime side: the current game contracts, one conventionally
   discovered page per model, the exact compiled MCP tools and input schemas, the
   assembled Agent surface, vocabulary, storage and explicit deferrals.
-- **Development** projects the development side: current concept direction, the
-  append-only decision register, source-owned open sections, research, plan task
-  graphs, the backlog horizon, retained experiments, evidence and build rules.
+- **Development** projects the development side: current Development Area
+  syntheses, retained concept rationale, the append-only decision register,
+  source-owned open landscape, research, plan task graphs, the backlog horizon,
+  retained experiments, evidence and build rules. Each Area distinguishes meaning,
+  positive and negative boundary, chosen, rejected and unchosen direction, research
+  needs, components and delivered/directional/absent technical layers. Work alone
+  projects the selected edge, its plans and execution state.
 - **Live** browses the one connected local World through bounded pages for Users,
   Characters, Places, Entities, Properties and Property keys, Traits,
   investigation attempts and Activity. It also exposes migration state,
@@ -99,7 +103,8 @@ are:
   rows for each introspected application table.
 
 Every resource has a server-rendered path URL such as `/game/model/entity`,
-`/development/work`, `/live/entity/<id>` or `/live/storage/entity`. Reloading,
+`/dev/work`, `/dev/areas/multiplayer/scenarios`, `/live/entity/<id>` or
+`/live/storage/entity`. Reloading,
 history and sharing therefore need no browser route state. A copied development
 reference combines that path with its owning repository source or durable record
 context so it can be used in an AI conversation without copying the underlying

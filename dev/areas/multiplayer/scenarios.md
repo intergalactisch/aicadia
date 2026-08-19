@@ -1,6 +1,6 @@
 # Unified World-change scenario catalogue
 
-> **Role / side:** reusable multiplayer scenario input / development side.
+> **Role / side:** Multiplayer Area scenario catalogue / development side.
 > **Authority:** owns the fixed narratives, fixtures and questions reused by
 > multiplayer experiments.
 > **Excludes:** accepted game behavior, expected product outcomes, production
@@ -12,7 +12,7 @@ current game contract. A scenario makes a hard case repeatable; it does not auth
 the capability it describes or choose its outcome.
 
 The catalogue tests the direction explored in the draft
-[`multiplayer-lab` plan](../../../dev/plans/20260816-153410-multiplayer-lab/plan.md):
+[`multiplayer-lab` plan](../../plans/20260816-153410-multiplayer-lab/plan.md):
 one Agent-authored World-change substrate should be able to express creation,
 mutation, multi-subject consequences and scoped effects. Current state, one durable
 Activity and dirty authoritative resources should follow from the same accepted

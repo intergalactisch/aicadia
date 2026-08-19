@@ -28,7 +28,7 @@ async fn game_mcp_and_studio_share_one_router_without_sharing_capabilities(pool:
     let client = Client::new();
     let origin = format!("http://{address}");
 
-    for path in ["/", "/game", "/development", "/live", "/brief"] {
+    for path in ["/", "/game", "/dev", "/live", "/brief"] {
         let response = client
             .get(format!("{origin}{path}"))
             .send()

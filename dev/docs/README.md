@@ -27,7 +27,7 @@ The development side governs how Aicadia is understood, researched, chosen, plan
 and built. It includes `dev/docs/README.md`, `AGENTS.md`, `CLAUDE.md`, `dev/CONTEXT.md`,
 `dev/docs/concept/` with its log and archive, `dev/docs/research/` with its archive,
 `dev/docs/methodology/`,
-`dev/backlog/`, `dev/plans/`, `dev/skills/`, `dev/lab/`, `dev/playtest/`,
+`dev/areas/`, `dev/backlog/`, `dev/plans/`, `dev/skills/`, `dev/lab/`, `dev/playtest/`,
 `dev/tests/`, and all of `studio/` except where the home table names a runtime
 operation fixture.
 
@@ -57,6 +57,7 @@ only through the static delivery-status pointer defined below.
 | `dev/docs/research/` | Development | Live sourced research | Each report and `dev/docs/research/README.md` | Questions, sources, findings, standing and implications | Product decisions or implementation contracts | Research begins, changes standing or completes |
 | `dev/docs/research/archive/` | Development | Frozen research history | Each archived report | Superseded or historical research with banners | Current research standing or product authority | A report is superseded and archived |
 | `dev/docs/methodology/` | Development | Reusable working methods | `dev/docs/methodology/README.md` and each method record | How a class of work is written, changed and checked; sizes and procedures | Product contracts, published text, decision history or delivery status | A working method is adopted, sharpened or retired |
+| `dev/areas/` | Development | Current development synthesis by Area | `dev/areas/README.md`, each Area `README.md` and its direct prepared records | What each Area means and is not; its chosen, rejected, unchosen and research-needed direction; its components and directional technical model | Exact executable behavior, sourced findings, experiment verdicts, delivery claims, current priority, plan tasks or backlog order | An Area's current development truth or its prepared material changes |
 | `dev/backlog/` | Development | Ordered forward planning state | `dev/backlog/README.md` and the current item | At most one active edge, later concrete outcomes and dependencies | Current product contract or duplicated decision rationale | Edge order, state, dependency or completion evidence changes |
 | `dev/plans/` | Development | Proportional build execution state | Each plan | Accepted outcome, task graph, invariants and exact evidence claim | Current product truth or reusable build rules | A consequential build is planned or its accepted execution state changes |
 | `dev/skills/` | Development | Reusable Agent workflow | Each skill's `SKILL.md` | Skill-specific procedure and routing | Project contract or duplicated global build rules | A reusable workflow changes |

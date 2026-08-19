@@ -6,6 +6,7 @@
 //! the page — bar, section tree, breadcrumb, colophon and toast — belongs to
 //! [`shell`], so a section module never re-implements the layout.
 
+mod area;
 mod development;
 mod doc;
 mod game;
@@ -15,6 +16,9 @@ mod overview;
 mod shell;
 mod tree;
 
+pub(super) use area::{
+    detail as development_area, index as development_areas, scenarios as development_area_scenarios,
+};
 pub(super) use development::{
     decision as development_decision, development, direction as development_direction,
     evidence as development_evidence, lab as development_lab, open as development_open,
@@ -82,7 +86,7 @@ impl Section {
         match self {
             Self::Overview => "/",
             Self::Game => "/game",
-            Self::Development => "/development",
+            Self::Development => "/dev",
             Self::Live => "/live",
         }
     }
@@ -579,6 +583,9 @@ pub(super) fn home_label(home_id: &str) -> &'static str {
         "research-archive" => "Research archive",
         "methodology-index" => "Methodology index",
         "methodology-record" => "Working method",
+        "area-index" => "Development Area index",
+        "development-area" => "Development Area",
+        "area-record" => "Area record",
         "evidence-index" => "Evidence index",
         "evidence-slice" => "Evidence slice",
         "runner-contract" => "Runner contract",
@@ -644,7 +651,7 @@ mod tests {
     fn every_section_has_a_distinct_route_and_label() {
         let href: Vec<&str> = Section::ALL.iter().map(|section| section.href()).collect();
 
-        assert_eq!(href, ["/", "/game", "/development", "/live"]);
+        assert_eq!(href, ["/", "/game", "/dev", "/live"]);
         assert_eq!(Section::Overview.tree_name(), "State of Aicadia");
         assert_eq!(Section::Game.side(), "Runtime side");
     }

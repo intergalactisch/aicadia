@@ -236,7 +236,7 @@ impl Brief {
         }
 
         out.push_str(&format!(
-            "\n## Open questions\n\n- [{} open sections](/development/open).\n",
+            "\n## Open landscape\n\n- [{} unresolved sections](/dev/open).\n",
             self.open_count
         ));
 

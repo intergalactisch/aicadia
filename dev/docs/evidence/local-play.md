@@ -1,5 +1,5 @@
 ---
-status: Deterministic passwordless launcher, handoff, persistence and convention-driven Studio proof complete
+status: Deterministic passwordless launcher, handoff, persistence and current-truth Studio Areas proof complete
 ---
 
 # Local play and Studio evidence
@@ -22,6 +22,77 @@ key or leading index except for the explicitly labeled D6 global World-chronicle
 sort; tables without a primary key fail closed. This evidence proves local
 development visibility and persistence, not model output quality, public hosting,
 retained schema history/diffing or multiple-World delivery.
+
+## Current-truth Studio Area workbooks — 2026-08-18
+
+- `dev/areas/` contains exactly six flat current-synthesis workbooks: Multiplayer,
+  Place, Movement, Discovery, Agent Play and World Change. Each source follows the
+  required Meaning, positive/negative Boundary, Chosen/Rejected/Not yet chosen,
+  Research needed, Components, Delivered/Directional/Absent model and Sources
+  shape. A real-source parser check covers all six; missing, repeated, out-of-order
+  or prose-ambiguous state sections fail closed, and an invalid governed Area
+  produced an honest HTTP 500 page naming its source and missing section.
+- The previous active Multiplayer, spatial and Discovery concept records are now
+  retained rationale/history and point to their Area owner. The Area sources point
+  outward to exact `game/docs/` behavior, sourced research, Lab verdicts and
+  Evidence rather than copying those facts.
+- `/dev/areas` rendered six source-derived definitions and Chosen, Rejected, Not yet
+  chosen and Research needed counts. All six detail routes rendered `This is`
+  beside `This is not`, four separately labelled state groups, a component table,
+  three technical-model layers and owning sources; Multiplayer retained its
+  fourteen-scenario prepared catalogue.
+- `/dev/open` projected each Area's `Not yet chosen` and `Research needed` section:
+  six of each within twenty total current unresolved sections during the check.
+  `/dev/work` alone rendered Current edge and Live plan boards and carried no Area
+  state grid.
+- In-app browser review covered the index and Multiplayer, Place, Movement and World
+  Change at 1440×900 and 390×844. Desktop used two boundary/state columns and three
+  model columns. Mobile used one 358 px content column, 16 px explanatory text and
+  exact 390 px document width; the component tables also fit their container with
+  no internal horizontal overflow.
+- The complete PostgreSQL-backed Studio suite passed with 73 library tests and 52
+  integration tests (`125` total). Strict all-target Studio Clippy, Rust formatting,
+  generated `cargo brief`, documentation lint and diff integrity passed. The named
+  disposable review database, port-3478 listener, viewport override and browser tab
+  were removed after inspection.
+
+This evidence proves the exercised workbook grammar, source authority migration,
+repository/HTTP projection, Work boundary and responsive presentation. It does not
+prove any game behavior, multiplayer outcome, production scale property, Agent
+quality or public browser security boundary.
+
+## Source-backed Studio Development Areas — 2026-08-18
+
+- `dev/areas/` is now a governed, linted development home with one index, one
+  Multiplayer overview and the moved fourteen-scenario catalogue. The catalogue
+  retains S01–S14, their fixed narratives, fixtures, questions and coverage matrix;
+  Lab remains the owner of experiments and links upward to this prepared input.
+- `/dev` is the sole Development route family. `/dev/areas`,
+  `/dev/areas/multiplayer` and `/dev/areas/multiplayer/scenarios` are server-rendered
+  from the governed records, while the nine former `/development` destinations each
+  return not found rather than redirecting or aliasing. `/dev/work` remains the only
+  checked Area-adjacent page that renders the current edge and live plan boards.
+- The scenario page joins fourteen source index rows to fourteen matching S01–S14
+  detail sections and fails closed on missing, repeated or mismatched identities.
+  Its collapsed overview shows ID, title and primary pressure; opening S01 exposed
+  its exact narrative, fixture, variants and questions from the source.
+- In-app browser review covered the real page at 1440 px and 390×844. Desktop
+  rendered a calm two-column scenario scan; mobile rendered one column, all fourteen
+  cards, a visible mobile-menu control and zero horizontal overflow (`390` px
+  document and viewport width). No client-side route or state was added.
+- All 69 Studio library tests and 52 Studio integration tests passed against real
+  PostgreSQL (`121` total), including Area discovery/index lint, source-to-card
+  parity, complete `/dev` destinations and old-route absence. Strict all-target
+  Studio Clippy, Rust formatting, generated `cargo brief`, documentation lint and
+  diff integrity passed.
+- The explicitly named disposable visual-review database, listener and browser tab
+  were removed after the checks; no pre-existing database, profile or listener was
+  changed.
+
+This evidence proves the exercised repository projection, Studio routes, scenario
+presentation and responsive browser layout. It does not prove any multiplayer game
+behavior, scenario outcome, production concurrency property or public browser
+security boundary.
 
 ## Passwordless local PostgreSQL startup — 2026-08-18
 

@@ -135,9 +135,9 @@ fn overview_content(brief: &Brief, markdown: &str) -> Markup {
                     }
                 }
                 div {
-                    h3 class="subhead" { "Open questions" }
+                    h3 class="subhead" { "Open landscape" }
                     p class="overview-number" { (brief.open_count) }
-                    p { a href="/development/open" { "Review source-owned open sections" } }
+                    p { a href="/dev/open" { "Review source-owned unresolved sections" } }
                 }
             }
         }
@@ -147,8 +147,8 @@ fn overview_content(brief: &Brief, markdown: &str) -> Markup {
             dl class="overview-metrics" {
                 div { dt { "Models" } dd { a href="/game" { (brief.model.len()) } } }
                 div { dt { "Agent capabilities" } dd { a href="/game/agent" { (brief.capability.len()) } } }
-                div { dt { "Evidence slices" } dd { a href="/development/evidence" { (brief.evidence.len()) } } }
-                div { dt { "Lab verdicts" } dd { a href="/development/lab" { (brief.lab.len()) } } }
+                div { dt { "Evidence slices" } dd { a href="/dev/evidence" { (brief.evidence.len()) } } }
+                div { dt { "Lab verdicts" } dd { a href="/dev/lab" { (brief.lab.len()) } } }
             }
             (live_summary(&brief.live))
         }
@@ -169,7 +169,7 @@ fn overview_content(brief: &Brief, markdown: &str) -> Markup {
                         }
                     }
                 }
-                p class="section-action" { a href="/development/decision" { "Browse the decision register" } }
+                p class="section-action" { a href="/dev/decision" { "Browse the decision register" } }
             }
         }
 
