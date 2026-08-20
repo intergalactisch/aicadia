@@ -108,8 +108,8 @@ proposals and asks the User to confirm every complete World-changing package.
 - An explicit accepted in-World Observation may preserve one bounded free-text note
   authored for the observing Character, such as “this time he wore a red hat.” The
   note never creates the hat, equips it or changes the observed Entity merely because
-  the Agent wrote it; whether it is private Character memory or shared World fact is
-  still under negotiation.
+  the Agent wrote it. It is private attributed Character memory, may be mistaken and
+  is never returned as shared World fact through the observed Entity.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

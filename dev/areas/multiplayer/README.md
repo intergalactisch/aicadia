@@ -37,8 +37,8 @@ into truth or spending tokens in the background.
 - Durable public history and a User's private remembered experience are separate.
 - A genuine repeat view is an explicit accepted in-World Observation, not an API
   read. Several immutable Observations may concern the same Character and subject;
-  each may carry bounded Agent-authored text, while its authority as private memory
-  versus shared World fact remains open.
+  each may carry bounded Agent-authored text which is private attributed memory of
+  the observing Character, may be wrong and never becomes shared subject truth.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,

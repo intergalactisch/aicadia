@@ -2665,14 +2665,32 @@ override current structured World state.
 
 The useful artistic consequence is a private, potentially imperfect trail of
 recurrence: Agents can notice familiar people, places and motifs without turning
-every recollection into universal canon. The still-open authority question is
-whether the note is definitively attributed only to the observing Character's
-memory, or whether the User wants it to become shared World truth. The current
-preference is private observer-owned memory; shared truth should require the exact
-ordinary World structures it claims, such as an Entity and Relation for a worn hat.
+every recollection into universal canon. The User selected that boundary. The note
+is definitively attributed only to the observing Character's memory and may be
+selective, interpretive or wrong. It is available only through that Character's
+authorized personal context; no target-facing or global reverse observer read is
+created. Shared truth still requires the exact ordinary World structures it claims,
+such as an Entity and Relation for a worn hat.
 
 An illustrative non-canonical storage split is one unique Knowledge row per
 `(character_entity_id, subject_type, subject_id)` and multiple immutable Observation
 occurrences tied to exact Activity. Exact Observation identity, text field name,
 subject limits, eligible acts, pagination and retention remain plan choices rather
 than accepted schema.
+
+## Private Observation account selected; Knowledge consequence open
+
+Option A is accepted for per-occurrence text. Mara's “this time he wore a red hat”
+is Mara-attributed memory, not a Property of Ivo, not proof that a Hat Entity exists
+and not text another Character receives by reading Ivo. World does not judge its
+truth; it only preserves bounded authorship, observer control, exact eligible
+subjects, request identity, occurrence time and Activity atomically. A conforming
+Agent can later narrate the note explicitly as memory and compare it creatively with
+fresh current World information.
+
+This keeps free authorship safe without making memory mechanically useless. It also
+opens the next dependency: when an Observation of exact subject X is accepted, does
+that same transaction always establish the one current Knowledge association for X?
+Without that rule, a Character could possess private Observation history about a
+subject which its ordinary known-subject read refuses to address; with it, first
+Observation inserts Knowledge and every later Observation leaves that one row intact.

@@ -134,10 +134,10 @@ _Avoid_: Passive interaction, generic link, relationship
 
 **Observation**:
 One situated acquisition of World information by a Character through an encounter,
-sensory situation or other accepted observation path. Repeated encounters may yield
-separate Observations about the same subject; Observation is not mere Activity
-participation, a transport read or all the information World knows.
-_Avoid_: Visibility flag, global state, participation
+sensory situation or other accepted observation path. Each occurrence and its
+authored account belong to that Character; repeated encounters may yield separate
+Observations about the same subject without making the account shared World truth.
+_Avoid_: Visibility flag, global state, participation, shared subject fact
 
 **Knowledge**:
 World information a Character can justifiably use because it was observed,
