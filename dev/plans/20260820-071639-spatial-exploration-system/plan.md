@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T13:56:17+02:00"
+updated_at: "2026-08-20T13:58:36+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -276,6 +276,11 @@ At million-Character pressure:
   `current_place` is absent. A loose Position is playable World ground and World
   never creates a dummy Place to admit look-around or discovery — User correction,
   2026-08-20.
+- The User-owned Agent dynamically composes conversational exploration from the MCP
+  tools available to it. S1 introduces no prescribed read/investigate sequence,
+  `explore` World operation, workflow state or read receipt; each selected capability
+  keeps its own grounding, bounds, freshness and confirmation contract — User
+  correction, 2026-08-20.
 - Movement may stop on an exact course point or arrive, writes ordinary Position and
   Activity and has no durable journey — Movement Area.
 - Connection loops and geographically impossible topology are artistically valid;
@@ -453,11 +458,13 @@ At million-Character pressure:
    around one of the three offered Place Positions without checking occupancy or
    guaranteeing solitude; co-position is valid. The latest User correction makes
    arrival stop there: no automatic nearby context, Observation or discovery is
-   returned. **Next open consequence:** decide whether the first later User-invoked
-   exploration step reads existing nearby subjects, attempts a new discovery or
-   sequences both. That step is grounded in current Position with or without a
-   current Place. Then decide how three Places become eligible; current-Place reads
-   already cover Characters that enter a selected Place.
+   returned. **Resolved exploration consequence:** the later User-invoked Agent
+   dynamically chooses among its available bounded MCP tools; World prescribes no
+   fixed existing-context/discovery order or workflow state. Every shared proposal
+   still uses fresh required grounding and confirmation. The Character can make
+   those choices from Position with or without a current Place. Still open: how
+   three Places become eligible; current-Place reads already cover Characters that
+   enter a selected Place.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

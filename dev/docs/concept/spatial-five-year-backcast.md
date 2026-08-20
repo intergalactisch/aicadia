@@ -3047,11 +3047,9 @@ because other Characters might be nearby.
 The User starts the next gameplay step explicitly by asking the Agent to look around
 or explore. Only that invoked turn may obtain bounded current surroundings, interpret
 them, preserve Observations or pursue a new discovery. This separates a possible
-encounter from an automatically consumed encounter. The next prerequisite is whether
-the first explicit exploration step reads already existing nearby World subjects,
-attempts to discover something new or deliberately sequences those two different
-behaviors. How the three Places become eligible and what happens before three exist
-also remain downstream choices.
+encounter from an automatically consumed encounter. World imposes no fixed ordering
+on that Agent turn; the dynamic tool-use choice is resolved below. How the three
+Places become eligible and what happens before three exist remain downstream choices.
 
 ## Exploration begins at every Character Position
 
@@ -3061,11 +3059,12 @@ is set. A loose Position is therefore playable spatial ground, not a waiting roo
 until somebody creates a Place. World must never require or fabricate a dummy Place
 merely to admit exploration.
 
-The Agent reads bounded structurally eligible context around the Character's fresh
-Position, uses its own intelligence to imagine and discuss a discovery, and submits
-the exact structured result through the later confirmed discovery boundary. World
-validates identity, coordinates, dependencies, authority, bounds, idempotency and
-atomic Activity; it does not infer the discovery from prose or from the coordinate.
+The Agent dynamically selects bounded structurally eligible MCP context from the
+Character's fresh Position, uses its own intelligence to imagine and discuss a
+discovery, and may submit the exact structured result through the later confirmed
+discovery boundary. World validates identity, coordinates, dependencies, authority,
+bounds, idempotency and atomic Activity; it does not infer the discovery from prose
+or from the coordinate.
 Millions of Characters exploring unrelated points touch no shared current-Place or
 region row, while genuinely conflicting proposals coordinate only on their exact
 subjects and dependencies.
@@ -3084,5 +3083,30 @@ Position keyed by Windcliff's `entity_id` and one Place role keyed by that same 
 A Connection and Activity refer to that stable subject. A positioned cup or Character
 does not become a Place merely because it has a name or Position; the role is an
 explicit accepted part of the discovery. This resolves the Place vocabulary branch.
-The next open gameplay choice is the ordering of existing-context inspection and a
-new discovery attempt during one User-invoked exploration turn.
+The dynamic Agent tool-use choice below resolves the ordering branch. The next open
+gameplay choice is whether finding a new Place must begin with a successful current
+Investigation or may begin as a directly Agent-authored proposal.
+
+## Agent dynamically composes exploration from MCP tools
+
+The User rejected a prescribed read-then-investigate exploration workflow. “Look
+around” and “go explore” are conversational intentions handled by the User-owned
+Agent, not World operations or durable workflow states. The Agent already receives
+the MCP capability catalogue and dynamically chooses which bounded reads and actions
+to invoke, how often and in which order for the current request.
+
+This does not weaken the established mutation boundary. Before proposing a shared
+change, the Agent obtains the fresh relevant authoritative context required by the
+capability and presents the complete proposal for User confirmation. World validates
+each submitted operation independently against explicit identity, authority,
+dependency revisions, bounds and idempotency. It neither proves which earlier reads
+the Agent performed nor stores an exploration session, step number or read receipt.
+A stale dependency rejects only the exact proposal, after which the invoked Agent may
+choose how to recover.
+
+For example, an Agent may answer “look around” using one available bounded spatial
+read, while “search for somewhere new” may lead it to read Position, inspect relevant
+map context and invoke Investigation. Another already well-grounded turn may need a
+different sequence. The tool contracts supply hard inputs and consequences; Agent
+intelligence supplies orchestration and narrative. At scale, this creates no global
+exploration coordinator or server-side Agent work and keeps every World call bounded.

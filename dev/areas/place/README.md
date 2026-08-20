@@ -45,6 +45,10 @@ not a pre-computed complete map.
 - Exploration can begin from every Character Position, including a Position with no
   current Place. Place is never required or fabricated merely to admit look-around,
   discovery or ordinary play between named locations.
+- The Agent dynamically composes exploration from available bounded MCP tools. Place
+  prescribes no universal existing-context/discovery order, and World stores no
+  exploration workflow or read receipt; shared proposals still require fresh relevant
+  grounding and confirmation.
 - Any positioned Entity may deliberately receive the Place role when Agent and User
   establish it as an independent spatial reference. World applies no city, forest,
   waterfall, building, object or other semantic kind allowlist and never grants the
@@ -299,9 +303,8 @@ not a pre-computed complete map.
 
 ### Not yet chosen
 
-- Which rule makes three existing Places eligible for `enter_world`, what happens
-  before three eligible Places exist and whether later explicit exploration first
-  reads existing nearby subjects, attempts a new discovery or sequences both.
+- Which rule makes three existing Places eligible for `enter_world` and what happens
+  before three eligible Places exist.
 - The exact bounded establish/develop operations, ordinary text bounds, dependency
   revisions and duplicate presentation for the accepted Relation record.
 - Which exact geometry representation Area uses, whether one Place may have
