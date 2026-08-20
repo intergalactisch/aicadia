@@ -1287,10 +1287,10 @@ the complete backcast model:
   atomic result consumes the opportunity and establishes only the explicit allowed
   A→C Connection plus Activity. Proximity informed the choice but did not establish
   direct travel by itself.
-- If the required A→C direction already exists or a concurrent request establishes
-  it first, a distinct later request creates no duplicate Connection or Activity and
-  retains its positive opportunity. The Agent re-grounds; only retrying the exact
-  winning request returns the prior accepted result.
+- Superseded by the later parallel-Connection choice: this first candidate treated an
+  existing A→C direction as a no-op. Current direction instead requires explicit
+  reuse of one stable Connection; an independently confirmed alternative may coexist,
+  and only retrying the exact accepted request returns its prior result automatically.
 - Equal or nearby Place Positions remain independent under concurrent discovery.
   Proximity informs the Agent and User but is not a uniqueness, blocking or merge
   rule; the future may earn explicit Agent- and User-driven organization only after
@@ -1800,9 +1800,10 @@ genuine concurrent edits to that one hot alternative may reject and retry.
 
 Still open are the smallest exact shape representation, whether it is two- or
 three-dimensional, its endpoint alignment and change rules, Area extent and overlap
-semantics, how the first discovery's narrow duplicate rule is enforced without a
-general endpoint-pair uniqueness constraint, authorship and visibility, and the
-concrete World interface. Parallel alternatives also expose one prior question: an
+semantics, authorship, visibility and the concrete World interface. The earlier
+first-discovery duplicate question is superseded below by explicit stable-identity
+reuse and independent parallel establishment. Parallel alternatives also expose one
+prior question: an
 Agent needs minimal readable state that distinguishes “footpath,” “ferry” and
 “portal” without showing internal ids or turning Connection into an Entity. That
 presentation state is the next frontier before exact shape representation. No
@@ -2207,10 +2208,9 @@ does not silently rewrite Connection history.
 
 The endpoint indexes are separate and directional so one bounded Place read does
 not scan every Connection. There is no unique endpoint-pair constraint because a
-footpath, ferry and portal may coexist. A concrete discovery operation that must
-reuse rather than duplicate an already suitable Connection needs its own
-opportunity- or endpoint-scoped conflict rule; global Connection uniqueness would
-contradict the accepted parallel-alternative behavior.
+footpath, ferry and portal may coexist. The later accepted rule makes reuse explicit
+by stable Connection identity and lets independently confirmed alternatives coexist;
+there is no opportunity- or endpoint-scoped semantic deduplication rule.
 
 ### Exact Movement over a Connection
 
@@ -3189,6 +3189,65 @@ page and cursor shapes are plan design rather than more product questions.
 
 If existing Place C appears at Character M's exact loose Position, the Agent can
 offer C as the origin instead of creating A; the User chooses in the complete
-preview. Coordinate equality never makes C current or merges it automatically. One
-spatial product question remains: whether Connections sharing endpoints are unique,
-explicitly reused or allowed to coexist as parallel alternatives.
+preview. Coordinate equality never makes C current or merges it automatically.
+
+## Connection identity, not endpoint equality, decides reuse
+
+The User selected option A. One Connection is identified only by its own stable
+identity. Equal endpoint Places, allowed direction, name, description or course do
+not prove that two proposals describe the same travel alternative. PostgreSQL and
+World therefore impose no endpoint-pair uniqueness and perform no prose, geometry or
+semantic deduplication.
+
+Reuse is always explicit. If bounded context returns an existing Connection and the
+Agent and User choose that exact alternative, no new Connection or Activity is
+created and the positive Investigation opportunity remains available. If they
+confirm a new alternative, World creates it even when another Connection already
+joins the same Places. Two concurrent Users may consequently establish two distinct
+named alternatives; that is valid shared-world history rather than a race loser.
+
+Only an exact retry is deduplicated automatically. Repeating the same accepted
+request id with the same normalized input returns its original Connection, Activity
+and Investigation settlement; reusing that request id with changed input conflicts.
+At scale this avoids an endpoint-pair lock or hot uniqueness row. Reads remain
+bounded by one endpoint and cursor, while each accepted creation owns its own stable
+Connection identity. With this choice, the spatial product frontier for S1 is empty;
+remaining capability names, schema shape, limits and evidence are technical plan
+design and still require explicit plan acceptance before implementation.
+
+## S1 technical plan is complete and deliberately smaller than the horizon
+
+The draft [S1 spatial delivery plan](../../plans/20260820-071639-spatial-exploration-system/plan.md)
+now translates the completed product frontier into one exact proposal for User
+acceptance. It does not change current gameplay. Its first scene keeps direct
+Position, shared Place windows, immutable Connections, connected-Place Discovery and
+partial or complete Character Movement. Observation, distributed entry, relative
+Position, Relation, Area and private arrangement remain explicit later slices.
+
+The review deliberately removed three speculative burdens. S1 does not version or
+edit a Connection after creation, does not implement the already explored
+Observation model and does not solve the separate three-Place or loose-Position
+entry outcome. A selected Connection is read in two bounded steps: endpoint-anchored
+summary listing followed by one exact full-course read. This keeps list responses
+small without reducing the accepted course or parallel-alternative freedom.
+
+The proposed production shape uses Entity-keyed immutable Position versions with one
+current pointer; immutable Connection plus bounded child points; typed Activity
+references for exact Position and Connection involvement; and a rebuildable
+Place-only coordinate projection which never becomes canonical geography. It admits
+coordinates within ±1,000,000,000,000,000 centimetres, windows up to 1,000 kilometres
+per axis, pages up to 100 and courses up to 128 points. These are proposed technical
+admission bounds, not current behavior or gameplay distance rules.
+
+The plan also resolves the delivered Investigation extension rather than creating a
+second exploration workflow. The Agent chooses either `entity_at_position` or
+`connected_place`; the attempt binds the Character's exact Position revision and
+optional current Place. Existing Place pressure applies when that Place exists, while
+a loose Position has no invented regional counter. Exact retry is the only automatic
+deduplication; concurrent equal-looking new Connections may both commit.
+
+One explicit non-claim remains visible. S1's new map, Connection and Movement paths
+do not depend on the broad delivered Place pointer, but this plan does not refactor
+the older local Entity Action/Interaction freshness contract. The plan is still
+`draft`; none of its schema, bounds, operations or deferrals become current until the
+User accepts it.

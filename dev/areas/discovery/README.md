@@ -106,11 +106,11 @@ grounded candidate and the User confirms the complete preview before World commi
   the allowed A→C Connection, consumes the opportunity and writes one Activity, or
   writes none of them. The Agent and User's confirmed proposal establishes that
   direct travel fact; C's proximity alone never does.
-- If the required A→C travel direction already exists or another request establishes
-  it first, this proposal writes no duplicate Connection or Activity and does not
-  consume its opportunity. The Agent re-grounds and may author another candidate.
-  A retry of the exact request that originally established A→C instead returns that
-  accepted result and consumed-opportunity state.
+- If bounded context returns an existing A→C Connection, the Agent and User may
+  explicitly reuse that exact alternative without a new Activity or consumed
+  opportunity. If they confirm a new alternative, World creates it even when another
+  A→C Connection commits first. Only an exact request retry returns its original
+  accepted Connection, Activity and consumed-opportunity state.
 - Concurrent discoveries at equal or nearby points remain independent Places unless
   later explicit World state establishes otherwise. A newly committed nearby Place
   does not invalidate an otherwise fresh proposal merely by entering its map window.
@@ -146,9 +146,9 @@ grounded candidate and the User confirms the complete preview before World commi
 - Which later concrete discovery behavior, if any, earns its own distance limit.
 - How discoveries expose information differently to present, distant or returning Characters.
 - How later evidence relates two independently discovered subjects that may be the same.
-- Which later concrete capability may deliberately establish another Connection
-  between the same Places; the first walking slice still has only one required A→C
-  alternative even though the general model permits parallel Connections.
+- Which later concrete capability may develop or retire a Connection; parallel
+  establishment between the same Places is already allowed, while the first scene
+  still needs only one selected A→C alternative.
 - Which later Agent- and User-driven behavior can curb, organize or reconcile a
   proven proliferation of overlapping Places without making World infer semantic
   sameness or invalidating their stable identity and history.

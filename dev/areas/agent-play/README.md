@@ -241,10 +241,11 @@ immediately tells the User what it retained.
   Connection from the origin to that Place instead of a new Place package. The
   Agent must present this as a deliberate travel fact, never as an automatic result
   of numerical proximity.
-- If that travel direction is already established or another request wins it, the
-  Agent receives no new mutation and retains the opportunity. It must re-ground and
-  discuss another candidate rather than presenting a duplicate Connection as a new
-  discovery; an exact accepted-request retry simply resumes the prior result.
+- If bounded context returns an existing Connection, the Agent may discuss explicit
+  reuse with the User; choosing it creates no mutation and retains the opportunity.
+  If the User instead confirms a new alternative, the Agent submits it even when an
+  equal-looking Connection already exists or commits concurrently. Only an exact
+  accepted-request retry resumes the prior result automatically.
 
 ### Rejected
 

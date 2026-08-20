@@ -141,10 +141,10 @@ not a pre-computed complete map.
   confirmed atomic result establishes the explicit allowed A→C Connection and
   Activity without creating or changing C's Place identity or Position. Proximity
   supplied context; the confirmed Connection supplies direct travel.
-- The required A→C direction is established at most once in this first slice. If it
-  already exists or a concurrent request wins, the later proposal writes no
-  duplicate Connection or Activity and retains its positive opportunity; only an
-  exact retry returns the original accepted result.
+- Existing A→C topology never makes another A→C proposal a duplicate. The Agent and
+  User may explicitly reuse one returned stable Connection without creating an
+  Activity or consuming the opportunity, or confirm a separately identified
+  alternative. Only an exact request retry returns its original accepted result.
 - Equal or nearby Positions neither identify nor conflict two Places. Concurrently
   established Places remain distinct, and proximity alone never blocks or merges
   them.
@@ -159,6 +159,9 @@ not a pre-computed complete map.
 - One Connection is one stable direct travel alternative rather than the unique
   endpoint pair. A footpath, ferry and portal may therefore be separate Connections
   between the same Places, each with its own stable identity and allowed direction.
+- Endpoint Places, direction, name, description and course never identify or merge a
+  Connection. Independently confirmed alternatives may coexist even when all those
+  values are equal; World performs no semantic deduplication.
 - Every Connection has one Agent-authored name and description so an Agent can
   distinguish and explain parallel alternatives without exposing internal ids. This
   text grants no mechanics, and Connection owns no Properties or Traits.

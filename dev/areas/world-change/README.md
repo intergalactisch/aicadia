@@ -64,10 +64,11 @@ structural dependencies, bounds, atomic current state and attributable history.
   alternative package creates only the explicit allowed A→C Connection and one
   Activity while consuming the opportunity; it never rewrites C or treats numeric
   proximity as the causal basis.
-- Settlement creates that required A→C direction at most once. A pre-existing or
-  concurrently won direction makes the later distinct request a non-mutating
-  conflict: no duplicate Connection, no Activity and no opportunity consumption.
-  The exact winning request remains idempotent and returns its accepted result.
+- Settlement creates one newly identified A→C alternative when that is what the User
+  confirms, even if another equal-looking Connection already exists or commits
+  concurrently. Explicitly choosing one returned existing Connection creates no
+  mutation and preserves the opportunity. Only retrying the exact accepted request
+  returns its original Connection and Activity automatically.
 - Future Entity state must support an unnamed persistent Position between Places
   without manufacturing a Place identity for that point.
 - Agent-authored relationship meaning may be open and precise; World must not require

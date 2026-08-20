@@ -122,6 +122,10 @@ into truth or spending tokens in the background.
   travel alternatives may join the same Places. Reads are bounded by one endpoint
   and cursor; writes conflict on the exact Connection or its optional reusable
   spatial shape, never on one endpoint-pair row, Place-wide count or graph revision.
+- Establishing a Connection never locks or deduplicates by endpoint pair, direction,
+  name, description or course. Independently confirmed concurrent alternatives may
+  both commit; only an exact request retry or an explicitly selected existing
+  Connection is reuse.
 - Area records only exact positive coverage. Changing one Place's coverage conflicts
   on that exact Area and never rewrites every intersecting Connection; ordered
   crossings are derived from revision-specific inputs through bounded spatial reads.
