@@ -3248,6 +3248,21 @@ deduplication; concurrent equal-looking new Connections may both commit.
 
 One explicit non-claim remains visible. S1's new map, Connection and Movement paths
 do not depend on the broad delivered Place pointer, but this plan does not refactor
-the older local Entity Action/Interaction freshness contract. The plan is still
-`draft`; none of its schema, bounds, operations or deferrals become current until the
-User accepts it.
+the older local Entity Action/Interaction freshness contract. At this review point
+the plan was still `draft`; the acceptance below changes execution status, not the
+fact that runtime behavior arrives only through completed plan tasks.
+
+## S1 accepted for dependency-ordered implementation
+
+The User explicitly accepted the complete S1 plan on 2026-08-20 and chose execution
+through a high-reasoning Sol subagent, followed by review of the delivered result.
+This activates only direct Position, bounded shared Place and Connection reads,
+Position-grounded Investigation/Discovery and complete or partial Character
+Movement exactly within the plan's bounds and non-goals.
+
+Implementation remains dependency ordered. Root owns scope, plan state, integration
+and the final evidence claim; the delegated Agent receives one ready task at a time
+and may not pull S2–S8 into S1. Evidence or implementation that changes public
+behavior, identity, bounds, history or the promised claim returns the plan to draft
+and requires renewed User acceptance. Until T1 publishes `game/docs`, the accepted
+plan authorizes work but does not itself pretend the runtime already provides S1.

@@ -56,7 +56,7 @@ selected; the ordered backlog retains the queued horizon.
 | Private attention control | Privately stop repeated unwanted targeting without rewriting co-presence or shared history | Deferred | Revisit before movement, notifications or broader Interaction reach |
 | Ripple knowledge | Learn a reduced, sourced consequence of a distant event only after it plausibly travels to the Character | Explored | Define propagation, information loss, provenance and arrival behavior |
 | Place neighborhood | Inspect explicit containing and adjacent Places around the exact current Place | Later / Queued | Select first relationship behavior without implying visibility |
-| Movement and expansion | Establish additional Places and connections and move through validated transitions | Later / Queued | Define route, action, time and historical location semantics |
+| Direct spatial exploration | Read bounded shared Places and Connections, discover an Entity or connected Place from exact Position and move fully or partially without journey state | Now / Active | Execute the [accepted S1 plan](../plans/20260820-071639-spatial-exploration-system/plan.md); Observation, distributed entry, relative Position, Area and Route remain later |
 | Rich World subjects | Establish flora, fauna, materials, boundaries and temporal processes when play needs them | Later / Queued | Introduce one concrete domain behavior at a time |
 
 ## Cross-cutting rules

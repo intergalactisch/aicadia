@@ -1,8 +1,8 @@
 ---
-status: draft
+status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T14:37:44+02:00"
-accepted_at: null
+updated_at: "2026-08-20T14:51:58+02:00"
+accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
 
@@ -503,7 +503,7 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 
 | ID | State | Depends | Parallel-safe | Objective | Owned surfaces | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| T1 | pending | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
+| T1 | in_progress | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
 | T2 | pending | T1 | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
 | T3 | pending | T2 | no | Ship bounded Place and Connection reads with the rebuildable projection. | World reads and tests | Pagination, cursor, hot-point, one-million-row plan and query-bound evidence. |
 | T4 | pending | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
