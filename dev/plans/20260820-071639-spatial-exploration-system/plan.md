@@ -320,8 +320,9 @@ At million-Character pressure:
   `create_character`. It establishes the Character's first Position and Activity
   from one User-selected option: three explained existing Places or one choice to
   begin at Position with no current Place. The latter creates no Place and does not
-  claim geometric exclusion from every incomplete Place Area. Who supplies its exact
-  Position remains open.
+  claim geometric exclusion from every incomplete Place Area. World selects and
+  atomically stores its exact Position once; retry returns it without rerolling. The
+  numeric distribution remains open.
 
 ### Open questions blocking activation
 
@@ -426,11 +427,12 @@ At million-Character pressure:
    placement during `create_character`. It offers three explained existing Places
    plus one option to begin at Position with no current Place, then establishes the
    selected first Position plus Activity. The loose option creates no Place and
-   claims no geometric exclusion from every incomplete Area. **Next open
-   consequence:** decide who supplies that exact loose Position. Only then decide
-   how three Places become eligible and the bounded spatial read through which
-   another Character can encounter an intermediate traveller; current-Place reads
-   already cover both when they are at B.
+   claims no geometric exclusion from every incomplete Area. User choice B makes
+   World select and store the exact loose Position once; retry never rerolls and
+   World infers no terrain or safety. **Next open consequence:** choose the explicit
+   numeric distribution. Only then decide how three Places become eligible and the
+   bounded spatial read through which another Character can encounter an intermediate
+   traveller; current-Place reads already cover both when they are at B.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

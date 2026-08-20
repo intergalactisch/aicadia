@@ -3017,7 +3017,17 @@ Place and creates no Place merely for the arrival.
 The latter wording is intentional. World cannot generally prove that an exact point
 lies geometrically outside every Place because Area coverage may be absent or
 incomplete. It can prove that the Character selected no existing Place as its local
-context. The next prerequisite is who supplies that exact loose Position: the Agent
-with User confirmation, deterministic World selection or a previously established
-unnamed entry point. How the three Places become eligible and what happens before
-three exist remain downstream choices.
+context. The User selected World to choose the exact loose Position. Choosing the
+open-space option authorizes that unknown result; the accepted `enter_world`
+transaction chooses and stores one exact `x`/`y`/`z` Position, no current Place and
+its Activity. Concurrent or lost-response retry returns that same stored result and
+never rerolls.
+
+World chooses only coordinates under an explicit numeric distribution. It does not
+infer suitable terrain, safety, beauty, accessibility or Place exclusion, and the
+Agent narrates only from structurally available context after arrival. No persistent
+pool of anonymous entry points, coordinate uniqueness or shared random counter is
+needed; several Characters may validly receive the same Position. The next
+prerequisite is the distribution: broadly around established beginnings, anywhere
+within representable World space or another explicit numeric boundary. How the three
+Places become eligible and what happens before three exist remain downstream choices.

@@ -34,7 +34,8 @@ reconstruct one accepted move.
 - `enter_world` remains the Character's first spatial introduction after creation
   and establishes its first Position plus Activity from one User-selected option:
   three explained existing Places or one choice for Position with no current Place.
-  It is not a participation flag and the loose result creates no Place.
+  It is not a participation flag and the loose result creates no Place. World chooses
+  and stores that exact loose Position once; retry never rerolls it.
 - Movement must preserve the stable identity of every moved Character, Entity and Place.
 - A move is explicit and deterministically validated by World; prose never implies a route or destination.
 - Accepted movement changes current Position and writes attributable Activity atomically.
@@ -176,7 +177,7 @@ reconstruct one accepted move.
 
 ### Not yet chosen
 
-- Who supplies the exact loose Position selected during `enter_world`, how three
+- Which numeric distribution World uses for a loose `enter_world` Position, how three
   existing Places become eligible without one hot global entry row and what happens
   before three eligible Places exist.
 - Whether an open-terrain Connection may exist without a physical Entity and who may establish it.

@@ -38,8 +38,9 @@ immediately tells the User what it retained.
 - After Character creation, `enter_world` remains the deliberate first spatial
   introduction. The Agent presents three existing Places with a short explanation
   plus one option to begin at a Position with no current Place, and lets the User
-  choose. Who supplies that loose Position and the exact capability boundary remain
-  under negotiation.
+  choose. If the User selects open space, World chooses and atomically stores one
+  exact Position; the Agent never invents those coordinates and narrates only after
+  receiving the accepted result. The numeric distribution remains under negotiation.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.
