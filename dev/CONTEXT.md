@@ -37,28 +37,51 @@ mean User, Agent, session or account.
 _Avoid_: User, Agent, avatar record with a separate identity
 
 **Position**:
-The optional exact current point of an Entity. A Place requires a Position, but a
-Position alone never makes an Entity a Place.
+The optional exact current point of an Entity in three spatial dimensions, expressed
+as whole-centimetre `x`, `y` and `z` from either the permanent World origin
+`(0, 0, 0)` or exactly one other Entity; increasing `x` is east, `y` north and `z`
+up. An Entity-relative Position mechanically follows that Entity, and a Place
+requires a Position but Position alone never makes an Entity a Place; its offsets
+start at the reference Entity's one Position point, never at a surface or part.
+Relative Position references never form a cycle.
 _Avoid_: Transform, spatial placement, Location, Place, Anchor
 
+**Position description**:
+The at-most-one optional current Agent-authored text that helps narrate an Entity's
+Position without changing its exact spatial meaning. It may contain several sentences
+but has no separate identity or lifecycle; World returns it only with the complete
+Position and never interprets it as coordinates, movement, geometry, a Relation,
+access or authority.
+_Avoid_: Prose, Position prose, mechanical constraint
+
 **Place**:
-The role of an Entity that World has established as an independent spatial reference
-for map, discovery, navigation or explicit spatial relationships. A Place uses the
-Entity's stable identity, requires its Position and may have an Area; the current
-World has at most one entry Place.
+The deliberately established role of a positioned Entity used as an independent
+reference for map, discovery, navigation or explicit spatial relationships. It uses
+the Entity's stable identity, may have an Area and is never inferred from Position,
+name, description or Entity kind; the current World has at most one entry Place.
 _Avoid_: Position, Location id, scene, node, coordinates
 
 **Area**:
-The optional spatial coverage of a Place. It is not an Entity or exact Position and
-does not by itself establish movement, ownership, visibility or a Connection.
+The optional exact positive spatial coverage established for a Place: a covered
+point is proven part of it, while absent coverage never proves that a point is
+outside. It is not an Entity or Position and establishes no movement, ownership,
+visibility or Connection.
 _Avoid_: Position, Place, Development Area, universal containment
 
 **Connection**:
-An explicit structural fact that states which direct travel direction or directions
-exist between two Places. It is not an Entity or Route and is never inferred from
-Positions, Area overlap or proximity; a tangible door, bridge or road may be a
-separate Entity involved in it.
-_Avoid_: Entity, Route, inferred proximity, overlapping geometry
+One stable non-Entity direct travel alternative between two Places, including its
+allowed direction or directions; several Connections may join the same Places. It
+has an Agent-authored name and description but no Traits or Properties, is never
+inferred from Positions, Area overlap or proximity, and remains distinct from a
+tangible Entity, a Route or one actual Movement.
+_Avoid_: Relation, Link, Entity, Route, inferred proximity, overlapping geometry
+
+**Relation**:
+A stable non-Entity World record through which an Agent gives one Entity an open,
+directional meaning toward another Entity. It has free name and description, no
+server-owned semantic kind or mechanical authority, and multiple Relations may
+coexist between the same Entity pair.
+_Avoid_: Connection, Entity, Trait, mechanic, universal graph edge
 
 **Place neighborhood**:
 A bounded view of explicit spatial relationships around one exact Place, such as
@@ -160,7 +183,8 @@ _Avoid_: Property definition, Property value, Trait, per-Entity field
 
 **Trait**:
 A non-executable Entity-owned statement that characterizes the Entity, such as
-“jumps unusually high.” Establishment gives it one stable Trait identity and one
+“jumps unusually high” or “always floats two centimetres above a surface.”
+Establishment gives it one stable Trait identity and one
 immutable Activity-backed statement version; development appends a predecessor-
 linked version and advances its current pointer. It is not reducible to one Property
 key/value, Relationship state, observer-specific Knowledge or a mechanic. An Agent

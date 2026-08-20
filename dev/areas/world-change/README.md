@@ -39,13 +39,100 @@ structural dependencies, bounds, atomic current state and attributable history.
 - Entity state uses uniform Property and Trait concepts; operations keep their concrete game meaning.
 - In the selected spatial scene, establishing a discovered Place and later entering
   it are separate confirmed changes rather than one combined mutation.
+- The first of those changes is itself one complete atomic package: B's Entity and
+  Place role, direct Position, optional initial Properties and Traits—including
+  authored landscape state—and explicit A→B Connection commit with one Activity
+  while the Character remains at A. Partial Place or Connection acceptance is
+  invalid; the later walking change remains a separate Activity.
+- For that package, the Agent submits B's exact absolute World point as structured
+  whole-centimetre `x`, `y` and `z`, with `z` as height, and names A's expected
+  Position revision. World performs deterministic numeric and freshness validation
+  only; it never parses spatial prose or a unit, and never chooses the point.
+- The coordinate convention is fixed: greater `x` means east, greater `y` north and
+  greater `z` up. World validates submitted numbers against that convention but
+  never interprets compass prose to produce them.
+- Absolute Position values use the permanent `(0, 0, 0)` World origin. No proposal
+  names, locks or mutates that origin; it has no identity or current-state row.
+- For the first slice, numeric validation is limited to the Position representation's
+  technical validity and still-unchosen representable bounds. World applies no
+  gameplay distance from A and does not reject a structurally valid far destination.
+- Nearby established Places are bounded read context, not mutation dependencies or
+  spatial locks. Their concurrent appearance does not conflict with B; retries and
+  competing use of the same discovery opportunity remain exact request- and
+  opportunity-scoped conflicts.
+- Discovery may instead settle against a User-chosen existing Place C. That bounded
+  alternative package creates only the explicit allowed A→C Connection and one
+  Activity while consuming the opportunity; it never rewrites C or treats numeric
+  proximity as the causal basis.
+- Settlement creates that required A→C direction at most once. A pre-existing or
+  concurrently won direction makes the later distinct request a non-mutating
+  conflict: no duplicate Connection, no Activity and no opportunity consumption.
+  The exact winning request remains idempotent and returns its accepted result.
 - Future Entity state must support an unnamed persistent Position between Places
   without manufacturing a Place identity for that point.
 - Agent-authored relationship meaning may be open and precise; World must not require
   every possible predicate to be an enum or treat its wording as executable mechanics.
-- A proposed precise arrangement explicitly distinguishes current independent state
-  from state that must remain relative when another Entity changes. World validates
-  that chosen structure instead of deriving it from the Agent's description.
+- Each open Relation has one stable non-Entity identity, directed Entity endpoints
+  and free name and description. A later change addresses that exact Relation;
+  several Relations between the same endpoints remain independent current subjects.
+- Connection remains a separately owned exact Place-to-Place fact rather than a
+  server-owned type inside the open Agent-authored Relation layer.
+- Establishing a Connection includes one Agent-authored name and description for
+  presentation. World stores but never interprets them as direction, access, method,
+  geometry or another mechanical consequence.
+- A Position proposal explicitly chooses either the permanent World origin or
+  exactly one reference Entity and supplies all three whole-centimetre offsets. An
+  Entity-relative Position mechanically follows that reference's resolved Position;
+  World validates this structure instead of deriving it from Agent-authored wording.
+- A successfully resolved Position read returns its calculated current World point and its
+  stored basis together. The immediate reference Entity and offsets explain an
+  Entity-relative Position, while one consistent revision boundary grounds a later
+  proposal; World stores no duplicate resolved point.
+- If bounded read work cannot reach the absolute basis, World returns only the
+  eligible immediate stored basis. It neither invents nor serves a stale World point,
+  and rejects an Action that structurally depends on that unresolved point.
+- A Position change may never create a reference cycle. Deliberately impossible
+  spatial experience remains valid through exact explicit Connection or Action
+  changes and authored meaning; World validates their own structure without forcing
+  Connection topology to agree with coordinates.
+- Settlement accepts a relative Position mutation only after bounded validation
+  reaches an absolute basis without the changed Entity and the examined revisions
+  remain current at commit. A detected cycle, exhausted proof or concurrent stale
+  dependency rejects the whole mutation and its Activity.
+- Re-referencing contains the complete intended new reference plus `x`, `y` and `z`;
+  World never calculates an implicit preserve-world or preserve-offset outcome. The
+  Agent uses the cup's durable Trait and may update current Position description to
+  compose and narrate those values, but World validates no semantic promise such as
+  “always two centimetres.”
+- An attempted action and its proposed result may differ. Agent reasoning may turn
+  “put the cup on the table” into the explicit result “the cup now floats ten
+  centimetres above it,” but World receives only the bounded exact Position, Trait
+  and description consequences and never invents the twist itself.
+- Unforeseen results are a desired future, non-default form of play. The User's
+  working label `Chaos` does not introduce a World model, operation or server-side
+  randomness; any later result still has to arrive as exact bounded state and Activity.
+- Its wider contract is deliberately deferred to a separate grill after the spatial
+  foundation; no temporary general operation is added to spatial in the meantime.
+- A proposal may include optional Position `description` for Agent narration. World
+  stores it only as authored text and never treats it as coordinates, following
+  behavior, geometry, a Relation or authority to change another Entity.
+- Every proposal that changes Position explicitly keeps, replaces or removes its
+  description. World settles that outcome against the same Position revision in the
+  same transaction, without a separately conflicting description write or lock.
+- A Position has at most one current description, which may contain several sentences
+  within ordinary text bounds. Multiple durable independent meanings stay as Traits
+  of the Entity; Position does not become another Trait-owning subject.
+- Position description is returned only as part of the complete Position. World
+  provides no separate description audience, query, count or redaction rule.
+- Entity knowledge and remembered Position do not grant current Position access.
+  Only a concrete bounded read that currently returns the Entity supplies its
+  Position; remembered state remains stale.
+- Agent-authored Trait and description content remains semantically free within
+  ordinary text bounds. An Agent may use it to withhold detail in conversation, but
+  World creates no Position-specific denial or confidentiality state from it.
+- The User-facing creative rule belongs to the Agent: it refuses to author
+  perception, knowledge or another current experience for a different User's
+  Character. World cannot interpret prose to enforce that authorship boundary.
 - Any Agent acting through its Character may in principle propose a new current state
   for ordinary World content, including content first authored by another Agent.
   Surprising causal meaning remains Agent-authored, while the proposal explicitly
@@ -53,6 +140,15 @@ structural dependencies, bounds, atomic current state and attributable history.
 - Direct change proposals may rely only on current subjects and Relations the acting
   Character is structurally eligible to know. World rejects guessed hidden subjects
   or bases without revealing whether they exist.
+- For a remote button and bomb, an eligible open Relation may supply causal meaning
+  to the Agent and be named as current context, but it never executes or authorizes
+  anything. The Agent previews and submits one exact bounded Action; World validates
+  Relation identity, endpoints and revision when claimed, plus ordinary authority,
+  freshness, idempotency and every explicit mutation, without spatial locality or
+  semantic interpretation.
+- That accepted remote Action settles all exact named state and Activity atomically.
+  World infers no blast radius, downstream target, automatic chain or delayed Agent
+  call; any additional affected Entity must be explicit and ordinarily authorized.
 - Remembering that a Relation existed earlier may justify a new investigation but
   cannot serve as the fresh structural basis for directly changing its hidden endpoint.
 - A change composes only the Relation, Position, movement, visibility and action
@@ -60,14 +156,21 @@ structural dependencies, bounds, atomic current state and attributable history.
 
 ### Rejected
 
-- A server ontology, heuristic or LLM that infers semantic effects from names, prose or Property values.
+- A server ontology, heuristic or LLM that infers semantic effects from names,
+  prose, Property values or Trait wording.
 - A generic JSON patch or arbitrary code surface for World mutation.
+- A `world_change` model, table or endpoint, and a standalone visibility editor
+  outside a concrete Action or Introduction.
 - Event sourcing, `world_event`, generic `rule` or universal consequence machinery in the current MVP.
 - Global World revisions, counters or locks used to settle unrelated changes.
 - Treating subscriptions, transport traffic or rejected attempts as World history.
 - Treating a closed Relation enum as the complete vocabulary of Agent-authored World meaning.
+- Treating open Relation wording as an executable rule, remote permission or bypass
+  of ordinary World authority.
 - Permanent author- or controller-exclusive mutation rights over ordinary World content.
 - Treating unguessable identifiers or Agent instructions as protection for hidden World state.
+- Locking or versioning a map region merely to prevent equal or nearby Place
+  Positions, or inferring Place identity from those Positions.
 
 ### Not yet chosen
 
@@ -75,14 +178,17 @@ structural dependencies, bounds, atomic current state and attributable history.
   discriminator, open authored statement or only a bounded read over separate exact
   facts, and how those layers avoid duplicating one truth.
 - The first general multi-subject proposal that current concrete operations cannot express cleanly.
-- How explicit remote causes and multi-Place consequences are authorized and bounded.
-- Which physical context or explicit remote basis a Character must have before its
-  Agent may change another Entity, without turning World into a physics interpreter.
 - The exact causal-dependency and freshness contract when concurrent changes cross.
 - How a bounded chain reaction terminates, detects loops and records its involved subjects.
 - Which collective ratification mechanism may authorize one shared outcome.
 - How a non-Place Position grounds an Entity and its Activity when no
   Place is the direct spatial address.
+- Which concrete bounded reads may select an Entity beyond the current Place and
+  therefore return its complete Position when one exists.
+- Which future concrete gameplay earns World-enforced privacy or visibility state;
+  no Position-specific exception or placeholder seam exists in the foundation.
+- After the spatial foundation, what exact invocation, confirmation and affected-
+  subject bounds the non-default unforeseen-result direction requires.
 
 ## Research needed
 
@@ -132,5 +238,6 @@ simulation and collective ratification are absent.
 - Retained rationale — [Entity state](../../docs/concept/entity-state.md), [Interaction](../../docs/concept/interaction.md) and [mass concurrency and living World direction](../../docs/concept/concurrency-and-world-dynamics.md).
 - Prepared pressure — [Multiplayer scenario catalogue](../multiplayer/scenarios.md).
 - Prepared spatial pressure — [Spatial scenario catalogue](../place/scenarios.md).
+- Current technical candidate — the [completed spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill) translates the chosen spatial-change direction into a falsifiable transaction and dependency shape without authorizing implementation.
 - Related synthesis — [Multiplayer](../multiplayer/README.md), [Movement](../movement/README.md) and [Agent Play](../agent-play/README.md).
 - Exact behavior and delivery — [`game/docs/`](../../../game/docs/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).

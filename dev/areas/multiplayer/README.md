@@ -44,11 +44,75 @@ into truth or spending tokens in the background.
 - Ordinary current World content is jointly changeable rather than permanently
   locked to its first author or Entity controller. Every accepted change remains
   attributable and concurrent attempts still settle against exact current subjects.
+- Every open Relation has its own stable non-Entity identity. Changes conflict on
+  that exact Relation rather than either endpoint Entity, and an endpoint carries no
+  shared Relation count, lock or revision even when it becomes extremely popular.
+- Relation reads are bounded by endpoint, direction, cursor and limit. Several
+  independent Relations may coexist between the same Entity pair without prose
+  similarity, last-write-wins or a universal graph traversal merging them.
 - Relation visibility is Character-specific and may hide the Relation's existence,
   endpoints and current state even when one endpoint is otherwise observable. A
   guessed identifier cannot widen that knowledge or mutation boundary.
 - A Character may retain an attributed memory of a previously observed Relation,
   while its current hidden state remains unreadable and inactionable as a direct target.
+- A remembered point may remain Knowledge, but it is not fresh current Position and
+  cannot ground a mutation. The foundation exposes no direct current-Position lookup
+  merely because a Character once knew an Entity.
+- A bounded current Place read includes complete Position for each positioned Entity
+  it already returns. This is one paginated response rather than a per-Entity protocol
+  query, and the foundation performs no Character-specific Position redaction.
+- A successfully resolved eligible read returns both the calculated current World point and the
+  stored Position basis under one freshness boundary. This does not grant new
+  separate eligibility, and no global resolved-point cache becomes authoritative.
+- When bounded work cannot reach an absolute basis, the same read returns only the
+  immediate eligible stored basis. Actions needing the exact point fail closed, so
+  load or deep content never turns stale coordinates into multiplayer truth or causes
+  descendant-wide rewrite fan-out.
+- Cyclic Connection topology is ordinary explicit shared state and never requires a
+  global graph lock or full-loop traversal for one move. Each movement settles on its
+  exact origin, chosen direction and destination, while cyclic Position references
+  remain invalid.
+- Each Connection has its own stable identity and revision because several direct
+  travel alternatives may join the same Places. Reads are bounded by one endpoint
+  and cursor; writes conflict on the exact Connection or its optional reusable
+  spatial shape, never on one endpoint-pair row, Place-wide count or graph revision.
+- Area records only exact positive coverage. Changing one Place's coverage conflicts
+  on that exact Area and never rewrites every intersecting Connection; ordered
+  crossings are derived from revision-specific inputs through bounded spatial reads.
+- Place-role establishment conflicts on the exact Entity and creates no map-wide
+  count or partition. Coordinate-window map reads use spatial indexes, independent
+  result bounds and stable continuations, so one crowded city cannot force an
+  unbounded response or lock quiet World regions.
+- Partial or complete Connection Movement changes only the exact Character Position
+  and writes Activity while reading the expected Connection revision. Thousands of
+  Characters may occupy or traverse the same course without a Connection-wide
+  traveller row, count, lock or progress update.
+- A current eligible Relation may let an Agent understand and narrate that one button
+  activates one distant bomb, but Relation grants no mechanical authority. The
+  explicitly invoked Agent proposes the exact bounded remote Action; World applies
+  ordinary subject eligibility, authority, revisions, idempotency and atomic Activity
+  without interpreting the Relation text or requiring spatial proximity.
+- A claimed Relation may be named as current causal context so World can validate its
+  identity, endpoints and revision, but semantic mismatch remains Agent and User
+  judgment. If ordinary authority forbids the Bomb change, the Relation never
+  overrides that rejection.
+- Relative Position writes fail closed unless bounded validation proves an absolute,
+  acyclic chain against revisions that remain current at commit. Concurrent A→B and
+  B→A attempts therefore cannot both be accepted, while unrelated Position writes
+  share no global cycle lock or revision.
+- A reference change writes one explicit complete new Position and conflicts only on
+  the exact current Position and examined dependencies. No automatic preserve mode
+  or descendant fan-out is selected from prose, even when the Agent honors a durable
+  authored characteristic in its proposed offsets.
+- Creative failure or escalation remains a bounded proposal over exact named
+  subjects. An Agent cannot use “unexpected outcome” to modify another User's
+  Character, omit dependencies or widen one cup Action into an unbounded Place effect.
+- The Agent refuses a User request to author perception, knowledge or another
+  current experience for a different User's Character. World never interprets
+  prose to police that creative boundary.
+- A conforming Agent may use Trait or Position-description meaning to withhold a
+  Position detail in player conversation. Because World returned that data, this is
+  explicitly not confidentiality against a modified or non-conforming Agent.
 
 ### Rejected
 
@@ -59,6 +123,10 @@ into truth or spending tokens in the background.
 - Using last-write-wins, CRDT merge or prose similarity to settle semantic conflicts.
 - Treating original authorship as permanent exclusive mutation authority over ordinary World content.
 - Relying on identifier secrecy, client filtering or Agent obedience to protect a hidden Relation.
+- Claiming that Agent-only Position withholding is World-enforced privacy or a
+  security guarantee.
+- Treating any Relation as executable permission merely because its Agent-authored
+  name or description sounds causal.
 
 ### Not yet chosen
 
@@ -71,6 +139,11 @@ into truth or spending tokens in the background.
   now, and how a grounded investigation may test remembered but non-current knowledge.
 - Whether one confirmed proposal may atomically combine an authored Relation with
   the exact Position, attachment or other structural fact on which it is based.
+- How a later privacy and visibility design enforces private information without an
+  audience-wide fan-out, global policy row or trust in Agent obedience.
+- How one explicitly invited unforeseen result remains bounded to exact eligible
+  subjects and current revisions without granting cross-User authority or creating
+  a hot global mode.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed
@@ -123,4 +196,5 @@ settlement are absent. Their mention here does not authorize their implementatio
 - Retained rationale — [mass concurrency and living World direction](../../docs/concept/concurrency-and-world-dynamics.md).
 - Sourced findings — [multiplayer concurrency and World observation](../../docs/research/multiplayer-concurrency-and-world-observation.md) and the [spatial multiplayer foundation](../../docs/research/spatial-multiplayer-foundation.md).
 - Experiments — [Multiplayer Lab track](../../lab/multiplayer/README.md).
+- Current technical candidate — the [completed spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill) applies the selected spatial facts to bounded conflicts and hot subjects without claiming production evidence.
 - Exact behavior and delivery — [`game/docs/`](../../../game/docs/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).

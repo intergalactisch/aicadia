@@ -144,7 +144,12 @@ examples that a future builder can implement and test. Present every material op
 in two adjacent layers: first the understandable player or World consequence, then
 the technical state, ownership, transaction, contention and cost consequence. State
 what happens with millions of Users and one deliberately hot subject; never ask the
-User to choose between unexplained implementation terms.
+User to choose between unexplained implementation terms. Before every material User
+choice, state which option you prefer and the concrete reason for that preference.
+During every grill, make each answer and material option self-contained by showing
+the actor, exact input, stored or read result and relevant failure boundary. When
+technical state matters, include a small data, transaction or query example and mark
+illustrative names and shapes as non-canonical until they are separately negotiated.
 
 ### Vocabulary Is Negotiated
 

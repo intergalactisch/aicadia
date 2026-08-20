@@ -10,20 +10,23 @@ status: active
 
 Date: 2026-08-18
 
-Status: **complete recommendation, pending User decision**. Nothing in this record is
-accepted merely because the recommendation is complete. `Relation`, `coordinate
-space`, `Orientation`, `Activation` and every illustrated field or table below are
-explicitly proposed or descriptive unless already defined in `dev/CONTEXT.md`.
+Status: **complete exploration and technical synthesis; spatial product-choice
+frontier empty; implementation planning pending**. The initial five-year recommendation
+is retained as the starting hypothesis; later sections that record what the User
+selected, accepted, rejected or corrected supersede it wherever they differ. Every
+illustrated field or table remains descriptive unless a later section explicitly
+accepts its domain meaning; no production schema or build is authorized here.
 
 The primary-source basis is the
 [spatial foundation research report](../research/spatial-five-year-foundation.md).
-The fixed tests are the thirteen
-[spatial scenarios](../../areas/place/scenarios.md). The earlier
+The initial fixed tests were the first thirteen
+[spatial scenarios](../../areas/place/scenarios.md); later User choices may append
+new pressure cases without rewriting that research run. The earlier
 [four-candidate paper comparison](../../lab/spatial/01-model-pressure/README.md)
 supplied a leading direction; this backcast tried to break it rather than treating
 it as decided.
 
-## Executive recommendation
+## Initial executive recommendation
 
 Five years from now, Aicadia should **not** have one universal spatial graph, one
 giant map of Places or one flexible Position payload containing coordinates, prose,
@@ -102,9 +105,9 @@ with that external move. A Character looking from shore can receive an exact cur
 point only if the relevant Position is visible and resolvable.
 
 A Character presses a button while its bomb is miles away. Spatial state says where
-both Entities and Activities are. A separate explicit remote mechanic says whether
-this button invocation can affect that bomb. A descriptive Relation may explain the
-connection to an Agent, but the Relation never grants the effect.
+both Entities and Activity are. An eligible descriptive Relation may explain the
+causality to the Agent but neither executes nor authorizes it; the Agent submits one
+exact confirmed Action under ordinary World authority.
 
 Cartographers publish named journeys such as the Green Route. A durable Route exists
 only because named, saved and shared travel has become gameplay. Ordinary paths are
@@ -166,7 +169,7 @@ boundaries whose removal creates irreversible confusion.
 | Stable Entity identity | Moving or redrawing something never renames it | ids are independent of coordinates, cells, parents and partitions |
 | One exact Position | one subject never has competing mechanical locations | zero or one current Position keyed by `entity_id` |
 | Explicit reference | “stays here” and “moves with that” are deliberate choices | World- or one-Entity-relative variant; no prose inference |
-| Derived resolved point | Agent gets one current answer without descendant writes | bounded chain calculation, not second canonical storage |
+| Optional resolved output | Agent always gets the stored basis and gets the World point when bounded resolution succeeds | bounded calculation, explicit absence and no second canonical storage |
 | Explicit current Place | entering is not guessed from equal coordinates or Area overlap | optional typed Place participation, separate from exact Position |
 | Open authored meaning | Agents can express surprising spatial facts | free text/Properties with provenance, dependencies and no execution |
 | Typed mechanics | travel, privacy and remote effects remain predictable | separate invariants, indexes, access and transactions when earned |
@@ -211,19 +214,17 @@ second Position identity.
 - **Entity-referenced:** moving the referenced Entity changes the resolved point.
   This is the birdhouse that should travel with the table or the cabin that should
   travel with the ship.
-- **Re-reference preserving the World point:** picking an Entity up can change its
-  reference while keeping its current resolved point.
-- **Re-reference preserving the local point:** attaching an Entity to a new carrier
-  can retain the submitted offset and therefore change its resolved World point.
-
-The Agent must choose the re-reference behavior explicitly. World never derives it
-from “on”, “inside”, “held by” or another free description.
+- **Re-reference:** the Agent submits the complete new World or Entity reference and
+  all three new offsets. It may deliberately choose values that preserve a prior
+  World point or offsets, but World has no mode that calculates either outcome
+  implicitly and never derives it from “on”, “inside”, “held by” or other prose.
 
 One immediate reference is enough. Chains arise compositionally: Birdhouse can be
-relative to Table, Table to Cabin and Cabin to Ship. The recommendation uses a hard
-small maximum and rejects cycles. **Eight references is the proposed initial bound**:
-large enough for the fixed scenarios and small enough to inspect, lock and resolve.
-That number remains a candidate until a real fixture tests it.
+relative to Table, Table to Cabin and Cabin to Ship. No fixed chain-length maximum
+is accepted. Each read instead performs bounded work: it returns the immediate stored
+basis and includes a World point only when that work reaches an absolute basis.
+Cycles still cannot yield the exact point Position means; their bounded validation
+on mutation remains the next open dependency.
 
 ### 3. Relative Position deliberately means movement inheritance
 
@@ -247,25 +248,29 @@ Moving one reference changes the resolved points of its descendants without writ
 new descendant Position versions. History records that the reference moved; it does
 not fabricate a separate movement Activity for every descendant.
 
-### 4. One authorized read returns one resolved current point
+### 4. One authorized read always returns the basis and may resolve the World point
 
-An Agent should not have to understand storage joins or calculate a carrier chain.
-When the Character is eligible to know a positioned Entity's current Position, one
-World read returns its current resolved World point and a freshness token. Internally
-World resolves at most the accepted depth from one request snapshot.
+An Agent should not have to understand storage joins merely to learn the immediate
+Position. When the Character is eligible, one World read always returns the stored
+absolute values or immediate Entity reference and offsets with their freshness. World
+also returns the calculated current World point when bounded work reaches the
+absolute basis. Otherwise the point is absent and any Action structurally requiring
+it fails closed; World never substitutes a stale cache or rewrites descendants.
 
-That promise has three deliberate limits:
+That promise has four deliberate limits:
 
 1. an unpositioned Entity has no point and World says so only when the Character is
    eligible to know the Entity and that absence;
 2. a hidden Entity or Position is unavailable without confirming its existence; and
-3. a calculated point is fresh for the named Position/reference revisions, not an
+3. a deep eligible Position may return its immediate basis without a World point
+   when bounded resolution does not reach the absolute basis; and
+4. a calculated point is fresh for the named Position/reference revisions, not an
    eternal coordinate that remains valid after an ancestor moves.
 
-The response may also expose the immediate relative reference when that fact is
-visible and useful. The resolved point can be returned without exposing a private
-ancestor's identity when the access design eventually permits that combination.
-Eligibility, not technical resolvability, decides the output.
+How a hidden immediate reference affects the otherwise eligible Position remains an
+open privacy choice. Eligibility and technical resolvability are separate: the first
+decides which stored facts may be returned, while the second decides whether an exact
+World point can be calculated within one bounded read.
 
 ### 5. Exact Position and current Place are separate
 
@@ -350,18 +355,16 @@ columns of its own. A Place can be Entity-relative: a cabin remains a stable Pla
 while its ship moves. Place answers whether a subject is a durable independent map,
 discovery, navigation or spatial reference—not whether it is large or immobile.
 
-**Area.** Area remains optional coverage of a Place. The recommendation defaults to
-positive established coverage: geometry says where the Place is established to
-cover, while absence outside the geometry does not reveal a complete hidden World.
-A complete boundary must be asserted explicitly and versioned. Overlap does not
-create Connection, visibility, ownership or movement. Moving Places may keep Area
-geometry in their local basis so the geometry follows without rewriting every point.
+**Area.** Area is optional exact positive coverage of a Place: established geometry
+proves inclusion, while absence outside it remains unknown. Overlap may return
+several true Places and creates no Connection, visibility, ownership or movement.
+The exact geometry and moving-basis representation remain technical work.
 
-**Connection.** Keep the existing one-word term for direct Place topology unless a
-later negotiation finds a materially clearer word. Connection records only that one
-or both explicit travel directions exist between two Places. A physical road, door,
-bridge or ferry remains an Entity and may be a dependency of the Connection. Its
-name, geometry or Property never silently creates topology or current access.
+**Connection.** Connection is one stable named and described direct travel
+alternative between two Places, and several may share endpoints. It states explicit
+direction, may own one optional ordered three-dimensional World-points course and
+never follows from geometry or prose. A physical road, door, bridge or ferry remains
+a separate Entity.
 
 **Route.** Keep Route absent now. If named, saved or shared journeys become current
 gameplay, a Route is an ordered sequence of Connection identities with its own
@@ -414,7 +417,7 @@ their own exact models only when accepted gameplay requires them:
 | dog/bridge | `sleeping under` | Positions and optional exact geometry predicate |
 | sword/backpack | `inside` | private Position; later Inventory membership/access if listing and removal need it |
 | Character/glass | `holding` | relative Position; later hand/equipment rule if slots and release need enforcement |
-| button/bomb | `connected to` | proposed typed Activation record and bounded remote Action |
+| button/bomb | `connected to` | one exact confirmed Action under ordinary authority; Relation remains non-executable context |
 | A/B Places | `a road leads there` | Connection with explicit direction; access remains separate |
 
 There is no generic Containment mechanic. Relative Position supplies movement only.
@@ -432,8 +435,8 @@ Freedom also does not mean omniscience:
 
 - the Character must be eligible to know every exact subject and current fact it
   proposes to change;
-- current locality, explicit access or an operation-specific remote basis must make
-  the attempted Action eligible;
+- ordinary current subject eligibility and authority must permit every exact named
+  change; an Agent-understood Relation never widens them;
 - expected revisions prove that the proposal was grounded in fresh authorized state;
 - guessed Entity ids and stale memories do not satisfy current eligibility;
 - private facts are filtered before counts, pagination, hydration and errors; and
@@ -681,19 +684,21 @@ The strict settlement order is:
 2. parse and bound subjects, geometry, relation text, properties and output scope;
 3. retrieve only currently eligible exact facts without revealing missing/private
    distinctions;
-4. collect proposed subjects and the bounded reference/dependency chains;
+4. collect proposed subjects and perform bounded work over required
+   reference/dependency links;
 5. lock existing Entity/current-state rows in one stable id order, then re-read the
    chains so concurrent re-referencing cannot create a cycle;
-6. validate expected revisions, depth, coordinate bounds, access, locality or the
-   explicit remote mechanic and every claimed dependency;
+6. validate expected revisions, coordinate bounds, ordinary authority and every
+   claimed structural dependency without interpreting Relation meaning;
 7. insert one Activity, immutable versions and exact current-pointer changes;
 8. mark only rebuildable index/interest resources dirty or update the minimal
    synchronous candidate index; and
 9. commit once and return the authoritative result.
 
 An ordinary move retaining the same immediate reference locks the moved Entity's
-Position, not every ancestor and descendant. Re-reference must inspect the new
-bounded ancestor chain to reject cycles. A local cabin Action does not resolve or
+Position, not every ancestor and descendant. Re-reference must prove within bounded
+work that the proposed reference does not create a cycle; the result when it cannot
+prove that remains open. A local cabin Action does not resolve or
 lock the ship's external Position unless its validity actually depends on the
 external World point. A cross-boundary shot or shore observation does name that
 dependency and may retry if the ship moves concurrently.
@@ -803,16 +808,14 @@ Mara once saw Noor put Sword S in Backpack P. Later Mara sees only P.
 ### Distant bomb example
 
 - Button and bomb retain independent Position; distance is irrelevant to authority.
-- A free Relation may describe that the button controls the bomb but is inert.
-- A proposed typed Activation record names the exact endpoints, permitted operation,
-  visibility and current revisions.
-- Pressing validates current access to the button and that Activation basis. The
-  Agent supplies a bounded affected set and claimed Places; World performs no blast
-  inference from prose.
-- If button press and bomb state change are one accepted Action, both current facts,
-  involved roles and Activity commit atomically. A consequence too wide for the
-  accepted bound is rejected or routed through a separately accepted collective
-  mechanism, never silently fanned out.
+- A free eligible Relation may describe that the button controls the bomb but remains
+  inert and grants no authority.
+- The Agent previews and submits one exact bounded Action naming Button, Bomb,
+  revisions, intended state and optional current Relation context.
+- World validates ordinary eligibility, authority, freshness, idempotency and bounds;
+  it performs no blast inference from prose.
+- Accepted state, involved roles and Activity commit atomically. A consequence too
+  wide or unauthorized is rejected, never silently fanned out.
 
 ## Scenario walkthrough
 
@@ -851,17 +854,19 @@ ordinary holder move does not rewrite the hidden child.
 
 ### SP03 — Distant button and bomb
 
-**Input.** The Agent presses the visible/usable button and names the exact accepted
-remote basis and bounded consequences. Position and Connection do not supply it.
+**Input.** The Agent understands an eligible B→X Relation, previews the exact bounded
+button-and-bomb Action and submits every intended consequence after confirmation.
+Position and Connection do not supply authority.
 
-**Stored state.** Endpoint Positions remain independent. A typed remote mechanic and
-one Activity ground the accepted effect; an optional Relation is explanatory only.
+**Stored state.** Endpoint Positions remain independent. Relation stays explanatory;
+the exact accepted current state and one Activity ground the result.
 
 **Read/privacy.** Authorized use need not reveal the bomb's Position or even full
 identity to unauthorized observers. Guessed ids fail neutrally.
 
-**Contention/cost.** Lock exact button, remote-basis and affected-subject versions.
-The transaction never locks every subject at the remote Place.
+**Contention/cost.** Validate or lock the exact Button, optional claimed Relation,
+Bomb and affected-subject versions. The transaction never locks every subject at the
+remote Place.
 
 ### SP04 — Cup two centimetres above a table
 
@@ -955,7 +960,7 @@ same Entity id, and a passenger's current Place can remain Cabin. Descendant
 Positions, current-Place rows and local indexes remain unchanged.
 
 **Read/privacy.** Interior reads operate in the cabin/ship local basis. Exterior
-reads resolve bounded chains and filter private cargo before output.
+reads attempt bounded resolution and filter private cargo before output.
 
 **Contention/cost.** Interior local Actions do not lock ship external Position.
 Carrier moves serialize honestly on the ship row. Candidate/root-local indexes keep
@@ -1122,7 +1127,7 @@ Still unknown and not smuggled in as decisions:
 - whether proposed Orientation is needed in the first relative scene;
 - complete versus positive-only Area operations and 2D versus 3D geometry;
 - the final Relation fields, visibility model, duplicate semantics and dependencies;
-- concrete Inventory, access, Activation or collective-authority mechanics;
+- concrete Inventory, access or collective-authority mechanics;
 - movement time, collision, reach, terrain costs and arrival rules;
 - exact nearby index/projection design and overload thresholds;
 - production query plans, capacity, privacy timing and failure behavior; and
@@ -1149,8 +1154,9 @@ Orientation. Carrier/root-local indexing and privacy around cargo are tested wit
 real PostgreSQL data. Interior play is independent of external carrier motion. Remote
 Actions name exact capability and scope.
 
-**What had to be true earlier:** relative Position had one mechanical meaning, chain
-depth and cycles were bounded, and open Relation prose never granted access.
+**What had to be true earlier:** relative Position had one mechanical meaning, every
+read had bounded work, cycles could not become a valid Position and open Relation
+prose never granted access.
 
 ### Year three — terrain, topology and player journeys
 
@@ -1191,10 +1197,11 @@ Do not implement the full future schema. The smallest high-leverage sequence is:
 
 1. **User decision:** accept, revise or reject the core recommendation that Position
    is one exact `{reference, point}` per Entity; Entity-relative means following; an
-   eligible read returns one resolved World point; free proposed Relation meaning
-   stays separate and inert.
-2. **One real lab:** after acceptance, test direct/relative resolution, preserve-
-   world versus preserve-local re-reference, cycle/depth, fixed-point precision,
+   eligible read returns its stored basis and adds the World point when bounded
+   resolution succeeds; free proposed Relation meaning stays separate and inert.
+2. **One real lab:** after acceptance, test direct/relative resolution, explicit
+   re-reference values that intentionally preserve a World point or local offsets,
+   cycles/deep reads, fixed-point precision,
    private child reads and a ship with 1/1,000/100,000 descendants against real
    PostgreSQL. Name every simulated seam and do not claim million-player proof.
 3. **First production behavior:** if the lab does not falsify the foundation, return
@@ -1217,7 +1224,8 @@ behavior that currently earns code.
 - one Position keyed by Entity;
 - Position contains exact point plus World-or-one-Entity reference;
 - Entity-relative Position means mechanical movement inheritance;
-- one eligible World read resolves the current World point;
+- one eligible World read returns the stored basis and includes the current World
+  point only when bounded resolution reaches the absolute basis;
 - current Place remains an optional explicit context distinct from Position and
   Area;
 - Place uses that same Position and may eventually be relative;
@@ -1225,14 +1233,1313 @@ behavior that currently earns code.
   execution;
 - Area, Connection, access/private contents, remote causality and later Route remain
   distinct earned mechanics;
-- per-fact versions, bounded chains, stable locks, atomic Activity and disposable
+- per-fact versions, bounded reads, stable locks, atomic Activity and disposable
   indexes provide the scale/security foundation; and
-- fixed-point millimetres and depth eight are concrete starting candidates to test.
+- whole-centimetre coordinates are accepted, while no fixed chain depth is.
 
-### Not decided while the User sleeps
+### State when the backcast was delivered
 
-No item above has entered `dev/CONTEXT.md`, an Area's `Chosen` section, `game/docs`,
-the backlog, schema, API, code or public Agent text. The next conversation can accept
-the recommendation as a package, challenge one premise or choose the first proposed
-decision to grill. Repository history, not this report alone, will record any later
-acceptance.
+At delivery, no item above had entered `dev/CONTEXT.md`, an Area's `Chosen` section,
+`game/docs`, the backlog, schema, API, code or public Agent text. Repository history,
+not this report alone, records later acceptance.
+
+## Subsequent User choice — first-slice focus
+
+On 2026-08-19 the User accepted the smallest first spatial scene without accepting
+the complete backcast model:
+
+- Place A and Place B may differ through their Entity descriptions or Agent-authored
+  Properties—for example grassy ground versus dunes—without a server Terrain model.
+- Discovery establishes B and its explicit A→B Connection while the Character stays
+  at A; the player may inspect B and decline to enter.
+- That discovery is one complete confirmed package: B's Entity and Place role,
+  direct Position, name, description, optional initial Properties and Traits
+  (including authored landscape state) and directed A→B Connection commit with one
+  Activity, or none of them do. An accepted retry returns the same complete result.
+- The Agent reads A's fresh exact Position, reasons about the spatial meaning and
+  submits B's exact three-dimensional absolute World point as structured state.
+  World never parses prose into Position. Before confirmation the Agent must inspect a bounded eligible
+  set of established Places around the proposed point and include the returned
+  context in the complete preview. Hidden or out-of-scope Places remain unknown;
+  their omission never establishes global absence.
+- The first slice applies no gameplay distance limit from A. The Agent may propose
+  any technically valid absolute World point and the User may confirm it after the
+  required nearby inspection; World validates representation and structural truth,
+  not a discovery radius.
+- Every exact World point has three spatial dimensions. This keeps height available
+  for caves, cliffs, bridges and object arrangements, but does not introduce
+  geometry, surfaces or Orientation and does not make incomplete prose calculable.
+- Each dimension is submitted as a whole number of centimetres. Agents may present
+  other units to Users but convert them before submission; World never parses unit
+  prose. Millimetre precision is rejected for this foundation unless later concrete
+  gameplay earns it. Integer width and range remain open.
+- The three values are named `x`, `y` and `z`; `x` and `y` form the horizontal plane
+  and `z` is vertical height. Increasing `x` is east, increasing `y` north and
+  increasing `z` up. Agents translate natural direction language before submission;
+  World receives structured values and performs no compass parsing.
+- `(0, 0, 0)` is the permanent World origin. It has no Entity or Place identity,
+  frame object, database row, lifecycle or lock. The first entry Place is initially
+  positioned there, but later movement of that Place would never move the origin.
+- If a returned Place plausibly fits the intended discovery, the Agent must discuss
+  reuse with the User and explain why a new Place may still be distinct. Only an
+  explicit User choice continues the new-Place proposal; World never makes or
+  validates that semantic judgment. If the User chooses existing C, the alternative
+  atomic result consumes the opportunity and establishes only the explicit allowed
+  A→C Connection plus Activity. Proximity informed the choice but did not establish
+  direct travel by itself.
+- If the required A→C direction already exists or a concurrent request establishes
+  it first, a distinct later request creates no duplicate Connection or Activity and
+  retains its positive opportunity. The Agent re-grounds; only retrying the exact
+  winning request returns the prior accepted result.
+- Equal or nearby Place Positions remain independent under concurrent discovery.
+  Proximity informs the Agent and User but is not a uniqueness, blocking or merge
+  rule; the future may earn explicit Agent- and User-driven organization only after
+  actual proliferation proves the need.
+- A later deliberate action walks from A to B over that Connection. Walking is the
+  only current movement method in this proposed slice, so no travel-mode field or
+  enum is earned.
+- Geographic adjacency is not stored and is not inferred from the Connection,
+  Position, Area or prose. It remains later behavior only if a concrete game scene
+  needs to distinguish adjacent-but-impassable from connected-but-distant Places.
+- The resulting Connection may therefore span any technically valid distance.
+  Distance does not yet decide Movement duration, intermediate Position or another
+  travel mechanic.
+- Grass and dunes gain mechanical effects only when accepted gameplay requires
+  movement, material, visibility or other deterministic terrain behavior. An
+  independently discoverable plant may already be an Entity.
+
+This choice updates the Place and Movement development direction and backlog only.
+It introduces no Terrain or adjacency vocabulary, `game/docs`, schema, capability,
+code or public Agent text. The remaining Relation, Area, geometry, chain-bound and
+privacy recommendations remain pending User negotiation.
+
+## Subsequent User choice — Entity-relative Position and description
+
+On 2026-08-19 the User accepted the reference behavior that remained open after the
+first-slice focus:
+
+- Position is either absolute from permanent World origin or relative to exactly one
+  Entity, using the already accepted whole-centimetre `x`, `y` and `z` World axes.
+- Entity-relative Position mechanically follows changes to its reference Entity's
+  resolved Position. The Agent chooses that structure explicitly; a Relation or
+  authored sentence never creates following behavior.
+- Place uses the same Position as every Entity role and may therefore be relative;
+  a cabin can remain a stable Place while moving with a ship.
+- Until Orientation earns its own accepted behavior, relative Position inherits
+  translation only and does not rotate local axes with its reference.
+- Position may include optional Agent-authored `description` that helps another
+  Agent narrate the current spatial situation. The cup example may say, “this cup
+  strangely remains exactly two centimetres above the table; nobody knows why,”
+  while the exact reference and offsets remain the sole mechanical truth.
+- World never parses Position description into coordinates, movement, geometry,
+  Relation meaning, access or authority. Every accepted Position change explicitly
+  keeps, replaces or removes the current description in the same transaction and
+  under the same Position revision. Description shares exactly the Position's read
+  eligibility and is never independently queryable.
+- Knowing an Entity or remembering an earlier point does not grant its exact current
+  Position. Position has an independent Character-specific eligibility boundary;
+  denied reads reveal neither Position existence nor reference, offsets or
+  description. One positive path is now accepted: a bounded current Place read that
+  already returns an Entity includes that Entity's readable Position in the same
+  response. It never issues or requires one follow-up Position lookup per Entity.
+  Other positive eligibility paths remain open.
+- A normal eligible Position read returns the resolved current World point together
+  with the basis actually stored. For an absolute Position that is its origin-based
+  values; for an Entity-relative Position it is the immediate reference Entity and
+  stored offsets. The resolved point is calculated for the read and is never stored
+  as a second spatial truth. Behavior when the immediate reference itself is hidden
+  remains open.
+
+The existing canonical term Prose still means immutable narrative of one accepted
+World action; `description` is the accepted name for this optional current Position
+text and does not give Prose a second meaning. Bounded reference-chain work, cycles,
+hidden-reference reads, re-referencing, privacy, indexing and hot-reference concurrency
+remain future evidence questions. No `game/docs`, schema, capability, runtime or
+public Agent text changes.
+
+The User subsequently rejected a proposed fixed maximum of 32 relative Position
+references. Reads must avoid retrieving unbounded state, but the number of Relations
+and the length of a finite relative Position chain should not gain that product
+limit merely for operational convenience. These are distinct structures: Relation
+count is never traversed to resolve Position, while an exact absolute World point
+does mathematically depend on reaching the Position chain's absolute basis. The
+At that point the result returned when one bounded read could not reach that basis remained open, as did
+the implementation that proves bounded work without a fixed chain-length rule. A
+cycle or genuinely non-terminating chain cannot yield the exact point promised by
+Position and is not accepted by this rejection.
+
+The User then accepted the bounded incomplete-read result. Every eligible read
+returns the immediate stored Position basis. If bounded work reaches an absolute
+basis it additionally returns the exact current World point; otherwise that point is
+absent. World never falls back to a stale cached point or descendant-wide coordinate
+rewrites, and an Action whose mechanics require the absent point fails closed until
+resolution succeeds or an eligible Action simplifies or re-establishes the Position.
+
+The User then accepted a deliberate art-and-game distinction. Relative Position
+references never cycle: a cycle cannot establish the one exact point Position means.
+The player's spatial experience may nevertheless be intentionally impossible.
+Explicit Connections may form loops or join Places whose coordinates are
+geographically inconsistent; concrete Actions may later change that topology, and
+Agent-authored meaning may narrate it without becoming executable inference. An
+infinite staircase, looping doors or a space larger inside than outside therefore
+does not require corrupt Position state. Each movement settles one explicit
+Connection direction, so one loop never requires a global graph traversal or lock.
+SP15 preserves this artistic pressure case. Bounded cycle validation on Position
+mutation is fail closed: World accepts the new relative Position only when bounded
+work reaches an absolute basis without returning to the changed Entity. A detected
+cycle or exhausted proof rejects the whole mutation. The examined Position revisions
+must remain current at commit, so concurrent A→B and B→A proposals cannot both win.
+The exact PostgreSQL lock and validation strategy remains an evidence question; it
+may not introduce a global spatial lock or revision.
+
+The User then accepted explicit complete re-referencing. Changing an Entity from
+Table-relative to Tray-relative supplies Tray and all new `x`, `y` and `z` values;
+World never guesses whether to preserve the prior World point or prior offsets. The
+Agent must also account for eligible authored meaning such as “this cup always
+floats two centimetres above a surface.” If available World information does not
+ground the tray's surface, the Agent explains the uncertainty and asks the User
+rather than inventing geometry. World validates only the complete Position,
+revisions and acyclic basis; it neither interprets nor enforces the two-centimetre
+promise. Whether that durable meaning is canonically a Trait, Property or another
+already accepted authored surface remained the next vocabulary choice. The User
+then selected Trait: “this cup always floats two centimetres above a surface” is a
+durable, open and non-executable characterization of the cup. It remains with the
+cup across Position changes and guides the Agent's complete next proposal. Position
+description may separately narrate the current tray arrangement. World interprets
+neither text surface as geometry or physics.
+
+The User then clarified that User control does not make the Agent a literal command
+executor. The User chooses what their Character attempts and the Agent must
+understand and communicate the likely impact, but it may also invent a bounded,
+playful result. “Put the cup on the table now” may fail; the Agent may propose that
+the cup instead rebounds and floats ten centimetres above it. The creative result
+must still name the complete exact Position and what is retained, developed or
+replaced in Trait and Position description. World never authors the surprise from
+prose and cross-User, privacy, subject and boundedness rules do not loosen. Whether
+the initial request itself confirms the surprising result or a changed result needs
+a new explicit preview and confirmation remains open inside the wider routing choice.
+
+## Subsequent User clarification — cursed visibility exception
+
+The unconditional recommendation that a User's Agent can always read its own
+Character's current Position is not yet accepted. The User immediately qualified it
+with deliberately strange World behavior such as glasses that are hidden from their
+possessor, possibly extending to loss of the Character's own spatial awareness.
+
+Trait remains the accepted non-executable characterization and may narrate “hidden
+from its possessor,” but its wording cannot change a read. The User accepted that
+normal own-Character Position eligibility may be overridden by an explicitly
+proposed current structural consequence for exact Characters and Entities. World
+validates and stores that structure with Activity without interpreting the Trait.
+The exception may therefore hide cursed glasses from their possessor or even hide
+the affected Character's own Position.
+
+The User then accepted the boundary between free meaning and executable structure.
+Trait statements and Position description may carry arbitrary Agent-authored meaning
+within ordinary bounded-text rules, but an executable visibility exception separately
+names the exact protected World information it hides. World never infers that scope
+from text and no universal hidden flag silently hides all Entity state.
+
+The User also accepted that `world_change` is not a game resource, model, table or
+generic operation. `World Change` remains only the name of a development Area. A
+visibility consequence can exist only inside the confirmed Action that establishes,
+changes or ends it, or inside the Introduction that first establishes its cause or
+basis. That operation names the exact affected subjects, protected information and
+expected current revisions; the resulting current state and Activity commit together
+or not at all. There is no standalone visibility editor and no orphaned consequence
+whose cause changed without it.
+
+No canonical name or storage form exists yet. The available protected information
+scopes and how an affected Character recovers remain open. The User corrected the
+cross-User direction: the User-owned Agent must refuse a request to author
+perception, knowledge or another current experience for a different User's
+Character and explain that a User writes only for their own Character. World cannot
+interpret prose to enforce that creative boundary. The User accepted the separate
+structural security boundary: when the authored meaning has an executable
+consequence, World requires the explicitly affected Character to equal the acting
+Character. World compares only those stable identities and makes no semantic
+judgment. The User then limited the first spatial scope to current Position: the
+Agent names each Entity whose Position becomes unreadable to its own Character, but
+the same mechanism cannot hide Entity existence, Relations, inventory, Trait,
+Property or any other World state. Those need separate later gameplay and privacy
+choices. SP14 preserves this pressure case. No `game/docs`, schema, capability,
+runtime or public Agent text changes.
+
+## Working direction — non-default unforeseen outcomes
+
+The User wants playful, genuinely unforeseen outcomes to become an intentional part
+of Aicadia rather than an accidental Agent failure. A dungeon-master-like Agent may
+not always produce the literal requested result: the floating cup can rebound higher,
+and later situations may develop in other surprising but grounded ways. This must
+never become the ordinary default for every Action. `Chaos` is the User's working
+label only; no canonical term, universal mode, operation or server mechanic is chosen.
+
+The current spatial model already preserves the necessary narrow case. The Agent can
+reason from eligible Position, Trait, description, Relations and history, then submit
+the exact resulting Position and other bounded state. World remains dumb and strict,
+does not roll or invent the twist, and grants no extra subjects, hidden knowledge or
+cross-User authority. The wider idea belongs primarily to Agent Play and World Change;
+SP04 remains its spatial pressure case rather than expanding the spatial model into a
+general surprise system.
+
+This direction is now retained in the Areas and backlog so it cannot disappear. The
+User chose to finish the spatial foundation first and run a separate grill afterward.
+Spatial retains SP04 as a pressure case but gains no temporary general surprise mode.
+The later grill owns invocation, canonical name, preview and confirmation, affected-
+subject bounds and relation to concrete Actions. This choice does not amend
+`game/docs` or current confirmation behavior.
+
+## Correction — World never understands “hidden”
+
+The User correctly challenged the next lantern-and-boat question because it silently
+assumed World could understand that Boat B was hidden. It cannot. A Trait, Relation,
+description or Agent explanation never changes a read by meaning. World can withhold
+state only when a concrete read rule or explicitly stored structural consequence
+names the acting Character, exact subject and exact protected information in data it
+can compare deterministically.
+
+The earlier accepted cursed-glasses direction is such a structural possibility: an
+Agent may narrate the reason freely, but its confirmed Action separately names that
+Character W cannot read Entity G's current Position. World validates identities,
+self-only authority, current revisions and bounds, then stores and applies that exact
+consequence without knowing what a curse or hidden object means. Its canonical name
+and storage are still unchosen. The withdrawn boat question becomes meaningful only
+after stating which concrete current rule makes B ineligible; it cannot use “hidden”
+as an unexplained premise.
+
+The phrase “stored structural consequence” was itself too abstract. A small
+illustrative—not accepted—technical shape makes the candidate concrete. A confirmed
+Action could submit the acting Character W, affected Character W, subject Entity G,
+the exact protected information `Position` and expected current revisions. In the
+same transaction World would write Activity plus one current row whose existence
+means only “W cannot receive G's current Position.” A later Place read for W would
+join or test that exact `(W, G)` pair before selecting Position; finding the row omits
+Position, while not finding it follows the normal Place-read rule. World never reads
+the cup, glasses, Trait or prose to make that decision. The row name, columns,
+lifecycle and whether row existence is ultimately the best model remain open.
+
+The User added a cross-task Terry rule: every grill answer and option must show the
+concrete actor, input, stored or read result and important failure boundary, with a
+small technical example whenever state or scale could otherwise remain abstract.
+Illustrative technical names and shapes must be identified as non-canonical rather
+than silently becoming Aicadia vocabulary or schema.
+
+## Position denial uses sparse Position-specific current state
+
+The User selected the Position-specific option. For the first spatial behavior,
+World does not store a generic protected-information kind and does not create a
+positive permission row for every readable Character–Entity pair. It stores current
+state only when one exact affected Character cannot receive one exact Entity's
+Position. Record presence denies Position; record absence follows the normal
+current Place-read rule. Entity existence, Relations, inventory, Trait, Property and
+Activity are unaffected.
+
+Concretely, a confirmed Action for Character W and Entity G creates or changes the
+one current `(W, G)` Position-denial record and its Activity atomically. A paginated
+Place read for W tests all returned Entity ids against that sparse set in the same
+query and sets only a matching Entity's Position result absent. It performs no
+per-Entity protocol calls and writes no rows for millions of ordinary readable
+pairs. The table name, exact columns, conflict revision, cause lifecycle and removal
+operation remain unchosen; the example shape does not canonize them.
+
+## Position denial reopened as premature spatial complexity
+
+Before choosing how denial propagates through relative Position, the User challenged
+the whole branch. A Character-specific Position-denial record, derived-output privacy
+and dependency-aware redaction are already an information-access system rather than
+the minimum model required to establish where Entities and Places are. Q3 is paused
+and the sparse Position-specific direction is no longer treated as current.
+
+The leading simplification is to keep the foundation mechanical and direct: one
+Entity has one optional Position; Place requires it; a bounded current Place read
+returns every selected Entity with its Position; and relative resolution concerns
+coordinates, cycles and bounded work only. Cursed glasses and private inventory
+remain recorded pressure cases, but privacy, visibility and selective information
+release would receive their own later grill rather than hiding inside Position. This
+rollback is not yet accepted; it is the next explicit choice.
+
+## Position privacy removed from the foundation
+
+The User accepted that simplification. The spatial foundation has no Position-
+specific denial record, permission, redaction hook, own-Character exception or
+recovery path. A concrete bounded read first decides which Entities it returns. For
+each selected Entity it returns the complete Position when one exists, including its
+optional description and immediate stored basis. Knowing an Entity or remembering a
+prior point does not create a separate current-Position lookup.
+
+A Trait or Position description may tell a conforming Agent to withhold a spatial
+detail in its player conversation. World nevertheless sent the structured Position
+to that Agent. This is therefore creative Agent conduct, not confidentiality,
+authorization or protection from a modified Agent, and it may never be presented as
+evidence of World-enforced privacy. Cursed glasses and private inventory remain
+pressure cases for the dedicated later privacy grill and backlog item.
+
+The next open model boundary comes from the User's suggestion that Position might
+itself have Traits or several descriptions. Current vocabulary still gives multiple
+stable Traits only to the Entity and gives its one current Position one optional
+description with no independent identity or revision. No alternative has been
+accepted yet. The next question must compare the concrete lifecycle, read and write
+consequences rather than introducing another spatial term by example.
+
+## One Position description; Traits remain Entity-owned
+
+The User selected option A. One current Position has at most one optional description,
+and that text may contain multiple sentences or paragraphs within ordinary bounds.
+It remains one part of Position: a Position change explicitly keeps, replaces or
+removes it under the same revision and transaction. It has no independent identity,
+authorship lifecycle, ordering, pagination or conflict surface.
+
+An Entity may separately have multiple Traits. Durable meanings such as “always
+floats two centimetres above a surface” remain Traits of the cup and survive every
+Position change. Current narration such as “after resisting the attempt, it now
+floats ten centimetres above the oak table” belongs in the one Position description.
+Position itself owns no Traits and does not become a second World subject.
+
+This leaves one immediately adjacent spatial boundary open: an Entity-relative
+Position currently names only the reference Entity and offsets from its one Position
+point. The phrase “above the table surface” may therefore be Agent-understood meaning,
+or a future exact sub-Entity reference may eventually earn structural state. No such
+reference concept or name is accepted by this observation.
+
+## Relative Position uses only the reference Entity's Position point
+
+The User selected option A. Entity-relative offsets start at the reference Entity's
+one Position point. The foundation contains no targetable surface, part, internal
+point or geometry, and World never converts “above the tabletop” into one. An Agent
+may understand Entity Properties, Traits and descriptions and submit the numerical
+offset it intends, but World stores and validates only that explicit Position.
+
+Concretely, if Table T's Position point is at its base and an Agent understands its
+top to be 75 centimetres higher, the Agent may propose Cup C relative to T with
+`z = 77 cm`. World does not derive either 75 or 2 from text. If the table's understood
+shape later changes, no automatic Position change occurs; an Agent must explicitly
+propose the new offset. This keeps one Position row and one reference-chain read per
+positioned Entity at scale. Exact surfaces, internal points, Orientation and geometry
+remain absent until concrete gameplay earns them, without a dormant placeholder.
+
+Under the now-confirmed foundation, six material User choices remain before this
+spatial grill can crystallize one coherent technical and database candidate:
+
+1. the exact concept and canonical one-word name for direct Place topology;
+2. the identity and storage boundary between open authored Relation meaning and
+   exact mechanical spatial facts;
+3. whether Area belongs in the first foundation and, if so, its minimum meaning;
+4. which Entity earns the Place role and what a bounded map read may reveal;
+5. the first exact movement result over direct Place topology; and
+6. the spatial boundary of remote consequences such as a button and distant bomb.
+
+Accepting the leading recommendation on each keeps that count at six. A choice that
+introduces a new mechanical concept can open a necessary dependent question; numeric
+width, indexes, PostgreSQL concurrency and evidence are technical design and proof
+work rather than User questions unless they expose a new game trade-off.
+
+## Connection is the dedicated direct Place-topology primitive
+
+After clarifying the other candidate Relation meanings, the User selected option A.
+`Connection` is the canonical one-word name for a separately owned mechanical fact
+between two Places. It explicitly records which direct travel direction exists; it is
+not an Entity, Route, `Link`, open authored Relation or server-owned Relation type.
+Position, proximity, Area overlap and prose never create it implicitly.
+
+Concretely, A→B and B→A are distinct allowed directions. One bounded read of A's
+outgoing Connections can offer B as a direct option without scanning Relations or
+the World. A road, bridge or door may remain an Entity and an Agent-authored Relation
+may describe how it leads to B, but neither substitutes for A→B. Concurrent attempts
+to establish the same direction settle on that exact Place pair; unrelated Places
+share no counter, lock or global graph revision.
+
+This choice fixes conceptual ownership, not a production schema or operation. It
+removes direct Place topology from the next Relation decision. Five material User
+choices remain on the leading path: the open Relation record itself, Area scope,
+Place qualification/map reads, the first Movement result and remote-effect boundary.
+
+## Open Relation has one stable non-Entity identity
+
+The User selected option A. Relation is now the canonical name for one stable,
+directed, non-Entity World record between a source Entity and target Entity. Its name
+and description are free Agent-authored English rather than a server-owned semantic
+kind. World validates identity, endpoints, ordinary bounds, authority, freshness and
+the exact Relation being changed, but never understands or executes the wording.
+
+Several Relations may coexist between the same Entity pair. Renaming or developing
+“sleeps under” keeps the same Relation identity rather than deleting one natural-key
+tuple and creating another. Activity can name that exact Relation as involved history;
+original authorship stays attributable but grants no permanent exclusive edit right.
+Connection, Position and every later Inventory or remote-effect mechanic remain
+separate exact facts and never gain authority from Relation wording.
+
+At scale, one Relation change conflicts only on that Relation and updates no endpoint
+counter, revision or lock. Reads must name one endpoint, direction, cursor and limit;
+a hot bridge can have many Relation rows and a hot endpoint index range without
+serializing unrelated Entity or Connection changes. This accepts the domain record,
+not a production table or public operation. Exact text bounds, dependencies, privacy
+and duplicate presentation remain later design work.
+
+Four material User choices remain on the leading path: Area scope, Place
+qualification/map reads, the first Movement result and the remote-effect boundary.
+
+## Area choice withdrawn; traversal context expands the question
+
+The User rejected all three Area options as premature. Deferring Area, immediately
+building complete geometry and canonizing simple circles or rectangles each failed
+to address the more important desired experience: the World should eventually be
+able to describe where Places fall, what their spatial coverage looks like and what
+landscape a Character passes through while traversing a Connection.
+
+That clarification separates at least three candidate truths. A Place may have an
+extent or shape. Several Place extents may include or overlap another Place or point.
+A Connection may have enough ordered or spatial state to say that its traversal
+crosses forest edge, woodland and heath. The Connection's A and B endpoints alone
+cannot derive that middle, and an Area attached only to A or B does not supply it.
+None of those observations chooses geometry, hierarchy, a path record, traversal
+segments or a new canonical term.
+
+Q3 is withdrawn rather than counted as answered. Place qualification, Movement and
+the remaining remote-effect boundary now depend on resolving which of these facts
+are stored and which are calculated. Existing primary-source research is being
+extended specifically across Place extent, overlap and Connection traversal before
+a replacement one-question frontier is presented. The number of remaining User
+choices will be recomputed from that evidence rather than pretending it remains four.
+
+## Focused extent and Connection-traversal research
+
+The completed [primary-source report](../research/place-area-connection-traversal.md)
+confirms that Place extent, inclusion or overlap and Connection traversal are three
+independent truths. OGC and PostGIS distinguish coverage, containment, touching,
+crossing and overlap; geometry therefore yields many candidates rather than one
+Place parent. Overture likewise separates identity, representative point, extent,
+boundary, hierarchy, oriented transportation shape and partial linear rules.
+
+Endpoint topology cannot answer what lies between A and B. Two credible sources of
+ordered traversal context remain. An ordinary Connection can carry an exact oriented
+course, after which current Place extents are intersected and ordered along it. Or an
+Agent can author structured ordered intervals along the Connection even without
+complete geometry and across impossible topology. The first follows boundary changes
+but needs valid compatible geometry and bounded spatial work. The second supports
+incomplete Worlds and portals but can become inconsistent with later extents.
+
+Storing both as equally current truth is not a free hybrid: World would need a
+deterministic authority rule. Materializing every course/Area intersection creates
+large boundary-change fan-out, while deriving on read costs a bounded spatial join.
+Indexes bound candidate work, never result cardinality; repeated and overlapping
+intervals must be permitted and paginated by course position plus a stable tie-breaker.
+
+The replacement frontier first chooses the source of ordinary Connection traversal
+context. Under the leading derived-course direction, one subsequent question can
+decide Area extent and inclusion semantics before returning to Place map reads,
+Movement and remote effects. The leading path therefore currently has five material
+User choices rather than the withdrawn estimate of four.
+
+## Connection-course ownership reopened by travel choice and ceremony
+
+The User challenged the leading course candidate before selecting it. One exact
+course attached to A→B can be false because walking a mountain path, sailing a river,
+flying directly and entering a portal may connect the same Places through different
+or nonexistent intervening space. Making that course mandatory on every Connection
+is establishment ceremony; requiring every repeated journey to resubmit a stable
+road is execution ceremony.
+
+The question therefore begins with ownership, not geometry. One candidate makes a
+Connection one persistent direct travel alternative rather than the unique endpoint
+pair. A footpath, ferry and portal may then be separate stable Connections from A to
+B; the first two may have reusable spatial shape and the portal may honestly have
+none. This reopens the earlier inference that the directed Place pair alone is always
+Connection identity. The accepted first discovery's duplicate A→B rule remains its
+narrow result and does not yet prove a universal ban on parallel Connections.
+
+Other possible owners remain a physical Entity such as a road, river or tunnel, or
+the exact Movement result taken by one Character. Useful shape families also answer
+different questions: ordered points or a line describe one centre course; a corridor
+describes possible width or exposure rather than exact footsteps; ordered intervals
+describe stages without geometry; an actual Position trace describes one completed
+journey; and a 3D tube or volume would be later geometry. None is chosen or canonized.
+
+The replacement Q3 must now ask which subject owns reusable travel shape. Only after
+that can Area intersections and ceremony be judged honestly. Under the leading
+one-Connection-per-alternative candidate the remaining choice count can stay five;
+another owner may expose a dependent identity or lifecycle question.
+
+## Connection owns one optional reusable shape
+
+The User selected the one-Connection-per-alternative direction. A Connection is now
+one stable direct travel alternative rather than the unique relationship between an
+endpoint pair. A walking path, ferry and portal may be three Connections between the
+same Places. Each states its own allowed direction and may optionally own one exact
+reusable spatial shape; a portal or an incompletely mapped alternative may honestly
+have none. The physical road, bridge or vessel remains an Entity, an actual Movement
+chooses a Connection without restating its reusable shape and a later Route may
+compose several Connection identities.
+
+This selection removes pair uniqueness from general Connection identity. The first
+discovery slice still establishes at most one required A→B result because that
+capability currently offers only one undifferentiated walking alternative; it does
+not justify a database uniqueness rule over every endpoint pair or prohibit a later
+capability from establishing another deliberate alternative.
+
+One minimal technical candidate follows, but its names and fields are illustrative
+rather than accepted Aicadia schema. A `connection` record has a stable id, two Place
+endpoint ids, explicit allowed direction and its own revision. Its optional bounded
+ordered exact shape is stored under that same Connection identity, either in the row
+or in one keyed optional record; the physical layout is still open. It also needs a
+freshness rule for the endpoint Positions against which the shape was established.
+A later Movement proposal can submit the chosen Connection id so World can validate
+the Character's origin, allowed direction and exact current revisions. Its exact
+resulting Position and duration remain a later choice; whatever state it eventually
+changes must settle with Activity in one transaction. No per-journey trace is earned
+before travel-over-time gameplay needs one.
+
+When Places later have exact Areas, World can intersect the selected Connection shape
+with eligible current Areas and return ordered crossings on demand. Those crossings
+are calculated output, not duplicated current rows, so an Area edit causes no global
+fan-out. A missing shape means “not established or not applicable,” never “the
+straight endpoint line” and never “known to cross nothing.” Reads remain bounded by
+one Connection, cursor and limit. Concurrent changes conflict on that exact
+Connection, its shape or the Position revisions actually examined; millions of
+Movements may read one stable alternative without locking its endpoint Places, while
+genuine concurrent edits to that one hot alternative may reject and retry.
+
+Still open are the smallest exact shape representation, whether it is two- or
+three-dimensional, its endpoint alignment and change rules, Area extent and overlap
+semantics, how the first discovery's narrow duplicate rule is enforced without a
+general endpoint-pair uniqueness constraint, authorship and visibility, and the
+concrete World interface. Parallel alternatives also expose one prior question: an
+Agent needs minimal readable state that distinguishes “footpath,” “ferry” and
+“portal” without showing internal ids or turning Connection into an Entity. That
+presentation state is the next frontier before exact shape representation. No
+subordinate domain term, production table, capability or current game contract is
+selected by this technical sketch.
+
+## Connection carries its own readable meaning
+
+The User selected the minimal self-describing alternative. Every Connection has one
+Agent-authored name and description, allowing several alternatives between the same
+Places to be presented as “Old Forest Path,” “Moon Ferry” or “Cracked Portal” rather
+than opaque ids. Connection still is not an Entity and therefore owns no Properties
+or Traits. A physical road, boat or portal device may independently be an Entity.
+
+World stores and returns the text but never interprets it as travel method,
+direction, access, cost, timing, geometry or causality. Those mechanical facts must
+be separately explicit when gameplay requires them. Exact text bounds, later change
+operations, authorship and visibility remain open rather than being smuggled in by
+the two fields.
+
+Technically, a bounded Connection read can now return stable id, endpoint Places,
+allowed direction, name, description and whether reusable spatial shape exists. An
+Agent can explain the alternatives to the User, retain the selected stable id only
+inside its subsequent structured command and avoid exposing protocol identity in
+player conversation. The database still permits several rows with the same endpoint
+Places; names are presentation and never uniqueness keys.
+
+The next frontier is the smallest exact representation of the optional reusable
+shape. Ordered three-dimensional World points are the leading candidate because they
+can express a curved or elevated representative course with little ceremony and let
+later Area crossings be calculated. A corridor adds width or volume, while authored
+crossing intervals duplicate changing Area truth; none is selected yet.
+
+## Connection shape uses ordered World points
+
+The User selected the ordered-points candidate. When a Connection has reusable
+spatial shape, it contains a bounded ordered sequence of exact whole-centimetre
+`x`/`y`/`z` World points. World treats consecutive points as straight segments. The
+result is one exact representative course for that travel alternative: it can curve,
+rise and descend, but it does not claim the road's width, every reachable location or
+one Character's exact footsteps. A portal may continue to have no shape.
+
+The User additionally accepted at most one optional Agent-authored description on
+that shape. It can tell another Agent, for example, that the trail clings to a cliff
+or that nobody hears birds along its middle. It remains part of the Connection shape
+state, has no independent identity, revision, read or lifecycle and is changed with
+the points. World stores and returns it but never derives coordinates, Area
+crossings, access, danger or movement behavior from the text.
+
+This rejects a corridor or full 3D volume as the foundation and rejects stored
+authored Area intervals as co-equal crossing truth. When exact Areas exist, the
+ordinary result is derived by intersecting them with the current ordered segments.
+Missing shape remains unknown or inapplicable rather than an inferred straight line.
+Exact point count and integer range, endpoint alignment, behavior after an endpoint
+Place moves, physical PostgreSQL representation and operations remain technical or
+dependent design work rather than accepted schema.
+
+Four leading material User choices remain: Area coverage and intersection meaning,
+Place qualification and bounded map reads, the first Movement result, and the remote
+effect boundary for examples such as a distant bomb button. The count can grow only
+when a selected answer genuinely opens a new product concept.
+
+## Area proves positive coverage only
+
+The User selected Area as exact positive coverage rather than a complete boundary or
+descriptive-only map. A point inside established Area is proven to fall in that
+Place. A point outside all established coverage remains unknown: the Place may end
+there, the boundary may still be undiscovered or another Place may also cover it.
+Missing Area means that no spatial coverage is established, never that the Place is
+empty or point-sized.
+
+Overlapping positive Areas may all be true. A village can lie within forest coverage,
+a marsh can overlap both and an incompletely mapped heath can begin before the forest
+is known to end. World does not choose a universal parent, merge Places or infer
+movement, visibility or ownership from overlap. An Agent authors which Place the
+coverage means; World validates only exact bounded geometry and current revisions.
+
+For the selected Connection points, derived traversal output can prove each ordered
+portion intersecting eligible current Areas and mark every uncovered portion as
+unknown. Those intersections are not current rows. An Area extension or correction
+therefore changes later calculated results without rewriting or locking all affected
+Connections. At scale, candidate Areas come from a spatial index, results are bounded
+and paginated, and the read identifies exact Connection and Area revisions rather
+than borrowing a global map revision.
+
+The geometry representation, disconnected coverage, vertical behavior, concrete
+operations and visibility remain technical or dependent work. Three leading material
+User choices remain: which positioned Entity earns the Place role and what a bounded
+map read returns, the first Movement result and the remote-effect boundary.
+
+## Place is a deliberate role with bounded map reads
+
+The User selected deliberate Place establishment rather than a server kind list or
+automatic promotion of every positioned Entity. Any Entity with Position may become
+a Place when Agent and User establish it as an independent map, discovery, navigation
+or explicit spatial reference. A city, forest, cave, waterfall, ship or exceptional
+small object can qualify; none does so merely because of its name, description,
+Position or inferred category.
+
+Place continues to use `entity_id` as the stable subject identity. Entity owns its
+name, description, Properties and Traits; the Place role adds only its requirement
+for Position and eligibility for Area and Connections. World validates exact
+identity, Position, authority, current revision, bounds and confirmation and commits
+the role with Activity. It never judges whether the subject is sufficiently large,
+important or location-like.
+
+The selected map consequence is an exact bounded coordinate-window read, not an
+unbounded `list all Places`. A Place is a spatial candidate when its resolved current
+Position falls within the requested World window or its known positive Area
+intersects that window. The result can carry bounded Entity name and description,
+complete eligible Position, relevant Area coverage and Connections touching selected
+Places, with stable continuation for independently limited collections. Ordinary
+positioned cups, grass, fauna and Characters without the Place role do not enter this
+map index.
+
+This coordinate-window read remains distinct from Place neighborhood, which begins
+at one exact Place and follows explicit structural relationships rather than metric
+geometry. At scale, Place-role writes touch only the exact Entity; spatial indexes
+bound candidates, cursors bound results and one hot city produces real paginated load
+without a global map row, count, revision or lock.
+
+Exact window shape, limits, cursor contract, visibility and public operation names
+remain technical or dependent choices. Two leading material User choices remain:
+the first Movement result and the remote-effect boundary.
+
+## Movement may stop on a Connection without journey state
+
+The User selected partial-or-complete Connection Movement. For a shaped Connection,
+the Agent may propose the destination endpoint or one exact whole-centimetre point on
+a named segment of its ordered course. The proposal names the exact Connection and
+Character Position revisions. World proves that the Character begins at the allowed
+endpoint or current segment, that the target lies on the submitted segment and that
+progress follows an allowed direction. It derives none of those facts from name,
+description or narration.
+
+Accepted Movement replaces the Character's one Position and stores Activity in the
+same transaction. An intermediate stop is an ordinary unnamed Position: the
+Character can meet others, discover, place or act there without establishing a Place
+or a durable journey. A later Movement names and revalidates the Connection again;
+there is no current Connection membership, percentage, departure time, timer,
+background process or completed trace. Leaving the course is a separate explicit
+Movement. A shapeless portal or impossible alternative has no valid middle and can
+only move directly between endpoints.
+
+At arrival, the Agent supplies the complete new Position and may explicitly make it
+relative to the destination Place so a moving cabin or ship can carry the Character.
+World never silently rebases or invents offsets. Connection Areas and description
+give the Agent grounded journey context, while World validates only the exact points,
+direction, revisions and authority.
+
+At scale, thousands of travellers read one Connection revision and update only their
+own Position rows and Activities. They share no traveller count, progress row or
+course lock. A real concurrent edit to the hot Connection makes dependent proposals
+stale; it does not serialize quiet Characters or unrelated geography.
+
+Exact point-membership arithmetic, segment and endpoint rules, no-op behavior,
+operation names, limits, errors and observation remain technical or dependent work.
+One material User choice remains: the remote-effect boundary for the distant button
+and bomb.
+
+## Remote causality remains Agent-understood Relation meaning
+
+The User rejected a new typed remote-control basis as unnecessary ceremony and
+refined the Relation option: Relation may explain to an eligible Agent that Button B
+activates distant Bomb X, but it is not technically executable and grants no World
+authority. This is now also the preferred lightweight foundation. It keeps the
+accepted open Relation honest instead of quietly adding a rule engine inside it.
+
+Concretely, the Agent reads the current B→X Relation and understands its name and
+description. When the User presses B, the Agent previews one bounded Action naming B,
+X, their expected revisions and every exact intended mutation. It may name the
+Relation identity and revision as claimed causal context; World can then prove that
+the same eligible directed record still exists, but never that its words mean
+“detonate.” After explicit User confirmation, World applies ordinary Entity
+eligibility, authority, freshness, idempotency and bounds. Relation never widens
+those permissions, so an otherwise forbidden Bomb change is still rejected.
+
+If accepted, all named state and one attributable Activity settle atomically. The
+Activity can involve Button, Bomb and their current Places so later reads establish
+where the local act and remote result occurred. World infers no radius, physics,
+extra victim, chain reaction or delayed work. Distance, Position, Area, Connection
+and Route neither grant nor block the causal result; they only ground the involved
+subjects and occurrence context.
+
+This choice has an explicit limitation: a modified or mistaken Agent may assign the
+wrong meaning to an eligible Relation, and World cannot catch that semantic error.
+User preview plus ordinary authority is sufficient for the open, freely authored
+foundation; it is not evidence for secure high-impact control over another User's
+protected state. A future concrete mechanic may earn typed authorization only when
+that actual gameplay invariant exists. No remote table, universal operation enum,
+rule engine, background Agent or spatial-causality concept is added now.
+
+The spatial product-choice frontier is now empty. The technical synthesis below
+turns the choices into one recommended implementation shape and separates its proof
+gates from accepted truth. None of it silently authorizes a build.
+
+## Technical synthesis after the completed grill
+
+### Standing
+
+This section is the current technical recommendation. It is deliberately more
+specific than the accepted domain direction so a productionward lab and later plan
+can falsify it. It is **not** a production schema, public contract or implementation
+authorization. Field names and table shapes below are candidates; the accepted
+meaning remains in the later choice sections above and in the owning Areas.
+
+My preference is one small relational model in PostgreSQL, not a universal spatial
+document, graph database, spatial microservice or general Relation engine:
+
+```text
+Entity ── zero or one Position ── World or one reference Entity
+   │             │
+   │             └─ resolved World point is calculated, never a second Position
+   │
+   ├─ optional Place role ── optional Area
+   │                         └─ zero or more Connections to other Places
+   │
+   └─ zero or more open Relations to other Entities
+
+Character Movement changes Position and optional current Place context.
+Every accepted mutation writes Activity and exact typed dependencies atomically.
+```
+
+This is layered storage, not layered ceremony for the Agent. One World read or one
+confirmed Action may compose several rows and expose one coherent game operation.
+
+### One technical home for each truth
+
+| Truth | Durable identity | Current state | History and conflict boundary |
+| --- | --- | --- | --- |
+| Entity | `entity.id` | name, description and its established Entity state | Existing Entity and Activity rules |
+| Position | the Entity identity; no Position id | zero or one exact point, reference and optional description | one Position revision for that Entity |
+| Place | the same Entity identity | deliberate role only | role establishment Activity; Position remains separately revisioned |
+| Area | preferably the Place identity; no extra Area id until independent lifecycle is proved | optional positive coverage | one Area revision for that Place |
+| Connection | its own stable non-Entity id | immutable Place endpoints plus versioned direction, text and optional course | one Connection revision; parallel endpoint pairs remain possible |
+| Relation | its own stable non-Entity id | immutable Entity endpoints plus versioned free name and description | one Relation revision; no semantic kind |
+| current Place | the Character or Entity association that concrete local play establishes | optional exact Place context | changes only with the concrete operation that establishes or leaves it |
+| Activity | its own immutable id | never current state | exact accepted operation, actor, subjects, typed dependencies and prose |
+
+No generic `spatial`, `edge`, `fact`, `rule`, `frame`, `containment` or
+`world_change` table sits above these records. Shared implementation helpers may
+normalize text, revisions and history, but the database keeps each invariant in its
+own table family.
+
+### Position candidate
+
+The candidate follows the repository's current immutable-version plus current-pointer
+pattern. `reference_entity_id = NULL` means the permanent World origin; a value means
+the three coordinates are offsets from that Entity's Position point. No enum, World
+row or coordinate-frame Entity is needed.
+
+```sql
+position_version(
+    entity_id               uuid,
+    activity_id             uuid,
+    previous_activity_id    uuid null,
+    reference_entity_id     uuid null,
+    x_cm                    bigint,
+    y_cm                    bigint,
+    z_cm                    bigint,
+    description             text null,
+    primary key (entity_id, activity_id)
+)
+
+position(
+    entity_id               uuid primary key,
+    current_activity_id     uuid,
+    foreign key (entity_id, current_activity_id)
+        references position_version(entity_id, activity_id)
+)
+```
+
+Required database invariants are conventional and exact:
+
+- both tables reference the same existing Entity and every version references its
+  Activity;
+- `reference_entity_id` references an Entity and may not equal `entity_id`;
+- one partial unique index permits one root version per Entity and another permits
+  at most one successor for each previous version;
+- the current pointer names an immutable version from the same Entity;
+- `x_cm`, `y_cm` and `z_cm` are signed whole centimetres; and
+- the optional description uses ordinary bounded, trimmed text rules and changes
+  under the same Position revision.
+
+An Entity without rows has no Position. The first slice should not invent an
+`is_positioned` flag, tombstone or removal operation. If actual gameplay later needs
+an Entity to become unpositioned again, that lifecycle must first define its history
+and read meaning.
+
+I prefer `BIGINT` storage plus one symmetric server constant below the arithmetic
+limits over decimal metres, floating-point canonical coordinates or cell identities.
+That constant is a technical representability bound, not a gameplay travel limit.
+The proof must select it so reference addition, subtraction and exact segment
+products can use checked `i128` arithmetic without overflow. A Connection may still
+span any distance inside that representable World.
+
+The common addressed read joins the one current pointer to its immutable version.
+It returns the stored reference and offsets and, only when bounded resolution reaches
+the World origin, the calculated current World point. It does not persist that point
+back into Position.
+
+### Resolving a relative Position
+
+There is no accepted semantic maximum chain depth. There must nevertheless be a
+bounded request. The first productionward candidate is a terminating recursive read
+under a database work and time budget, followed by stable locks and an exact recheck:
+
+1. Starting at the selected Entity, read the current Position chain until a
+   World-referenced version, a missing Position or a repeated Entity is found.
+2. Stop and fail the resolution if the request's resource budget is exhausted. This
+   is operational admission, not a claim that the deeper World state is invalid.
+3. Collect the changed Entity and every Position dependency, sort their Entity ids,
+   and acquire compatible row locks in that order.
+4. Re-read every current Position revision after locking. Reject stale input rather
+   than retrying an unbounded number of times inside the request.
+5. Reject a repeated Entity. Otherwise add every offset with checked integer
+   arithmetic and reject overflow or a result outside the technical coordinate bound.
+
+For a Position write, the changed Entity needs a writer lock while ancestors need
+reader locks that block their Position writers. The kept first lab compared
+`FOR NO KEY UPDATE` for changed Entity coordinator rows with `FOR SHARE` for
+dependencies, acquired in one Entity-id order. That exact scratch fixture survived
+its foreign-key and race falsifiers. A production plan must still re-establish the
+result against the real Entity foreign keys, Position operation and Activity
+dependencies rather than importing the lab implementation.
+
+This solves the concurrent A→B and B→A case without a global graph lock. Both
+transactions first discover their candidate chains, but the common ordered lock set
+forces one to recheck after the other. The second then sees the cycle and writes
+nothing. Moving Ship conflicts with an operation only when that operation actually
+requires Ship's resolved external Position. Cabin-local work that does not use that
+point never traverses or locks Ship's external chain.
+
+### Place and current Place remain separate from Position
+
+The existing `place.entity_id` is the correct identity shape. When Position becomes
+current behavior, Place establishment must require a current Position for the same
+Entity. The simplest schema constraint is a foreign key from `place.entity_id` to
+the current Position row, provided the migration first positions every existing
+Place. Place stores no `x`, `y`, `z`, duplicate name or duplicate description.
+
+Position does not replace current Place. A Character halfway across heath has a
+Position and no newly established Place context. Entering destination B changes the
+Character's Position and its optional current Place context in the same Movement
+transaction. Merely resolving to B's coordinates or falling inside B's future Area
+does not perform that change.
+
+The current `place.latest_activity_id` is not a suitable spatial revision or
+long-term coordinator. It makes unrelated activity at one hot Place share one row.
+Position, Connection, Area and Relation each need their own current revision; a
+later build must not expand the existing Place-wide revision into a universal
+spatial lock.
+
+### Connection candidate
+
+Connection needs a stable identity because parallel alternatives can share the same
+Places and later development must address exactly one of them. Its endpoints define
+the identity and should be immutable; changing an endpoint creates another
+Connection. Direction, text and course can develop through immutable versions.
+
+```sql
+connection(
+    id                       uuid primary key,
+    start_place_entity_id    uuid,
+    end_place_entity_id      uuid,
+    current_activity_id      uuid,
+    check (start_place_entity_id <> end_place_entity_id)
+)
+
+connection_version(
+    connection_id            uuid,
+    activity_id              uuid,
+    previous_activity_id     uuid null,
+    allows_start_to_end      boolean,
+    allows_end_to_start      boolean,
+    name                     text,
+    description              text,
+    shape_description        text null,
+    primary key (connection_id, activity_id),
+    check (allows_start_to_end or allows_end_to_start)
+)
+
+connection_point(
+    connection_id            uuid,
+    connection_activity_id   uuid,
+    ordinal                  integer,
+    x_cm                     bigint,
+    y_cm                     bigint,
+    z_cm                     bigint,
+    primary key (connection_id, connection_activity_id, ordinal)
+)
+```
+
+Zero points means no spatial course and therefore only direct endpoint Movement.
+A shaped version has a bounded sequence of at least two points with contiguous
+ordinals. Points are ordered from `start_place_entity_id` toward
+`end_place_entity_id`; reverse travel reads them backward. One deferred validation
+can prove zero-or-at-least-two points and contiguous ordinals for only the affected
+Connection version. Endpoint alignment is validated by World against the exact
+endpoint Position revisions when the course is established or used; a Place move
+does not silently rewrite Connection history.
+
+The endpoint indexes are separate and directional so one bounded Place read does
+not scan every Connection. There is no unique endpoint-pair constraint because a
+footpath, ferry and portal may coexist. A concrete discovery operation that must
+reuse rather than duplicate an already suitable Connection needs its own
+opportunity- or endpoint-scoped conflict rule; global Connection uniqueness would
+contradict the accepted parallel-alternative behavior.
+
+### Exact Movement over a Connection
+
+One Movement proposal needs only the exact Connection id and revision, Character
+Position revision, allowed direction, target segment ordinal and target World point.
+World performs this deterministic sequence:
+
+1. select the named current Connection and hold a shared dependency lock;
+2. resolve and lock the Character's current Position dependencies;
+3. prove the current World point is the allowed endpoint or lies on the current
+   course;
+4. prove the submitted target point lies exactly on the named segment;
+5. compare the current and target progress along the ordered points in the selected
+   direction; and
+6. write one new Character Position version, optional destination current Place and
+   one Activity atomically.
+
+Exact segment membership does not require floating point. With bounded integer
+coordinates, checked `i128` cross products prove collinearity and dot-product bounds
+prove the point falls between the segment endpoints. If the current point occurs at
+several different positions on a self-crossing course and direction is therefore
+ambiguous, the small first contract should reject the proposal. A second
+`current_segment` input earns its place only when an accepted self-crossing scene
+requires it.
+
+Thousands of travellers may hold compatible shared locks on one Connection revision
+and update different Character Position rows. They share no traveller row, count,
+progress or endpoint Place lock. A Connection editor waits for those short
+transactions; after its commit, proposals carrying the older revision fail stale.
+The lock-manager cost and editor fairness on a deliberately hot Connection remain a
+real PostgreSQL proof gate.
+
+### Relation candidate
+
+Relation uses the same identity/version pattern without becoming a common base table
+for Connection, Position or Area:
+
+```sql
+relation(
+    id                       uuid primary key,
+    source_entity_id         uuid,
+    target_entity_id         uuid,
+    current_activity_id      uuid
+)
+
+relation_version(
+    relation_id              uuid,
+    activity_id              uuid,
+    previous_activity_id     uuid null,
+    name                     text,
+    description              text,
+    primary key (relation_id, activity_id)
+)
+```
+
+The endpoints are immutable; free name and description may develop. A Relation may
+refer from an Entity to itself because open authored meaning supplies no mechanical
+reason to forbid that shape. There is no
+`type`, `kind`, predicate enum, Properties container or executable payload. Multiple
+rows between the same endpoints are valid. Bounded indexes support `(source, id)`
+and `(target, id)` pages; no operation returns every Relation of a hot Entity.
+
+When an Agent uses Button B's Relation to explain a Bomb Action, Activity may cite
+the exact Relation id and revision. World verifies that eligible directed record is
+still current, but the Bomb mutation independently passes ordinary subject,
+authority and revision rules. The Relation row is never a permission row and its
+text is never evaluated.
+
+### Area candidate boundary
+
+Area has accepted meaning but not yet an exact geometry representation. My
+preference is therefore **not to put placeholder JSON, prose, circles or rectangles
+into the first schema**. That would make the lightweight choice look complete while
+quietly weakening “exact positive coverage.”
+
+When an Area-requiring scene becomes current, the smallest storage boundary is one
+current Area per Place, keyed by `place_entity_id`, plus immutable Activity-backed
+versions. One coverage value may contain bounded disconnected components; an extra
+stable Area id is earned only if components later need independent authorship,
+visibility or lifecycle.
+
+The first geometry comparison should include an exact three-dimensional point
+predicate. A two-dimensional footprint alone cannot distinguish a cave, bridge and
+surface sharing `x` and `y`. My leading practical candidate is bounded horizontal
+polygon components with explicit inclusive vertical intervals, using a spatial
+index only to find candidates and integer/accepted-geometry checks for the final
+positive result. A full arbitrary 3D solid is more expressive but should lose unless
+a current scene proves that the simpler volumes cannot represent it.
+
+Connection-to-Area traversal context remains derived output. World intersects one
+exact Connection revision with bounded current Area revisions and returns ordered
+covered intervals; overlapping Areas may both appear and every uncovered interval
+is reported as unknown. No crossing table becomes canonical merely to make narration
+cheaper.
+
+### Activity and typed dependencies
+
+Every accepted mutation keeps the existing one-Activity transaction. The spatial
+extension should add exact typed dependency rows rather than one polymorphic JSON
+payload or generic foreign key:
+
+```text
+Activity
+  ├─ activity_entity roles for actor, moved subject, source, target and destination
+  ├─ exact Position versions used to resolve an occurrence point
+  ├─ exact Connection revision used by Movement
+  └─ exact Relation revision cited as Agent-understood causal context
+```
+
+An operation that used a resolved World point stores the ordered Position-version
+chain it actually validated. That freezes where the occurrence was grounded without
+copying a second current Position or letting a later ship move relocate history. An
+interior operation that never used Ship's external point stores no counterfeit Ship
+dependency.
+
+The candidate tables are narrow and typed, for example
+`activity_connection_revision`, `activity_relation_revision` and an ordered
+`activity_position_revision`. Their exact names belong to a plan, but their foreign
+keys must reach the concrete immutable version rows. The Activity and all current
+pointers commit together or nothing does.
+
+Existing `(requested_by_user_id, request_id)` idempotency remains the correct retry
+scope. The canonical fingerprint covers every exact subject, expected revision,
+coordinate, direction, segment, Relation dependency and intended mutation. Reusing
+one request id with different input fails; an exact retry returns the original
+accepted result without another Activity.
+
+### World reads and operations
+
+Database separation must not turn into Agent ceremony. My preferred World surface
+has these properties:
+
+- every bounded Entity or Place read that selects an eligible Entity includes its
+  complete Position when present; there is no separate `get_position` capability;
+- Position output contains stored `x`, `y`, `z`, optional reference Entity,
+  description, revision and the resolved World point when available;
+- one bounded coordinate-window Place read returns only deliberately established
+  Places, their eligible Position and bounded independently paged Area and Connection
+  context;
+- one bounded Connection read returns exact alternatives from one Place, not a
+  calculated multi-Connection Route;
+- one bounded Relation page filters by exact endpoint, direction, cursor and limit;
+  unlimited durable Relations never mean an unlimited response; and
+- mutations remain concrete game operations such as discovering a Place or moving a
+  Character. There is no public universal spatial patch.
+
+Eligibility is decided before hydration. If a Character is not eligible to know a
+hidden Entity or Relation, its Position, endpoint, count, cursor gap and detailed
+error remain unavailable. The current foundation has no World-enforced private
+Position subset: once an Entity is legitimately selected, its Position is returned
+whole. Agent narration may be selective, but it is not a security boundary.
+
+### The candidate against all fifteen spatial scenarios
+
+| Scenario | Exact technical composition | Honest remaining boundary |
+| --- | --- | --- |
+| SP01 · A to B | Place Positions, one selected Connection revision, Character Position change and optional destination current Place | timing and travel methods remain absent |
+| SP02 · Entity in coat | Entity-relative Position can make it follow the coat; Relation can describe “inside” | private contents, listing and removal need a later mechanic |
+| SP03 · distant bomb | Button and Bomb Positions plus an optional current Relation dependency and one exact Action | Relation neither authorizes nor executes |
+| SP04 · floating cup | table-relative exact Position and Position description; the durable anomaly remains a cup Trait | no surface geometry or automatic physics |
+| SP05 · dog under bridge | independent Positions and an open Relation or Agent-derived narration | World can derive “under” only after exact geometry earns a predicate |
+| SP06 · one hundred metres to hotel | resolved World points calculate straight-line distance; a Connection course can calculate course distance | estimate, path choice and arrival meaning stay explicit |
+| SP07 · birdhouse on table | birdhouse Position references table; table may reference another Entity; Activity records exact changed lineage | deep-chain latency and map projection remain proof gates |
+| SP08 · forest edge to heath | Character Position plus overlapping positive Areas and derived course intersections | exact Area geometry is deliberately not faked now |
+| SP09 · moving ship | ship root Position changes once; cabin and passengers resolve through references | private cargo and moving-Place index repair remain separate |
+| SP10 · hidden sword | remembered Knowledge stays non-current; no eligible Entity selection means no Position or Relation hydration | World-enforced inventory privacy needs its dedicated model |
+| SP11 · A connects to B, not C | exact Connection rows answer direct travel; absence of A→C returns no known alternative | absence never proves geographic distance or impossibility outside the eligible view |
+| SP12 · hot unnamed point | each Character owns one Position row; bounded indexed pages return candidates | no count or promise to enumerate the million matches |
+| SP13 · city, forest and waterfall | each qualifying Entity deliberately gains Place, uses its Position and may later gain Area | ordinary positioned Entities do not enter the Place map |
+| SP14 · cursed glasses | Trait and Agent narration preserve the curse without altering Position | conforming-Agent withholding is not World-enforced secrecy |
+| SP15 · impossible staircase | Connection topology may cycle or form impossible loops; each Movement still writes one exact Position | Position-reference cycles remain invalid and no background infinite journey runs |
+
+The unresolved boundaries are not failures hidden inside Relation or prose. They are
+the exact later mechanics and evidence gates the lightweight foundation deliberately
+leaves separate.
+
+### Map indexing without canonical cells
+
+Canonical Position alone is sufficient for addressed reads but not automatically
+for a bounded World-window query. The index must remain disposable and may never
+decide Place identity, discovery, visibility or authority.
+
+The smallest first map slice can index only World-referenced Places. A rebuildable
+`place_world_index` keyed by Place Entity stores the current Position revision and
+World point, updates in the same transaction as an absolute Place Position and is
+always rechecked against canonical Position before output. A missing or stale index
+fails closed or is repaired; World never performs an unbounded Place scan as a
+fallback.
+
+Relative Places require a later root/local design rather than descendant canonical
+writes. The leading candidate keeps one indexed World point for each World-referenced
+root and one root-relative point for each map-indexed Place. A root move changes one
+root index row; the map query translates its World window into that root's local
+coordinates and pages matching Places. Moving or re-referencing an intermediate
+carrier can invalidate a bounded or large subtree of derived index rows, so dirty
+root handling, rebuild admission and false-negative prevention must be proved before
+relative Places are promised in a production window read. No prose claim closes
+that gap.
+
+A million Characters or Places at one point still produces a million matches. The
+index only finds candidates; a stable limit, opaque continuation and query-admission
+budget bound every request. There is no exact count, shared point row, region lock or
+global map revision.
+
+### Transaction template
+
+Every concrete spatial mutation should instantiate the same small sequence without
+introducing a generic change resource:
+
+1. normalize and bound all structured input before opening the transaction;
+2. start PostgreSQL and resolve an exact idempotent retry;
+3. establish the User, Character and current eligibility without semantic prose
+   inference;
+4. read enough immutable endpoint data to enumerate exact Position, Connection,
+   Relation and current-state dependencies;
+5. acquire all coordinator rows in one documented type-and-id order before any
+   write, then re-read every expected current revision;
+6. validate coordinates, cycles, direction, segment membership, bounds and ordinary
+   operation authority;
+7. append Activity and its typed involved-subject and dependency rows;
+8. append immutable versions and advance only the exact current pointers changed;
+9. update or invalidate only earned disposable indexes; and
+10. commit once.
+
+The lock order itself needs real PostgreSQL evidence because foreign-key locks and
+mixed present/absent state can defeat an order that looks correct on paper. The kept
+multiplayer lab already refuted a hybrid lock-class strategy; spatial should compare
+the conservative Entity coordinator above with any narrower slot only after the
+concrete first operation identifies false contention worth paying to remove.
+
+### Million-User and deliberately hot-subject result
+
+- **Quiet Entity:** its Position write touches its Entity coordinator, Position
+  lineage, Activity and any exact index entry; no Place, region or World row.
+- **Hot unnamed point:** writers remain independent. Reads are admitted and paged;
+  there is no co-location owner or count to lock.
+- **Hot Connection:** travellers share a read dependency and update only themselves.
+  Editing the Connection is the honest conflicting act; shared-lock overhead and
+  fairness are measured rather than hand-waved.
+- **Hot carrier:** one root move changes one canonical Position. Only operations
+  whose outcome needs its external resolved point conflict; interior actions remain
+  independent. Derived map-index repair is operational work, never descendant World
+  history.
+- **Hot Place:** Position, Area, each Connection and each Relation have distinct
+  revisions. The existing Place-wide activity pointer must not become their common
+  lock.
+- **Remote Action:** work is proportional to Button, optional Relation, Bomb and the
+  explicitly named affected subjects. Distance causes no spatial scan and Relation
+  causes no fan-out.
+
+This model does not make a genuinely shared fact conflict-free. It confines the
+conflict to the fact and applies bounded admission when one subject is hotter than
+PostgreSQL can fairly serve.
+
+### Dependency-ordered implementation path
+
+The five-year model should not arrive in one migration. My preferred Terry order is:
+
+1. **Completed productionward Position lab:** real PostgreSQL lineage, cycle race,
+   checked centimetre arithmetic, idempotency and hot-carrier dependency isolation
+   survived the fixed scratch fixture. No production imports from the lab.
+2. **First complete spatial game slice:** direct World Position, deliberate second
+   Place discovery, one named shaped Connection, bounded direct-Place map context and
+   one complete or partial Character Movement with Activity. No Area, Relation,
+   relative Position, Route or generic spatial endpoint.
+3. **Relative Position slice:** table/birdhouse and ship/cabin behavior, addressed
+   resolved reads and exact re-reference concurrency. Moving-Place map indexing is a
+   separate proof gate, not a hidden promise in this slice.
+4. **Open Relation slice:** stable directed Relation and bounded endpoint reads;
+   remote causal citation uses ordinary exact Action authority and gains no execution
+   mechanism.
+5. **Area slice:** only after one current exploration scene chooses and proves the
+   minimum exact 3D coverage representation and Connection intersection result.
+6. **Later earned mechanics:** private contents, protected remote control, terrain
+   mechanics, Orientation, physical surfaces and named Route each require their own
+   concrete game behavior. None belongs in the foundation migration.
+
+The first production slice is the highest-leverage next game edge because it turns
+the already completed discovery loop into actual large-world exploration while
+testing the durable Position and Connection seams. The kept lab now precedes it
+because a reference-cycle or locking mistake would corrupt a core shared-world
+invariant.
+
+### Exact proof gates before implementation claims
+
+| Gate | Must prove | Does not prove |
+| --- | --- | --- |
+| Position lineage | direct and relative resolution, cycle race rejection, checked overflow and atomic Activity in real PostgreSQL | production throughput or moving-Place map lookup |
+| Connection Movement | exact endpoint/segment/direction rules, stale revision rejection, independent travellers and editor behavior | timed journeys, collision or terrain cost |
+| Direct Place map | bounded indexed window, authorization before hydration, stable continuation and hot-point admission | relative-Place indexing or privacy not in the fixture |
+| Hot carrier | one canonical move, no descendant World writes and quiet interior action independence | free projection rebuilds or arbitrary chain depth latency |
+| Relative Place map | no stale false negatives across root and intermediate moves, bounded dirty handling and rebuild | Area geometry |
+| Area | exact positive 3D predicate, overlaps, disconnected coverage, bounded course intersections and revision freshness | ownership, visibility or travel permission |
+| Relation privacy | guessed ids, endpoints, counts, cursors, errors and timing do not reveal an ineligible Relation | semantic correctness of Agent interpretation |
+
+If any gate requires a global revision, unbounded fallback scan, descendant canonical
+rewrite or server interpretation of prose, this candidate must be revised rather
+than patched with more ceremony.
+
+### Bounded PostgreSQL Position verdict
+
+The retained [PostgreSQL Position-lineage lab](../../lab/spatial/02-postgres-position-lineage/README.md)
+supports the first Position-lineage and hot-carrier candidates inside its exact
+scratch boundary. Eight focused cases on local PostgreSQL 17 under `READ COMMITTED`
+resolved a 64-level chain, rejected symmetric coordinate overflow without partial
+history, permitted only one side of a synchronized A→B/B→A race, moved one Ship
+without rewriting any of exactly 1,000 descendants, kept Cabin-local work
+independent and rolled back an injected post-Activity failure. Its separate cleanup
+audit also passed.
+
+The experiment narrows rather than completes the production proof. Both deliberate
+lock waits returned `57014` because the equal 150 ms statement timeout won before a
+distinct lock-timeout code; this proves bounded conflicting work in the fixture but
+chooses no public retry contract. Production authorization, actual migrations,
+typed Activity dependency rows, concurrent first-Position behavior, map indexes,
+hosted operation and load remain untested. The implication is to carry this small
+candidate into a separately accepted first spatial slice, not to promote lab code
+or collapse Position, Place, Area, Connection and Relation into one system table.
+
+### Result
+
+The recommended technical foundation is therefore one stable Entity identity with
+separate sparse Position, Place, Area, Connection and Relation truths; immutable
+per-truth versions; exact operation-scoped dependencies; atomic Activity; and
+replaceable indexes. It is powerful because those truths compose, lightweight
+because an Entity pays only for the state it actually has, and secure at the World
+boundary because prose never becomes coordinates, access or execution.
+
+Technical synthesis is complete and its first PostgreSQL Position falsifier is kept.
+Exact production fields, operation names, limits, privacy, geometry, integration
+lock behavior and indexes remain evidence and plan work. No `game/docs`, migration,
+runtime, HTTP, MCP or public Agent surface is authorized by this record.

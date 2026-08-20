@@ -16,6 +16,7 @@ models.
 ## Experiments
 
 - [01 — Model pressure](01-model-pressure/README.md) — Which of four temporary model shapes best explains all thirteen fixed spatial scenarios without conflating exact Position, authored meaning, movement, topology, visibility or remote causality?
+- [02 — PostgreSQL Position lineage](02-postgres-position-lineage/README.md) — Can the candidate PostgreSQL Position lineage and carrier lock boundary survive the fixed eight-case fixture?
 
 ## Spatial-specific boundaries
 

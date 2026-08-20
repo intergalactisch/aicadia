@@ -146,21 +146,24 @@ can be queried without returning thousands of unbounded records?
 **Narrative.** Character A presses Button B in House H. Bomb X, located in distant
 Place Z and not spatially near H, detonates.
 
-**Fixture.** B, X, H and Z exist. The fixture contains an explicit structural link
-or operation-specific capability connecting B to X; prose such as “remote trigger”
-is not enough. A's package names the link, its expected version, the bomb and all
-declared consequences.
+**Fixture.** B, X, H and Z exist. A current eligible B→X Relation has an Agent-
+authored name and description explaining that B activates X remotely. It is
+non-executable and grants no authority. A's Agent understands that context, previews
+one bounded Action and, after User confirmation, names B, X, the current Relation as
+claimed causal context, every expected revision and every exact intended consequence.
+World validates structural currency and ordinary authority but never judges whether
+the Relation wording truly causes detonation.
 
-**Variants.** Remove or retarget the link concurrently; move or change X before
-commit; make B and X valid but one affected Entity invalid; compare one atomic
-package with two explicitly separate Actions connected by a causal Activity
-reference; retry after a lost response.
+**Variants.** Remove or retarget the Relation concurrently; move or change X before
+commit; use a semantically irrelevant Relation with the same endpoints; deny ordinary
+authority over X; make B and X valid but one explicitly affected Entity invalid;
+retry after a lost response.
 
-**Questions.** What grants A authority over the remote consequence? Which parts must
-commit atomically? If detonation is a later Action, who or what may submit it without
-the server invoking an Agent? Which resources become dirty in H and Z? Can local
-interest in Z learn promptly while unrelated Places receive no per-recipient World
-record?
+**Questions.** Does one confirmed bounded Action commit its exact state and Activity
+or none? Can World reject stale, hidden or ordinarily unauthorized subjects without
+pretending to understand causal prose? Which resources become dirty in H and Z? Can
+local interest in Z learn promptly while unrelated Places receive no per-recipient
+World record?
 
 ## S04 — A bomb is dropped inside a house
 

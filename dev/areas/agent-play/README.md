@@ -39,9 +39,59 @@ proposals and asks the User to confirm every complete World-changing package.
 - If MCP authority is unavailable, the Agent fails closed before mutation.
 - An Agent must be able to express open, nuanced and quantitative relationships
   between Entities without every possible phrase becoming a World-owned enum.
-- When an arrangement may either be momentary or follow another Entity, the Agent's
-  confirmed proposal explicitly chooses the intended behavior; free wording never
-  makes that choice implicitly.
+- The Agent may address one stable Relation between a source and target Entity,
+  author its free name and description and later develop that same Relation. Several
+  Relations may coexist between the same pair; wording never becomes mechanics.
+- A Relation such as “activates remotely” may give an eligible Agent meaningful
+  causal context for Button B and Bomb X. It never executes or authorizes the effect;
+  the Agent must still preview one exact bounded Action, obtain User confirmation
+  and submit every intended state change under ordinary World authority and freshness.
+- An Agent treats `Connection` as the dedicated exact direct-travel fact between
+  Places. Open Relation wording may describe a road or passage but never substitutes
+  for Connection or authorizes movement.
+- An Agent may propose the Place role for any positioned Entity when the User wants
+  it to become an independent map, discovery or navigation reference. It never
+  assumes that Position, prose or a semantic kind already made the Entity a Place.
+- For map context, the Agent requests one exact bounded World window. World returns
+  only established Places selected by resolved Position or known Area intersection,
+  plus bounded relevant spatial state and continuation; the Agent never asks for or
+  receives one unbounded list of every Place or positioned Entity.
+- For every positioned Entity, the Agent grounds either an absolute Position from
+  permanent World origin or a Position relative to exactly one Entity. Choosing the
+  latter explicitly means mechanical following; free wording and Relations never
+  make that choice implicitly.
+- Optional Position `description` helps an Agent tell the current spatial story—for
+  example, “this cup strangely remains exactly two centimetres above the table;
+  nobody knows why.” It may narrate the exact structure but never replaces it or
+  causes World behavior.
+- The one current Position description may contain several sentences or paragraphs.
+  The Agent uses the Entity's multiple Traits for durable independent characteristics
+  rather than creating Traits or separately versioned descriptions on Position.
+- Whenever an Agent proposes a Position change, its complete preview explicitly says
+  whether the current description is kept, replaced or removed. The Agent makes the
+  semantic judgment; World only settles that choice with the Position change.
+- An Agent receives Position description only as part of the complete Position. It
+  can never query, count or discover that description independently; one current
+  Place-read path is accepted while other Entity-selection paths remain open.
+- When a bounded current Place read already returns an Entity, the Agent receives its
+  complete Position in that same response when one exists. It never performs a
+  Position lookup per returned Entity, and the spatial foundation performs no
+  Position-specific redaction.
+- Knowing an Entity or remembering its earlier Position never gives an Agent its
+  exact current Position. The Agent may present the remembered point explicitly as
+  stale Knowledge, but it cannot use that memory as fresh mutation grounding or
+  probe Position by guessing the Entity identity.
+- An Agent normally receives its own Character's resolved Position or knows that it
+  has none. The spatial foundation contains no Position-only exception that changes
+  this structured response.
+- The Agent may freely author the Trait or Position description that narrates an
+  unusual effect within ordinary text bounds. It may use that meaning to withhold a
+  detail in its own player conversation, but this is Agent conduct rather than World-
+  enforced confidentiality; World still returned the structured Position.
+- The Agent enforces the creative boundary that a User writes only for their own
+  Character. If asked to author perception, knowledge or another consequence for a
+  different User's Character, it refuses and explains that boundary. World never
+  parses the request or resulting prose to decide whose experience it narrates.
 - An Agent acts through its Character and may in principle propose changes to
   ordinary World state first authored by any other Agent. It may author surprising
   multi-Entity consequences, but must name them explicitly rather than relying on
@@ -55,6 +105,73 @@ proposals and asks the User to confirm every complete World-changing package.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.
+- For new-Place discovery, the Agent reads fresh structured Position context and
+  calculates and submits the exact three-dimensional absolute point itself as whole
+  centimetre `x`, `y` and `z`, where `z` is height. Before asking for confirmation it
+  must inspect a bounded eligible set of established Places around that point and
+  include the returned nearby
+  context in the complete preview. World returns structural facts and numeric
+  proximity but never interprets the Agent's spatial wording, and omitted hidden or
+  out-of-scope state is never presented as proof of global absence.
+- The first slice lets the Agent propose any technically valid absolute World point,
+  regardless of distance from A. It must make that distance intelligible in the
+  User conversation and still complete nearby inspection; World supplies no hidden
+  gameplay radius for the Agent to satisfy.
+- The Agent may converse in centimetres, metres or kilometres but converts the
+  confirmed point to whole centimetres before submission. World receives no free-
+  text unit to interpret, and sub-centimetre precision is not promised.
+- The Agent also converts compass wording using increasing `x` for east, `y` for
+  north and `z` for up. It presents natural directions to the User while submitting
+  only the resulting structured Position.
+- Absolute Position reads and proposals share permanent World origin `(0, 0, 0)`.
+  The Agent never presents that convention as an Entity, Place or discoverable
+  object in player conversation.
+- A successfully resolved Position read gives the Agent both the current World
+  point and the stored basis. For an Entity-relative Position that includes the
+  immediate reference Entity and stored offsets, so the Agent knows both where the
+  subject is now and why it mechanically follows another Entity.
+- If bounded resolution cannot reach an absolute basis, the Agent receives the
+  immediate reference and offsets without a World point. It must present that limit
+  honestly and cannot propose an Action whose mechanics require the missing point;
+  it may instead simplify or re-establish the Position through an eligible Action.
+- The Agent may propose and narrate impossible architecture through explicit
+  Connections, concrete Actions and authored meaning, including travel loops whose
+  geography makes no ordinary sense. It never creates that experience by proposing
+  a cyclic Position reference or asking World to infer mechanics from the story.
+- A proposed relative Position succeeds only when World can prove within bounded
+  work that it reaches an absolute basis and stays acyclic. On an unproven or stale
+  chain the Agent receives a rejection and may offer an absolute Position or a
+  simpler eligible reference; it never presents the rejected placement as World truth.
+- On every reference change the Agent proposes the complete new reference and all
+  three offsets; it never asks World to preserve a prior point implicitly. Before
+  preview it considers eligible current Traits, including a cup's “always floats two
+  centimetres above a surface.” If the new surface point is not grounded, the Agent
+  explains the uncertainty and asks rather than inventing geometry. Position
+  description may then narrate the resulting current placement.
+- The User controls what their Character attempts, but an instruction is not a
+  guaranteed literal outcome. The Agent reasons about current World meaning and may
+  warn, comply or invent a bounded surprising consequence: forcing the two-centimetre
+  cup down might fail and leave it floating ten centimetres above the table. It must
+  expose the exact resulting Position, Trait and description choices rather than
+  hiding invention inside prose.
+- Deliberately unforeseen Agent-authored outcomes are desired future game value, but
+  never ordinary default behavior. `Chaos` is only the User's current working label;
+  no canonical game term or capability has been chosen.
+- The spatial foundation is finished before a separate grill designs that wider
+  unforeseen-result direction. Spatial keeps SP04 as pressure but gains no interim
+  surprise mode or extra mechanic.
+- When nearby context contains a plausible existing Place, the Agent must use its
+  conversation with the User to offer that Place first and explain why a new Place
+  may still be distinct. It asks for final new-Place confirmation only after the
+  User has explicitly chosen to continue; World never evaluates that semantic case.
+- If the User chooses the existing Place, the Agent previews an explicit directed
+  Connection from the origin to that Place instead of a new Place package. The
+  Agent must present this as a deliberate travel fact, never as an automatic result
+  of numerical proximity.
+- If that travel direction is already established or another request wins it, the
+  Agent receives no new mutation and retains the opportunity. It must re-ground and
+  discuss another candidate rather than presenting a duplicate Connection as a new
+  discovery; an exact accepted-request retry simply resumes the prior result.
 
 ### Rejected
 
@@ -64,8 +181,20 @@ proposals and asks the User to confirm every complete World-changing package.
 - Quiet fallback to repository, HTTP, database, logs or memory during player interaction.
 - Durable conversational session state inside World.
 - Requiring a closed server vocabulary to contain every relationship an Agent may describe.
+- Expecting Trait wording such as “hidden from its possessor” to execute a privacy
+  consequence without an explicit structural change in the confirmed proposal.
+- Giving an Agent a standalone visibility editor or generic World-change operation.
+- Presenting Relation meaning as a World-enforced remote control, rule or permission.
+- Letting an Agent author perception, knowledge or another current experience for a
+  different User's Character merely because its User requested a convincing story.
 - Giving the original Agent permanent exclusive edit authority over ordinary World content.
 - Supplying hidden Relations to an Agent and relying on its prompt to conceal them.
+- Asking World to turn prose such as “one kilometre east” into Position or to decide
+  that nearby Places are semantically identical.
+- Asking the User to confirm a new Place before the Agent has inspected and
+  presented the bounded nearby Place context available to its Character.
+- Silently ignoring a plausible nearby Place or deciding on the User's behalf
+  whether it should be reused.
 
 ### Not yet chosen
 
@@ -74,10 +203,20 @@ proposals and asks the User to confirm every complete World-changing package.
 - How long-running Agent work presents changing World context without stale proposals.
 - Which context-compaction guidance belongs in the public Agent contract as capabilities grow.
 - How shared or delegated User control could safely invoke one Character through several Agents.
-- How one confirmed proposal presents exact current Position, open Relation meaning
-  and optional persistent movement with another Entity without duplicating truth.
-- Whether a Character that may know an Entity can always read its exact resolved
-  Position, or Position has an independent visibility boundary.
+- How one confirmed proposal presents exact Position, its optional description
+  and open Relation meaning without presenting authored wording as mechanics.
+- Whether the User's initial request authorizes the Agent to commit its bounded
+  creative result, or whether every changed result still requires a fresh explicit
+  preview and confirmation.
+- After the spatial foundation, how one User explicitly invokes unforeseen-result
+  play for one bounded attempt without turning it into a global mode, background
+  process or default Agent habit.
+- Which concrete bounded World reads may select an Entity beyond the current Place;
+  each such read returns the selected Entity's complete Position when one exists.
+- How a later privacy design decides whether an Entity or private Relation is
+  returned at all, without reintroducing Position-specific denial or redaction.
+- How a later privacy grill replaces best-effort Agent withholding with actual World-
+  enforced information boundaries when concrete gameplay requires them.
 
 ## Research needed
 
