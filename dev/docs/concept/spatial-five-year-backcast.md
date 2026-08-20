@@ -2936,3 +2936,36 @@ target id, ordered newest-first. It touches no target row and can use an index s
 for exactly that access. The unresolved ceremony question is whether one Agent call
 may request prior context for several selected models, whether every ordinary model
 read carries it automatically, or whether the Agent calls once per model.
+
+## One rich batched Observation-history read selected
+
+The User selected option A. One explicit bounded read accepts several exact model
+references chosen from the Agent's current authorized context. It groups the private
+history by model and returns several newest-first Observation occurrences for each,
+including each stored account, occurrence time and available Activity location. A
+per-model continuation says that older occurrences remain without calculating or
+storing an exact total.
+
+That response lets the Agent distinguish no stored encounter, one earlier encounter
+and several returned encounters. It can therefore truthfully say “we have met quite
+often” when the returned evidence supports that interpretation, while World never
+stores a `view_count` or labels a relationship `often`. The Agent may page further
+when older detail matters; it does not need one call per model and ordinary Entity,
+Place or Connection reads do not automatically absorb private history and context
+cost.
+
+For example, one response about Ivo can contain three recent occurrences in
+Duindorp, the dunes and the harbour, plus a continuation. The exact public response
+schema and bounds remain technical design work, but the contract must preserve the
+model grouping, multiple recent occurrences and independent continuation. If a
+machine-readable correction reference is accepted later, it belongs on its
+Observation inside this same response rather than requiring another history call.
+
+The database access remains Character-first and subject-addressed. One bounded
+request performs bounded newest-first indexed scans for a bounded number of exact
+subjects; it reads no subject-wide counter, locks no observed model and cannot turn a
+famous Character into one shared write row. The exact operation name remains open:
+the User proposed `get_observations`, while the current Aicadia constitution uses
+`list` for collections and singular domain nouns, as in `list_activity`. Resolving
+that nomenclature conflict must be explicit rather than silently creating an
+exception.

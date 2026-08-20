@@ -307,9 +307,12 @@ At million-Character pressure:
   not a durable World session or server-verifiable conversational flag. A subscription
   may announce change only; it cannot create an Agent turn or Observation.
 - Observation-history reads are Character-private, subject-addressed, newest-first,
-  bounded and cursor-paginated with no stored count. The expected database access
-  begins with observing Character plus target alias/id, so one famous subject is not
-  a shared read or write row; whether one call accepts one or several subjects is open.
+  bounded and cursor-paginated with no stored count. One read accepts a bounded set
+  of exact subjects and groups several recent occurrences plus independent
+  continuation per subject. The expected database access begins with observing
+  Character plus target alias/id, so one famous subject is not a shared read or write
+  row. The exact operation name remains open because `get_observations` conflicts
+  with current `list`-for-collections and singular-domain-name rules.
 
 ### Open questions blocking activation
 
@@ -396,15 +399,19 @@ At million-Character pressure:
    under BYO Agents, a subscription cannot invoke the Agent or spend tokens at all.
    Shared state changes still require full preview and confirmation. Before treating
    a selected exact model as new, familiar or narratively significant, the Agent must
-   first read that Character's prior Observation history for it. The bounded result
-   includes each account, occurrence time and available Activity location, allowing
-   creative spatial callbacks without World inferring recognition. An empty result
-   means no stored prior Observation; the read itself writes nothing. Q12's optional
-   explicit correction reference remains open because recurrence retrieval already
-   solves the Duindorp callback but not whether one memory mechanically corrects
-   another. **Next open consequence:** decide whether the Agent retrieves prior
-   context for several currently considered models in one bounded call, receives it
-   automatically on every model read, or makes one call per model.
+   first read that Character's prior Observation history for it. User choice A makes
+   this one bounded multi-model read rather than automatic history on every model
+   response or one call per model. Its response groups several newest-first
+   occurrences per requested model, including each account, occurrence time and
+   available Activity location, with independent continuation. That gives the Agent
+   enough concrete evidence to narrate repeated meetings without World storing a
+   count, recognition flag or `often` label. An empty group means no stored prior
+   Observation; the read itself writes nothing. Q12's optional explicit correction
+   reference remains open because recurrence retrieval already solves the Duindorp
+   callback but not whether one memory mechanically corrects another. **Next open
+   consequence:** choose the public operation name. The User proposed
+   `get_observations`; current binding rules instead use `list` for collections and
+   singular Aicadia domain nouns.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
