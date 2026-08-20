@@ -37,8 +37,10 @@ mod spatial_read_plan_test;
 pub use activity::*;
 pub use error::*;
 pub use investigation::{
-    AcceptedDiscovery, DiscoveryFind, DiscoveryKind, InvestigationAttemptId, InvestigationLimit,
-    InvestigationOutcome, InvestigationResult, StartInvestigation, SubmitDiscovery,
+    AcceptedDiscovery, ConnectionInput, ConnectionPointInput, DirectPositionInput,
+    DiscoveryDestinationInput, DiscoveryKind, DiscoveryOriginInput, DiscoveryResultInput,
+    InvestigationAttemptId, InvestigationLimit, InvestigationOutcome, InvestigationResult,
+    PlaceEntityInput, StartInvestigation, SubmitDiscovery,
 };
 pub use model::*;
 pub use property::*;
@@ -46,7 +48,7 @@ pub use spatial::ActivityPositionRole;
 
 use common::*;
 use entity_trait::*;
-use read::CURRENT_ENTITY_STATE_SQL;
+use read::{CURRENT_ENTITY_STATE_SQL, find_connection_by_id};
 use spatial::*;
 
 #[derive(Clone, Copy)]
@@ -220,6 +222,22 @@ impl World {
             .execute(&mut *transaction)
             .await
             .map_err(|error| spatial_read_error(operation, error))?;
+        Ok(transaction)
+    }
+
+    async fn begin_spatial_mutation(
+        &self,
+        operation: &'static str,
+    ) -> Result<Transaction<'_, Postgres>, WorldError> {
+        let mut transaction = self.begin(operation).await?;
+        sqlx::query("SET LOCAL statement_timeout = '3s'")
+            .execute(&mut *transaction)
+            .await
+            .map_err(|error| storage_error(operation, error))?;
+        sqlx::query("SET LOCAL lock_timeout = '500ms'")
+            .execute(&mut *transaction)
+            .await
+            .map_err(|error| storage_error(operation, error))?;
         Ok(transaction)
     }
 }

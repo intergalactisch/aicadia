@@ -8,10 +8,10 @@
 
 use aicadia::{
     ActionConsequence, ChangeEntityState, CreateCharacter, CreateEntity, CreateEntryPlace,
-    EntityCurrentAssociation, EntityId, EntityPropertyChangeInput, EntityTraitChangeInput,
-    EntityTraitId, GetEntityAtCurrentPlace, IntroduceEntity, ListEntityAtCurrentPlace,
-    PlaceRevision, PropertyInput, PropertyValue, StartInvestigation, SubmitAction, TraitInput,
-    World,
+    DiscoveryKind, EntityCurrentAssociation, EntityId, EntityPropertyChangeInput,
+    EntityTraitChangeInput, EntityTraitId, GetEntityAtCurrentPlace, IntroduceEntity,
+    ListEntityAtCurrentPlace, PlaceRevision, PropertyInput, PropertyValue, StartInvestigation,
+    SubmitAction, TraitInput, World,
 };
 use aicadia_studio::StudioError;
 use aicadia_studio::live::{
@@ -224,6 +224,7 @@ async fn seed(pool: &PgPool) -> Seed {
             user_id,
             StartInvestigation {
                 request_id: attempt_request_id,
+                kind: DiscoveryKind::EntityAtPosition,
             },
         )
         .await
@@ -233,6 +234,7 @@ async fn seed(pool: &PgPool) -> Seed {
             user_id,
             StartInvestigation {
                 request_id: Uuid::new_v4(),
+                kind: DiscoveryKind::EntityAtPosition,
             },
         )
         .await

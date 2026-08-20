@@ -386,6 +386,63 @@ pub(super) async fn find_place_by_id(
     .transpose()
 }
 
+pub(super) async fn find_entity_with_position(
+    transaction: &mut Transaction<'_, Postgres>,
+    entity_id: EntityId,
+    position_activity_id: ActivityId,
+    operation: &'static str,
+) -> Result<Option<(Entity, Position)>, WorldError> {
+    #[derive(FromRow)]
+    struct Row {
+        id: EntityId,
+        name: String,
+        description: String,
+        introduced_by_user_id: UserId,
+        introduced_at: DateTime<Utc>,
+        x_cm: i64,
+        y_cm: i64,
+        z_cm: i64,
+        position_description: Option<String>,
+    }
+    sqlx::query_as::<_, Row>(
+        r#"
+        SELECT entity.id, entity.name, entity.description,
+               entity.introduced_by_user_id, entity.introduced_at,
+               version.x_cm, version.y_cm, version.z_cm,
+               version.description AS position_description
+        FROM entity
+        JOIN position_version version
+          ON version.entity_id = entity.id
+         AND version.activity_id = $2
+        WHERE entity.id = $1
+        "#,
+    )
+    .bind(entity_id.0)
+    .bind(position_activity_id.0)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(|error| storage_error(operation, error))
+    .map(|row| {
+        row.map(|row| {
+            let position = Position {
+                x_cm: row.x_cm,
+                y_cm: row.y_cm,
+                z_cm: row.z_cm,
+                description: row.position_description,
+                position_revision: PositionRevision::from_parts(row.id, position_activity_id),
+            };
+            let entity = Entity {
+                id: row.id,
+                name: row.name,
+                description: row.description,
+                introduced_by_user_id: row.introduced_by_user_id,
+                introduced_at: row.introduced_at,
+            };
+            (entity, position)
+        })
+    })
+}
+
 pub(super) fn validate_limit(limit: u16, error: WorldError) -> Result<(), WorldError> {
     if limit == 0 || limit > MAX_PAGE_SIZE {
         Err(error)

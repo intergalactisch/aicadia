@@ -43,7 +43,7 @@ fn discovery(request_id: Uuid, attempt_id: InvestigationAttemptId, prose: &str) 
         request_id,
         attempt_id,
         prose: prose.to_owned(),
-        find: DiscoveryFind {
+        result: DiscoveryResultInput::EntityAtPosition {
             name: "Rainbell Cups".to_owned(),
             description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
             position_description: None,
@@ -63,16 +63,28 @@ fn discovery_fingerprint_uses_normalized_semantically_unordered_find_state() {
     let attempt_id = InvestigationAttemptId(Uuid::new_v4());
     let request_id = Uuid::new_v4();
     let mut first = discovery(request_id, attempt_id, " A complete find. ");
-    first.find.property.push(PropertyInput {
+    let DiscoveryResultInput::EntityAtPosition {
+        property, r#trait, ..
+    } = &mut first.result
+    else {
+        unreachable!()
+    };
+    property.push(PropertyInput {
         key: "height".to_owned(),
         value: PropertyValue::Integer(2),
     });
-    first.find.r#trait.push(TraitInput {
+    r#trait.push(TraitInput {
         statement: "Holds a bead of water.".to_owned(),
     });
     let mut reordered = first.clone();
-    reordered.find.property.reverse();
-    reordered.find.r#trait.reverse();
+    let DiscoveryResultInput::EntityAtPosition {
+        property, r#trait, ..
+    } = &mut reordered.result
+    else {
+        unreachable!()
+    };
+    property.reverse();
+    r#trait.reverse();
     let first = first.normalize().unwrap();
     let reordered = reordered.normalize().unwrap();
     assert_eq!(
@@ -81,32 +93,35 @@ fn discovery_fingerprint_uses_normalized_semantically_unordered_find_state() {
     );
 }
 
-async fn positive(world: &World, user_id: UserId) -> InvestigationResult {
-    world
-        .start_investigation(
-            user_id,
-            StartInvestigation {
-                request_id: Uuid::new_v4(),
-            },
-        )
-        .await
-        .unwrap()
-}
-
 #[sqlx::test(migrations = "./migration")]
 async fn start_is_retry_stable_across_restart_and_draws_exactly_once(pool: PgPool) {
     let (world, user_id, _, _) = entered_world(pool.clone(), vec![0.0]).await;
     let request_id = Uuid::new_v4();
     let first = world
-        .start_investigation(user_id, StartInvestigation { request_id })
+        .start_investigation(
+            user_id,
+            StartInvestigation {
+                request_id,
+                kind: DiscoveryKind::EntityAtPosition,
+            },
+        )
         .await
         .unwrap();
     assert_eq!(first.outcome, InvestigationOutcome::Positive);
-    assert_eq!(first.limit, InvestigationLimit::CURRENT);
+    assert_eq!(
+        first.limit,
+        InvestigationLimit::for_kind(DiscoveryKind::EntityAtPosition)
+    );
 
     let restarted = World::with_scripted_chance(pool.clone(), Vec::new());
     let retry = restarted
-        .start_investigation(user_id, StartInvestigation { request_id })
+        .start_investigation(
+            user_id,
+            StartInvestigation {
+                request_id,
+                kind: DiscoveryKind::EntityAtPosition,
+            },
+        )
         .await
         .unwrap();
     assert_eq!(retry, first);
@@ -141,6 +156,7 @@ async fn exhausted_scripted_chance_is_unavailable_without_any_write(pool: PgPool
                 user_id,
                 StartInvestigation {
                     request_id: Uuid::new_v4(),
+                    kind: DiscoveryKind::EntityAtPosition,
                 },
             )
             .await,
@@ -184,7 +200,10 @@ async fn discovery_normalization_keeps_prose_and_find_errors_typed_before_writes
     }
 
     let mut invalid_entity = discovery(Uuid::new_v4(), attempt_id, "Valid discovery prose.");
-    invalid_entity.find.name = "   ".to_owned();
+    let DiscoveryResultInput::EntityAtPosition { name, .. } = &mut invalid_entity.result else {
+        unreachable!()
+    };
+    *name = "   ".to_owned();
     assert_eq!(
         world.submit_discovery(user_id, invalid_entity).await,
         Err(WorldError::InvalidEntity {
@@ -194,7 +213,11 @@ async fn discovery_normalization_keeps_prose_and_find_errors_typed_before_writes
     );
 
     let mut invalid_property = discovery(Uuid::new_v4(), attempt_id, "Valid discovery prose.");
-    invalid_property.find.property[0].key = "Not_Canonical".to_owned();
+    let DiscoveryResultInput::EntityAtPosition { property, .. } = &mut invalid_property.result
+    else {
+        unreachable!()
+    };
+    property[0].key = "Not_Canonical".to_owned();
     assert_eq!(
         world.submit_discovery(user_id, invalid_property).await,
         Err(WorldError::InvalidProperty {
@@ -204,7 +227,10 @@ async fn discovery_normalization_keeps_prose_and_find_errors_typed_before_writes
     );
 
     let mut invalid_trait = discovery(Uuid::new_v4(), attempt_id, "Valid discovery prose.");
-    invalid_trait.find.r#trait[0].statement = "   ".to_owned();
+    let DiscoveryResultInput::EntityAtPosition { r#trait, .. } = &mut invalid_trait.result else {
+        unreachable!()
+    };
+    r#trait[0].statement = "   ".to_owned();
     assert_eq!(
         world.submit_discovery(user_id, invalid_trait).await,
         Err(WorldError::InvalidTrait)
@@ -238,7 +264,13 @@ async fn zero_retry_changes_no_activity_or_place_pointer(pool: PgPool) {
             .unwrap();
     let request_id = Uuid::new_v4();
     let first = world
-        .start_investigation(user_id, StartInvestigation { request_id })
+        .start_investigation(
+            user_id,
+            StartInvestigation {
+                request_id,
+                kind: DiscoveryKind::EntityAtPosition,
+            },
+        )
         .await
         .unwrap();
     assert_eq!(first.outcome, InvestigationOutcome::Zero);
@@ -249,7 +281,13 @@ async fn zero_retry_changes_no_activity_or_place_pointer(pool: PgPool) {
         .unwrap();
     assert_eq!(
         world
-            .start_investigation(user_id, StartInvestigation { request_id })
+            .start_investigation(
+                user_id,
+                StartInvestigation {
+                    request_id,
+                    kind: DiscoveryKind::EntityAtPosition
+                }
+            )
             .await
             .unwrap(),
         first
@@ -375,6 +413,7 @@ async fn positive_or_zero(
             user_id,
             StartInvestigation {
                 request_id: Uuid::new_v4(),
+                kind: DiscoveryKind::EntityAtPosition,
             },
         )
         .await
@@ -450,39 +489,49 @@ async fn discovery_commits_exact_state_history_consumption_and_retry_precedence(
     let attempt = positive(&world, user_id).await;
     let request_id = Uuid::new_v4();
     let mut input = discovery(request_id, attempt.attempt_id, " Mara parts the reeds. ");
-    input.find.property.push(PropertyInput {
+    let DiscoveryResultInput::EntityAtPosition {
+        property, r#trait, ..
+    } = &mut input.result
+    else {
+        unreachable!()
+    };
+    property.push(PropertyInput {
         key: "height".to_owned(),
         value: PropertyValue::Integer(2),
     });
-    input.find.r#trait.push(TraitInput {
+    r#trait.push(TraitInput {
         statement: "Holds a bead of water.".to_owned(),
     });
     let accepted = world
         .submit_discovery(user_id, input.clone())
         .await
         .unwrap();
+    let AcceptedDiscovery::EntityAtPosition {
+        activity,
+        entity,
+        place: accepted_place,
+        ..
+    } = &accepted
+    else {
+        unreachable!()
+    };
+    assert_eq!(activity.operation, ActivityOperation::SubmitDiscovery);
     assert_eq!(
-        accepted.activity.operation,
-        ActivityOperation::SubmitDiscovery
-    );
-    assert_eq!(
-        accepted.activity.actor_character.as_ref().unwrap().id,
+        activity.actor_character.as_ref().unwrap().id,
         character.entity.id
     );
     assert_eq!(
-        accepted.activity.context_place.as_ref().unwrap().entity.id,
+        activity.context_place.as_ref().unwrap().entity.id,
         place.entity.id
     );
-    assert_eq!(
-        accepted.activity.prose.as_deref(),
-        Some("Mara parts the reeds.")
-    );
-    assert_eq!(accepted.activity.property_change.len(), 2);
-    assert_eq!(accepted.activity.trait_change.len(), 2);
-    assert!(accepted.activity.involved_entity.iter().any(|reference| {
-        reference.entity.id == accepted.entity.id && reference.role == ActivityEntityRole::Subject
+    assert_eq!(activity.prose.as_deref(), Some("Mara parts the reeds."));
+    assert_eq!(activity.property_change.len(), 2);
+    assert_eq!(activity.trait_change.len(), 2);
+    assert_eq!(accepted_place.as_ref().unwrap().entity.id, place.entity.id);
+    assert!(activity.involved_entity.iter().any(|reference| {
+        reference.entity.id == entity.id && reference.role == ActivityEntityRole::Subject
     }));
-    assert!(accepted.activity.involved_entity.iter().any(|reference| {
+    assert!(activity.involved_entity.iter().any(|reference| {
         reference.entity.id == place.entity.id && reference.role == ActivityEntityRole::Location
     }));
     let consumed: Option<Uuid> = sqlx::query_scalar(
@@ -492,14 +541,14 @@ async fn discovery_commits_exact_state_history_consumption_and_retry_precedence(
     .fetch_one(&pool)
     .await
     .unwrap();
-    assert_eq!(consumed, Some(accepted.activity.id.0));
+    assert_eq!(consumed, Some(activity.id.0));
     let latest: Uuid =
         sqlx::query_scalar("SELECT latest_activity_id FROM place WHERE entity_id = $1")
             .bind(place.entity.id.0)
             .fetch_one(&pool)
             .await
             .unwrap();
-    assert_eq!(latest, accepted.activity.id.0);
+    assert_eq!(latest, activity.id.0);
 
     let observer = world.create_user().await.unwrap();
     world
@@ -519,24 +568,19 @@ async fn discovery_commits_exact_state_history_consumption_and_retry_precedence(
         .list_activity_at_current_place(observer.id, ListActivityAtCurrentPlace::default())
         .await
         .unwrap();
-    assert!(
-        observed
-            .activity
-            .iter()
-            .any(|activity| activity.id == accepted.activity.id)
-    );
+    assert!(observed.activity.iter().any(|item| item.id == activity.id));
     let observed_entity = world
         .get_entity_at_current_place(
             observer.id,
             GetEntityAtCurrentPlace {
-                entity_id: accepted.entity.id,
+                entity_id: entity.id,
                 cursor: None,
                 limit: 100,
             },
         )
         .await
         .unwrap();
-    assert_eq!(observed_entity.entity.id, accepted.entity.id);
+    assert_eq!(observed_entity.entity.id, entity.id);
     assert_eq!(observed_entity.current_state.association.len(), 4);
     assert_eq!(
         observed_entity
@@ -564,12 +608,22 @@ async fn discovery_commits_exact_state_history_consumption_and_retry_precedence(
         .execute(&pool)
         .await
         .unwrap();
-    input.find.property.reverse();
-    input.find.r#trait.reverse();
-    let retry = world.submit_discovery(user_id, input).await.unwrap();
+    let DiscoveryResultInput::EntityAtPosition {
+        property, r#trait, ..
+    } = &mut input.result
+    else {
+        unreachable!()
+    };
+    property.reverse();
+    r#trait.reverse();
+    let restarted = World::new(pool.clone());
+    let retry = restarted.submit_discovery(user_id, input).await.unwrap();
     assert_eq!(retry, accepted);
     let mut changed = discovery(request_id, attempt.attempt_id, "Different prose.");
-    changed.find.name = "Different find".to_owned();
+    let DiscoveryResultInput::EntityAtPosition { name, .. } = &mut changed.result else {
+        unreachable!()
+    };
+    *name = "Different find".to_owned();
     assert_eq!(
         world.submit_discovery(user_id, changed).await,
         Err(WorldError::DiscoveryRequestConflict)
@@ -932,7 +986,10 @@ async fn discovery_database_failure_rolls_back_every_write_and_leaves_attempt_li
         attempt.attempt_id,
         "Mara finds a contradiction.",
     );
-    input.find.property = vec![PropertyInput {
+    let DiscoveryResultInput::EntityAtPosition { property, .. } = &mut input.result else {
+        unreachable!()
+    };
+    *property = vec![PropertyInput {
         key: "measure".to_owned(),
         value: PropertyValue::Text("one".to_owned()),
     }];
@@ -1041,8 +1098,20 @@ async fn equal_concurrent_starts_share_one_attempt(pool: PgPool) {
     let left = world.clone();
     let right = world.clone();
     let (left, right) = tokio::join!(
-        left.start_investigation(user_id, StartInvestigation { request_id }),
-        right.start_investigation(user_id, StartInvestigation { request_id })
+        left.start_investigation(
+            user_id,
+            StartInvestigation {
+                request_id,
+                kind: DiscoveryKind::EntityAtPosition
+            }
+        ),
+        right.start_investigation(
+            user_id,
+            StartInvestigation {
+                request_id,
+                kind: DiscoveryKind::EntityAtPosition
+            }
+        )
     );
     assert_eq!(left.unwrap(), right.unwrap());
     let count: i64 = sqlx::query_scalar("SELECT count(*) FROM investigation_attempt")
@@ -1065,6 +1134,7 @@ async fn distinct_concurrent_starts_preserve_admission_and_live_positive_caps(po
                     user_id,
                     StartInvestigation {
                         request_id: Uuid::new_v4(),
+                        kind: DiscoveryKind::EntityAtPosition,
                     },
                 )
                 .await
@@ -1191,8 +1261,8 @@ async fn insert_raw_activity(
     .unwrap();
 }
 
-fn colour_as_property_find() -> DiscoveryFind {
-    DiscoveryFind {
+fn colour_as_property_find() -> DiscoveryResultInput {
+    DiscoveryResultInput::EntityAtPosition {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
         position_description: None,
@@ -1204,8 +1274,8 @@ fn colour_as_property_find() -> DiscoveryFind {
     }
 }
 
-fn colour_as_trait_find() -> DiscoveryFind {
-    DiscoveryFind {
+fn colour_as_trait_find() -> DiscoveryResultInput {
+    DiscoveryResultInput::EntityAtPosition {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
         position_description: None,
@@ -1224,13 +1294,17 @@ fn discovery_fingerprint_separates_property_content_from_trait_content() {
     let attempt_id = InvestigationAttemptId(Uuid::new_v4());
     let request_id = Uuid::new_v4();
     let mut as_property = discovery(request_id, attempt_id, "Mara notes one warm colour.");
-    as_property.find = colour_as_property_find();
+    as_property.result = colour_as_property_find();
     let mut as_trait = as_property.clone();
-    as_trait.find = colour_as_trait_find();
+    as_trait.result = colour_as_trait_find();
     let as_property = as_property.normalize().unwrap();
     let as_trait = as_trait.normalize().unwrap();
-    assert!(as_property.find.r#trait.is_empty());
-    assert!(as_trait.find.property.is_empty());
+    assert!(
+        matches!(&as_property.result, DiscoveryResultInput::EntityAtPosition { r#trait, .. } if r#trait.is_empty())
+    );
+    assert!(
+        matches!(&as_trait.result, DiscoveryResultInput::EntityAtPosition { property, .. } if property.is_empty())
+    );
     assert_ne!(
         discovery_fingerprint(&as_property),
         discovery_fingerprint(&as_trait)
@@ -1243,9 +1317,9 @@ async fn discovery_retry_moving_find_content_between_property_and_trait_conflict
     let attempt = positive(&world, user_id).await;
     let prose = "Mara notes one warm colour.";
     let mut first = discovery(Uuid::new_v4(), attempt.attempt_id, prose);
-    first.find = colour_as_property_find();
+    first.result = colour_as_property_find();
     let mut second = first.clone();
-    second.find = colour_as_trait_find();
+    second.result = colour_as_trait_find();
     world.submit_discovery(user_id, first).await.unwrap();
     assert_eq!(
         world.submit_discovery(user_id, second).await,
@@ -1253,8 +1327,8 @@ async fn discovery_retry_moving_find_content_between_property_and_trait_conflict
     );
 }
 
-fn tag_lookalike_as_property_find() -> DiscoveryFind {
-    DiscoveryFind {
+fn tag_lookalike_as_property_find() -> DiscoveryResultInput {
+    DiscoveryResultInput::EntityAtPosition {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
         position_description: None,
@@ -1274,8 +1348,8 @@ fn tag_lookalike_as_property_find() -> DiscoveryFind {
     }
 }
 
-fn tag_lookalike_as_trait_find() -> DiscoveryFind {
-    DiscoveryFind {
+fn tag_lookalike_as_trait_find() -> DiscoveryResultInput {
+    DiscoveryResultInput::EntityAtPosition {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
         position_description: None,
@@ -1298,9 +1372,9 @@ async fn discovery_retry_realigning_a_find_across_tag_lookalike_content_conflict
     let attempt = positive(&world, user_id).await;
     let prose = "Mara records a key and a statement that read like list tags.".to_owned();
     let mut first = discovery(Uuid::new_v4(), attempt.attempt_id, &prose);
-    first.find = tag_lookalike_as_property_find();
+    first.result = tag_lookalike_as_property_find();
     let mut second = first.clone();
-    second.find = tag_lookalike_as_trait_find();
+    second.result = tag_lookalike_as_trait_find();
     world.submit_discovery(user_id, first).await.unwrap();
     assert_eq!(
         world.submit_discovery(user_id, second).await,
@@ -1404,3 +1478,6 @@ async fn investigation_indexes_support_bounded_hot_subject_queries(pool: PgPool)
         "the live hoarding void must use its declared index: {void_plan}"
     );
 }
+
+mod spatial;
+use spatial::positive;

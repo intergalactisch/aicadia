@@ -532,15 +532,21 @@ fn investigation_wire_conversions_preserve_typed_initial_state() {
         },
     };
     let parsed: crate::SubmitDiscovery = input.into();
+    let crate::DiscoveryResultInput::EntityAtPosition {
+        property, r#trait, ..
+    } = parsed.result
+    else {
+        unreachable!("the legacy adapter creates only entity_at_position")
+    };
     assert_eq!(
-        parsed.find.property,
+        property,
         vec![PropertyInput {
             key: "height".to_owned(),
             value: PropertyValue::Integer(2),
         }]
     );
     assert_eq!(
-        parsed.find.r#trait,
+        r#trait,
         vec![TraitInput {
             statement: "Rings in rain.".to_owned(),
         }]

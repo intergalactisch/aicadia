@@ -12,6 +12,7 @@ impl From<StartInvestigationInput> for StartInvestigation {
     fn from(value: StartInvestigationInput) -> Self {
         Self {
             request_id: value.request_id,
+            kind: DiscoveryKind::EntityAtPosition,
         }
     }
 }
@@ -41,7 +42,10 @@ pub enum DiscoveryKindOutput {
 impl From<DiscoveryKind> for DiscoveryKindOutput {
     fn from(value: DiscoveryKind) -> Self {
         match value {
-            DiscoveryKind::EntityAtCurrentPlace => Self::EntityAtCurrentPlace,
+            DiscoveryKind::EntityAtPosition => Self::EntityAtCurrentPlace,
+            DiscoveryKind::ConnectedPlace => unreachable!(
+                "the legacy adapter cannot request connected_place before T6 publishes it"
+            ),
         }
     }
 }
@@ -113,9 +117,9 @@ pub struct DiscoveryFindInput {
     pub r#trait: Vec<TraitInput>,
 }
 
-impl From<DiscoveryFindInput> for DiscoveryFind {
+impl From<DiscoveryFindInput> for DiscoveryResultInput {
     fn from(value: DiscoveryFindInput) -> Self {
-        Self {
+        Self::EntityAtPosition {
             name: value.name,
             description: value.description,
             position_description: None,
@@ -147,7 +151,7 @@ impl From<SubmitDiscoveryInput> for SubmitDiscovery {
             request_id: value.request_id,
             attempt_id: InvestigationAttemptId(value.attempt_id),
             prose: value.prose,
-            find: value.find.into(),
+            result: value.find.into(),
         }
     }
 }
@@ -166,10 +170,21 @@ pub struct AcceptedDiscoveryOutput {
 
 impl From<AcceptedDiscovery> for AcceptedDiscoveryOutput {
     fn from(value: AcceptedDiscovery) -> Self {
-        Self {
-            activity: value.activity.into(),
-            entity: value.entity.into(),
-            place: value.place.into(),
+        match value {
+            AcceptedDiscovery::EntityAtPosition {
+                activity,
+                entity,
+                place: Some(place),
+                ..
+            } => Self {
+                activity: activity.into(),
+                entity: entity.into(),
+                place: place.into(),
+            },
+            AcceptedDiscovery::EntityAtPosition { place: None, .. }
+            | AcceptedDiscovery::ConnectedPlace { .. } => unreachable!(
+                "the legacy adapter cannot produce loose or connected discovery before T6"
+            ),
         }
     }
 }

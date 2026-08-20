@@ -963,6 +963,47 @@ async fn hydrate_connection_summaries(
     .map_err(|error| spatial_read_error(operation, error))
 }
 
+pub(super) async fn find_connection_by_id(
+    transaction: &mut Transaction<'_, Postgres>,
+    connection_id: ConnectionId,
+    operation: &'static str,
+) -> Result<Option<Connection>, WorldError> {
+    let Some(row) = sqlx::query_as::<_, ConnectionRow>(&format!(
+        r#"
+        {CONNECTION_DETAIL_SELECT}
+        {CONNECTION_JOINS}
+        WHERE connection.id = $1
+        "#,
+    ))
+    .bind(connection_id.0)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(|error| storage_error(operation, error))?
+    else {
+        return Ok(None);
+    };
+    let course = sqlx::query_as::<_, ConnectionPointRow>(
+        r#"
+        SELECT ordinal, x_cm, y_cm, z_cm
+        FROM connection_point
+        WHERE connection_id = $1
+        ORDER BY ordinal
+        LIMIT 129
+        "#,
+    )
+    .bind(connection_id.0)
+    .fetch_all(&mut **transaction)
+    .await
+    .map_err(|error| storage_error(operation, error))?
+    .into_iter()
+    .map(ConnectionPoint::try_from)
+    .collect::<Result<Vec<_>, _>>()?;
+    if course.len() > 128 {
+        return Err(invalid_stored_relation());
+    }
+    Ok(Some(row.into_connection(course)))
+}
+
 async fn find_positioned_place(
     transaction: &mut Transaction<'_, Postgres>,
     place_id: EntityId,

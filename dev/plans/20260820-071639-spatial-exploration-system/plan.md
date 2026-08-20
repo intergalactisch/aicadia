@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T18:06:03+02:00"
+updated_at: "2026-08-20T19:05:24+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
@@ -515,8 +515,8 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T1E | completed | T1 | no | Falsify the leading Place-map projection and covering B-tree before production schema work. | `dev/lab/spatial/03-place-map-index/` only | Real PostgreSQL 17 dense/adversarial million-row `EXPLAIN (ANALYZE, BUFFERS)` verdict and cleanup. |
 | T2 | completed | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
 | T3 | completed | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
-| T4 | in_progress | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
-| T5 | pending | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
+| T4 | completed | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
+| T5 | in_progress | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
 | T6 | pending | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
 | T7 | pending | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
 
@@ -683,6 +683,25 @@ complete connected-Place package without moving the Character.
 
 **Evidence:** focused production World tests read back complete state, attempts and
 Activity after every variant and race.
+
+**T4 review record:** real PostgreSQL passed 35/35 focused Investigation cases. The
+full `aicadia-game` crate passed 65/65 library tests, 14 server tests with one
+existing ignored catalog regenerator and 95/95 World tests; workspace all-target
+checking, focused documentation lint, formatting and diff checks were clean. Entity
+Discovery preserves the exact pre-T4 v1 fingerprint and reconstructs retries from
+legacy accepted history even when no origin Position exists; connected-Place
+Discovery uses its own v2 fingerprint and remains exact after later Character
+Movement. New or reused loose origins and destinations create one distinct
+immutable Connection without moving the Character. PostgreSQL's checked `numeric`
+course constraint remains authoritative across the complete coordinate range, and
+invalid deferred geometry rolls the full package back. Review removed unnecessary
+endpoint Entity locks, proved compatible immutable reads, retained only the lock
+that protects mutable state and combined both new Places' initial Property and Trait
+writes into one globally ordered batch per relation. Two concurrent maximum
+new-origin/new-destination packages therefore both commit with exact independent
+history. The current storage authority now states the per-subject limit of 100 and
+connected-Activity maximum of 200 Property and 200 Trait history rows. T4 publishes
+no Movement, HTTP/MCP capability, Area, Relation, Observation or privacy behavior.
 
 **Stop:** no endpoint-pair deduplication, coordinate merge, map-read receipt, direct
 spatial proposal outside Investigation or Discovery-triggered Movement.

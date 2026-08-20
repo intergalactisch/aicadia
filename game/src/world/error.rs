@@ -26,6 +26,22 @@ pub enum DiscoveryField {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PositionField {
+    XCm,
+    YCm,
+    ZCm,
+    Description,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ConnectionField {
+    Name,
+    Description,
+    ShapeDescription,
+    Course,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyField {
     Property,
     PropertyChange,
@@ -77,6 +93,16 @@ pub enum WorldError {
         field: DiscoveryField,
         reason: InvalidReason,
     },
+    #[error("position input is invalid")]
+    InvalidPosition {
+        field: PositionField,
+        reason: InvalidReason,
+    },
+    #[error("connection input is invalid")]
+    InvalidConnection {
+        field: ConnectionField,
+        reason: InvalidReason,
+    },
     #[error("property input is invalid")]
     InvalidProperty {
         field: PropertyField,
@@ -120,10 +146,14 @@ pub enum WorldError {
     InteractionRequestConflict,
     #[error("discovery request id has already been used with different content")]
     DiscoveryRequestConflict,
+    #[error("investigation request id has already been used for another kind")]
+    InvestigationRequestConflict,
     #[error("investigation attempt is unavailable")]
     DiscoveryAttemptUnavailable,
     #[error("investigation was not admitted")]
     InvestigationNotAdmitted,
+    #[error("selected place is unavailable for discovery")]
+    PlaceUnavailable,
     #[error("one or more interaction targets are unavailable")]
     InteractionTargetUnavailable,
     #[error("one or more property entities are unavailable")]
@@ -149,6 +179,10 @@ pub(super) fn invalid_stored_relation() -> WorldError {
     )
 }
 
+pub(super) fn invalid_connection(field: ConnectionField, reason: InvalidReason) -> WorldError {
+    WorldError::InvalidConnection { field, reason }
+}
+
 pub(super) fn constraint(error: &sqlx::Error) -> Option<&str> {
     error
         .as_database_error()
@@ -156,6 +190,15 @@ pub(super) fn constraint(error: &sqlx::Error) -> Option<&str> {
 }
 
 pub(super) fn storage_error(operation: &'static str, error: sqlx::Error) -> WorldError {
+    let database_code = error
+        .as_database_error()
+        .and_then(|error| error.code())
+        .map(|code| code.into_owned());
+    if matches!(operation, "start_investigation" | "submit_discovery")
+        && matches!(database_code.as_deref(), Some("57014" | "55P03"))
+    {
+        return WorldError::TemporarilyUnavailable;
+    }
     let category = match error {
         sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => "pool",
         sqlx::Error::Io(_) | sqlx::Error::Tls(_) => "connection",

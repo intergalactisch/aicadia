@@ -11,7 +11,7 @@ use crate::{
     ActivityEntityRole, ActivityId, ActivityOperation, ActivityPage, ActivityTraitChange,
     ChangeEntityState, Character, CharacterEntityStatePage, CreateCharacter, CreateEntity,
     CreateEntryPlace, CurrentPlaceActivityPage, CurrentPlaceEntity, CurrentPlaceEntityPage,
-    CurrentPlaceEntityStatePage, DiscoveryField, DiscoveryFind, DiscoveryKind, Entity,
+    CurrentPlaceEntityStatePage, DiscoveryField, DiscoveryKind, DiscoveryResultInput, Entity,
     EntityCurrentAssociation, EntityCurrentStateCursor, EntityCurrentStatePage, EntityCursor,
     EntityField, EntityId, EntityPropertyChange, EntityPropertyChangeInput as WorldPropertyChange,
     EntitySummary, EntityTrait, EntityTraitChangeInput as WorldTraitChange, EntityTraitId,

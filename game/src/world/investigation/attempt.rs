@@ -58,6 +58,7 @@ pub(super) const VOID_OLDEST_PRIOR_POSITIVE_SQL: &str = r#"
 struct AttemptRow {
     id: InvestigationAttemptId,
     outcome: String,
+    kind: String,
 }
 
 #[derive(FromRow)]
@@ -70,11 +71,12 @@ pub(super) async fn find_result(
     transaction: &mut Transaction<'_, Postgres>,
     user_id: UserId,
     request_id: Uuid,
+    kind: DiscoveryKind,
     operation: &'static str,
 ) -> Result<Option<InvestigationResult>, WorldError> {
     sqlx::query_as::<_, AttemptRow>(
         r#"
-        SELECT id, outcome
+        SELECT id, outcome, kind
         FROM investigation_attempt
         WHERE requested_by_user_id = $1 AND request_id = $2
         "#,
@@ -85,10 +87,14 @@ pub(super) async fn find_result(
     .await
     .map_err(|error| storage_error(operation, error))?
     .map(|row| {
+        let stored_kind = DiscoveryKind::parse(&row.kind)?;
+        if stored_kind != kind {
+            return Err(WorldError::InvestigationRequestConflict);
+        }
         Ok(InvestigationResult {
             attempt_id: row.id,
             outcome: InvestigationOutcome::parse(&row.outcome)?,
-            limit: InvestigationLimit::CURRENT,
+            limit: InvestigationLimit::for_kind(stored_kind),
         })
     })
     .transpose()
@@ -127,28 +133,36 @@ pub(super) async fn recent_discovery_count(
 pub(super) async fn insert_attempt(
     transaction: &mut Transaction<'_, Postgres>,
     user_id: UserId,
-    request_id: Uuid,
-    character_entity_id: EntityId,
-    position_revision: PositionRevision,
-    place_entity_id: EntityId,
+    input: StartInvestigation,
+    character: &Character,
     outcome: InvestigationOutcome,
     created_at: DateTime<Utc>,
 ) -> Result<InvestigationResult, WorldError> {
+    let position_revision = character
+        .position
+        .as_ref()
+        .ok_or(WorldError::CharacterNotEntered)?
+        .position_revision;
+    let place_entity_id = character
+        .current_place
+        .as_ref()
+        .map(|place| place.entity.id);
     let attempt_id = InvestigationAttemptId(Uuid::new_v4());
     sqlx::query(
         r#"
         INSERT INTO investigation_attempt (
             id, requested_by_user_id, request_id, character_entity_id,
             kind, position_activity_id, place_entity_id, outcome, created_at
-        ) VALUES ($1, $2, $3, $4, 'entity_at_position', $5, $6, $7, $8)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         "#,
     )
     .bind(attempt_id.0)
     .bind(user_id.0)
-    .bind(request_id)
-    .bind(character_entity_id.0)
+    .bind(input.request_id)
+    .bind(character.entity.id.0)
+    .bind(input.kind.as_str())
     .bind(position_revision.activity_id().0)
-    .bind(place_entity_id.0)
+    .bind(place_entity_id.map(|id| id.0))
     .bind(outcome.as_str())
     .bind(created_at)
     .execute(&mut **transaction)
@@ -160,7 +174,7 @@ pub(super) async fn insert_attempt(
     Ok(InvestigationResult {
         attempt_id,
         outcome,
-        limit: InvestigationLimit::CURRENT,
+        limit: InvestigationLimit::for_kind(input.kind),
     })
 }
 
@@ -180,38 +194,49 @@ async fn void_oldest_prior_positive(
     Ok(())
 }
 
-pub(super) async fn available_place(
+pub(super) async fn lock_available(
     transaction: &mut Transaction<'_, Postgres>,
     attempt_id: InvestigationAttemptId,
     user_id: UserId,
-    character_entity_id: EntityId,
-    current_place_entity_id: EntityId,
-    current_position_revision: PositionRevision,
+    character: &Character,
+    kind: DiscoveryKind,
     operation: &'static str,
-) -> Result<Option<EntityId>, WorldError> {
-    sqlx::query_scalar::<_, EntityId>(
+) -> Result<bool, WorldError> {
+    let current_position_revision = character
+        .position
+        .as_ref()
+        .ok_or(WorldError::DiscoveryAttemptUnavailable)?
+        .position_revision;
+    let current_place_entity_id = character
+        .current_place
+        .as_ref()
+        .map(|place| place.entity.id);
+    let found = sqlx::query_scalar::<_, Uuid>(
         r#"
-        SELECT place_entity_id
+        SELECT id
         FROM investigation_attempt
         WHERE id = $1
           AND requested_by_user_id = $2
           AND character_entity_id = $3
-          AND kind = 'entity_at_position'
+          AND kind = $5
           AND position_activity_id = $4
-          AND place_entity_id = $5
+          AND place_entity_id IS NOT DISTINCT FROM $6
           AND outcome = 'positive'
           AND consumed_by_activity_id IS NULL
           AND voided_by_attempt_id IS NULL
+        FOR UPDATE
         "#,
     )
     .bind(attempt_id.0)
     .bind(user_id.0)
-    .bind(character_entity_id.0)
+    .bind(character.entity.id.0)
     .bind(current_position_revision.activity_id().0)
-    .bind(current_place_entity_id.0)
+    .bind(kind.as_str())
+    .bind(current_place_entity_id.map(|id| id.0))
     .fetch_optional(&mut **transaction)
     .await
-    .map_err(|error| storage_error(operation, error))
+    .map_err(|error| storage_error(operation, error))?;
+    Ok(found.is_some())
 }
 
 pub(super) async fn consume(

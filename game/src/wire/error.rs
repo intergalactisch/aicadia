@@ -245,6 +245,13 @@ impl ErrorOutput {
                     reason,
                 )
             }
+            // T6 publishes the accepted spatial-specific wire codes. Until then
+            // these World-only T4 branches are unreachable through the legacy
+            // adapter input and remain a generic malformed request if surfaced.
+            WorldError::InvalidPosition { .. } | WorldError::InvalidConnection { .. } => Self::new(
+                ErrorCode::InvalidRequest,
+                "The request does not match the selected World operation.",
+            ),
             WorldError::InvalidProperty { field, reason } => {
                 let field = match field {
                     PropertyField::Property => "property",
@@ -341,7 +348,15 @@ impl ErrorOutput {
                 ErrorCode::DiscoveryRequestConflict,
                 "request_id was already accepted with different discovery content.",
             ),
+            WorldError::InvestigationRequestConflict => Self::new(
+                ErrorCode::InvalidRequest,
+                "The request does not match the selected World operation.",
+            ),
             WorldError::DiscoveryAttemptUnavailable => Self::new(
+                ErrorCode::DiscoveryAttemptUnavailable,
+                "The investigation attempt is unavailable.",
+            ),
+            WorldError::PlaceUnavailable => Self::new(
                 ErrorCode::DiscoveryAttemptUnavailable,
                 "The investigation attempt is unavailable.",
             ),

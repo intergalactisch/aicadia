@@ -154,7 +154,11 @@ by a same-lineage composite foreign key. `activity.action_consequence` is null f
 non-Action operations and stores `introduce_entity` or `change_entity_state` for new
 Actions. Immutable historical `change_entity_property` and `change_entity_trait`
 rows remain readable and retry-compatible. One Activity may own
-up to 100 history rows, so `activity_id` in history is indexed but not unique.
+up to 100 Property history rows per subject. A connected Discovery may establish
+two new Place subjects, so its one Activity may own up to 200
+`entity_property_history` rows; the same per-subject and per-Activity maxima apply
+independently to `entity_trait_version`. Therefore `activity_id` in either history
+relation is indexed but not unique.
 
 Indexes exist only for current behavior:
 
