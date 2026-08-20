@@ -241,6 +241,11 @@ At million-Character pressure:
   infers either result and ordinary reads still write nothing. A later pure-look
   behavior may earn a dedicated Observation operation — User choice A for initial
   trial, 2026-08-20.
+- One grounding action may explicitly include several Observation occurrences. Each
+  occurrence still references exactly one model and owns its own optional private
+  account; all share the action's Activity and atomic idempotent settlement. One
+  multi-model Observation and forced follow-up actions are rejected — User choice A,
+  2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -272,6 +277,9 @@ At million-Character pressure:
   Activity and its Observation rows commit atomically; failure writes none and the
   same idempotent retry creates no duplicates. If concrete payloads or confirmation
   become unclear, a dedicated Observation operation remains the clean fallback.
+- The multi-Observation request is bounded by a later selected technical admission
+  limit. That limit protects one transaction and response at scale; it is not a
+  gameplay score or a total cap on how many Observations a Character may retain.
 
 ### Open questions blocking activation
 
@@ -343,8 +351,14 @@ At million-Character pressure:
    Activity and Observation commit atomically; failure and retry cannot leave or
    duplicate the occurrence. A dedicated-only operation remains the reversible
    fallback if the first concrete flow proves the combined contract unclear.
-   **Next open consequence:** decide whether one grounding action may explicitly
-   record several independently targeted Observations or exactly one.
+   One grounding action may explicitly record several independently targeted
+   Observation occurrences. For example, one Movement may record its exact
+   Connection and destination Place as two rows with separate private accounts but
+   the same Activity. A single multi-model Observation and mandatory artificial
+   follow-up actions are rejected. The request will have a technical admission
+   bound selected with the other S1 limits; no total history cap follows from it.
+   **Next open consequence:** decide which exact models a particular grounding
+   action makes structurally eligible for these Observation occurrences.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

@@ -2765,3 +2765,27 @@ remains the smaller fallback without changing Observation identity, privacy or
 history. The next dependent choice is cardinality: whether one grounding action may
 explicitly produce several independently targeted Observation occurrences or exactly
 one.
+
+## Several Observations per grounding action selected
+
+The User selected option A. One grounding action may explicitly produce several
+Observation occurrences. Mara's one Movement through a sandy Connection into
+Duindorp may therefore preserve one private account about that Connection and a
+different private account about the destination Place. These are two Observation
+records, each with exactly one model reference and its own optional text, not one
+ambiguous record pointing at several models.
+
+All occurrences share the grounding action's Activity and settle atomically with
+that action. A failed action stores none, and retrying the same request appends none.
+World still interprets no account and infers no extra observer or subject. Requiring
+one artificial action per Observation is rejected because it would fragment one
+experienced moment and multiply confirmations, writes and Activities without adding
+game meaning.
+
+The submitted collection must receive a finite technical admission limit with the
+other S1 request bounds so one action cannot create an unbounded transaction. That
+number is not yet selected and will not limit a Character's retained history. At
+million-Character scale, one action writes only its own bounded observer-owned rows;
+it updates no subject counter and fans out to nobody. The next dependent choice is
+structural eligibility: which exact Entity, Place or Connection references each
+kind of grounding action is allowed to include.

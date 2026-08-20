@@ -51,6 +51,10 @@ into truth or spending tokens in the background.
   Activity and occurrence settle atomically; failure writes none and an idempotent
   retry adds no duplicate. World never infers an Observation from the action, and a
   later pure-look act may use a dedicated operation.
+- One grounding action may explicitly produce several Observation occurrences, each
+  with one exact model reference and its own optional private account. They share
+  one Activity and settle atomically; the request is technically bounded without a
+  stored total, subject counter or observer fan-out.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
@@ -168,9 +172,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- Whether one grounding in-World action may explicitly establish several
-  independently targeted Observation occurrences or exactly one, and what bounded
-  request shape the first concrete flow earns.
+- Which exact Entity, Place or Connection references each grounding in-World action
+  may structurally admit as Observation subjects, including a hot Place with many
+  otherwise hidden or unrelated subjects.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

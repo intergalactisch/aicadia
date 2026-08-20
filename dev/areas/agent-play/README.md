@@ -122,6 +122,10 @@ proposals and asks the User to confirm every complete World-changing package.
   the whole action either commits with its Activity and Observation or not at all,
   and retry adds no duplicate. A later act whose sole purpose is looking may receive
   its own Observation operation.
+- One such action may explicitly include several Observation occurrences. Each has
+  one exact model and its own optional private account, while all share the action's
+  Activity and atomic settlement. The Agent never combines several models into one
+  Observation or uses the list to name subjects the action cannot structurally admit.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.
