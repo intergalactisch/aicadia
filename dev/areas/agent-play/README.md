@@ -35,6 +35,10 @@ immediately tells the User what it retained.
 
 ### Chosen
 
+- After Character creation, `enter_world` remains the deliberate first spatial
+  introduction. The Agent presents a bounded set of several World-provided starting
+  choices and lets the User choose; the exact choice model and capability boundary
+  remain under negotiation.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.

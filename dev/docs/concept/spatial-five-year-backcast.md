@@ -2990,6 +2990,25 @@ prerequisite. The User rejected “participation” as an extra state or ceremon
 Character already exists in World, while being abandoned by its User would be a
 separate later control or lifecycle question. `current_place` only says that a Place
 is the Character's current local context; its absence may validly mean that a
-positioned Character stands between Places. The remaining narrower question is
-whether Character creation may still have a short unpositioned setup state before
-its first Position, or whether every Character receives Position immediately.
+positioned Character stands between Places.
+
+## `enter_world` retained as the Character's introduction
+
+The User initially selected immediate Position during `create_character`, then
+reopened and superseded that answer after recalling the game value of
+`enter_world`. Character creation may leave the Character unpositioned. This is not
+“no participation”; it is the short, intentional state before the Character is
+spatially introduced into the shared World. `enter_world` establishes its first
+Position and attributable Activity.
+
+The introduction should offer a bounded set of several World locations from which
+the User can choose instead of forcing every new Character through one global entry
+Place. That keeps first arrival a meaningful scene and allows a mature World to offer
+geographically different beginnings. It does not require a Character participation
+field, per-location arrival counter or update to one hot global row.
+
+“World locations” is deliberately temporary wording rather than a new domain term.
+The next prerequisite is whether each offered choice must be an established Place
+with Position and local context, or may instead be a raw Position point without a
+Place. How choices become eligible, how many are returned and which operation lists
+them remain downstream of that distinction.

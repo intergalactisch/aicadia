@@ -316,6 +316,10 @@ At million-Character pressure:
 - Observation has no correction link, active version or update operation. A later
   correction is another ordinary immutable occurrence; `list_observation` returns
   the chronology and Agent intelligence interprets it.
+- `enter_world` remains a meaningful first spatial introduction after
+  `create_character`. It establishes the Character's first Position and Activity
+  from one User-selected item in a bounded set of several World locations rather
+  than forcing one global entry Place. The exact item model remains open.
 
 ### Open questions blocking activation
 
@@ -415,11 +419,14 @@ At million-Character pressure:
    or update operation is added, and Agent intelligence interprets the chronology.
    **Corrected framing:** no Character participation state or ceremony is introduced.
    A Character with Position and no current Place is simply between Places; later
-   abandonment is a separate control or lifecycle concern. **Next open consequence:**
-   decide whether Character creation retains the delivered short unpositioned setup
-   before first placement or establishes Position immediately. Only then decide the
-   bounded spatial read through which another Character can encounter an intermediate
-   traveller; current-Place reads already cover both when they are at B.
+   abandonment is a separate control or lifecycle concern. The User retained
+   `enter_world` as a fun first spatial introduction and superseded immediate
+   placement during `create_character`; it offers several bounded World locations
+   and establishes the selected first Position plus Activity. **Next open
+   consequence:** decide whether each offered location is an established Place or a
+   raw Position point. Only then decide the bounded spatial read through which
+   another Character can encounter an intermediate traveller; current-Place reads
+   already cover both when they are at B.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
