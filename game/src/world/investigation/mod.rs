@@ -29,6 +29,10 @@ impl World {
         let character = find_character(&mut transaction, user_id, false, "start_investigation")
             .await?
             .ok_or(WorldError::CharacterNotFound)?;
+        let position = character
+            .position
+            .as_ref()
+            .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
             .ok_or(WorldError::CharacterNotEntered)?;
@@ -60,6 +64,7 @@ impl World {
             user_id,
             input.request_id,
             character.entity.id,
+            position.position_revision,
             place.entity.id,
             outcome,
             database_now,
@@ -98,12 +103,18 @@ impl World {
         let Some(place) = character.current_place.clone() else {
             return Err(WorldError::DiscoveryAttemptUnavailable);
         };
+        let position_revision = character
+            .position
+            .as_ref()
+            .ok_or(WorldError::DiscoveryAttemptUnavailable)?
+            .position_revision;
         if attempt::available_place(
             &mut transaction,
             input.attempt_id,
             user_id,
             character.entity.id,
             place.entity.id,
+            position_revision,
             "submit_discovery",
         )
         .await?

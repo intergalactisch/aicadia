@@ -174,6 +174,7 @@ async fn seed(pool: &PgPool) -> Seed {
                         r#trait: vec![TraitInput {
                             statement: format!("Stands {} paces from the gate.", index + 1),
                         }],
+                        position_description: None,
                     }),
                 },
             )

@@ -137,6 +137,7 @@ impl World {
         Ok(Character {
             entity,
             owner_user_id: user_id,
+            position: None,
             current_place: None,
         })
     }
@@ -189,6 +190,17 @@ impl World {
         write_trait_changes(&mut transaction, activity_id, &trait_change, &[entity.id])
             .await
             .map_err(|error| map_trait_error(error, "create_entry_place"))?;
+        let position = insert_root_position(
+            &mut transaction,
+            entity.id,
+            activity_id,
+            0,
+            0,
+            0,
+            None,
+            "create_entry_place",
+        )
+        .await?;
         if let Err(error) = sqlx::query(
             "INSERT INTO place (entity_id, is_entry, latest_activity_id) VALUES ($1, true, $2)",
         )
@@ -202,12 +214,15 @@ impl World {
             }
             return Err(storage_error("create_entry_place", error));
         }
+        insert_place_map_projection(&mut transaction, entity.id, &position, "create_entry_place")
+            .await?;
         transaction
             .commit()
             .await
             .map_err(|error| storage_error("create_entry_place", error))?;
         Ok(Place {
             entity,
+            position,
             is_entry: true,
         })
     }
@@ -250,6 +265,17 @@ impl World {
             "enter_world",
         )
         .await?;
+        let character_position = insert_root_position(
+            &mut transaction,
+            character.entity.id,
+            activity_id,
+            entry_place.position.x_cm,
+            entry_place.position.y_cm,
+            entry_place.position.z_cm,
+            None,
+            "enter_world",
+        )
+        .await?;
         advance_place_revision(
             &mut transaction,
             entry_place.entity.id,
@@ -262,6 +288,7 @@ impl World {
             .await
             .map_err(|error| storage_error("enter_world", error))?;
         character.current_place = Some(entry_place);
+        character.position = Some(character_position);
         Ok(character)
     }
 
@@ -288,6 +315,10 @@ impl World {
         let character = find_character(&mut transaction, user_id, true, "submit_action")
             .await?
             .ok_or(WorldError::CharacterNotFound)?;
+        let actor_position = character
+            .position
+            .clone()
+            .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
             .ok_or(WorldError::CharacterNotEntered)?;
@@ -298,106 +329,105 @@ impl World {
             return Err(WorldError::PlaceRevisionConflict);
         }
 
-        let (involved, property, trait_change, eligible_trait_entity, action_consequence) =
-            match input.consequence {
-                ActionConsequence::IntroduceEntity(consequence) => {
-                    let entity = insert_entity(
-                        &mut transaction,
-                        user_id,
-                        consequence.name,
-                        consequence.description,
-                    )
-                    .await
-                    .map_err(|error| storage_error("submit_action", error))?;
-                    sqlx::query(
-                        "INSERT INTO entity_location (entity_id, place_entity_id) VALUES ($1, $2)",
-                    )
-                    .bind(entity.id.0)
-                    .bind(place.entity.id.0)
-                    .execute(&mut *transaction)
-                    .await
-                    .map_err(|error| storage_error("submit_action", error))?;
-                    (
-                        vec![
-                            (entity.id, ActivityEntityRole::Subject),
-                            (place.entity.id, ActivityEntityRole::Location),
-                        ],
-                        property_writes_for_entity(entity.id, consequence.property),
-                        trait_writes_for_entity(entity.id, consequence.r#trait),
-                        vec![entity.id],
-                        "introduce_entity",
-                    )
-                }
-                ActionConsequence::ChangeEntityState(consequence) => {
-                    let property = consequence
-                        .property_change
-                        .into_iter()
-                        .map(|change| PropertyWrite {
-                            entity_id: change.entity_id,
-                            key: change.key,
-                            value: change.value,
-                        })
-                        .collect::<Vec<_>>();
-                    require_local_property_entity(
+        let (
+            involved,
+            property,
+            trait_change,
+            eligible_trait_entity,
+            action_consequence,
+            introduced_position,
+        ) = match input.consequence {
+            ActionConsequence::IntroduceEntity(consequence) => {
+                let entity = insert_entity(
+                    &mut transaction,
+                    user_id,
+                    consequence.name,
+                    consequence.description,
+                )
+                .await
+                .map_err(|error| storage_error("submit_action", error))?;
+                (
+                    vec![
+                        (entity.id, ActivityEntityRole::Subject),
+                        (place.entity.id, ActivityEntityRole::Location),
+                    ],
+                    property_writes_for_entity(entity.id, consequence.property),
+                    trait_writes_for_entity(entity.id, consequence.r#trait),
+                    vec![entity.id],
+                    "introduce_entity",
+                    Some((entity.id, consequence.position_description)),
+                )
+            }
+            ActionConsequence::ChangeEntityState(consequence) => {
+                let property = consequence
+                    .property_change
+                    .into_iter()
+                    .map(|change| PropertyWrite {
+                        entity_id: change.entity_id,
+                        key: change.key,
+                        value: change.value,
+                    })
+                    .collect::<Vec<_>>();
+                require_local_property_entity(
+                    &mut transaction,
+                    character.entity.id,
+                    place.entity.id,
+                    &property,
+                    "submit_action",
+                )
+                .await?;
+                let trait_change = consequence
+                    .trait_change
+                    .into_iter()
+                    .map(|change| match change {
+                        EntityTraitChangeInput::Establish {
+                            entity_id,
+                            statement,
+                        } => TraitWrite::Establish {
+                            entity_id,
+                            statement,
+                        },
+                        EntityTraitChangeInput::Develop {
+                            trait_id,
+                            statement,
+                        } => TraitWrite::Develop {
+                            trait_id: trait_id.0,
+                            statement,
+                        },
+                    })
+                    .collect::<Vec<_>>();
+                let eligible_trait_entity = if trait_change.is_empty() {
+                    Vec::new()
+                } else {
+                    find_local_entity_ids(
                         &mut transaction,
                         character.entity.id,
                         place.entity.id,
-                        &property,
                         "submit_action",
                     )
-                    .await?;
-                    let trait_change = consequence
-                        .trait_change
-                        .into_iter()
-                        .map(|change| match change {
-                            EntityTraitChangeInput::Establish {
-                                entity_id,
-                                statement,
-                            } => TraitWrite::Establish {
-                                entity_id,
-                                statement,
-                            },
-                            EntityTraitChangeInput::Develop {
-                                trait_id,
-                                statement,
-                            } => TraitWrite::Develop {
-                                trait_id: trait_id.0,
-                                statement,
-                            },
-                        })
-                        .collect::<Vec<_>>();
-                    let eligible_trait_entity = if trait_change.is_empty() {
-                        Vec::new()
-                    } else {
-                        find_local_entity_ids(
-                            &mut transaction,
-                            character.entity.id,
-                            place.entity.id,
-                            "submit_action",
-                        )
-                        .await?
-                    };
-                    let mut subject = property
-                        .iter()
-                        .map(|write| write.entity_id)
-                        .collect::<Vec<_>>();
-                    subject
-                        .sort_unstable_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
-                    subject.dedup();
-                    let mut involved = subject
-                        .into_iter()
-                        .map(|entity_id| (entity_id, ActivityEntityRole::Subject))
-                        .collect::<Vec<_>>();
-                    involved.push((place.entity.id, ActivityEntityRole::Location));
-                    (
-                        involved,
-                        property,
-                        trait_change,
-                        eligible_trait_entity,
-                        "change_entity_state",
-                    )
-                }
-            };
+                    .await?
+                };
+                let mut subject = property
+                    .iter()
+                    .map(|write| write.entity_id)
+                    .collect::<Vec<_>>();
+                subject.sort_unstable_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
+                subject.dedup();
+                let mut involved = subject
+                    .into_iter()
+                    .map(|entity_id| (entity_id, ActivityEntityRole::Subject))
+                    .collect::<Vec<_>>();
+                involved.push((place.entity.id, ActivityEntityRole::Location));
+                (
+                    involved,
+                    property,
+                    trait_change,
+                    eligible_trait_entity,
+                    "change_entity_state",
+                    None,
+                )
+            }
+        };
         let activity_id = append_activity(
             &mut transaction,
             ActivityDraft {
@@ -414,6 +444,33 @@ impl World {
             "submit_action",
         )
         .await?;
+        if let Some((entity_id, position_description)) = introduced_position {
+            append_activity_position(
+                &mut transaction,
+                activity_id,
+                ActivityPositionRole::Origin,
+                actor_position.position_revision,
+                "submit_action",
+            )
+            .await?;
+            insert_root_position(
+                &mut transaction,
+                entity_id,
+                activity_id,
+                actor_position.x_cm,
+                actor_position.y_cm,
+                actor_position.z_cm,
+                position_description.as_deref(),
+                "submit_action",
+            )
+            .await?;
+            sqlx::query("INSERT INTO entity_location (entity_id, place_entity_id) VALUES ($1, $2)")
+                .bind(entity_id.0)
+                .bind(place.entity.id.0)
+                .execute(&mut *transaction)
+                .await
+                .map_err(|error| storage_error("submit_action", error))?;
+        }
         write_property_changes(&mut transaction, activity_id, &property)
             .await
             .map_err(|error| map_property_error(error, "submit_action"))?;

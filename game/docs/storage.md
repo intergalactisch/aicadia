@@ -74,14 +74,14 @@ connection(id PK, source_place_entity_id FK place,
            destination_place_entity_id FK place,
            source_position_activity_id,
            destination_position_activity_id,
-           allows_reverse, name, description, shape_description NULL,
+           allows_reverse, has_course, name, description, shape_description NULL,
            created_by_activity_id UNIQUE/FK activity,
            FK both endpoint Position versions)
 connection_point(connection_id FK connection, ordinal,
                  x_cm, y_cm, z_cm,
                  PK(connection_id, ordinal))
 activity_connection(activity_id FK activity, connection_id FK connection,
-                    PK(activity_id, connection_id))
+                    PK(activity_id))
 place_map_index(place_entity_id PK/FK place,
                 position_activity_id, x_cm, y_cm, z_cm,
                 FK Place Position version)
@@ -117,25 +117,29 @@ investigation_attempt(id UUID PK,
 ```
 
 `position_version` is append-only. Partial unique indexes enforce one root and one
-successor per prior version. Deferred per-Entity commit checks require exactly one
-root, exactly one current pointer and that pointer at the lineage tip; insertion may
-therefore create Activity, version and current pointer in ordinary transaction order
-without permitting an incomplete commit. Updates may only advance `position` from
-its current tip to the one direct successor. Deleting Position state, backtracking,
-branching, updating a version or advancing a Place Position is rejected.
+successor per prior version. A non-root insertion must name that Entity's indexed
+current pointer as predecessor. One deferred local check on each new version requires
+its exact typed result and the current pointer to name that new version at commit;
+it never scans the Entity's lineage. Updates may only advance `position` from its
+current tip to the one direct successor. Deleting Position state, incomplete roots,
+backtracking, branching, cycles, updating a version or advancing a Place Position is
+rejected.
 
 Connection and point rows reject update and delete. Endpoint Places must differ and
-the stored endpoint Position revisions must be current at creation. Deferred
-per-Connection checks require either zero points or contiguous ordinals `0..n-1`
-with `2 <= n <= 128`, exact first/last endpoint points, distinct consecutive points
-and no non-adjacent segment intersection. No endpoint, direction, text or geometry
-unique index exists. `created_by_activity_id` is unique because one S1 discovery
-Activity creates exactly one Connection.
+the stored endpoint Position revisions must be current at creation. Immutable
+`has_course` fixes whether the Connection was admitted with a course. Deferred
+per-Connection checks require exactly zero points when false, or contiguous ordinals
+`0..n-1` with `2 <= n <= 128` when true, exact first/last endpoint points, distinct
+consecutive points, adjacent segments meeting only at their shared endpoint and no
+non-adjacent segment intersection. No endpoint, direction, text or geometry unique
+index exists. `created_by_activity_id` is unique because one S1 discovery Activity
+creates exactly one Connection.
 
 `activity_position` accepts only `origin` and `result`; all its rows and
 `activity_connection` rows are immutable. Each result Position must name the same
-Activity as its version. Every Connection-creation Activity names its created
-Connection, and every Movement Activity names its traversed Connection.
+Activity as its version. Each Activity can name at most one Connection. Only a
+Discovery may name exactly the Connection it created, and only Movement may otherwise
+name one traversed Connection.
 
 `place_map_index` is synchronous rebuildable candidate state, not a second Position
 truth. Place insertion writes its one row in the same transaction. Reads exact-check

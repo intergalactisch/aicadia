@@ -11,6 +11,8 @@ use uuid::Uuid;
 
 const MAX_ENTITY_NAME_LENGTH: usize = 120;
 const MAX_ENTITY_DESCRIPTION_LENGTH: usize = 4_000;
+const MAX_POSITION_DESCRIPTION_LENGTH: usize = 4_000;
+const MAX_COORDINATE_CM: i64 = 1_000_000_000_000_000;
 const MAX_ACTION_PROSE_LENGTH: usize = 4_000;
 const MAX_INTERACTION_PROSE_LENGTH: usize = 4_000;
 const MAX_INTERACTION_TARGET_COUNT: usize = 100;
@@ -27,6 +29,7 @@ mod model;
 mod mutation;
 mod property;
 mod read;
+mod spatial;
 
 pub use activity::*;
 pub use error::*;
@@ -36,10 +39,12 @@ pub use investigation::{
 };
 pub use model::*;
 pub use property::*;
+pub use spatial::ActivityPositionRole;
 
 use common::*;
 use entity_trait::*;
 use read::CURRENT_ENTITY_STATE_SQL;
+use spatial::*;
 
 #[derive(Clone, Copy)]
 enum PropertyQueryKind {

@@ -1,15 +1,15 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T15:53:34+02:00"
+updated_at: "2026-08-20T17:04:21+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
 
 # Build the first spatial exploration slice without losing the complete system
 
-> **Role / side:** draft staged spatial delivery plan / development side.
-> **Authority:** owns S1's proposed player outcome, exact technical contract, dependency-ordered tasks and evidence claim until explicit User acceptance.
+> **Role / side:** accepted staged spatial delivery plan / development side.
+> **Authority:** owns S1's accepted player outcome, exact technical contract, dependency-ordered tasks and evidence claim during delivery.
 > **Excludes:** accepted current gameplay, spatial concept truth, experiment verdicts and later-slice implementation authority; those remain in `game/docs/`, the active spatial synthesis, retained labs and separately accepted later plans.
 
 ## Outcome
@@ -513,8 +513,8 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | completed | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
 | T1E | completed | T1 | no | Falsify the leading Place-map projection and covering B-tree before production schema work. | `dev/lab/spatial/03-place-map-index/` only | Real PostgreSQL 17 dense/adversarial million-row `EXPLAIN (ANALYZE, BUFFERS)` verdict and cleanup. |
-| T2 | in_progress | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
-| T3 | pending | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
+| T2 | completed | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
+| T3 | in_progress | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
 | T4 | pending | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
 | T5 | pending | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
 | T6 | pending | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
@@ -603,7 +603,9 @@ immutable Connection state with queryable history and no Place-wide spatial revi
 
 1. Add `0011_spatial_exploration.sql` with deterministic fail-closed backfill,
    constraints, triggers, typed Activity associations and map projection.
-2. Implement deep Position and Connection storage/read modules behind `World`.
+2. Implement Position storage/read helpers behind `World` and the exact Connection
+   schema/model seam. T3 owns Connection selection and read hydration; T4 owns its
+   first World creation path.
 3. Evolve current entry and situated Entity-producing operations to write Position
    atomically and keep `entity_location`/current Place explicit.
 4. Prove coordinate bounds, linear Position lineage, current-pointer integrity,
@@ -612,6 +614,18 @@ immutable Connection state with queryable history and no Place-wide spatial revi
 **Evidence:** focused `aicadia-game` World tests cover legacy fixture variants,
 backfill refusal, migration success, constraints, injected rollback and immutable
 readback.
+
+**T2 review record:** real PostgreSQL passed 5/5 focused spatial cases. The full
+`aicadia-game` crate passed 50/50 library tests, 14 server tests with one existing
+ignored case and 86/86 World tests; workspace all-target checking, documentation
+lint, formatting and diff checks were clean. Review replaced a lineage-wide scan
+with indexed local predecessor/result/current checks and proved valid advancement,
+incomplete state, literal backtracking, disconnected cycles and a concurrent sibling
+race. Immutable `has_course` seals shaped versus unshaped creation; typed
+one-Connection Activity history, adjacent retrace rejection, post-commit append
+rejection and full physical Connection/course readback are also proven. This task
+does not claim T3 reads, T4 creation, T5 Movement behavior, T6 adapter parity or T7
+production evidence.
 
 **Stop:** do not add a Position id, duplicate Place-owned coordinates, relative
 reference field, Connection version/update, global revision or lab-code import.

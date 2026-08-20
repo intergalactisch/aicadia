@@ -132,6 +132,7 @@ async fn duplicate_initial_traits_reject_every_creation_route_without_orphans(po
                     consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                         name: "Rejected introduced Frog".to_owned(),
                         description: "Must leave no orphan.".to_owned(),
+                        position_description: None,
                         property: vec![integer_property("leg_count", 3)],
                         r#trait: duplicate(),
                     }),

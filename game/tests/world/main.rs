@@ -6,6 +6,7 @@ mod interaction;
 mod investigation_schema;
 mod property_behavior;
 mod property_schema;
+mod spatial_storage;
 mod trait_behavior;
 mod trait_storage;
 
@@ -67,6 +68,7 @@ fn action(request_id: Uuid, expected_place_revision: PlaceRevision, name: &str) 
         consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
             name: name.to_owned(),
             description: format!("Description of {name}"),
+            position_description: None,
             property: Vec::new(),
             r#trait: Vec::new(),
         }),

@@ -62,6 +62,7 @@ async fn every_entity_creation_route_atomically_establishes_one_hundred_properti
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Measured Cairn".to_owned(),
                     description: "A cairn with one hundred recorded measures.".to_owned(),
+                    position_description: None,
                     property: hundred(),
                     r#trait: Vec::new(),
                 }),
@@ -189,6 +190,7 @@ async fn invalid_initial_properties_roll_back_each_creation_route_without_orphan
                     consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                         name: "Rejected Marker".to_owned(),
                         description: "Must not persist.".to_owned(),
+                        position_description: None,
                         property: over_bound(),
                         r#trait: Vec::new(),
                     }),
@@ -1033,6 +1035,24 @@ async fn reversed_combined_state_actions_at_distinct_places_complete_without_dea
     .unwrap();
     let second_enter_activity = Uuid::new_v4();
     let mut setup = pool.begin().await.unwrap();
+    sqlx::query("INSERT INTO position_version (entity_id, activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(second_place_entity.id.0)
+        .bind(second_place_genesis)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO position (entity_id, current_activity_id) VALUES ($1, $2)")
+        .bind(second_place_entity.id.0)
+        .bind(second_place_genesis)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO activity_position (activity_id, role, position_entity_id, position_activity_id) VALUES ($1, 'result', $2, $1)")
+        .bind(second_place_genesis)
+        .bind(second_place_entity.id.0)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
     sqlx::query(
         "INSERT INTO place (entity_id, is_entry, latest_activity_id) VALUES ($1, false, $2)",
     )
@@ -1041,6 +1061,12 @@ async fn reversed_combined_state_actions_at_distinct_places_complete_without_dea
     .execute(&mut *setup)
     .await
     .unwrap();
+    sqlx::query("INSERT INTO place_map_index (place_entity_id, position_activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(second_place_entity.id.0)
+        .bind(second_place_genesis)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
     sqlx::query(
         r#"
         INSERT INTO activity (
@@ -1057,6 +1083,24 @@ async fn reversed_combined_state_actions_at_distinct_places_complete_without_dea
     .execute(&mut *setup)
     .await
     .unwrap();
+    sqlx::query("INSERT INTO position_version (entity_id, activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(second_character.entity.id.0)
+        .bind(second_enter_activity)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO position (entity_id, current_activity_id) VALUES ($1, $2)")
+        .bind(second_character.entity.id.0)
+        .bind(second_enter_activity)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO activity_position (activity_id, role, position_entity_id, position_activity_id) VALUES ($1, 'result', $2, $1)")
+        .bind(second_enter_activity)
+        .bind(second_character.entity.id.0)
+        .execute(&mut *setup)
+        .await
+        .unwrap();
     sqlx::query(
         "INSERT INTO activity_entity (activity_id, entity_id, role) VALUES ($1, $2, 'destination')",
     )

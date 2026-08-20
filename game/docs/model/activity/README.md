@@ -1,6 +1,6 @@
 ---
 kind: history
-storage_table: [activity, activity_entity]
+storage_table: [activity, activity_entity, activity_position, activity_connection]
 ---
 
 # Activity

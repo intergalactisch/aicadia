@@ -1,6 +1,6 @@
 ---
 kind: state
-storage_table: []
+storage_table: [position_version, position]
 ---
 
 # Position
@@ -40,7 +40,7 @@ that Entity's current pointer. A version is identified internally by
 `(entity_id, activity_id)`, names at most one prior version of the same Entity and is
 the result of that Activity. Each Entity has at most one root and at most one
 successor per version. The current pointer must name the same Entity and the unique
-lineage tip at commit.
+lineage tip at commit. A new non-root version must extend the current Position.
 
 `PositionRevision` is the opaque public encoding of `(entity_id, activity_id)`. It
 is a freshness value, not an authorization token, request id, timestamp ordering,

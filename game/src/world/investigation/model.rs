@@ -63,6 +63,7 @@ pub struct InvestigationResult {
 pub struct DiscoveryFind {
     pub name: String,
     pub description: String,
+    pub position_description: Option<String>,
     pub property: Vec<PropertyInput>,
     pub r#trait: Vec<TraitInput>,
 }
@@ -113,6 +114,7 @@ impl SubmitDiscovery {
             })?;
         let property = normalize_property_input(self.find.property, PropertyField::Property)?;
         let r#trait = normalize_trait_input(self.find.r#trait)?;
+        let position_description = normalize_position_description(self.find.position_description)?;
         Ok(NormalizedSubmitDiscovery {
             request_id: self.request_id,
             attempt_id: self.attempt_id,
@@ -120,6 +122,7 @@ impl SubmitDiscovery {
             find: DiscoveryFind {
                 name,
                 description,
+                position_description,
                 property,
                 r#trait,
             },
@@ -150,6 +153,10 @@ pub(super) fn discovery_fingerprint(input: &NormalizedSubmitDiscovery) -> Vec<u8
         fingerprint_field(&mut hash, field);
     }
     fingerprint_field(&mut hash, b"property");
+    if let Some(description) = &input.find.position_description {
+        fingerprint_field(&mut hash, b"position_description_v1");
+        fingerprint_field(&mut hash, description.as_bytes());
+    }
     fingerprint_field(&mut hash, &(input.find.property.len() as u64).to_be_bytes());
     fingerprint_property_input(&mut hash, &input.find.property);
     fingerprint_field(&mut hash, b"trait");

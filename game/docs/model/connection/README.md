@@ -1,6 +1,6 @@
 ---
 kind: subject
-storage_table: []
+storage_table: [connection, connection_point]
 ---
 
 # Connection
@@ -40,8 +40,11 @@ their submitted endpoint revisions are current.
 No course points means direct complete travel between the two endpoint points. A
 shaped Connection contains 2–128 exact World points in source-to-destination order.
 Its first and last points equal the exact endpoint points named by the stored
-Position revisions, consecutive points differ and non-adjacent segments do not
-intersect. World validates points and segments with checked integer arithmetic.
+Position revisions, consecutive points differ, adjacent segments meet only at their
+shared endpoint and non-adjacent segments do not intersect. World validates points
+and segments with checked integer arithmetic. Whether the immutable Connection was
+created shaped or unshaped is fixed at creation; course points cannot be appended
+later.
 
 Connection id is the only identity. Several Connections may have equal endpoints,
 direction, name, description and course. Those values never merge or deduplicate a

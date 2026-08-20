@@ -153,6 +153,7 @@ async fn seed(pool: &PgPool) -> WalkSeed {
                     r#trait: vec![TraitInput {
                         statement: "Stands one pace from the gate.".to_owned(),
                     }],
+                    position_description: None,
                 }),
             },
         )

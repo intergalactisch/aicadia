@@ -18,6 +18,10 @@ pub(super) fn action_fingerprint(input: &SubmitAction) -> Vec<u8> {
             ] {
                 fingerprint_field(&mut hash, field);
             }
+            if let Some(description) = &consequence.position_description {
+                fingerprint_field(&mut hash, b"position_description_v1");
+                fingerprint_field(&mut hash, description.as_bytes());
+            }
             fingerprint_property_input(&mut hash, &consequence.property);
             if !consequence.r#trait.is_empty() {
                 fingerprint_field(&mut hash, b"initial_trait_v1");
@@ -210,6 +214,7 @@ mod fingerprint_test {
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Three-legged Frog".to_owned(),
                     description: "A heat-scorched frog.".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait,
                 }),
@@ -229,6 +234,7 @@ mod fingerprint_test {
             consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                 name: "Three-legged Frog".to_owned(),
                 description: "A heat-scorched frog.".to_owned(),
+                position_description: None,
                 property: Vec::new(),
                 r#trait: Vec::new(),
             }),
@@ -423,6 +429,63 @@ pub(super) async fn activities_from_rows(
             .or_default()
             .push(related.try_into()?);
     }
+    let position = if activity_ids.is_empty() {
+        Vec::new()
+    } else {
+        sqlx::query_as::<_, ActivityPositionRow>(
+            r#"
+            SELECT activity_position.activity_id, activity_position.role,
+                   version.entity_id, version.activity_id AS position_activity_id,
+                   version.x_cm, version.y_cm, version.z_cm, version.description
+            FROM activity_position
+            JOIN position_version version
+              ON version.entity_id = activity_position.position_entity_id
+             AND version.activity_id = activity_position.position_activity_id
+            WHERE activity_position.activity_id = ANY($1)
+            ORDER BY activity_position.activity_id, activity_position.role,
+                     activity_position.position_entity_id,
+                     activity_position.position_activity_id
+            "#,
+        )
+        .bind(&activity_ids)
+        .fetch_all(&mut **transaction)
+        .await
+        .map_err(|error| storage_error(operation, error))?
+    };
+    let mut position_by_activity: HashMap<ActivityId, Vec<ActivityPositionReference>> =
+        HashMap::new();
+    for position in position {
+        position_by_activity
+            .entry(position.activity_id)
+            .or_default()
+            .push(position.try_into()?);
+    }
+    let connection = if activity_ids.is_empty() {
+        Vec::new()
+    } else {
+        sqlx::query_as::<_, ActivityConnectionRow>(
+            r#"
+            SELECT activity_id, connection_id
+            FROM activity_connection
+            WHERE activity_id = ANY($1)
+            ORDER BY activity_id, connection_id
+            "#,
+        )
+        .bind(&activity_ids)
+        .fetch_all(&mut **transaction)
+        .await
+        .map_err(|error| storage_error(operation, error))?
+    };
+    let mut connection_by_activity: HashMap<ActivityId, Vec<ActivityConnectionReference>> =
+        HashMap::new();
+    for connection in connection {
+        connection_by_activity
+            .entry(connection.activity_id)
+            .or_default()
+            .push(ActivityConnectionReference {
+                connection_id: connection.connection_id,
+            });
+    }
     let mut property_by_activity = hydrate_property_changes(transaction, &typed_activity_ids)
         .await
         .map_err(|error| map_property_error(error, operation))?;
@@ -446,6 +509,8 @@ pub(super) async fn activities_from_rows(
                 .collect();
             row.into_activity(
                 involved_by_activity.remove(&id).unwrap_or_default(),
+                position_by_activity.remove(&id).unwrap_or_default(),
+                connection_by_activity.remove(&id).unwrap_or_default(),
                 property_change,
                 trait_change,
             )
@@ -717,6 +782,8 @@ pub struct Activity {
     pub actor_character: Option<EntitySummary>,
     pub context_place: Option<PlaceSummary>,
     pub involved_entity: Vec<ActivityEntityReference>,
+    pub involved_position: Vec<ActivityPositionReference>,
+    pub involved_connection: Vec<ActivityConnectionReference>,
     pub property_change: Vec<EntityPropertyChange>,
     pub trait_change: Vec<ActivityTraitChange>,
     pub prose: Option<String>,
@@ -796,6 +863,17 @@ pub struct ActivityEntityReference {
     pub role: ActivityEntityRole,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ActivityPositionReference {
+    pub role: ActivityPositionRole,
+    pub position: Position,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ActivityConnectionReference {
+    pub connection_id: ConnectionId,
+}
+
 #[derive(FromRow)]
 pub(super) struct ActivityRow {
     pub(super) id: ActivityId,
@@ -844,6 +922,8 @@ impl ActivityRow {
     fn into_activity(
         self,
         involved_entity: Vec<ActivityEntityReference>,
+        involved_position: Vec<ActivityPositionReference>,
+        involved_connection: Vec<ActivityConnectionReference>,
         property_change: Vec<EntityPropertyChange>,
         trait_change: Vec<ActivityTraitChange>,
     ) -> Result<Activity, WorldError> {
@@ -861,6 +941,8 @@ impl ActivityRow {
             actor_character,
             context_place,
             involved_entity,
+            involved_position,
+            involved_connection,
             property_change,
             trait_change,
             prose: self.prose,
@@ -875,6 +957,44 @@ struct ActivityEntityRow {
     entity_id: EntityId,
     name: String,
     role: String,
+}
+
+#[derive(FromRow)]
+struct ActivityPositionRow {
+    activity_id: ActivityId,
+    role: String,
+    entity_id: EntityId,
+    position_activity_id: ActivityId,
+    x_cm: i64,
+    y_cm: i64,
+    z_cm: i64,
+    description: Option<String>,
+}
+
+impl TryFrom<ActivityPositionRow> for ActivityPositionReference {
+    type Error = WorldError;
+
+    fn try_from(value: ActivityPositionRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            role: ActivityPositionRole::parse(&value.role)?,
+            position: Position {
+                x_cm: value.x_cm,
+                y_cm: value.y_cm,
+                z_cm: value.z_cm,
+                description: value.description,
+                position_revision: PositionRevision::from_parts(
+                    value.entity_id,
+                    value.position_activity_id,
+                ),
+            },
+        })
+    }
+}
+
+#[derive(FromRow)]
+struct ActivityConnectionRow {
+    activity_id: ActivityId,
+    connection_id: ConnectionId,
 }
 
 impl TryFrom<ActivityEntityRow> for ActivityEntityReference {

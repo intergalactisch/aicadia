@@ -197,17 +197,35 @@ impl World {
         let mut row = sqlx::query_as::<_, CurrentPlaceEntityRow>(
             r#"
             WITH eligible_entity AS (
-                SELECT entity.id, entity.name, entity.description, entity.introduced_at
+                SELECT entity.id, entity.name, entity.description, entity.introduced_at,
+                       position.current_activity_id AS position_activity_id,
+                       version.x_cm AS position_x_cm,
+                       version.y_cm AS position_y_cm,
+                       version.z_cm AS position_z_cm,
+                       version.description AS position_description
                 FROM character
                 JOIN entity ON entity.id = character.entity_id
+                JOIN position ON position.entity_id = entity.id
+                JOIN position_version version
+                  ON version.entity_id = position.entity_id
+                 AND version.activity_id = position.current_activity_id
                 WHERE character.current_place_entity_id = $1
                   AND character.entity_id <> $2
 
                 UNION ALL
 
-                SELECT entity.id, entity.name, entity.description, entity.introduced_at
+                SELECT entity.id, entity.name, entity.description, entity.introduced_at,
+                       position.current_activity_id AS position_activity_id,
+                       version.x_cm AS position_x_cm,
+                       version.y_cm AS position_y_cm,
+                       version.z_cm AS position_z_cm,
+                       version.description AS position_description
                 FROM entity_location
                 JOIN entity ON entity.id = entity_location.entity_id
+                JOIN position ON position.entity_id = entity.id
+                JOIN position_version version
+                  ON version.entity_id = position.entity_id
+                 AND version.activity_id = position.current_activity_id
                 WHERE entity_location.place_entity_id = $1
                   AND NOT EXISTS (
                       SELECT 1 FROM character WHERE character.entity_id = entity.id
@@ -216,7 +234,9 @@ impl World {
                       SELECT 1 FROM place WHERE place.entity_id = entity.id
                   )
             )
-            SELECT id, name, description, introduced_at
+            SELECT id, name, description, introduced_at,
+                   position_activity_id, position_x_cm, position_y_cm,
+                   position_z_cm, position_description
             FROM eligible_entity
             WHERE (
                     $3::timestamptz IS NULL
@@ -253,6 +273,16 @@ impl World {
                 id: row.id,
                 name: row.name,
                 description: row.description,
+                position: Position {
+                    x_cm: row.position_x_cm,
+                    y_cm: row.position_y_cm,
+                    z_cm: row.position_z_cm,
+                    description: row.position_description,
+                    position_revision: PositionRevision::from_parts(
+                        row.id,
+                        row.position_activity_id,
+                    ),
+                },
             })
             .collect();
         transaction
@@ -400,8 +430,17 @@ impl World {
 
         let entity = sqlx::query_as::<_, CurrentPlaceEntityRow>(
             r#"
-            SELECT entity.id, entity.name, entity.description, entity.introduced_at
+            SELECT entity.id, entity.name, entity.description, entity.introduced_at,
+                   position.current_activity_id AS position_activity_id,
+                   version.x_cm AS position_x_cm,
+                   version.y_cm AS position_y_cm,
+                   version.z_cm AS position_z_cm,
+                   version.description AS position_description
             FROM entity
+            JOIN position ON position.entity_id = entity.id
+            JOIN position_version version
+              ON version.entity_id = position.entity_id
+             AND version.activity_id = position.current_activity_id
             WHERE entity.id = $1
               AND (
                     entity.id = $2
@@ -456,6 +495,16 @@ impl World {
                 id: entity.id,
                 name: entity.name,
                 description: entity.description,
+                position: Position {
+                    x_cm: entity.position_x_cm,
+                    y_cm: entity.position_y_cm,
+                    z_cm: entity.position_z_cm,
+                    description: entity.position_description,
+                    position_revision: PositionRevision::from_parts(
+                        entity.id,
+                        entity.position_activity_id,
+                    ),
+                },
             },
             current_state,
         })

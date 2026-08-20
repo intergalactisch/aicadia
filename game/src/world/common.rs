@@ -292,15 +292,33 @@ fn character_query(for_update: bool) -> String {
         SELECT entity.id AS entity_id, entity.name, entity.description,
                entity.introduced_by_user_id, entity.introduced_at,
                character.owner_user_id,
+               character_position.current_activity_id AS position_activity_id,
+               character_position_version.x_cm AS position_x_cm,
+               character_position_version.y_cm AS position_y_cm,
+               character_position_version.z_cm AS position_z_cm,
+               character_position_version.description AS position_description,
                place_entity.id AS place_entity_id, place_entity.name AS place_name,
                place_entity.description AS place_description,
                place_entity.introduced_by_user_id AS place_introduced_by_user_id,
                place_entity.introduced_at AS place_introduced_at,
-               place.is_entry AS place_is_entry
+               place.is_entry AS place_is_entry,
+               place_position.current_activity_id AS place_position_activity_id,
+               place_position_version.x_cm AS place_position_x_cm,
+               place_position_version.y_cm AS place_position_y_cm,
+               place_position_version.z_cm AS place_position_z_cm,
+               place_position_version.description AS place_position_description
         FROM character
         JOIN entity ON entity.id = character.entity_id
+        LEFT JOIN position character_position ON character_position.entity_id = character.entity_id
+        LEFT JOIN position_version character_position_version
+          ON character_position_version.entity_id = character_position.entity_id
+         AND character_position_version.activity_id = character_position.current_activity_id
         LEFT JOIN place ON place.entity_id = character.current_place_entity_id
         LEFT JOIN entity place_entity ON place_entity.id = place.entity_id
+        LEFT JOIN position place_position ON place_position.entity_id = place.entity_id
+        LEFT JOIN position_version place_position_version
+          ON place_position_version.entity_id = place_position.entity_id
+         AND place_position_version.activity_id = place_position.current_activity_id
         WHERE character.owner_user_id = $1
         {}
         "#,
@@ -319,16 +337,24 @@ pub(super) async fn find_entry_place(
     sqlx::query_as::<_, PlaceRow>(
         r#"
         SELECT entity.id AS entity_id, entity.name, entity.description,
-               entity.introduced_by_user_id, entity.introduced_at, place.is_entry
+               entity.introduced_by_user_id, entity.introduced_at, place.is_entry,
+               position.current_activity_id AS position_activity_id,
+               version.x_cm AS position_x_cm, version.y_cm AS position_y_cm,
+               version.z_cm AS position_z_cm, version.description AS position_description
         FROM place
         JOIN entity ON entity.id = place.entity_id
+        JOIN position ON position.entity_id = place.entity_id
+        JOIN position_version version
+          ON version.entity_id = position.entity_id
+         AND version.activity_id = position.current_activity_id
         WHERE place.is_entry
         "#,
     )
     .fetch_optional(&mut **transaction)
     .await
-    .map_err(|error| storage_error(operation, error))
-    .map(|row| row.map(Into::into))
+    .map_err(|error| storage_error(operation, error))?
+    .map(TryInto::try_into)
+    .transpose()
 }
 
 pub(super) async fn find_place_by_id(
@@ -339,17 +365,25 @@ pub(super) async fn find_place_by_id(
     sqlx::query_as::<_, PlaceRow>(
         r#"
         SELECT entity.id AS entity_id, entity.name, entity.description,
-               entity.introduced_by_user_id, entity.introduced_at, place.is_entry
+               entity.introduced_by_user_id, entity.introduced_at, place.is_entry,
+               position.current_activity_id AS position_activity_id,
+               version.x_cm AS position_x_cm, version.y_cm AS position_y_cm,
+               version.z_cm AS position_z_cm, version.description AS position_description
         FROM place
         JOIN entity ON entity.id = place.entity_id
+        JOIN position ON position.entity_id = place.entity_id
+        JOIN position_version version
+          ON version.entity_id = position.entity_id
+         AND version.activity_id = position.current_activity_id
         WHERE place.entity_id = $1
         "#,
     )
     .bind(place_entity_id.0)
     .fetch_optional(&mut **transaction)
     .await
-    .map_err(|error| storage_error(operation, error))
-    .map(|row| row.map(Into::into))
+    .map_err(|error| storage_error(operation, error))?
+    .map(TryInto::try_into)
+    .transpose()
 }
 
 pub(super) fn validate_limit(limit: u16, error: WorldError) -> Result<(), WorldError> {
@@ -365,6 +399,11 @@ pub(super) struct CurrentPlaceEntityRow {
     pub(super) name: String,
     pub(super) description: String,
     pub(super) introduced_at: DateTime<Utc>,
+    pub(super) position_activity_id: ActivityId,
+    pub(super) position_x_cm: i64,
+    pub(super) position_y_cm: i64,
+    pub(super) position_z_cm: i64,
+    pub(super) position_description: Option<String>,
 }
 
 #[derive(FromRow)]
@@ -438,18 +477,36 @@ struct CharacterRow {
     introduced_by_user_id: UserId,
     introduced_at: DateTime<Utc>,
     owner_user_id: UserId,
+    position_activity_id: Option<ActivityId>,
+    position_x_cm: Option<i64>,
+    position_y_cm: Option<i64>,
+    position_z_cm: Option<i64>,
+    position_description: Option<String>,
     place_entity_id: Option<EntityId>,
     place_name: Option<String>,
     place_description: Option<String>,
     place_introduced_by_user_id: Option<UserId>,
     place_introduced_at: Option<DateTime<Utc>>,
     place_is_entry: Option<bool>,
+    place_position_activity_id: Option<ActivityId>,
+    place_position_x_cm: Option<i64>,
+    place_position_y_cm: Option<i64>,
+    place_position_z_cm: Option<i64>,
+    place_position_description: Option<String>,
 }
 
 impl TryFrom<CharacterRow> for Character {
     type Error = WorldError;
 
     fn try_from(value: CharacterRow) -> Result<Self, Self::Error> {
+        let position = optional_position(
+            value.entity_id,
+            value.position_activity_id,
+            value.position_x_cm,
+            value.position_y_cm,
+            value.position_z_cm,
+            value.position_description,
+        )?;
         let current_place = match value.place_entity_id {
             None => None,
             Some(id) => Some(Place {
@@ -466,6 +523,14 @@ impl TryFrom<CharacterRow> for Character {
                         .place_introduced_at
                         .ok_or_else(invalid_stored_relation)?,
                 },
+                position: required_position(
+                    id,
+                    value.place_position_activity_id,
+                    value.place_position_x_cm,
+                    value.place_position_y_cm,
+                    value.place_position_z_cm,
+                    value.place_position_description,
+                )?,
                 is_entry: value.place_is_entry.ok_or_else(invalid_stored_relation)?,
             }),
         };
@@ -478,6 +543,7 @@ impl TryFrom<CharacterRow> for Character {
                 introduced_at: value.introduced_at,
             },
             owner_user_id: value.owner_user_id,
+            position,
             current_place,
         })
     }
@@ -491,11 +557,18 @@ struct PlaceRow {
     introduced_by_user_id: UserId,
     introduced_at: DateTime<Utc>,
     is_entry: bool,
+    position_activity_id: ActivityId,
+    position_x_cm: i64,
+    position_y_cm: i64,
+    position_z_cm: i64,
+    position_description: Option<String>,
 }
 
-impl From<PlaceRow> for Place {
-    fn from(value: PlaceRow) -> Self {
-        Self {
+impl TryFrom<PlaceRow> for Place {
+    type Error = WorldError;
+
+    fn try_from(value: PlaceRow) -> Result<Self, Self::Error> {
+        Ok(Self {
             entity: Entity {
                 id: value.entity_id,
                 name: value.name,
@@ -503,7 +576,50 @@ impl From<PlaceRow> for Place {
                 introduced_by_user_id: value.introduced_by_user_id,
                 introduced_at: value.introduced_at,
             },
+            position: Position {
+                x_cm: value.position_x_cm,
+                y_cm: value.position_y_cm,
+                z_cm: value.position_z_cm,
+                description: value.position_description,
+                position_revision: PositionRevision::from_parts(
+                    value.entity_id,
+                    value.position_activity_id,
+                ),
+            },
             is_entry: value.is_entry,
-        }
+        })
     }
+}
+
+fn optional_position(
+    entity_id: EntityId,
+    activity_id: Option<ActivityId>,
+    x_cm: Option<i64>,
+    y_cm: Option<i64>,
+    z_cm: Option<i64>,
+    description: Option<String>,
+) -> Result<Option<Position>, WorldError> {
+    match (activity_id, x_cm, y_cm, z_cm) {
+        (None, None, None, None) if description.is_none() => Ok(None),
+        (Some(activity_id), Some(x_cm), Some(y_cm), Some(z_cm)) => Ok(Some(Position {
+            x_cm,
+            y_cm,
+            z_cm,
+            description,
+            position_revision: PositionRevision::from_parts(entity_id, activity_id),
+        })),
+        _ => Err(invalid_stored_relation()),
+    }
+}
+
+fn required_position(
+    entity_id: EntityId,
+    activity_id: Option<ActivityId>,
+    x_cm: Option<i64>,
+    y_cm: Option<i64>,
+    z_cm: Option<i64>,
+    description: Option<String>,
+) -> Result<Position, WorldError> {
+    optional_position(entity_id, activity_id, x_cm, y_cm, z_cm, description)?
+        .ok_or_else(invalid_stored_relation)
 }

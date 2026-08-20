@@ -16,6 +16,10 @@ pub struct EntityTraitId(pub Uuid);
 #[sqlx(transparent)]
 pub struct ActivityId(pub Uuid);
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, sqlx::Type)]
+#[sqlx(transparent)]
+pub struct ConnectionId(pub Uuid);
+
 #[derive(Clone, Debug, PartialEq, Eq, FromRow)]
 pub struct User {
     pub id: UserId,
@@ -35,13 +39,72 @@ pub struct Entity {
 pub struct Character {
     pub entity: Entity,
     pub owner_user_id: UserId,
+    pub position: Option<Position>,
     pub current_place: Option<Place>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Place {
     pub entity: Entity,
+    pub position: Position,
     pub is_entry: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct PositionRevision {
+    entity_id: EntityId,
+    activity_id: ActivityId,
+}
+
+impl PositionRevision {
+    pub fn from_parts(entity_id: EntityId, activity_id: ActivityId) -> Self {
+        Self {
+            entity_id,
+            activity_id,
+        }
+    }
+
+    pub fn entity_id(self) -> EntityId {
+        self.entity_id
+    }
+
+    pub fn activity_id(self) -> ActivityId {
+        self.activity_id
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Position {
+    pub x_cm: i64,
+    pub y_cm: i64,
+    pub z_cm: i64,
+    pub description: Option<String>,
+    pub position_revision: PositionRevision,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ConnectionPoint {
+    pub x_cm: i64,
+    pub y_cm: i64,
+    pub z_cm: i64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ConnectionEndpoint {
+    pub place: PlaceSummary,
+    pub position_revision: PositionRevision,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Connection {
+    pub id: ConnectionId,
+    pub source: ConnectionEndpoint,
+    pub destination: ConnectionEndpoint,
+    pub allows_reverse: bool,
+    pub name: String,
+    pub description: String,
+    pub shape_description: Option<String>,
+    pub course: Vec<ConnectionPoint>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -232,6 +295,7 @@ impl SubmitAction {
 pub struct IntroduceEntity {
     pub name: String,
     pub description: String,
+    pub position_description: Option<String>,
     pub property: Vec<PropertyInput>,
     pub r#trait: Vec<TraitInput>,
 }
@@ -250,9 +314,11 @@ impl IntroduceEntity {
             })?;
         let property = normalize_property_input(self.property, PropertyField::Property)?;
         let r#trait = normalize_trait_input(self.r#trait)?;
+        let position_description = normalize_position_description(self.position_description)?;
         Ok(Self {
             name,
             description,
+            position_description,
             property,
             r#trait,
         })
@@ -513,6 +579,7 @@ pub struct CurrentPlaceEntity {
     pub id: EntityId,
     pub name: String,
     pub description: String,
+    pub position: Position,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -186,6 +186,7 @@ async fn action_normalizes_before_fingerprinting_and_equal_retry_returns_canonic
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "  Cedar Marker  ".to_owned(),
                     description: "  Three lines cross its face.  ".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: Vec::new(),
                 }),
@@ -203,6 +204,7 @@ async fn action_normalizes_before_fingerprinting_and_equal_retry_returns_canonic
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Cedar Marker".to_owned(),
                     description: "Three lines cross its face.".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: Vec::new(),
                 }),
@@ -784,6 +786,7 @@ async fn invalid_unplaced_stale_and_storage_failed_actions_leave_no_partial_rows
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Valid".to_owned(),
                     description: "Valid".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: Vec::new(),
                 }),
@@ -799,6 +802,7 @@ async fn invalid_unplaced_stale_and_storage_failed_actions_leave_no_partial_rows
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Bad\0name".to_owned(),
                     description: "Valid".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: Vec::new(),
                 }),
@@ -989,12 +993,13 @@ async fn activity_at_an_unrelated_place_does_not_invalidate_revision(pool: PgPoo
         .unwrap();
     let second_place_id = Uuid::new_v4();
     let second_place_activity_id = Uuid::new_v4();
+    let mut second_place_setup = pool.begin().await.unwrap();
     sqlx::query(
         "INSERT INTO entity (id, name, description, introduced_by_user_id) VALUES ($1, 'Test South Place', 'Internal isolation fixture', $2)",
     )
     .bind(second_place_id)
     .bind(second_user.0)
-    .execute(&pool)
+    .execute(&mut *second_place_setup)
     .await
     .unwrap();
     sqlx::query(
@@ -1003,31 +1008,56 @@ async fn activity_at_an_unrelated_place_does_not_invalidate_revision(pool: PgPoo
     .bind(second_place_activity_id)
     .bind(second_user.0)
     .bind(second_character.entity.id.0)
-    .execute(&pool)
+    .execute(&mut *second_place_setup)
     .await
     .unwrap();
+    sqlx::query("INSERT INTO position_version (entity_id, activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(second_place_id)
+        .bind(second_place_activity_id)
+        .execute(&mut *second_place_setup)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO position (entity_id, current_activity_id) VALUES ($1, $2)")
+        .bind(second_place_id)
+        .bind(second_place_activity_id)
+        .execute(&mut *second_place_setup)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO activity_position (activity_id, role, position_entity_id, position_activity_id) VALUES ($1, 'result', $2, $1)")
+        .bind(second_place_activity_id)
+        .bind(second_place_id)
+        .execute(&mut *second_place_setup)
+        .await
+        .unwrap();
     sqlx::query(
         "INSERT INTO place (entity_id, is_entry, latest_activity_id) VALUES ($1, false, $2)",
     )
     .bind(second_place_id)
     .bind(second_place_activity_id)
-    .execute(&pool)
+    .execute(&mut *second_place_setup)
     .await
     .unwrap();
+    sqlx::query("INSERT INTO place_map_index (place_entity_id, position_activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(second_place_id)
+        .bind(second_place_activity_id)
+        .execute(&mut *second_place_setup)
+        .await
+        .unwrap();
     sqlx::query(
         "INSERT INTO activity_entity (activity_id, entity_id, role) VALUES ($1, $2, 'subject')",
     )
     .bind(second_place_activity_id)
     .bind(second_place_id)
-    .execute(&pool)
+    .execute(&mut *second_place_setup)
     .await
     .unwrap();
     sqlx::query("UPDATE character SET current_place_entity_id = $1 WHERE owner_user_id = $2")
         .bind(second_place_id)
         .bind(second_user.0)
-        .execute(&pool)
+        .execute(&mut *second_place_setup)
         .await
         .unwrap();
+    second_place_setup.commit().await.unwrap();
 
     let first_revision = world
         .list_entity_at_current_place(first_user, ListEntityAtCurrentPlace::default())

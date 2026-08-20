@@ -379,6 +379,7 @@ impl SubmitActionInput {
             } => ActionConsequence::IntroduceEntity(IntroduceEntity {
                 name,
                 description,
+                position_description: None,
                 property: property.into_iter().map(Into::into).collect(),
                 r#trait: r#trait.into_iter().map(Into::into).collect(),
             }),

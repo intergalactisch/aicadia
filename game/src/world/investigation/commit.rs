@@ -85,13 +85,6 @@ pub(super) async fn accept(
     )
     .await
     .map_err(|error| storage_error(operation, error))?;
-    sqlx::query("INSERT INTO entity_location (entity_id, place_entity_id) VALUES ($1, $2)")
-        .bind(entity.id.0)
-        .bind(place.entity.id.0)
-        .execute(&mut **transaction)
-        .await
-        .map_err(|error| storage_error(operation, error))?;
-
     let involved = [
         (entity.id, ActivityEntityRole::Subject),
         (place.entity.id, ActivityEntityRole::Location),
@@ -112,6 +105,36 @@ pub(super) async fn accept(
         operation,
     )
     .await?;
+
+    let actor_position = character
+        .position
+        .as_ref()
+        .ok_or_else(invalid_stored_relation)?;
+    append_activity_position(
+        transaction,
+        activity_id,
+        ActivityPositionRole::Origin,
+        actor_position.position_revision,
+        operation,
+    )
+    .await?;
+    insert_root_position(
+        transaction,
+        entity.id,
+        activity_id,
+        actor_position.x_cm,
+        actor_position.y_cm,
+        actor_position.z_cm,
+        input.find.position_description.as_deref(),
+        operation,
+    )
+    .await?;
+    sqlx::query("INSERT INTO entity_location (entity_id, place_entity_id) VALUES ($1, $2)")
+        .bind(entity.id.0)
+        .bind(place.entity.id.0)
+        .execute(&mut **transaction)
+        .await
+        .map_err(|error| storage_error(operation, error))?;
 
     let property = property_writes_for_entity(entity.id, input.find.property);
     write_property_changes(transaction, activity_id, &property)

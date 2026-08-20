@@ -118,6 +118,7 @@ impl From<DiscoveryFindInput> for DiscoveryFind {
         Self {
             name: value.name,
             description: value.description,
+            position_description: None,
             property: value.property.into_iter().map(Into::into).collect(),
             r#trait: value.r#trait.into_iter().map(Into::into).collect(),
         }

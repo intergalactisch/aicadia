@@ -1385,6 +1385,7 @@ async fn every_creation_route_atomically_establishes_initial_traits(pool: PgPool
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Copper Spring".to_owned(),
                     description: "A warm copper spring.".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: vec![TraitInput {
                         statement: "Sings after an unusually high landing.".to_owned(),

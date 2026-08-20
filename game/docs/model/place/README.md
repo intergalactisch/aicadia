@@ -1,6 +1,6 @@
 ---
 kind: role
-storage_table: [place]
+storage_table: [place, place_map_index]
 ---
 
 # Place

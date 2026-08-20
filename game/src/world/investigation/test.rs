@@ -46,6 +46,7 @@ fn discovery(request_id: Uuid, attempt_id: InvestigationAttemptId, prose: &str) 
         find: DiscoveryFind {
             name: "Rainbell Cups".to_owned(),
             description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+            position_description: None,
             property: vec![PropertyInput {
                 key: "colour".to_owned(),
                 value: PropertyValue::Text(" chalk-pale ".to_owned()),
@@ -348,8 +349,10 @@ async fn insert_raw_timed_attempt(
         r#"
         INSERT INTO investigation_attempt (
             id, requested_by_user_id, request_id, character_entity_id,
-            place_entity_id, outcome, created_at
-        ) VALUES ($1, $2, $3, $4, $5, 'zero', $6)
+            kind, position_activity_id, place_entity_id, outcome, created_at
+        ) VALUES ($1, $2, $3, $4, 'entity_at_position',
+                  (SELECT current_activity_id FROM position WHERE entity_id = $4),
+                  $5, 'zero', $6)
         "#,
     )
     .bind(Uuid::new_v4())
@@ -415,8 +418,10 @@ async fn fifo_breaks_equal_created_at_ties_by_attempt_id(pool: PgPool) {
             r#"
             INSERT INTO investigation_attempt (
                 id, requested_by_user_id, request_id, character_entity_id,
-                place_entity_id, outcome, created_at
-            ) VALUES ($1, $2, $3, $4, $5, 'positive', $6)
+                kind, position_activity_id, place_entity_id, outcome, created_at
+            ) VALUES ($1, $2, $3, $4, 'entity_at_position',
+                      (SELECT current_activity_id FROM position WHERE entity_id = $4),
+                      $5, 'positive', $6)
             "#,
         )
         .bind(id)
@@ -592,6 +597,7 @@ async fn activity_request_id_reuse_conflicts_before_current_preconditions(pool: 
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Conflict marker".to_owned(),
                     description: "A request namespace marker.".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: Vec::new(),
                 }),
@@ -653,7 +659,7 @@ async fn activity_request_id_reuse_conflicts_before_current_preconditions(pool: 
 #[sqlx::test(migrations = "./migration")]
 async fn unavailable_attempt_reasons_share_one_neutral_error(pool: PgPool) {
     let draw = vec![0.0, 0.99, 0.0, 0.0, 0.0, 0.0, 0.0];
-    let (world, user_id, character, _) = entered_world(pool.clone(), draw).await;
+    let (world, user_id, character, entry_place) = entered_world(pool.clone(), draw).await;
     let other_user = world.create_user().await.unwrap();
     world
         .create_character(
@@ -681,21 +687,65 @@ async fn unavailable_attempt_reasons_share_one_neutral_error(pool: PgPool) {
         )
         .await
         .unwrap();
-    let alternate_activity_id: Uuid = sqlx::query_scalar(
-        "SELECT activity_id FROM activity_entity WHERE entity_id = $1 AND role = 'subject'",
+    let alternate_activity_id = Uuid::new_v4();
+    let mut alternate = pool.begin().await.unwrap();
+    sqlx::query(
+        r#"
+        INSERT INTO activity (
+            id, operation, requested_by_user_id, actor_character_entity_id,
+            context_place_entity_id, prose, request_id, request_fingerprint
+        ) VALUES ($1, 'submit_discovery', $2, $3, $4,
+                  'A second Place is established for stale-grounding evidence.', $5, $6)
+        "#,
     )
-    .bind(alternate_place_entity.id.0)
-    .fetch_one(&pool)
+    .bind(alternate_activity_id)
+    .bind(user_id.0)
+    .bind(character.entity.id.0)
+    .bind(entry_place.entity.id.0)
+    .bind(Uuid::new_v4())
+    .bind(vec![5_u8; 32])
+    .execute(&mut *alternate)
     .await
     .unwrap();
+    sqlx::query("INSERT INTO activity_entity (activity_id, entity_id, role) VALUES ($1, $2, 'subject'), ($1, $2, 'destination')")
+        .bind(alternate_activity_id)
+        .bind(alternate_place_entity.id.0)
+        .execute(&mut *alternate)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO position_version (entity_id, activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(alternate_place_entity.id.0)
+        .bind(alternate_activity_id)
+        .execute(&mut *alternate)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO position (entity_id, current_activity_id) VALUES ($1, $2)")
+        .bind(alternate_place_entity.id.0)
+        .bind(alternate_activity_id)
+        .execute(&mut *alternate)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO activity_position (activity_id, role, position_entity_id, position_activity_id) VALUES ($1, 'result', $2, $1)")
+        .bind(alternate_activity_id)
+        .bind(alternate_place_entity.id.0)
+        .execute(&mut *alternate)
+        .await
+        .unwrap();
     sqlx::query(
         "INSERT INTO place (entity_id, is_entry, latest_activity_id) VALUES ($1, false, $2)",
     )
     .bind(alternate_place_entity.id.0)
     .bind(alternate_activity_id)
-    .execute(&pool)
+    .execute(&mut *alternate)
     .await
     .unwrap();
+    sqlx::query("INSERT INTO place_map_index (place_entity_id, position_activity_id, x_cm, y_cm, z_cm) VALUES ($1, $2, 100, 0, 0)")
+        .bind(alternate_place_entity.id.0)
+        .bind(alternate_activity_id)
+        .execute(&mut *alternate)
+        .await
+        .unwrap();
+    alternate.commit().await.unwrap();
 
     let foreign_attempt = positive(&world, user_id).await;
     let foreign = world
@@ -825,6 +875,7 @@ async fn unrelated_place_action_does_not_stale_positive_attempt(pool: PgPool) {
                 consequence: ActionConsequence::IntroduceEntity(IntroduceEntity {
                     name: "Survey marker".to_owned(),
                     description: "A plain marker.".to_owned(),
+                    position_description: None,
                     property: Vec::new(),
                     r#trait: Vec::new(),
                 }),
@@ -1144,6 +1195,7 @@ fn colour_as_property_find() -> DiscoveryFind {
     DiscoveryFind {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        position_description: None,
         property: vec![PropertyInput {
             key: "colour".to_owned(),
             value: PropertyValue::Text("warm".to_owned()),
@@ -1156,6 +1208,7 @@ fn colour_as_trait_find() -> DiscoveryFind {
     DiscoveryFind {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        position_description: None,
         property: Vec::new(),
         r#trait: ["colour", "text", "warm"]
             .into_iter()
@@ -1204,6 +1257,7 @@ fn tag_lookalike_as_property_find() -> DiscoveryFind {
     DiscoveryFind {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        position_description: None,
         property: vec![
             PropertyInput {
                 key: "a".to_owned(),
@@ -1224,6 +1278,7 @@ fn tag_lookalike_as_trait_find() -> DiscoveryFind {
     DiscoveryFind {
         name: "Rainbell Cups".to_owned(),
         description: "Chalk-pale cups whose thin rims ring in rain.".to_owned(),
+        position_description: None,
         property: vec![PropertyInput {
             key: "a".to_owned(),
             value: PropertyValue::Text("v1".to_owned()),
@@ -1278,9 +1333,11 @@ async fn investigation_indexes_support_bounded_hot_subject_queries(pool: PgPool)
             r#"
             INSERT INTO investigation_attempt (
                 id, requested_by_user_id, request_id, character_entity_id,
-                place_entity_id, outcome, created_at
+                kind, position_activity_id, place_entity_id, outcome, created_at
             ) VALUES (
-                $1, $2, $3, $4, $5, 'positive',
+                $1, $2, $3, $4, 'entity_at_position',
+                (SELECT current_activity_id FROM position WHERE entity_id = $4),
+                $5, 'positive',
                 statement_timestamp() - make_interval(days => $6)
             )
             "#,

@@ -12,8 +12,10 @@ async fn raw_attempt(
         r#"
         INSERT INTO investigation_attempt (
             id, requested_by_user_id, request_id, character_entity_id,
-            place_entity_id, outcome, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, statement_timestamp())
+            kind, position_activity_id, place_entity_id, outcome, created_at
+        ) VALUES ($1, $2, $3, $4, 'entity_at_position',
+                  (SELECT current_activity_id FROM position WHERE entity_id = $4),
+                  $5, $6, statement_timestamp())
         "#,
     )
     .bind(id)
@@ -69,6 +71,8 @@ async fn investigation_attempt_schema_enforces_immutable_identity_and_one_way_li
         "requested_by_user_id = gen_random_uuid()",
         "request_id = gen_random_uuid()",
         "character_entity_id = gen_random_uuid()",
+        "kind = 'connected_place'",
+        "position_activity_id = gen_random_uuid()",
         "place_entity_id = gen_random_uuid()",
         "outcome = 'zero'",
         "created_at = created_at - interval '1 second'",
@@ -224,8 +228,10 @@ async fn investigation_attempt_schema_enforces_retry_and_provenance_foreign_keys
             r#"
             INSERT INTO investigation_attempt (
                 id, requested_by_user_id, request_id, character_entity_id,
-                place_entity_id, outcome, created_at
-            ) VALUES ($1, $2, $3, $4, $5, 'positive', statement_timestamp())
+                kind, position_activity_id, place_entity_id, outcome, created_at
+            ) VALUES ($1, $2, $3, $4, 'entity_at_position',
+                      (SELECT current_activity_id FROM position WHERE entity_id = $4),
+                      $5, 'positive', statement_timestamp())
             "#,
         )
         .bind(Uuid::new_v4())
@@ -247,8 +253,10 @@ async fn investigation_attempt_schema_enforces_retry_and_provenance_foreign_keys
                 r#"
                 INSERT INTO investigation_attempt (
                     id, requested_by_user_id, request_id, character_entity_id,
-                    place_entity_id, outcome, created_at
-                ) VALUES ($1, $2, $3, $4, $5, 'positive', statement_timestamp())
+                    kind, position_activity_id, place_entity_id, outcome, created_at
+                ) VALUES ($1, $2, $3, $4, 'entity_at_position',
+                          (SELECT current_activity_id FROM position WHERE entity_id = $4),
+                          $5, 'positive', statement_timestamp())
                 "#,
             )
             .bind(Uuid::new_v4())

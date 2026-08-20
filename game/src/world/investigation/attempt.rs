@@ -129,6 +129,7 @@ pub(super) async fn insert_attempt(
     user_id: UserId,
     request_id: Uuid,
     character_entity_id: EntityId,
+    position_revision: PositionRevision,
     place_entity_id: EntityId,
     outcome: InvestigationOutcome,
     created_at: DateTime<Utc>,
@@ -138,14 +139,15 @@ pub(super) async fn insert_attempt(
         r#"
         INSERT INTO investigation_attempt (
             id, requested_by_user_id, request_id, character_entity_id,
-            place_entity_id, outcome, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            kind, position_activity_id, place_entity_id, outcome, created_at
+        ) VALUES ($1, $2, $3, $4, 'entity_at_position', $5, $6, $7, $8)
         "#,
     )
     .bind(attempt_id.0)
     .bind(user_id.0)
     .bind(request_id)
     .bind(character_entity_id.0)
+    .bind(position_revision.activity_id().0)
     .bind(place_entity_id.0)
     .bind(outcome.as_str())
     .bind(created_at)
@@ -184,6 +186,7 @@ pub(super) async fn available_place(
     user_id: UserId,
     character_entity_id: EntityId,
     current_place_entity_id: EntityId,
+    current_position_revision: PositionRevision,
     operation: &'static str,
 ) -> Result<Option<EntityId>, WorldError> {
     sqlx::query_scalar::<_, EntityId>(
@@ -193,7 +196,9 @@ pub(super) async fn available_place(
         WHERE id = $1
           AND requested_by_user_id = $2
           AND character_entity_id = $3
-          AND place_entity_id = $4
+          AND kind = 'entity_at_position'
+          AND position_activity_id = $4
+          AND place_entity_id = $5
           AND outcome = 'positive'
           AND consumed_by_activity_id IS NULL
           AND voided_by_attempt_id IS NULL
@@ -202,6 +207,7 @@ pub(super) async fn available_place(
     .bind(attempt_id.0)
     .bind(user_id.0)
     .bind(character_entity_id.0)
+    .bind(current_position_revision.activity_id().0)
     .bind(current_place_entity_id.0)
     .fetch_optional(&mut **transaction)
     .await
