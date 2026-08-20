@@ -19,32 +19,51 @@ impl IntoResponse for HttpError {
             | ErrorCode::InvalidEntity
             | ErrorCode::InvalidCharacter
             | ErrorCode::InvalidPlace
+            | ErrorCode::InvalidPosition
+            | ErrorCode::InvalidPlaceWindow
+            | ErrorCode::InvalidConnection
+            | ErrorCode::InvalidMovement
             | ErrorCode::InvalidAction
             | ErrorCode::InvalidInteraction
             | ErrorCode::InvalidDiscovery
             | ErrorCode::InvalidProperty
             | ErrorCode::InvalidTrait
             | ErrorCode::InvalidEntityLimit
-            | ErrorCode::InvalidActivityLimit => StatusCode::BAD_REQUEST,
+            | ErrorCode::InvalidActivityLimit
+            | ErrorCode::InvalidPlaceLimit
+            | ErrorCode::InvalidConnectionLimit => StatusCode::BAD_REQUEST,
             ErrorCode::UserNotFound
             | ErrorCode::CharacterNotFound
+            | ErrorCode::PlaceNotFound
+            | ErrorCode::ConnectionNotFound
             | ErrorCode::EntryPlaceNotFound => StatusCode::NOT_FOUND,
             ErrorCode::CharacterAlreadyExists
             | ErrorCode::CharacterAlreadyEntered
             | ErrorCode::CharacterNotEntered
+            | ErrorCode::CharacterNotAtPlace
             | ErrorCode::EntryPlaceAlreadyExists
             | ErrorCode::ActionRequestConflict
             | ErrorCode::InteractionRequestConflict
             | ErrorCode::DiscoveryRequestConflict
+            | ErrorCode::MovementRequestConflict
+            | ErrorCode::InvestigationRequestConflict
             | ErrorCode::DiscoveryAttemptUnavailable
+            | ErrorCode::PlaceUnavailable
+            | ErrorCode::ConnectionUnavailable
+            | ErrorCode::ConnectionDirectionDisallowed
+            | ErrorCode::MovementOffCourse
+            | ErrorCode::MovementNoProgress
             | ErrorCode::InteractionTargetUnavailable
             | ErrorCode::PropertyEntityUnavailable
             | ErrorCode::EntityAtCurrentPlaceUnavailable
             | ErrorCode::TraitUnavailable
             | ErrorCode::PropertyKeyConflict => StatusCode::CONFLICT,
             ErrorCode::PlaceRevisionConflict => StatusCode::PRECONDITION_FAILED,
+            ErrorCode::PositionRevisionConflict => StatusCode::PRECONDITION_FAILED,
             ErrorCode::InvestigationNotAdmitted => StatusCode::TOO_MANY_REQUESTS,
-            ErrorCode::Unavailable => StatusCode::SERVICE_UNAVAILABLE,
+            ErrorCode::Unavailable | ErrorCode::TemporarilyUnavailable => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
         };
         (status, HttpJson(self.0)).into_response()
     }

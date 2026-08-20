@@ -34,6 +34,23 @@ pub enum PositionField {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlaceWindowField {
+    MinXCm,
+    MaxXCm,
+    MinYCm,
+    MaxYCm,
+    MinZCm,
+    MaxZCm,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlaceWindowReason {
+    OutOfRange,
+    BeforeMinimum,
+    SpanTooWide,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ConnectionField {
     Name,
     Description,
@@ -129,7 +146,10 @@ pub enum WorldError {
     #[error("property list limit must be between 1 and 100")]
     InvalidPropertyLimit,
     #[error("place window is invalid")]
-    InvalidPlaceWindow,
+    InvalidPlaceWindow {
+        field: PlaceWindowField,
+        reason: PlaceWindowReason,
+    },
     #[error("place list limit must be between 1 and 100")]
     InvalidPlaceLimit,
     #[error("connection list limit must be between 1 and 100")]
@@ -152,6 +172,8 @@ pub enum WorldError {
     ConnectionNotFound,
     #[error("character has not entered the world")]
     CharacterNotEntered,
+    #[error("character is not currently at a place")]
+    CharacterNotAtPlace,
     #[error("action request id has already been used with different content")]
     ActionRequestConflict,
     #[error("interaction request id has already been used with different content")]

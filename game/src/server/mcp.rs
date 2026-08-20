@@ -354,6 +354,66 @@ impl AicadiaMcp {
     }
 
     #[tool(
+        input_schema = mcp_input_schema::<ListPlaceInput>(),
+        annotations(title = "List place", read_only_hint = true, destructive_hint = false, idempotent_hint = true, open_world_hint = false)
+    )]
+    async fn list_place(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<PlacePageOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: ListPlaceInput = Self::decode(input, "Place query is invalid")?;
+        self.world
+            .list_place(user_id, input.parse().map_err(Self::error)?)
+            .await
+            .map(Into::into)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
+        input_schema = mcp_input_schema::<ListConnectionInput>(),
+        annotations(title = "List connection", read_only_hint = true, destructive_hint = false, idempotent_hint = true, open_world_hint = false)
+    )]
+    async fn list_connection(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<ConnectionPageOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: ListConnectionInput = Self::decode(input, "Connection query is invalid")?;
+        self.world
+            .list_connection(user_id, input.parse().map_err(Self::error)?)
+            .await
+            .map(Into::into)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
+        input_schema = mcp_input_schema::<GetConnectionInput>(),
+        annotations(title = "Get connection", read_only_hint = true, destructive_hint = false, idempotent_hint = true, open_world_hint = false)
+    )]
+    async fn get_connection(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<ConnectionOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: GetConnectionInput = Self::decode(input, "Connection input is invalid")?;
+        self.world
+            .get_connection(user_id, input.into())
+            .await
+            .map(Into::into)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
         input_schema = mcp_input_schema::<StartInvestigationInput>(),
         annotations(
             title = "Start investigation",
@@ -454,6 +514,26 @@ impl AicadiaMcp {
             .submit_discovery(user_id, input.into())
             .await
             .map(AcceptedDiscoveryOutput::from)
+            .map(Json)
+            .map_err(ErrorOutput::from_world)
+            .map_err(Self::error)
+    }
+
+    #[tool(
+        input_schema = mcp_input_schema::<MoveCharacterInput>(),
+        annotations(title = "Move character", read_only_hint = false, destructive_hint = false, idempotent_hint = true, open_world_hint = false)
+    )]
+    async fn move_character(
+        &self,
+        Extension(parts): Extension<Parts>,
+        input: JsonObject,
+    ) -> Result<Json<AcceptedMovementOutput>, CallToolResult> {
+        let user_id = user_context(&parts.headers).map_err(Self::error)?;
+        let input: MoveCharacterInput = Self::decode(input, "Movement body is invalid")?;
+        self.world
+            .move_character(user_id, input.parse().map_err(Self::error)?)
+            .await
+            .map(Into::into)
             .map(Json)
             .map_err(ErrorOutput::from_world)
             .map_err(Self::error)

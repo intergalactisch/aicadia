@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T19:44:46+02:00"
+updated_at: "2026-08-20T21:46:24+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
@@ -517,8 +517,8 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T3 | completed | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
 | T4 | completed | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
 | T5 | completed | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
-| T6 | in_progress | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
-| T7 | pending | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
+| T6 | completed | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
+| T7 | in_progress | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
 
 ## Task details
 
@@ -763,6 +763,26 @@ MCP semantics without exposing implementation structure in player conversation.
 
 **Evidence:** `cargo test -p aicadia-game --test server` plus focused parity and
 catalog tests cover all new and evolved capabilities.
+
+**T6 review record:** the published surface contains exactly 19 capability
+contracts, 19 Agent tool-text sources, 19 generated catalog tools and 19 compiled
+HTTP/OpenAPI capabilities. Real PostgreSQL adapter matrices cover both directions of
+Entity discovery; all 12 current/new/existing origin and new/existing destination
+combinations through both adapters; unshaped, shaped-forward, shaped-reverse and
+partial Movement through both adapters; cross-adapter retries; two independent
+travellers; and the complete two-User shared-geography flow with direct World and
+database readback. Exact error, cursor, window, course, Position-description and
+Activity-reference bounds are pinned in the generated MCP schema and OpenAPI. The
+final `aicadia-game` library suite passed 86/86, the server suite passed 14/14 with
+only the explicit catalog generator ignored, the five focused Studio documentation
+and capability lints passed, and formatting and diff checks were clean. Independent
+Standards and Spec reviews ended with zero findings. During iteration the catalog
+generator was run seven successful times, rather than the intended single final
+run, plus one mistaken command that selected zero tests; the retained artifact is
+exactly source-parity and no runtime or authority claim depends on the process
+deviation. The only broad Studio failure remains the pre-existing Area scenario
+heading/link drift assigned to T7. T6 adds no Area, Relation, Observation, privacy,
+Route, terrain, journey, timer, Connection mutation or other S2–S8 behavior.
 
 **Stop:** repeat the inventory if one rule, bound, capability or error diverges
 between World, HTTP, MCP and generated catalog.

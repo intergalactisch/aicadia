@@ -1,8 +1,8 @@
 What it does:
-places the current unplaced Character at the one entry Place.
+places the current Character without a Position at the one entry Place.
 
 Use it when:
-right after a Character whose current_place is null.
+right after get_character returns a null position.
 
 Input meaning:
 empty — no ids and no Place selector; the World derives both.

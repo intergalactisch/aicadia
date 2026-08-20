@@ -17,7 +17,7 @@ use tokio::{net::TcpListener, task::JoinHandle};
 use uuid::Uuid;
 
 const PROTOCOL_VERSION: &str = "2026-07-28";
-const CAPABILITY: [&str; 15] = [
+const CAPABILITY: [&str; 19] = [
     "get_world",
     "get_user",
     "get_character",
@@ -29,10 +29,14 @@ const CAPABILITY: [&str; 15] = [
     "list_entity_at_current_place",
     "list_activity_at_current_place",
     "get_entity_at_current_place",
+    "list_place",
+    "list_connection",
+    "get_connection",
     "start_investigation",
     "submit_action",
     "submit_interaction",
     "submit_discovery",
+    "move_character",
 ];
 
 static MCP_INSTRUCTIONS: std::sync::LazyLock<&'static str> =

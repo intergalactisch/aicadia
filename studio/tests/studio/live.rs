@@ -22,7 +22,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 /// The exact number of application tables migrations `0001`–`0010` deliver.
-const APPLICATION_TABLE_COUNT: usize = 14;
+const APPLICATION_TABLE_COUNT: usize = 21;
 
 /// The Studio read refused the limit rather than clamping it.
 fn refused_the_limit<T>(result: Result<T, StudioError>) -> bool {
@@ -766,9 +766,9 @@ async fn latest_successful_migration_is_one_fixed_newest_primary_key_window(pool
     let latest = schema::latest_successful_migration(&pool)
         .await
         .expect("the latest migration reads");
-    assert_eq!(latest.version, Some(10));
+    assert_eq!(latest.version, Some(11));
     assert_eq!(latest.state, schema::LATEST_MIGRATION_KNOWN);
-    assert_eq!(latest.inspected_newest, 10);
+    assert_eq!(latest.inspected_newest, 11);
 
     sqlx::query(
         r#"
@@ -780,7 +780,7 @@ async fn latest_successful_migration_is_one_fixed_newest_primary_key_window(pool
                false,
                decode('00', 'hex'),
                0
-        FROM generate_series(11, 110) AS version
+        FROM generate_series(12, 111) AS version
         "#,
     )
     .execute(&pool)

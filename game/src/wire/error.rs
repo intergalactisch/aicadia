@@ -27,6 +27,10 @@ pub enum ErrorCode {
     InvalidEntity,
     InvalidCharacter,
     InvalidPlace,
+    InvalidPosition,
+    InvalidPlaceWindow,
+    InvalidConnection,
+    InvalidMovement,
     InvalidAction,
     InvalidInteraction,
     InvalidDiscovery,
@@ -34,25 +38,39 @@ pub enum ErrorCode {
     InvalidTrait,
     InvalidEntityLimit,
     InvalidActivityLimit,
+    InvalidPlaceLimit,
+    InvalidConnectionLimit,
     UserNotFound,
     CharacterNotFound,
     CharacterAlreadyExists,
     CharacterAlreadyEntered,
     CharacterNotEntered,
+    CharacterNotAtPlace,
     EntryPlaceAlreadyExists,
     EntryPlaceNotFound,
+    PlaceNotFound,
+    ConnectionNotFound,
     ActionRequestConflict,
     InteractionRequestConflict,
     DiscoveryRequestConflict,
+    MovementRequestConflict,
+    InvestigationRequestConflict,
     DiscoveryAttemptUnavailable,
+    PlaceUnavailable,
+    ConnectionUnavailable,
+    ConnectionDirectionDisallowed,
+    MovementOffCourse,
+    MovementNoProgress,
     InteractionTargetUnavailable,
     PropertyEntityUnavailable,
     EntityAtCurrentPlaceUnavailable,
     TraitUnavailable,
     PropertyKeyConflict,
     PlaceRevisionConflict,
+    PositionRevisionConflict,
     InvestigationNotAdmitted,
     Unavailable,
+    TemporarilyUnavailable,
 }
 
 impl ErrorOutput {
@@ -90,6 +108,24 @@ impl ErrorOutput {
         )
     }
 
+    pub fn invalid_place_id() -> Self {
+        Self::with_detail(
+            ErrorCode::InvalidRequest,
+            "place_id must be a UUID.",
+            "place_id",
+            "invalid_uuid",
+        )
+    }
+
+    pub fn invalid_connection_id() -> Self {
+        Self::with_detail(
+            ErrorCode::InvalidRequest,
+            "connection_id must be a UUID.",
+            "connection_id",
+            "invalid_uuid",
+        )
+    }
+
     pub fn invalid_cursor() -> Self {
         Self::with_detail(
             ErrorCode::InvalidRequest,
@@ -104,6 +140,15 @@ impl ErrorOutput {
             ErrorCode::InvalidRequest,
             "expected_place_revision is malformed.",
             "expected_place_revision",
+            "malformed",
+        )
+    }
+
+    pub fn invalid_position_revision() -> Self {
+        Self::with_detail(
+            ErrorCode::InvalidRequest,
+            "expected_position_revision is malformed.",
+            "expected_position_revision",
             "malformed",
         )
     }
@@ -245,14 +290,37 @@ impl ErrorOutput {
                     reason,
                 )
             }
-            // T6 publishes the accepted spatial-specific wire codes. Until then
-            // these World-only T4/T5 branches are unreachable through the legacy
-            // adapter input and remain a generic malformed request if surfaced.
-            WorldError::InvalidPosition { .. }
-            | WorldError::InvalidConnection { .. }
-            | WorldError::InvalidMovement { .. } => Self::new(
-                ErrorCode::InvalidRequest,
-                "The request does not match the selected World operation.",
+            WorldError::InvalidPosition { field, reason } => spatial_detail(
+                ErrorCode::InvalidPosition,
+                "Position",
+                match field {
+                    PositionField::XCm => "x_cm",
+                    PositionField::YCm => "y_cm",
+                    PositionField::ZCm => "z_cm",
+                    PositionField::Description => "description",
+                },
+                reason,
+            ),
+            WorldError::InvalidConnection { field, reason } => spatial_detail(
+                ErrorCode::InvalidConnection,
+                "Connection",
+                match field {
+                    crate::ConnectionField::Name => "name",
+                    crate::ConnectionField::Description => "description",
+                    crate::ConnectionField::ShapeDescription => "shape_description",
+                    crate::ConnectionField::Course => "course",
+                },
+                reason,
+            ),
+            WorldError::InvalidMovement { field, reason } => spatial_detail(
+                ErrorCode::InvalidMovement,
+                "Movement",
+                match field {
+                    crate::MovementField::OriginSegmentOrdinal => "target.origin_segment_ordinal",
+                    crate::MovementField::TargetSegmentOrdinal => "target.target_segment_ordinal",
+                    crate::MovementField::Target => "target",
+                },
+                reason,
             ),
             WorldError::InvalidProperty { field, reason } => {
                 let field = match field {
@@ -298,13 +366,28 @@ impl ErrorOutput {
                 "limit",
                 "out_of_range",
             ),
-            // T3's World-only reads are not adapter routes until T6. Keep the
-            // current fifteen-capability error schema closed until that parity task.
-            WorldError::InvalidPlaceWindow
-            | WorldError::InvalidPlaceLimit
-            | WorldError::InvalidConnectionLimit => Self::new(
-                ErrorCode::InvalidRequest,
-                "The request does not match the selected World operation.",
+            WorldError::InvalidPlaceWindow { field, reason } => place_window_detail(
+                match field {
+                    PlaceWindowField::MinXCm => "min_x_cm",
+                    PlaceWindowField::MaxXCm => "max_x_cm",
+                    PlaceWindowField::MinYCm => "min_y_cm",
+                    PlaceWindowField::MaxYCm => "max_y_cm",
+                    PlaceWindowField::MinZCm => "min_z_cm",
+                    PlaceWindowField::MaxZCm => "max_z_cm",
+                },
+                reason,
+            ),
+            WorldError::InvalidPlaceLimit => Self::with_detail(
+                ErrorCode::InvalidPlaceLimit,
+                "limit must be from 1 through 100.",
+                "limit",
+                "out_of_range",
+            ),
+            WorldError::InvalidConnectionLimit => Self::with_detail(
+                ErrorCode::InvalidConnectionLimit,
+                "limit must be from 1 through 100.",
+                "limit",
+                "out_of_range",
             ),
             WorldError::UserNotFound => Self::new(
                 ErrorCode::UserNotFound,
@@ -326,6 +409,18 @@ impl ErrorOutput {
                 ErrorCode::CharacterNotEntered,
                 "The current Character has not entered the World.",
             ),
+            WorldError::CharacterNotAtPlace => Self::new(
+                ErrorCode::CharacterNotAtPlace,
+                "The current Character is between Places.",
+            ),
+            WorldError::PlaceNotFound => Self::new(
+                ErrorCode::PlaceNotFound,
+                "The selected Place was not found.",
+            ),
+            WorldError::ConnectionNotFound => Self::new(
+                ErrorCode::ConnectionNotFound,
+                "The selected Connection was not found.",
+            ),
             WorldError::EntryPlaceAlreadyExists => Self::new(
                 ErrorCode::EntryPlaceAlreadyExists,
                 "The World already has an entry Place.",
@@ -333,10 +428,6 @@ impl ErrorOutput {
             WorldError::EntryPlaceNotFound => Self::new(
                 ErrorCode::EntryPlaceNotFound,
                 "The World does not have an entry Place yet.",
-            ),
-            WorldError::PlaceNotFound | WorldError::ConnectionNotFound => Self::new(
-                ErrorCode::Unavailable,
-                "The World could not complete the request; retry later.",
             ),
             WorldError::ActionRequestConflict => Self::new(
                 ErrorCode::ActionRequestConflict,
@@ -350,26 +441,41 @@ impl ErrorOutput {
                 ErrorCode::DiscoveryRequestConflict,
                 "request_id was already accepted with different discovery content.",
             ),
-            WorldError::MovementRequestConflict
-            | WorldError::ConnectionUnavailable
-            | WorldError::ConnectionDirectionDisallowed
-            | WorldError::MovementOffCourse
-            | WorldError::MovementNoProgress
-            | WorldError::PositionRevisionConflict => Self::new(
-                ErrorCode::InvalidRequest,
-                "The request does not match the selected World operation.",
+            WorldError::MovementRequestConflict => Self::new(
+                ErrorCode::MovementRequestConflict,
+                "request_id was already accepted with different movement content.",
+            ),
+            WorldError::ConnectionUnavailable => Self::new(
+                ErrorCode::ConnectionUnavailable,
+                "The selected Connection is unavailable.",
+            ),
+            WorldError::ConnectionDirectionDisallowed => Self::new(
+                ErrorCode::ConnectionDirectionDisallowed,
+                "The selected Connection does not allow that direction.",
+            ),
+            WorldError::MovementOffCourse => Self::new(
+                ErrorCode::MovementOffCourse,
+                "The Character or target is off the selected course.",
+            ),
+            WorldError::MovementNoProgress => Self::new(
+                ErrorCode::MovementNoProgress,
+                "The target makes no progress in that direction.",
+            ),
+            WorldError::PositionRevisionConflict => Self::new(
+                ErrorCode::PositionRevisionConflict,
+                "The current Position changed after it was read.",
             ),
             WorldError::InvestigationRequestConflict => Self::new(
-                ErrorCode::InvalidRequest,
-                "The request does not match the selected World operation.",
+                ErrorCode::InvestigationRequestConflict,
+                "request_id was already used for another investigation kind.",
             ),
             WorldError::DiscoveryAttemptUnavailable => Self::new(
                 ErrorCode::DiscoveryAttemptUnavailable,
                 "The investigation attempt is unavailable.",
             ),
             WorldError::PlaceUnavailable => Self::new(
-                ErrorCode::DiscoveryAttemptUnavailable,
-                "The investigation attempt is unavailable.",
+                ErrorCode::PlaceUnavailable,
+                "The selected Place is unavailable.",
             ),
             WorldError::InteractionTargetUnavailable => Self::new(
                 ErrorCode::InteractionTargetUnavailable,
@@ -399,9 +505,13 @@ impl ErrorOutput {
                 ErrorCode::InvestigationNotAdmitted,
                 "The investigation was not admitted.",
             ),
-            WorldError::Unavailable | WorldError::TemporarilyUnavailable => Self::new(
+            WorldError::Unavailable => Self::new(
                 ErrorCode::Unavailable,
                 "The World could not complete the request; retry later.",
+            ),
+            WorldError::TemporarilyUnavailable => Self::new(
+                ErrorCode::TemporarilyUnavailable,
+                "The World is temporarily busy; exact retry is safe.",
             ),
         }
     }
@@ -432,6 +542,42 @@ impl ErrorOutput {
             },
         }
     }
+}
+
+fn spatial_detail(
+    code: ErrorCode,
+    subject: &str,
+    field: &str,
+    reason: InvalidReason,
+) -> ErrorOutput {
+    let (reason, explanation) = match reason {
+        InvalidReason::Empty => ("empty", "is empty"),
+        InvalidReason::ContainsNul => ("contains_nul", "contains U+0000"),
+        InvalidReason::TooLong => ("too_long", "is too long"),
+        InvalidReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+        InvalidReason::InvalidFormat => ("invalid_format", "has an invalid format"),
+        InvalidReason::Duplicate => ("duplicate", "contains a duplicate"),
+    };
+    ErrorOutput::with_detail(
+        code,
+        format!("{subject} {field} {explanation}."),
+        field,
+        reason,
+    )
+}
+
+fn place_window_detail(field: &str, reason: PlaceWindowReason) -> ErrorOutput {
+    let (reason, explanation) = match reason {
+        PlaceWindowReason::OutOfRange => ("out_of_range", "is outside the accepted range"),
+        PlaceWindowReason::BeforeMinimum => ("before_minimum", "is before its minimum"),
+        PlaceWindowReason::SpanTooWide => ("span_too_wide", "makes the window too wide"),
+    };
+    ErrorOutput::with_detail(
+        ErrorCode::InvalidPlaceWindow,
+        format!("Place window {field} {explanation}."),
+        field,
+        reason,
+    )
 }
 
 pub fn parse_user_context(value: Option<&str>) -> Result<UserId, ErrorOutput> {

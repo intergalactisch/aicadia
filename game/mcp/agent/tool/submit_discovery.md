@@ -1,14 +1,14 @@
 What it does:
-establishes exactly one found Entity at the positive attempt's exact Place, with its initial Properties and Traits, one discovery Activity and prose.
+establishes one found Entity at the bound Position or one origin, destination and new Connection package, without moving the Character.
 
 Before you call:
-after a positive start, re-read the exact current Place, relevant local Entities and their state, and recent Activity. Author the entire found Entity and its discovery passage, preview all of it and wait for the User's explicit confirmation of the whole package.
+after a positive start, re-read relevant Position, Place, Connection, Entity and Activity context. Preview the entire same-kind result and prose, then wait for explicit confirmation.
 
 Input meaning:
-one fresh request_id, the private positive attempt_id, English prose and the confirmed find. Supply no kind, Place, Character, revision, chance input or extra result.
+one fresh request_id, the private positive attempt_id, English prose and one same-kind tagged result. World derives Character and bound Position.
 
 After acceptance:
-re-ground through the current Place, the accepted Entity and its state, and relevant Activity; then narrate only the found thing and the event. This is the first moment it exists as shared World state.
+re-ground and narrate only accepted state. Connected-Place discovery creates one new Connection and never moves the Character.
 
 On failure:
 nothing was written — re-orient, return to the private workshop and reconfirm changed meaning with a new request_id. Retry an uncertain delivery only with the same request_id, the same attempt_id and the same meaning.

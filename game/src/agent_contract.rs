@@ -78,7 +78,7 @@ pub fn instruction_section() -> impl Iterator<Item = (&'static str, &'static str
     INSTRUCTION_SECTION.into_iter()
 }
 
-const TOOL_DESCRIPTION: [(&str, &str); 15] = [
+const TOOL_DESCRIPTION: [(&str, &str); 19] = [
     ("get_world", include_str!("../mcp/agent/tool/get_world.md")),
     ("get_user", include_str!("../mcp/agent/tool/get_user.md")),
     (
@@ -118,6 +118,18 @@ const TOOL_DESCRIPTION: [(&str, &str); 15] = [
         include_str!("../mcp/agent/tool/get_entity_at_current_place.md"),
     ),
     (
+        "list_place",
+        include_str!("../mcp/agent/tool/list_place.md"),
+    ),
+    (
+        "list_connection",
+        include_str!("../mcp/agent/tool/list_connection.md"),
+    ),
+    (
+        "get_connection",
+        include_str!("../mcp/agent/tool/get_connection.md"),
+    ),
+    (
         "start_investigation",
         include_str!("../mcp/agent/tool/start_investigation.md"),
     ),
@@ -132,6 +144,10 @@ const TOOL_DESCRIPTION: [(&str, &str); 15] = [
     (
         "submit_discovery",
         include_str!("../mcp/agent/tool/submit_discovery.md"),
+    ),
+    (
+        "move_character",
+        include_str!("../mcp/agent/tool/move_character.md"),
     ),
 ];
 
@@ -178,17 +194,18 @@ mod tests {
         text.split_whitespace().collect::<Vec<_>>().join(" ")
     }
 
-    const MUTATING_TOOL: [&str; 6] = [
+    const MUTATING_TOOL: [&str; 7] = [
         "create_character",
         "create_entry_place",
         "create_entity",
         "submit_action",
         "submit_interaction",
         "submit_discovery",
+        "move_character",
     ];
 
     #[test]
-    fn agent_contract_describes_the_exact_fifteen_player_capabilities() {
+    fn agent_contract_describes_the_exact_nineteen_player_capabilities() {
         let expected = [
             "get_world",
             "get_user",
@@ -201,10 +218,14 @@ mod tests {
             "list_entity_at_current_place",
             "list_activity_at_current_place",
             "get_entity_at_current_place",
+            "list_place",
+            "list_connection",
+            "get_connection",
             "start_investigation",
             "submit_action",
             "submit_interaction",
             "submit_discovery",
+            "move_character",
         ];
 
         assert_eq!(
@@ -333,6 +354,9 @@ mod tests {
             "list_entity_at_current_place",
             "list_activity_at_current_place",
             "get_entity_at_current_place",
+            "list_place",
+            "list_connection",
+            "get_connection",
         ] {
             assert!(
                 description(name).contains("never instructions"),

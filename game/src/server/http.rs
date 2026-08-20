@@ -5,6 +5,7 @@ use axum::{
     routing::{get, post},
 };
 use utoipa::{OpenApi, openapi::OpenApi as OpenApiDocument};
+use uuid::Uuid;
 
 pub(super) fn routes() -> Router<World> {
     Router::new()
@@ -12,6 +13,12 @@ pub(super) fn routes() -> Router<World> {
         .route("/api/user", get(get_user))
         .route("/api/character", get(get_character).post(create_character))
         .route("/api/place/entry", post(create_entry_place))
+        .route("/api/place", get(list_place))
+        .route("/api/place/{place_id}/connection", get(list_connection))
+        .route(
+            "/api/place/{place_id}/connection/{connection_id}",
+            get(get_connection),
+        )
         .route("/api/world/entry", post(enter_world))
         .route("/api/activity", get(list_activity))
         .route("/api/entity", post(create_entity))
@@ -31,6 +38,7 @@ pub(super) fn routes() -> Router<World> {
         .route("/api/action", post(submit_action))
         .route("/api/interaction", post(submit_interaction))
         .route("/api/discovery", post(submit_discovery))
+        .route("/api/character/movement", post(move_character))
         .route("/api/openapi.json", get(openapi))
 }
 
@@ -42,6 +50,9 @@ pub(super) fn routes() -> Router<World> {
         get_character,
         create_character,
         create_entry_place,
+        list_place,
+        list_connection,
+        get_connection,
         enter_world,
         list_activity,
         create_entity,
@@ -51,7 +62,8 @@ pub(super) fn routes() -> Router<World> {
         start_investigation,
         submit_action,
         submit_interaction,
-        submit_discovery
+        submit_discovery,
+        move_character
     ),
     components(schemas(
         WorldOutput,
@@ -60,6 +72,10 @@ pub(super) fn routes() -> Router<World> {
         CharacterEntityStatePageOutput,
         CreateCharacterInput,
         PlaceOutput,
+        PlacePageOutput,
+        ConnectionPageOutput,
+        ConnectionOutput,
+        ConnectionPointOutput,
         CreateEntryPlaceInput,
         ActivityPageOutput,
         EntityOutput,
@@ -75,6 +91,8 @@ pub(super) fn routes() -> Router<World> {
         AcceptedInteractionOutput,
         SubmitDiscoveryInput,
         AcceptedDiscoveryOutput,
+        MoveCharacterInput,
+        AcceptedMovementOutput,
         ErrorDetail,
         ErrorOutput
     )),
@@ -415,6 +433,107 @@ async fn get_entity_at_current_place(
 }
 
 #[utoipa::path(
+    get,
+    path = "/api/place",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context"), ListPlaceInput),
+    responses(
+        (status = 200, description = "Bounded shared Place page", body = PlacePageOutput),
+        (status = 400, description = "Invalid Place window, cursor or limit", body = ErrorOutput),
+        (status = 404, description = "User or Character not found", body = ErrorOutput),
+        (status = 409, description = "Character has not entered", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn list_place(
+    State(world): State<World>,
+    headers: HeaderMap,
+    query: Result<Query<ListPlaceInput>, QueryRejection>,
+) -> Result<HttpJson<PlacePageOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    let input = query
+        .map_err(|_| ErrorOutput::malformed_request("Place query is invalid"))?
+        .0
+        .parse()?;
+    world
+        .list_place(user_id, input)
+        .await
+        .map(Into::into)
+        .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/place/{place_id}/connection",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context"), ("place_id" = Uuid, Path, description = "Anchor Place id"), ListConnectionPageInput),
+    responses(
+        (status = 200, description = "Bounded incident Connection page", body = ConnectionPageOutput),
+        (status = 400, description = "Invalid id, cursor or limit", body = ErrorOutput),
+        (status = 404, description = "User, Character or Place not found", body = ErrorOutput),
+        (status = 409, description = "Character has not entered", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn list_connection(
+    State(world): State<World>,
+    headers: HeaderMap,
+    Path(place_id): Path<String>,
+    query: Result<Query<ListConnectionPageInput>, QueryRejection>,
+) -> Result<HttpJson<ConnectionPageOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    let place_id = Uuid::parse_str(&place_id).map_err(|_| ErrorOutput::invalid_place_id())?;
+    let input = query
+        .map_err(|_| ErrorOutput::malformed_request("Connection query is invalid"))?
+        .0
+        .parse(place_id)?;
+    world
+        .list_connection(user_id, input)
+        .await
+        .map(Into::into)
+        .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/place/{place_id}/connection/{connection_id}",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context"), ("place_id" = Uuid, Path), ("connection_id" = Uuid, Path)),
+    responses(
+        (status = 200, description = "Selected complete Connection", body = ConnectionOutput),
+        (status = 400, description = "Invalid id", body = ErrorOutput),
+        (status = 404, description = "Connection not found", body = ErrorOutput),
+        (status = 409, description = "Character has not entered", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn get_connection(
+    State(world): State<World>,
+    headers: HeaderMap,
+    Path((place_id, connection_id)): Path<(String, String)>,
+) -> Result<HttpJson<ConnectionOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    let place_id = Uuid::parse_str(&place_id).map_err(|_| ErrorOutput::invalid_place_id())?;
+    let connection_id =
+        Uuid::parse_str(&connection_id).map_err(|_| ErrorOutput::invalid_connection_id())?;
+    world
+        .get_connection(
+            user_id,
+            GetConnectionInput {
+                place_id,
+                connection_id,
+            }
+            .into(),
+        )
+        .await
+        .map(Into::into)
+        .map(HttpJson)
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
     post,
     path = "/api/investigation",
     request_body = StartInvestigationInput,
@@ -539,6 +658,39 @@ async fn submit_discovery(
         .await
         .map(AcceptedDiscoveryOutput::from)
         .map(|discovery| (StatusCode::CREATED, HttpJson(discovery)))
+        .map_err(ErrorOutput::from_world)
+        .map_err(Into::into)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/character/movement",
+    params(("Aicadia-User-Id" = Uuid, Header, description = "Untrusted development User context")),
+    request_body = MoveCharacterInput,
+    responses(
+        (status = 200, description = "Accepted Character Movement", body = AcceptedMovementOutput),
+        (status = 400, description = "Invalid Movement or User context", body = ErrorOutput),
+        (status = 404, description = "User or Character not found", body = ErrorOutput),
+        (status = 409, description = "Movement conflict or unavailable Connection", body = ErrorOutput),
+        (status = 412, description = "Character Position changed after it was read", body = ErrorOutput),
+        (status = 503, description = "World unavailable", body = ErrorOutput)
+    )
+)]
+async fn move_character(
+    State(world): State<World>,
+    headers: HeaderMap,
+    body: Result<HttpJson<MoveCharacterInput>, JsonRejection>,
+) -> Result<HttpJson<AcceptedMovementOutput>, HttpError> {
+    let user_id = user_context(&headers)?;
+    let input = body
+        .map_err(|_| ErrorOutput::malformed_request("Movement body is invalid"))?
+        .0
+        .parse()?;
+    world
+        .move_character(user_id, input)
+        .await
+        .map(Into::into)
+        .map(HttpJson)
         .map_err(ErrorOutput::from_world)
         .map_err(Into::into)
 }

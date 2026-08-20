@@ -268,7 +268,8 @@ async fn action_http_and_mcp_share_commit_retry_visibility_and_errors(pool: PgPo
     let scoped_place = json!({
         "id": created_place["entity"]["id"],
         "name": created_place["entity"]["name"],
-        "description": created_place["entity"]["description"]
+        "description": created_place["entity"]["description"],
+        "position": created_place["position"]
     });
     for user_id in [actor.id.0, observer.id.0] {
         let response = server
@@ -316,7 +317,12 @@ async fn action_http_and_mcp_share_commit_retry_visibility_and_errors(pool: PgPo
             .keys()
             .cloned()
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["description".to_owned(), "id".to_owned(), "name".to_owned()])
+        BTreeSet::from([
+            "description".to_owned(),
+            "id".to_owned(),
+            "name".to_owned(),
+            "position".to_owned()
+        ])
     );
 
     let bad_limit_response = server
@@ -568,7 +574,12 @@ async fn action_http_and_mcp_share_commit_retry_visibility_and_errors(pool: PgPo
                 .keys()
                 .cloned()
                 .collect::<BTreeSet<_>>(),
-            BTreeSet::from(["description".to_owned(), "id".to_owned(), "name".to_owned()])
+            BTreeSet::from([
+                "description".to_owned(),
+                "id".to_owned(),
+                "name".to_owned(),
+                "position".to_owned()
+            ])
         );
     }
     let observer_activity: Value = server

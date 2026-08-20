@@ -460,7 +460,12 @@ async fn property_http_and_mcp_share_creation_bulk_change_history_and_strict_err
             .keys()
             .cloned()
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["description".to_owned(), "id".to_owned(), "name".to_owned()]),
+        BTreeSet::from([
+            "description".to_owned(),
+            "id".to_owned(),
+            "name".to_owned(),
+            "position".to_owned()
+        ]),
         "fictional keys must not add Character, NPC, owner, User or control classification fields"
     );
 

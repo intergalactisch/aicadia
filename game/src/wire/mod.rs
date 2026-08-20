@@ -18,7 +18,8 @@ use crate::{
     GetEntityAtCurrentPlace, GetEntityCurrentState, InteractionField, IntroduceEntity,
     InvalidReason, InvestigationAttemptId, InvestigationLimit, InvestigationOutcome,
     InvestigationResult, ListActivity, ListActivityAtCurrentPlace, ListEntityAtCurrentPlace, Place,
-    PlaceRevision, PlaceSummary, PropertyField, PropertyInput as WorldPropertyInput, PropertyValue,
+    PlaceRevision, PlaceSummary, PlaceWindowField, PlaceWindowReason, Position, PositionField,
+    PositionRevision, PropertyField, PropertyInput as WorldPropertyInput, PropertyValue,
     StartInvestigation, SubmitAction, SubmitDiscovery, SubmitInteraction,
     TraitInput as WorldTraitInput, User, UserId, WorldError, WorldView,
 };
@@ -29,11 +30,13 @@ mod error;
 mod input;
 mod investigation;
 mod output;
+mod spatial;
 
 pub use error::*;
 pub use input::*;
 pub use investigation::*;
 pub use output::*;
+pub use spatial::*;
 
 #[cfg(test)]
 mod test;

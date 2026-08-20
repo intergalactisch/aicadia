@@ -312,6 +312,9 @@ Error { code, message, field?: string, reason?: string }
 | `temporarily_unavailable` | bounded spatial statement or lock budget expired; exact retry is safe | `503` |
 | `unavailable` | World storage could not complete the request | `503` |
 
+`invalid_place_window` identifies the first failing bound in `field` and reports
+`out_of_range`, `before_minimum`, or `span_too_wide` in `reason`.
+
 A malformed target UUID is `invalid_request`; an empty or over-100 target list is
 `invalid_interaction`. Every well-formed but ineligible target set uses the one
 neutral `interaction_target_unavailable` result and writes nothing. A malformed revision is `invalid_request` with field

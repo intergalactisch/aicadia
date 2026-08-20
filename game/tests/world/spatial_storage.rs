@@ -1009,7 +1009,7 @@ async fn connection_storage_keeps_identity_course_and_history_strict(pool: PgPoo
         "SELECT count(*) FROM connection WHERE source_place_entity_id = $1 AND destination_place_entity_id = $2 AND name = 'Test Crossing'",
     ).bind(source.entity.id.0).bind(destination_id.0).fetch_one(&pool).await.unwrap();
     assert_eq!(equal_count, 3);
-    let shaped_row: (
+    type StoredConnectionRow = (
         Uuid,
         Uuid,
         Uuid,
@@ -1021,7 +1021,8 @@ async fn connection_storage_keeps_identity_course_and_history_strict(pool: PgPoo
         String,
         Option<String>,
         Uuid,
-    ) = sqlx::query_as(
+    );
+    let shaped_row: StoredConnectionRow = sqlx::query_as(
         r#"
         SELECT id, source_place_entity_id, destination_place_entity_id,
                source_position_activity_id, destination_position_activity_id,

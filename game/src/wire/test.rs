@@ -109,6 +109,10 @@ fn error_codes_have_one_compiler_checked_wire_spelling() {
         ErrorCode::InvalidEntity,
         ErrorCode::InvalidCharacter,
         ErrorCode::InvalidPlace,
+        ErrorCode::InvalidPosition,
+        ErrorCode::InvalidPlaceWindow,
+        ErrorCode::InvalidConnection,
+        ErrorCode::InvalidMovement,
         ErrorCode::InvalidAction,
         ErrorCode::InvalidInteraction,
         ErrorCode::InvalidDiscovery,
@@ -116,25 +120,39 @@ fn error_codes_have_one_compiler_checked_wire_spelling() {
         ErrorCode::InvalidTrait,
         ErrorCode::InvalidEntityLimit,
         ErrorCode::InvalidActivityLimit,
+        ErrorCode::InvalidPlaceLimit,
+        ErrorCode::InvalidConnectionLimit,
         ErrorCode::UserNotFound,
         ErrorCode::CharacterNotFound,
         ErrorCode::CharacterAlreadyExists,
         ErrorCode::CharacterAlreadyEntered,
         ErrorCode::CharacterNotEntered,
+        ErrorCode::CharacterNotAtPlace,
         ErrorCode::EntryPlaceAlreadyExists,
         ErrorCode::EntryPlaceNotFound,
+        ErrorCode::PlaceNotFound,
+        ErrorCode::ConnectionNotFound,
         ErrorCode::ActionRequestConflict,
         ErrorCode::InteractionRequestConflict,
         ErrorCode::DiscoveryRequestConflict,
+        ErrorCode::MovementRequestConflict,
+        ErrorCode::InvestigationRequestConflict,
         ErrorCode::DiscoveryAttemptUnavailable,
+        ErrorCode::PlaceUnavailable,
+        ErrorCode::ConnectionUnavailable,
+        ErrorCode::ConnectionDirectionDisallowed,
+        ErrorCode::MovementOffCourse,
+        ErrorCode::MovementNoProgress,
         ErrorCode::InteractionTargetUnavailable,
         ErrorCode::PropertyEntityUnavailable,
         ErrorCode::EntityAtCurrentPlaceUnavailable,
         ErrorCode::TraitUnavailable,
         ErrorCode::PropertyKeyConflict,
         ErrorCode::PlaceRevisionConflict,
+        ErrorCode::PositionRevisionConflict,
         ErrorCode::InvestigationNotAdmitted,
         ErrorCode::Unavailable,
+        ErrorCode::TemporarilyUnavailable,
     ] {
         // Exhaustive on purpose: a new ErrorCode without a published spelling
         // stops compiling here instead of shipping as an unproven public code.
@@ -144,6 +162,10 @@ fn error_codes_have_one_compiler_checked_wire_spelling() {
             ErrorCode::InvalidEntity => "invalid_entity",
             ErrorCode::InvalidCharacter => "invalid_character",
             ErrorCode::InvalidPlace => "invalid_place",
+            ErrorCode::InvalidPosition => "invalid_position",
+            ErrorCode::InvalidPlaceWindow => "invalid_place_window",
+            ErrorCode::InvalidConnection => "invalid_connection",
+            ErrorCode::InvalidMovement => "invalid_movement",
             ErrorCode::InvalidAction => "invalid_action",
             ErrorCode::InvalidInteraction => "invalid_interaction",
             ErrorCode::InvalidDiscovery => "invalid_discovery",
@@ -151,25 +173,39 @@ fn error_codes_have_one_compiler_checked_wire_spelling() {
             ErrorCode::InvalidTrait => "invalid_trait",
             ErrorCode::InvalidEntityLimit => "invalid_entity_limit",
             ErrorCode::InvalidActivityLimit => "invalid_activity_limit",
+            ErrorCode::InvalidPlaceLimit => "invalid_place_limit",
+            ErrorCode::InvalidConnectionLimit => "invalid_connection_limit",
             ErrorCode::UserNotFound => "user_not_found",
             ErrorCode::CharacterNotFound => "character_not_found",
             ErrorCode::CharacterAlreadyExists => "character_already_exists",
             ErrorCode::CharacterAlreadyEntered => "character_already_entered",
             ErrorCode::CharacterNotEntered => "character_not_entered",
+            ErrorCode::CharacterNotAtPlace => "character_not_at_place",
             ErrorCode::EntryPlaceAlreadyExists => "entry_place_already_exists",
             ErrorCode::EntryPlaceNotFound => "entry_place_not_found",
+            ErrorCode::PlaceNotFound => "place_not_found",
+            ErrorCode::ConnectionNotFound => "connection_not_found",
             ErrorCode::ActionRequestConflict => "action_request_conflict",
             ErrorCode::InteractionRequestConflict => "interaction_request_conflict",
             ErrorCode::DiscoveryRequestConflict => "discovery_request_conflict",
+            ErrorCode::MovementRequestConflict => "movement_request_conflict",
+            ErrorCode::InvestigationRequestConflict => "investigation_request_conflict",
             ErrorCode::DiscoveryAttemptUnavailable => "discovery_attempt_unavailable",
+            ErrorCode::PlaceUnavailable => "place_unavailable",
+            ErrorCode::ConnectionUnavailable => "connection_unavailable",
+            ErrorCode::ConnectionDirectionDisallowed => "connection_direction_disallowed",
+            ErrorCode::MovementOffCourse => "movement_off_course",
+            ErrorCode::MovementNoProgress => "movement_no_progress",
             ErrorCode::InteractionTargetUnavailable => "interaction_target_unavailable",
             ErrorCode::PropertyEntityUnavailable => "property_entity_unavailable",
             ErrorCode::EntityAtCurrentPlaceUnavailable => "entity_at_current_place_unavailable",
             ErrorCode::TraitUnavailable => "trait_unavailable",
             ErrorCode::PropertyKeyConflict => "property_key_conflict",
             ErrorCode::PlaceRevisionConflict => "place_revision_conflict",
+            ErrorCode::PositionRevisionConflict => "position_revision_conflict",
             ErrorCode::InvestigationNotAdmitted => "investigation_not_admitted",
             ErrorCode::Unavailable => "unavailable",
+            ErrorCode::TemporarilyUnavailable => "temporarily_unavailable",
         };
         assert_eq!(
             serde_json::to_value(code).expect("error code should serialize"),
@@ -208,5 +244,85 @@ fn action_wire_accepts_only_the_current_combined_state_variant() {
             serde_json::from_value::<SubmitActionInput>(old).is_err(),
             "the superseded {old_type} public input must stay absent"
         );
+    }
+}
+
+#[test]
+fn spatial_world_errors_keep_the_canonical_wire_taxonomy() {
+    use crate::{
+        ConnectionField, MovementField, PlaceWindowField, PlaceWindowReason, PositionField,
+    };
+
+    for (world, code) in [
+        (
+            WorldError::InvalidPosition {
+                field: PositionField::XCm,
+                reason: InvalidReason::OutOfRange,
+            },
+            ErrorCode::InvalidPosition,
+        ),
+        (
+            WorldError::InvalidPlaceWindow {
+                field: PlaceWindowField::MaxXCm,
+                reason: PlaceWindowReason::BeforeMinimum,
+            },
+            ErrorCode::InvalidPlaceWindow,
+        ),
+        (
+            WorldError::InvalidConnection {
+                field: ConnectionField::Course,
+                reason: InvalidReason::InvalidFormat,
+            },
+            ErrorCode::InvalidConnection,
+        ),
+        (
+            WorldError::InvalidMovement {
+                field: MovementField::Target,
+                reason: InvalidReason::InvalidFormat,
+            },
+            ErrorCode::InvalidMovement,
+        ),
+        (WorldError::InvalidPlaceLimit, ErrorCode::InvalidPlaceLimit),
+        (
+            WorldError::InvalidConnectionLimit,
+            ErrorCode::InvalidConnectionLimit,
+        ),
+        (WorldError::PlaceNotFound, ErrorCode::PlaceNotFound),
+        (
+            WorldError::ConnectionNotFound,
+            ErrorCode::ConnectionNotFound,
+        ),
+        (
+            WorldError::MovementRequestConflict,
+            ErrorCode::MovementRequestConflict,
+        ),
+        (
+            WorldError::InvestigationRequestConflict,
+            ErrorCode::InvestigationRequestConflict,
+        ),
+        (WorldError::PlaceUnavailable, ErrorCode::PlaceUnavailable),
+        (
+            WorldError::ConnectionUnavailable,
+            ErrorCode::ConnectionUnavailable,
+        ),
+        (
+            WorldError::ConnectionDirectionDisallowed,
+            ErrorCode::ConnectionDirectionDisallowed,
+        ),
+        (WorldError::MovementOffCourse, ErrorCode::MovementOffCourse),
+        (
+            WorldError::MovementNoProgress,
+            ErrorCode::MovementNoProgress,
+        ),
+        (
+            WorldError::PositionRevisionConflict,
+            ErrorCode::PositionRevisionConflict,
+        ),
+        (
+            WorldError::TemporarilyUnavailable,
+            ErrorCode::TemporarilyUnavailable,
+        ),
+    ] {
+        assert_eq!(ErrorOutput::from_world(world).error.code, code);
     }
 }

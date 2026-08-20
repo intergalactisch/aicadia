@@ -436,11 +436,13 @@ pub(super) async fn activities_from_rows(
             r#"
             SELECT activity_position.activity_id, activity_position.role,
                    version.entity_id, version.activity_id AS position_activity_id,
-                   version.x_cm, version.y_cm, version.z_cm, version.description
+                   version.x_cm, version.y_cm, version.z_cm, version.description,
+                   entity.name
             FROM activity_position
             JOIN position_version version
               ON version.entity_id = activity_position.position_entity_id
              AND version.activity_id = activity_position.position_activity_id
+            JOIN entity ON entity.id = version.entity_id
             WHERE activity_position.activity_id = ANY($1)
             ORDER BY activity_position.activity_id, activity_position.role,
                      activity_position.position_entity_id,
@@ -465,10 +467,13 @@ pub(super) async fn activities_from_rows(
     } else {
         sqlx::query_as::<_, ActivityConnectionRow>(
             r#"
-            SELECT activity_id, connection_id
-            FROM activity_connection
-            WHERE activity_id = ANY($1)
-            ORDER BY activity_id, connection_id
+            SELECT relation.activity_id, relation.connection_id, connection.name,
+                   connection.source_place_entity_id,
+                   connection.destination_place_entity_id
+            FROM activity_connection relation
+            JOIN connection ON connection.id = relation.connection_id
+            WHERE relation.activity_id = ANY($1)
+            ORDER BY relation.activity_id, relation.connection_id
             "#,
         )
         .bind(&activity_ids)
@@ -484,6 +489,9 @@ pub(super) async fn activities_from_rows(
             .or_default()
             .push(ActivityConnectionReference {
                 connection_id: connection.connection_id,
+                name: connection.name,
+                source_place_id: connection.source_place_entity_id,
+                destination_place_id: connection.destination_place_entity_id,
             });
     }
     let mut property_by_activity = hydrate_property_changes(transaction, &typed_activity_ids)
@@ -868,6 +876,7 @@ pub struct ActivityEntityReference {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ActivityPositionReference {
+    pub entity: EntitySummary,
     pub role: ActivityPositionRole,
     pub position: Position,
 }
@@ -875,6 +884,9 @@ pub struct ActivityPositionReference {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ActivityConnectionReference {
     pub connection_id: ConnectionId,
+    pub name: String,
+    pub source_place_id: EntityId,
+    pub destination_place_id: EntityId,
 }
 
 #[derive(FromRow)]
@@ -972,6 +984,7 @@ struct ActivityPositionRow {
     y_cm: i64,
     z_cm: i64,
     description: Option<String>,
+    name: String,
 }
 
 impl TryFrom<ActivityPositionRow> for ActivityPositionReference {
@@ -979,6 +992,10 @@ impl TryFrom<ActivityPositionRow> for ActivityPositionReference {
 
     fn try_from(value: ActivityPositionRow) -> Result<Self, Self::Error> {
         Ok(Self {
+            entity: EntitySummary {
+                id: value.entity_id,
+                name: value.name,
+            },
             role: ActivityPositionRole::parse(&value.role)?,
             position: Position {
                 x_cm: value.x_cm,
@@ -998,6 +1015,9 @@ impl TryFrom<ActivityPositionRow> for ActivityPositionReference {
 struct ActivityConnectionRow {
     activity_id: ActivityId,
     connection_id: ConnectionId,
+    name: String,
+    source_place_entity_id: EntityId,
+    destination_place_entity_id: EntityId,
 }
 
 impl TryFrom<ActivityEntityRow> for ActivityEntityReference {

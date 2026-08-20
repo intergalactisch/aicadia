@@ -375,7 +375,7 @@ async fn http_and_mcp_share_investigation_start_errors(pool: PgPool) {
         .client
         .post(format!("{}/api/investigation", server.base_url))
         .header(USER_CONTEXT_HEADER, bystander.id.0.to_string())
-        .json(&json!({"request_id": Uuid::new_v4()}))
+        .json(&json!({"request_id": Uuid::new_v4(), "kind": "entity_at_position"}))
         .send()
         .await
         .expect("Character-less investigation should send");
@@ -384,7 +384,7 @@ async fn http_and_mcp_share_investigation_start_errors(pool: PgPool) {
     let no_character_mcp = server
         .tool(
             "start_investigation",
-            json!({"request_id": Uuid::new_v4()}),
+            json!({"request_id": Uuid::new_v4(), "kind": "entity_at_position"}),
             Some(bystander.id.0),
         )
         .await;
@@ -402,7 +402,7 @@ async fn http_and_mcp_share_investigation_start_errors(pool: PgPool) {
         .client
         .post(format!("{}/api/investigation", server.base_url))
         .header(USER_CONTEXT_HEADER, owner.id.0.to_string())
-        .json(&json!({"request_id": Uuid::new_v4()}))
+        .json(&json!({"request_id": Uuid::new_v4(), "kind": "entity_at_position"}))
         .send()
         .await
         .expect("unplaced investigation should send");
@@ -411,7 +411,7 @@ async fn http_and_mcp_share_investigation_start_errors(pool: PgPool) {
     let not_entered_mcp = server
         .tool(
             "start_investigation",
-            json!({"request_id": Uuid::new_v4()}),
+            json!({"request_id": Uuid::new_v4(), "kind": "entity_at_position"}),
             Some(owner.id.0),
         )
         .await;

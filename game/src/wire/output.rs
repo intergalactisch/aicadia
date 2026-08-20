@@ -69,7 +69,11 @@ pub struct CharacterOutput {
     pub entity: EntityOutput,
     /// User who owns this Character.
     pub owner_user_id: Uuid,
-    /// Current Place, or null while the Character has not entered the World.
+    /// Exact current Position, or null before World entry.
+    #[schemars(schema_with = "nullable_position_schema", required)]
+    #[schema(required = true, nullable = true)]
+    pub position: Option<PositionOutput>,
+    /// Current Place, or null before entry and between Places.
     #[schemars(schema_with = "nullable_place_schema", required)]
     #[schema(required = true, nullable = true)]
     pub current_place: Option<PlaceOutput>,
@@ -80,9 +84,15 @@ impl From<Character> for CharacterOutput {
         Self {
             entity: value.entity.into(),
             owner_user_id: value.owner_user_id.0,
+            position: value.position.map(Into::into),
             current_place: value.current_place.map(Into::into),
         }
     }
+}
+
+fn nullable_position_schema(generator: &mut SchemaGenerator) -> Schema {
+    let position = generator.subschema_for::<PositionOutput>();
+    schemars::json_schema!({"oneOf": [position, {"type": "null"}]})
 }
 
 fn nullable_place_schema(generator: &mut SchemaGenerator) -> Schema {
@@ -96,6 +106,8 @@ fn nullable_place_schema(generator: &mut SchemaGenerator) -> Schema {
 pub struct PlaceOutput {
     /// The Place's Entity; its id is the Place id.
     pub entity: EntityOutput,
+    /// Exact current Position.
+    pub position: PositionOutput,
     /// True only for the one entry Place.
     pub is_entry: bool,
 }
@@ -104,6 +116,7 @@ impl From<Place> for PlaceOutput {
     fn from(value: Place) -> Self {
         Self {
             entity: value.entity.into(),
+            position: value.position.into(),
             is_entry: value.is_entry,
         }
     }
@@ -129,6 +142,8 @@ pub struct CurrentPlaceEntityOutput {
     pub name: String,
     /// Current description.
     pub description: String,
+    /// Exact current Position.
+    pub position: PositionOutput,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
@@ -141,6 +156,8 @@ pub struct CurrentPlaceOutput {
     pub name: String,
     /// Current description.
     pub description: String,
+    /// Exact current Position.
+    pub position: PositionOutput,
 }
 
 impl From<Place> for CurrentPlaceOutput {
@@ -149,6 +166,7 @@ impl From<Place> for CurrentPlaceOutput {
             id: value.entity.id.0,
             name: value.entity.name,
             description: value.entity.description,
+            position: value.position.into(),
         }
     }
 }
@@ -159,6 +177,7 @@ impl From<CurrentPlaceEntity> for CurrentPlaceEntityOutput {
             id: value.id.0,
             name: value.name,
             description: value.description,
+            position: value.position.into(),
         }
     }
 }
@@ -574,6 +593,73 @@ impl From<ActivityEntityReference> for ActivityEntityReferenceOutput {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ActivityPositionRoleOutput {
+    /// Position state before or grounding this Activity.
+    Origin,
+    /// Position state established by this Activity.
+    Result,
+}
+
+impl From<crate::ActivityPositionRole> for ActivityPositionRoleOutput {
+    fn from(value: crate::ActivityPositionRole) -> Self {
+        match value {
+            crate::ActivityPositionRole::Origin => Self::Origin,
+            crate::ActivityPositionRole::Result => Self::Result,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct ActivityPositionReferenceOutput {
+    /// Entity owning this exact Position version.
+    pub entity: EntitySummaryOutput,
+    /// Whether this Position grounds or results from the Activity.
+    pub role: ActivityPositionRoleOutput,
+    /// Exact immutable Position version involved.
+    pub position: PositionOutput,
+}
+
+impl From<crate::ActivityPositionReference> for ActivityPositionReferenceOutput {
+    fn from(value: crate::ActivityPositionReference) -> Self {
+        Self {
+            entity: value.entity.into(),
+            role: value.role.into(),
+            position: value.position.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct ActivityConnectionReferenceOutput {
+    /// Stable involved Connection id.
+    pub id: Uuid,
+    /// Accepted Connection name.
+    #[schemars(length(min = 1, max = 120))]
+    #[schema(min_length = 1, max_length = 120)]
+    pub name: String,
+    /// Source Place id in stored Connection direction.
+    pub source_place_id: Uuid,
+    /// Destination Place id in stored Connection direction.
+    pub destination_place_id: Uuid,
+}
+
+impl From<crate::ActivityConnectionReference> for ActivityConnectionReferenceOutput {
+    fn from(value: crate::ActivityConnectionReference) -> Self {
+        Self {
+            id: value.connection_id.0,
+            name: value.name,
+            source_place_id: value.source_place_id.0,
+            destination_place_id: value.destination_place_id.0,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(deny_unknown_fields)]
@@ -592,6 +678,14 @@ pub struct ActivityOutput {
     pub context_place: Option<PlaceSummaryOutput>,
     /// Entities involved, each with its role.
     pub involved_entity: Vec<ActivityEntityReferenceOutput>,
+    /// Exact Position versions involved in this Activity.
+    #[schemars(length(max = 3))]
+    #[schema(max_items = 3)]
+    pub involved_position: Vec<ActivityPositionReferenceOutput>,
+    /// Compact immutable Connections involved in this Activity.
+    #[schemars(length(max = 1))]
+    #[schema(max_items = 1)]
+    pub involved_connection: Vec<ActivityConnectionReferenceOutput>,
     /// Property changes made by this Activity.
     pub property_change: Vec<EntityPropertyOutput>,
     /// Trait establishments and developments made by this Activity.
@@ -622,6 +716,16 @@ impl From<Activity> for ActivityOutput {
             actor_character: value.actor_character.map(Into::into),
             context_place: value.context_place.map(Into::into),
             involved_entity: value.involved_entity.into_iter().map(Into::into).collect(),
+            involved_position: value
+                .involved_position
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            involved_connection: value
+                .involved_connection
+                .into_iter()
+                .map(Into::into)
+                .collect(),
             property_change: value.property_change.into_iter().map(Into::into).collect(),
             trait_change: value.trait_change.into_iter().map(Into::into).collect(),
             prose: value.prose,

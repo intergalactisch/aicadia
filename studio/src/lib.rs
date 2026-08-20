@@ -337,7 +337,7 @@ mod tests {
         );
 
         assert_eq!(surface.section.len(), 15);
-        assert_eq!(surface.tool.len(), 15);
+        assert_eq!(surface.tool.len(), 19);
         for tool in &surface.tool {
             assert!(
                 tool.capability_exists,

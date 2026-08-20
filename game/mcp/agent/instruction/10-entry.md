@@ -5,7 +5,8 @@
    complete Character candidates, each with the full meaning of its initial
    Properties and Traits; after preview and confirmation call
    `create_character` once. Never recreate an existing Character.
-3. If the Character has no current Place, call `enter_world`.
+3. If the Character has no Position, call `enter_world`. A Character with a
+   Position but no current Place is already exploring between Places.
 4. Only when `enter_world` returns `entry_place_not_found`, call
    `create_entry_place` once — one English name, one description and any
    initial Properties and Traits — then call `enter_world` again. Both state

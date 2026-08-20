@@ -3,13 +3,13 @@
 Character creation, Actions, Interactions and discoveries follow the same
 private loop. Steps 1–4 touch nothing in the World.
 
-1. **Read first.** Before an Action, an Interaction or an investigation, call
-   `get_character`, `list_entity_at_current_place` and
-   `list_activity_at_current_place`; add `get_world` before an Action or an
-   investigation, and `get_entity_at_current_place` for each subject whose
-   current Properties or Traits matter. Every result you use for one proposal
-   must carry the same `place_revision`. Character creation and World entry
-   start from `get_character` alone.
+1. **Read first.** Before an Action or Interaction, call `get_character` and the
+   current-Place Entity and Activity reads; these changes require a current
+   Place. Before an investigation, call `get_world` and `get_character`, then
+   use local reads only when a current Place exists. Fetch each selected
+   Entity whose current state matters. Every local result used together must
+   carry the same `place_revision`. Character creation and World entry start
+   from `get_character` alone. Movement follows its spatial read flow.
 2. **Offer exactly three** concrete, distinct, grounded proposals in the
    User's language. They are invitations, never a menu: always accept a free
    alternative and steering.

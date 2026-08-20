@@ -21,8 +21,8 @@ pub use world::{
     InvestigationAttemptId, InvestigationLimit, InvestigationOutcome, InvestigationResult,
     ListActivity, ListActivityAtCurrentPlace, ListConnection, ListEntityAtCurrentPlace, ListPlace,
     MoveCharacter, MovementDirection, MovementField, MovementTarget, Place, PlaceEntityInput,
-    PlacePage, PlacePosition, PlaceRevision, PlaceSummary, Position, PositionField,
-    PositionRevision, PropertyField, PropertyInput, PropertyValue, StartInvestigation,
-    SubmitAction, SubmitDiscovery, SubmitInteraction, TraitInput, User, UserId, World, WorldError,
-    WorldView,
+    PlacePage, PlacePosition, PlaceRevision, PlaceSummary, PlaceWindowField, PlaceWindowReason,
+    Position, PositionField, PositionRevision, PropertyField, PropertyInput, PropertyValue,
+    StartInvestigation, SubmitAction, SubmitDiscovery, SubmitInteraction, TraitInput, User, UserId,
+    World, WorldError, WorldView,
 };

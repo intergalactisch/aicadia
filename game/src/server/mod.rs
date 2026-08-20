@@ -14,14 +14,17 @@ use crate::{
     World,
     wire::{
         AcceptedActionOutput, AcceptedDiscoveryOutput, AcceptedInteractionOutput,
-        ActivityPageOutput, CharacterEntityStatePageOutput, CharacterOutput, CreateCharacterInput,
-        CreateEntityInput, CreateEntryPlaceInput, CurrentPlaceActivityPageOutput,
-        CurrentPlaceEntityPageOutput, CurrentPlaceEntityStatePageOutput, EntityOutput, ErrorCode,
-        ErrorDetail, ErrorOutput, GetEntityAtCurrentPlaceInput, GetEntityCurrentStateInput,
+        AcceptedMovementOutput, ActivityPageOutput, CharacterEntityStatePageOutput,
+        CharacterOutput, ConnectionOutput, ConnectionPageOutput, ConnectionPointOutput,
+        CreateCharacterInput, CreateEntityInput, CreateEntryPlaceInput,
+        CurrentPlaceActivityPageOutput, CurrentPlaceEntityPageOutput,
+        CurrentPlaceEntityStatePageOutput, EntityOutput, ErrorCode, ErrorDetail, ErrorOutput,
+        GetConnectionInput, GetEntityAtCurrentPlaceInput, GetEntityCurrentStateInput,
         GetEntityInput, InvestigationResultOutput, ListActivityAtCurrentPlaceInput,
-        ListActivityInput, ListEntityAtCurrentPlaceInput, PlaceOutput, StartInvestigationInput,
-        SubmitActionInput, SubmitDiscoveryInput, SubmitInteractionInput, USER_CONTEXT_HEADER,
-        UserOutput, WorldOutput, parse_user_context,
+        ListActivityInput, ListConnectionInput, ListConnectionPageInput,
+        ListEntityAtCurrentPlaceInput, ListPlaceInput, MoveCharacterInput, PlaceOutput,
+        PlacePageOutput, StartInvestigationInput, SubmitActionInput, SubmitDiscoveryInput,
+        SubmitInteractionInput, USER_CONTEXT_HEADER, UserOutput, WorldOutput, parse_user_context,
     },
 };
 
@@ -71,6 +74,15 @@ pub fn app(world: World, address: SocketAddr) -> Result<Router, ServerError> {
 mod investigation_test;
 
 #[cfg(test)]
+mod spatial_two_user_test;
+
+#[cfg(test)]
+mod spatial_variant_test;
+
+#[cfg(test)]
+mod spatial_movement_success_test;
+
+#[cfg(test)]
 mod test {
     use super::*;
     use sqlx::PgPool;
@@ -93,7 +105,7 @@ mod test {
             PgPool::connect_lazy("postgresql:///unused").expect("lazy pool should not connect");
         let tools = mcp_tool_catalog(World::new(pool));
 
-        assert_eq!(tools.len(), 15);
+        assert_eq!(tools.len(), 19);
         assert_eq!(
             tools
                 .iter()

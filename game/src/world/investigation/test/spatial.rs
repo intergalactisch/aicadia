@@ -198,9 +198,11 @@ async fn pre_t4_v1_activity_without_origin_retries_after_restart(pool: PgPool) {
         &mut transaction,
         entity.id,
         activity_id,
-        actor_position.x_cm,
-        actor_position.y_cm,
-        actor_position.z_cm,
+        [
+            actor_position.x_cm,
+            actor_position.y_cm,
+            actor_position.z_cm,
+        ],
         Some("Beside the north gate."),
         "pre_t4_retry_test",
     )

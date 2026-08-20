@@ -268,11 +268,10 @@ impl ConnectionRow {
         description: String,
         is_entry: bool,
         activity_id: ActivityId,
-        x_cm: i64,
-        y_cm: i64,
-        z_cm: i64,
+        coordinate: [i64; 3],
         position_description: Option<String>,
     ) -> ConnectionEndpoint {
+        let [x_cm, y_cm, z_cm] = coordinate;
         ConnectionEndpoint {
             place: PlacePosition {
                 id,
@@ -297,9 +296,7 @@ impl ConnectionRow {
             self.source_description,
             self.source_is_entry,
             self.source_position_activity_id,
-            self.source_x_cm,
-            self.source_y_cm,
-            self.source_z_cm,
+            [self.source_x_cm, self.source_y_cm, self.source_z_cm],
             self.source_position_description,
         );
         let destination = Self::endpoint(
@@ -308,9 +305,11 @@ impl ConnectionRow {
             self.destination_description,
             self.destination_is_entry,
             self.destination_position_activity_id,
-            self.destination_x_cm,
-            self.destination_y_cm,
-            self.destination_z_cm,
+            [
+                self.destination_x_cm,
+                self.destination_y_cm,
+                self.destination_z_cm,
+            ],
             self.destination_position_description,
         );
         ConnectionSummary {
@@ -392,12 +391,11 @@ pub(super) async fn insert_root_position(
     transaction: &mut Transaction<'_, Postgres>,
     entity_id: EntityId,
     activity_id: ActivityId,
-    x_cm: i64,
-    y_cm: i64,
-    z_cm: i64,
+    coordinate: [i64; 3],
     description: Option<&str>,
     operation: &'static str,
 ) -> Result<Position, WorldError> {
+    let [x_cm, y_cm, z_cm] = coordinate;
     for coordinate in [x_cm, y_cm, z_cm] {
         validate_coordinate(coordinate)?;
     }

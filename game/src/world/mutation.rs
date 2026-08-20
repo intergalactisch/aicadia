@@ -194,9 +194,7 @@ impl World {
             &mut transaction,
             entity.id,
             activity_id,
-            0,
-            0,
-            0,
+            [0, 0, 0],
             None,
             "create_entry_place",
         )
@@ -269,9 +267,11 @@ impl World {
             &mut transaction,
             character.entity.id,
             activity_id,
-            entry_place.position.x_cm,
-            entry_place.position.y_cm,
-            entry_place.position.z_cm,
+            [
+                entry_place.position.x_cm,
+                entry_place.position.y_cm,
+                entry_place.position.z_cm,
+            ],
             None,
             "enter_world",
         )
@@ -321,7 +321,7 @@ impl World {
             .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
-            .ok_or(WorldError::CharacterNotEntered)?;
+            .ok_or(WorldError::CharacterNotAtPlace)?;
         lock_place(&mut transaction, place.entity.id, "submit_action").await?;
         let current_revision =
             find_place_revision(&mut transaction, place.entity.id, "submit_action").await?;
@@ -457,9 +457,11 @@ impl World {
                 &mut transaction,
                 entity_id,
                 activity_id,
-                actor_position.x_cm,
-                actor_position.y_cm,
-                actor_position.z_cm,
+                [
+                    actor_position.x_cm,
+                    actor_position.y_cm,
+                    actor_position.z_cm,
+                ],
                 position_description.as_deref(),
                 "submit_action",
             )
@@ -560,9 +562,13 @@ impl World {
         let character = find_character(&mut transaction, user_id, true, "submit_interaction")
             .await?
             .ok_or(WorldError::CharacterNotFound)?;
+        character
+            .position
+            .as_ref()
+            .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
-            .ok_or(WorldError::CharacterNotEntered)?;
+            .ok_or(WorldError::CharacterNotAtPlace)?;
         lock_place(&mut transaction, place.entity.id, "submit_interaction").await?;
         let current_revision =
             find_place_revision(&mut transaction, place.entity.id, "submit_interaction").await?;

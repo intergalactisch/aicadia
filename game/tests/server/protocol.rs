@@ -1,5 +1,90 @@
 use super::*;
 
+fn collect_property_schema<'a>(value: &'a Value, name: &str, found: &mut Vec<&'a Value>) {
+    if let Some(property) = value.get("properties").and_then(Value::as_object)
+        && let Some(schema) = property.get(name)
+    {
+        found.push(schema);
+    }
+    match value {
+        Value::Array(item) => {
+            for value in item {
+                collect_property_schema(value, name, found);
+            }
+        }
+        Value::Object(item) => {
+            for value in item.values() {
+                collect_property_schema(value, name, found);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn assert_course_schema(schema: &Value) {
+    let alternative = schema["oneOf"]
+        .as_array()
+        .expect("Connection course should publish exact alternatives");
+    assert_eq!(alternative.len(), 2);
+    assert!(alternative.iter().any(|schema| schema["maxItems"] == 0));
+    assert!(
+        alternative
+            .iter()
+            .any(|schema| schema["minItems"] == 2 && schema["maxItems"] == 128)
+    );
+}
+
+fn assert_position_description_schemas(schema: &Value) {
+    let mut found = Vec::new();
+    collect_property_schema(schema, "position_description", &mut found);
+    assert_eq!(found.len(), 2);
+    assert!(
+        found
+            .iter()
+            .all(|schema| schema["minLength"] == 1 && schema["maxLength"] == 4_000)
+    );
+}
+
+fn assert_string_bounds(schema: &Value, min: u64, max: u64) {
+    assert_eq!(schema["minLength"], min, "unexpected schema: {schema}");
+    assert_eq!(schema["maxLength"], max, "unexpected schema: {schema}");
+}
+
+fn assert_nullable_string_bounds(schema: &Value, min: u64, max: u64) {
+    assert_string_bounds(schema, min, max);
+    let nullable = schema["nullable"] == true
+        || schema["type"]
+            .as_array()
+            .is_some_and(|types| types.contains(&json!("null")));
+    assert!(nullable, "schema should allow null: {schema}");
+}
+
+fn assert_described_fields(properties: &Value, fields: &[&str]) {
+    for field in fields {
+        assert!(
+            properties[*field]["description"]
+                .as_str()
+                .is_some_and(|description| !description.is_empty()),
+            "{field} should publish one concise meaning"
+        );
+    }
+}
+
+fn assert_position_roles(schema: &Value) {
+    let expected = vec![json!("origin"), json!("result")];
+    if let Some(values) = schema["enum"].as_array() {
+        assert_eq!(values, &expected);
+        return;
+    }
+    let values = schema["oneOf"]
+        .as_array()
+        .expect("Position role should publish its two variants")
+        .iter()
+        .map(|variant| variant["const"].clone())
+        .collect::<Vec<_>>();
+    assert_eq!(values, expected);
+}
+
 #[sqlx::test(migrations = "./migration")]
 async fn player_reads_remain_truthful_before_character_onboarding(pool: PgPool) {
     let world = World::new(pool);
@@ -41,7 +126,7 @@ async fn player_reads_remain_truthful_before_character_onboarding(pool: PgPool) 
 }
 
 #[sqlx::test(migrations = "./migration")]
-async fn catalog_exposes_exactly_the_fifteen_player_capabilities(pool: PgPool) {
+async fn catalog_exposes_exactly_the_nineteen_player_capabilities(pool: PgPool) {
     let server = TestServer::start(World::new(pool)).await;
 
     let openapi: Value = server
@@ -164,12 +249,181 @@ async fn catalog_exposes_exactly_the_fifteen_player_capabilities(pool: PgPool) {
         listed["result"]["tools"], expected_tools,
         "the checked-in catalog must equal the runtime catalog after central Agent descriptions are applied"
     );
-    assert_eq!(tools.len(), 15);
+    assert_eq!(tools.len(), 19);
     let tool_name = tools
         .iter()
         .map(|tool| tool["name"].as_str().expect("tool name should be text"))
         .collect::<BTreeSet<_>>();
     assert_eq!(tool_name, CAPABILITY.into_iter().collect());
+
+    let discovery_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "submit_discovery")
+        .expect("submit_discovery should publish its bounded schema");
+    assert_course_schema(
+        &discovery_tool["inputSchema"]["$defs"]["ConnectionInputWire"]["properties"]["course"],
+    );
+    assert_position_description_schemas(&discovery_tool["inputSchema"]);
+    assert_course_schema(
+        &openapi["components"]["schemas"]["ConnectionInputWire"]["properties"]["course"],
+    );
+    assert_position_description_schemas(&json!([
+        openapi["components"]["schemas"]["DiscoveryOriginInputWire"],
+        openapi["components"]["schemas"]["DiscoveryResultInputWire"]
+    ]));
+
+    let connection_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "get_connection")
+        .expect("get_connection should publish its bounded schema");
+    let place_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "list_place")
+        .expect("list_place should publish its bounded schema");
+    let list_connection_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "list_connection")
+        .expect("list_connection should publish its bounded schema");
+    assert_eq!(
+        connection_tool["outputSchema"]["$defs"]["ConnectionPointOutput"]["properties"]["ordinal"]
+            ["maximum"],
+        127
+    );
+    assert_eq!(
+        openapi["components"]["schemas"]["ConnectionPointOutput"]["properties"]["ordinal"]["maximum"],
+        127
+    );
+    for (name, schema) in [
+        (
+            "MCP Position description",
+            &connection_tool["outputSchema"]["$defs"]["PositionOutput"]["properties"]["description"],
+        ),
+        (
+            "MCP Connection shape description",
+            &connection_tool["outputSchema"]["properties"]["shape_description"],
+        ),
+        (
+            "OpenAPI Position description",
+            &openapi["components"]["schemas"]["PositionOutput"]["properties"]["description"],
+        ),
+        (
+            "OpenAPI Connection shape description",
+            &openapi["components"]["schemas"]["ConnectionOutput"]["properties"]["shape_description"],
+        ),
+    ] {
+        assert!(!schema.is_null(), "{name} should exist");
+        assert_nullable_string_bounds(schema, 1, 4_000);
+    }
+    assert_course_schema(&connection_tool["outputSchema"]["properties"]["course"]);
+    assert_course_schema(
+        &openapi["components"]["schemas"]["ConnectionOutput"]["properties"]["course"],
+    );
+    for schema in [
+        &connection_tool["outputSchema"]["properties"],
+        &connection_tool["outputSchema"]["$defs"]["PlacePositionOutput"]["properties"],
+        &openapi["components"]["schemas"]["ConnectionOutput"]["properties"],
+        &openapi["components"]["schemas"]["PlacePositionOutput"]["properties"],
+    ] {
+        assert_string_bounds(&schema["name"], 1, 120);
+        assert_string_bounds(&schema["description"], 1, 4_000);
+    }
+    for schema in [
+        &list_connection_tool["outputSchema"]["$defs"]["ConnectionSummaryOutput"]["properties"],
+        &openapi["components"]["schemas"]["ConnectionSummaryOutput"]["properties"],
+    ] {
+        assert_string_bounds(&schema["name"], 1, 120);
+        assert_string_bounds(&schema["description"], 1, 4_000);
+    }
+    for schema in [
+        &connection_tool["outputSchema"]["$defs"]["PositionOutput"]["properties"]["position_revision"],
+        &openapi["components"]["schemas"]["PositionOutput"]["properties"]["position_revision"],
+    ] {
+        assert_string_bounds(schema, 1, 256);
+    }
+    for schema in [
+        &place_tool["outputSchema"]["properties"]["next"],
+        &list_connection_tool["outputSchema"]["properties"]["next"],
+        &openapi["components"]["schemas"]["PlacePageOutput"]["properties"]["next"],
+        &openapi["components"]["schemas"]["ConnectionPageOutput"]["properties"]["next"],
+    ] {
+        assert_string_bounds(schema, 1, 512);
+    }
+    assert_eq!(
+        place_tool["outputSchema"]["properties"]["place"]["maxItems"],
+        100
+    );
+    assert_eq!(
+        list_connection_tool["outputSchema"]["properties"]["connection"]["maxItems"],
+        100
+    );
+    assert_eq!(
+        openapi["components"]["schemas"]["PlacePageOutput"]["properties"]["place"]["maxItems"],
+        100
+    );
+    assert_eq!(
+        openapi["components"]["schemas"]["ConnectionPageOutput"]["properties"]["connection"]["maxItems"],
+        100
+    );
+    let movement_tool = tools
+        .iter()
+        .find(|tool| tool["name"] == "move_character")
+        .expect("move_character should publish its bounded schema");
+    for name in ["origin_segment_ordinal", "target_segment_ordinal"] {
+        let mut found = Vec::new();
+        collect_property_schema(&movement_tool["inputSchema"], name, &mut found);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0]["maximum"], 126);
+        found.clear();
+        collect_property_schema(
+            &openapi["components"]["schemas"]["MovementTargetInput"],
+            name,
+            &mut found,
+        );
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0]["maximum"], 126);
+    }
+    for schema in [
+        &movement_tool["outputSchema"]["$defs"]["ActivityConnectionReferenceOutput"]["properties"]
+            ["name"],
+        &openapi["components"]["schemas"]["ActivityConnectionReferenceOutput"]["properties"]["name"],
+    ] {
+        assert_string_bounds(schema, 1, 120);
+    }
+    for schema in [
+        &movement_tool["inputSchema"]["properties"]["expected_position_revision"],
+        &openapi["components"]["schemas"]["MoveCharacterInput"]["properties"]["expected_position_revision"],
+    ] {
+        assert_string_bounds(schema, 1, 256);
+    }
+    let activity_position =
+        &movement_tool["outputSchema"]["$defs"]["ActivityPositionReferenceOutput"]["properties"];
+    let activity_connection =
+        &movement_tool["outputSchema"]["$defs"]["ActivityConnectionReferenceOutput"]["properties"];
+    let openapi_activity_position =
+        &openapi["components"]["schemas"]["ActivityPositionReferenceOutput"]["properties"];
+    let openapi_activity_connection =
+        &openapi["components"]["schemas"]["ActivityConnectionReferenceOutput"]["properties"];
+    for properties in [activity_position, openapi_activity_position] {
+        assert_described_fields(properties, &["entity", "role", "position"]);
+    }
+    for properties in [activity_connection, openapi_activity_connection] {
+        assert_described_fields(
+            properties,
+            &["id", "name", "source_place_id", "destination_place_id"],
+        );
+        for id in ["id", "source_place_id", "destination_place_id"] {
+            assert_eq!(properties[id]["format"], "uuid");
+        }
+    }
+    for properties in [
+        &movement_tool["outputSchema"]["$defs"]["ActivityOutput"]["properties"],
+        &openapi["components"]["schemas"]["ActivityOutput"]["properties"],
+    ] {
+        assert_eq!(properties["involved_position"]["maxItems"], 3);
+        assert_eq!(properties["involved_connection"]["maxItems"], 1);
+    }
+    assert_position_roles(&movement_tool["outputSchema"]["$defs"]["ActivityPositionRoleOutput"]);
+    assert_position_roles(&openapi["components"]["schemas"]["ActivityPositionRoleOutput"]);
     for removed in ["list_entity", "get_entity"] {
         assert!(!tool_name.contains(removed));
     }
@@ -188,7 +442,7 @@ async fn catalog_exposes_exactly_the_fifteen_player_capabilities(pool: PgPool) {
     assert_eq!(property["annotations"]["destructiveHint"], false);
     assert_eq!(property["annotations"]["idempotentHint"], true);
     assert_eq!(property["annotations"]["openWorldHint"], false);
-    for name in ["start_investigation", "submit_discovery"] {
+    for name in ["start_investigation", "submit_discovery", "move_character"] {
         let tool = tools
             .iter()
             .find(|tool| tool["name"] == name)
@@ -396,10 +650,14 @@ async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabi
         ("list_entity_at_current_place", true),
         ("list_activity_at_current_place", true),
         ("get_entity_at_current_place", true),
+        ("list_place", true),
+        ("list_connection", true),
+        ("get_connection", true),
         ("start_investigation", true),
         ("submit_action", true),
         ("submit_interaction", true),
         ("submit_discovery", true),
+        ("move_character", true),
     ] {
         let response = server
             .tool(
@@ -449,6 +707,7 @@ async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabi
 
     let unknown_start = json!({
         "request_id": Uuid::new_v4(),
+        "kind": "entity_at_position",
         "unexpected": true
     });
     let http_response = server
@@ -470,7 +729,7 @@ async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabi
     assert_eq!(error_code(&http_error), "invalid_request");
     assert_eq!(mcp_error(&mcp_response), http_error);
 
-    let invalid_start_id = json!({"request_id": "not-a-uuid"});
+    let invalid_start_id = json!({"request_id": "not-a-uuid", "kind": "entity_at_position"});
     let http_response = server
         .client
         .post(format!("{}/api/investigation", server.base_url))
@@ -494,7 +753,8 @@ async fn mcp_arguments_fail_closed_with_canonical_invalid_request_for_all_capabi
         "request_id": Uuid::new_v4(),
         "attempt_id": Uuid::new_v4(),
         "prose": "This malformed discovery must not be accepted.",
-        "find": {
+        "result": {
+            "type": "entity_at_position",
             "name": "Must not exist",
             "description": "An unknown nested field rejects the complete body.",
             "unexpected": true

@@ -57,7 +57,12 @@ async fn interaction_http_and_mcp_share_strict_commit_errors_and_scoped_results(
                 .keys()
                 .cloned()
                 .collect::<BTreeSet<_>>(),
-            BTreeSet::from(["description".to_owned(), "id".to_owned(), "name".to_owned()])
+            BTreeSet::from([
+                "description".to_owned(),
+                "id".to_owned(),
+                "name".to_owned(),
+                "position".to_owned()
+            ])
         );
     }
     let serialized_context = actor_context.to_string();
@@ -87,7 +92,12 @@ async fn interaction_http_and_mcp_share_strict_commit_errors_and_scoped_results(
             .keys()
             .cloned()
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["description".to_owned(), "id".to_owned(), "name".to_owned()])
+        BTreeSet::from([
+            "description".to_owned(),
+            "id".to_owned(),
+            "name".to_owned(),
+            "position".to_owned()
+        ])
     );
     for forbidden in [
         "introduced_by_user_id",
@@ -143,7 +153,12 @@ async fn interaction_http_and_mcp_share_strict_commit_errors_and_scoped_results(
             .keys()
             .cloned()
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["description".to_owned(), "id".to_owned(), "name".to_owned()])
+        BTreeSet::from([
+            "description".to_owned(),
+            "id".to_owned(),
+            "name".to_owned(),
+            "position".to_owned()
+        ])
     );
     for forbidden in ["introduced_by_user_id", "owner_user_id", "response"] {
         assert!(!accepted.to_string().contains(forbidden));

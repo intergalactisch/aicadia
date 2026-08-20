@@ -428,11 +428,10 @@ async fn unshaped_completion_retry_conflict_and_exact_history(pool: PgPool) {
             .count(),
         1
     );
+    assert_eq!(accepted.activity.involved_connection.len(), 1);
     assert_eq!(
-        accepted.activity.involved_connection,
-        vec![ActivityConnectionReference {
-            connection_id: connection.id
-        }]
+        accepted.activity.involved_connection[0].connection_id,
+        connection.id
     );
     let after = spatial_counts(&pool, character.entity.id).await;
     assert_eq!(

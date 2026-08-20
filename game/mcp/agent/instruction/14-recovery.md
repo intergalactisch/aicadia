@@ -15,6 +15,9 @@
   `discovery_request_conflict`: never silently edit or reuse the id.
 - Invalid discovery content returns to the private workshop; changed meaning
   needs a complete new preview, confirmation and `request_id`.
+- On stale Position, unavailable Connection or invalid travel: nothing changed.
+  Re-read exact spatial context, revise naturally and confirm again. On
+  `temporarily_unavailable`, retry only the unchanged exact request.
 - Never reveal whether an unavailable subject or Trait was nonexistent,
   remote, stale, duplicated, the actor, no longer present or controlled by a
   User. Never silently invent a replacement key or type, a Trait identity, a

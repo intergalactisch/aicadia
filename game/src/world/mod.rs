@@ -351,9 +351,7 @@ mod spatial_read_query_count_test {
                     &mut transaction,
                     destination_id,
                     activity_id,
-                    100,
-                    0,
-                    0,
+                    [100, 0, 0],
                     None,
                     "spatial_read_query_count_test",
                 )

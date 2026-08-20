@@ -494,9 +494,13 @@ impl World {
         )
         .await?
         .ok_or(WorldError::CharacterNotFound)?;
+        character
+            .position
+            .as_ref()
+            .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
-            .ok_or(WorldError::CharacterNotEntered)?;
+            .ok_or(WorldError::CharacterNotAtPlace)?;
         let place_revision = find_place_revision(
             &mut transaction,
             place.entity.id,
@@ -627,9 +631,13 @@ impl World {
         )
         .await?
         .ok_or(WorldError::CharacterNotFound)?;
+        character
+            .position
+            .as_ref()
+            .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
-            .ok_or(WorldError::CharacterNotEntered)?;
+            .ok_or(WorldError::CharacterNotAtPlace)?;
         let place_revision = find_place_revision(
             &mut transaction,
             place.entity.id,
@@ -730,9 +738,13 @@ impl World {
         )
         .await?
         .ok_or(WorldError::CharacterNotFound)?;
+        character
+            .position
+            .as_ref()
+            .ok_or(WorldError::CharacterNotEntered)?;
         let place = character
             .current_place
-            .ok_or(WorldError::CharacterNotEntered)?;
+            .ok_or(WorldError::CharacterNotAtPlace)?;
         let place_revision = find_place_revision(
             &mut transaction,
             place.entity.id,
@@ -824,29 +836,40 @@ impl World {
 }
 
 fn validate_place_window(request: &ListPlace) -> Result<(), WorldError> {
-    for coordinate in [
-        request.min_x_cm,
-        request.max_x_cm,
-        request.min_y_cm,
-        request.max_y_cm,
-        request.min_z_cm,
-        request.max_z_cm,
+    for (field, coordinate) in [
+        (PlaceWindowField::MinXCm, request.min_x_cm),
+        (PlaceWindowField::MaxXCm, request.max_x_cm),
+        (PlaceWindowField::MinYCm, request.min_y_cm),
+        (PlaceWindowField::MaxYCm, request.max_y_cm),
+        (PlaceWindowField::MinZCm, request.min_z_cm),
+        (PlaceWindowField::MaxZCm, request.max_z_cm),
     ] {
         if validate_coordinate(coordinate).is_err() {
-            return Err(WorldError::InvalidPlaceWindow);
+            return Err(WorldError::InvalidPlaceWindow {
+                field,
+                reason: PlaceWindowReason::OutOfRange,
+            });
         }
     }
-    for (minimum, maximum) in [
-        (request.min_x_cm, request.max_x_cm),
-        (request.min_y_cm, request.max_y_cm),
-        (request.min_z_cm, request.max_z_cm),
+    for (maximum_field, minimum, maximum) in [
+        (PlaceWindowField::MaxXCm, request.min_x_cm, request.max_x_cm),
+        (PlaceWindowField::MaxYCm, request.min_y_cm, request.max_y_cm),
+        (PlaceWindowField::MaxZCm, request.min_z_cm, request.max_z_cm),
     ] {
-        if minimum > maximum
-            || maximum
-                .checked_sub(minimum)
-                .is_none_or(|span| span > MAX_PLACE_WINDOW_SPAN_CM)
+        if minimum > maximum {
+            return Err(WorldError::InvalidPlaceWindow {
+                field: maximum_field,
+                reason: PlaceWindowReason::BeforeMinimum,
+            });
+        }
+        if maximum
+            .checked_sub(minimum)
+            .is_none_or(|span| span > MAX_PLACE_WINDOW_SPAN_CM)
         {
-            return Err(WorldError::InvalidPlaceWindow);
+            return Err(WorldError::InvalidPlaceWindow {
+                field: maximum_field,
+                reason: PlaceWindowReason::SpanTooWide,
+            });
         }
     }
     Ok(())

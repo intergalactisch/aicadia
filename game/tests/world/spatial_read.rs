@@ -1,5 +1,5 @@
 use super::*;
-use aicadia::{ActivityId, ConnectionId};
+use aicadia::{ActivityId, ConnectionId, PlaceWindowField, PlaceWindowReason};
 
 #[derive(Clone, Copy)]
 struct RawPlace {
@@ -132,15 +132,14 @@ async fn insert_place(
 
 async fn insert_connection(
     pool: &PgPool,
-    user_id: UserId,
-    actor_id: EntityId,
-    connection_id: ConnectionId,
-    source: RawPlace,
-    destination: RawPlace,
+    identity: (UserId, EntityId, ConnectionId),
+    endpoint: (RawPlace, RawPlace),
     allows_reverse: bool,
     point: &[(i16, i64, i64, i64)],
     marker: u8,
 ) {
+    let (user_id, actor_id, connection_id) = identity;
+    let (source, destination) = endpoint;
     let activity_id = ActivityId(Uuid::new_v4());
     let mut transaction = pool.begin().await.unwrap();
     sqlx::query(
@@ -325,12 +324,21 @@ async fn place_read_validates_window_limit_and_positioned_character(pool: PgPool
             .await,
         Err(WorldError::InvalidRequest)
     );
-    let mut invalid = place_window(0, None, 1);
-    invalid.max_x_cm = 100_000_001;
-    assert_eq!(
-        world.list_place(user_id, invalid).await,
-        Err(WorldError::InvalidPlaceWindow)
-    );
+    for (maximum, reason) in [
+        (1_000_000_000_000_001, PlaceWindowReason::OutOfRange),
+        (-1, PlaceWindowReason::BeforeMinimum),
+        (100_000_001, PlaceWindowReason::SpanTooWide),
+    ] {
+        let mut invalid = place_window(0, None, 1);
+        invalid.max_x_cm = maximum;
+        assert_eq!(
+            world.list_place(user_id, invalid).await,
+            Err(WorldError::InvalidPlaceWindow {
+                field: PlaceWindowField::MaxXCm,
+                reason,
+            })
+        );
+    }
     assert_eq!(
         world
             .list_place(user_id, place_window(0, Some("foreign".to_owned()), 1))
@@ -530,11 +538,8 @@ async fn connection_list_is_incident_paged_complete_and_course_free(pool: PgPool
         };
         insert_connection(
             &pool,
-            user_id,
-            actor_id,
-            ConnectionId(Uuid::from_u128(id)),
-            source,
-            destination,
+            (user_id, actor_id, ConnectionId(Uuid::from_u128(id))),
+            (source, destination),
             true,
             &[(0, start, 0, 0), (1, end, 0, 0)],
             marker,
@@ -656,11 +661,8 @@ async fn connection_get_is_neutral_and_hydrates_only_selected_course(pool: PgPoo
     let other = ConnectionId(Uuid::from_u128(301));
     insert_connection(
         &pool,
-        user_id,
-        actor_id,
-        selected,
-        entry,
-        b,
+        (user_id, actor_id, selected),
+        (entry, b),
         false,
         &[(0, 0, 0, 0), (1, 50, 0, 0), (2, 100, 0, 0)],
         40,
@@ -668,11 +670,8 @@ async fn connection_get_is_neutral_and_hydrates_only_selected_course(pool: PgPoo
     .await;
     insert_connection(
         &pool,
-        user_id,
-        actor_id,
-        other,
-        entry,
-        c,
+        (user_id, actor_id, other),
+        (entry, c),
         true,
         &[(0, 0, 0, 0), (1, 200, 0, 0)],
         41,
@@ -739,11 +738,12 @@ async fn connection_list_does_not_expand_courses_on_hundred_summary_page(pool: P
         let selected_point = if suffix <= 3 { point.as_slice() } else { &[] };
         insert_connection(
             &pool,
-            user_id,
-            actor_id,
-            ConnectionId(Uuid::from_u128(10_000 + suffix)),
-            entry,
-            destination,
+            (
+                user_id,
+                actor_id,
+                ConnectionId(Uuid::from_u128(10_000 + suffix)),
+            ),
+            (entry, destination),
             true,
             selected_point,
             u8::try_from(suffix).unwrap(),

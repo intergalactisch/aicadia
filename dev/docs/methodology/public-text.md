@@ -82,6 +82,12 @@ visible:
 | One tool description | ≤ ~100 words | 46–258 words, 2,245 total, 15.3k chars | 42–224 words, 1,756 total, 11.6k chars (11.8k after the block layout of the same day) |
 | One schema description | ≤ ~15 words | up to 60 words; 24.2k chars over 323 fields | at most 13 words; 10.0k chars over 323 fields |
 
+Later measurements preserve this baseline:
+
+| Date and reason | Play contract (L2) | Tool descriptions (L1) |
+| --- | --- | --- |
+| 2026-08-20, spatial S1 publication | 2,493 words, 16,683 chars, 15 sections | 42–195 words, 2,047 total, 13,869 chars across 19 tools |
+
 The first pass under this method landed above the contract guidance: semantic
 parity with the previous texts (about 150 distinct rules) bounds how far the
 contract can shrink without dropping a rule. The larger gains were in the schema

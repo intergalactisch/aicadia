@@ -133,13 +133,13 @@ The Agent asks for no User, Character or Place id. It must:
    labels, untranslated payload text or transport preparation.
 4. Only after confirmation, call `create_character` once with that privately retained
    input.
-   Creation deliberately returns `current_place: null`; introducing a Character does
-   not place it. If the final input changes, preview it again and obtain a new
+   Creation deliberately returns `position: null` and `current_place: null`;
+   introducing a Character does not place it. If the final input changes, preview it again and obtain a new
    confirmation before calling World.
-5. If the Character returned by the first read or accepted creation has a complete
-   `current_place` rather than null, it has already entered and the flow is finished.
-6. Otherwise call `enter_world` with empty input. World derives both the Character
-   and the one entry Place.
+5. If the Character returned by the first read or accepted creation has a Position,
+   it has already entered; `current_place` may still be null between Places.
+6. Only without a Position, call `enter_world` with empty input. World derives both
+   the Character and the one entry Place.
 7. Only when `enter_world` returns `entry_place_not_found`, call
    `create_entry_place` once with the semantic name and description for World
    genesis, then call `enter_world` again. Both state lists default to empty. If the
@@ -188,9 +188,9 @@ private confirmed result workshop. The Agent must:
 5. On `zero`, describe one honest unsuccessful search naturally and stop that
    attempt. Do not imply that a thing was found, expose chance/admission mechanics or
    submit a discovery. A later conscious investigation uses a new request id.
-6. On `positive`, re-read the Character's Position and current Place plus the
-   relevant Entity, Place, Connection and Activity context. The stable result is
-   permission, not a context snapshot.
+6. On `positive`, re-read the Character's Position and any current Place plus
+   relevant Entity, Place, Connection and Activity context. A loose Position has
+   no current-Place reads. The stable result is permission, not a context snapshot.
 7. For `entity_at_position`, author exactly one coherent found Entity with complete
    English name, description, optional Position description, 0–100 Properties and
    0–100 Traits at the bound point.

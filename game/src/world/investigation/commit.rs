@@ -344,9 +344,11 @@ async fn accept_entity_at_position(
         transaction,
         entity.id,
         activity_id,
-        actor_position.x_cm,
-        actor_position.y_cm,
-        actor_position.z_cm,
+        [
+            actor_position.x_cm,
+            actor_position.y_cm,
+            actor_position.z_cm,
+        ],
         position_description.as_deref(),
         operation,
     )
@@ -596,9 +598,7 @@ async fn create_place(
         transaction,
         entity.id,
         activity_id,
-        x_cm,
-        y_cm,
-        z_cm,
+        [x_cm, y_cm, z_cm],
         description,
         operation,
     )

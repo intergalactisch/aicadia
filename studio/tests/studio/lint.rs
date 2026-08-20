@@ -119,7 +119,7 @@ fn every_capability_document_has_published_tool_text_and_vice_versa() {
         .map(|record| stem(&record.path))
         .collect::<BTreeSet<_>>();
     assert_eq!(capability, tool_text);
-    assert_eq!(capability.len(), 15);
+    assert_eq!(capability.len(), 19);
 }
 
 #[test]

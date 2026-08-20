@@ -184,7 +184,7 @@ mod tests {
     async fn every_compiled_tool_joins_a_capability_contract_tool_text_and_http_route() {
         let surface = surface(&fixture(), catalog());
 
-        assert_eq!(surface.tool.len(), 15);
+        assert_eq!(surface.tool.len(), 19);
         let world = surface.tool("get_world").expect("get_world is published");
         assert_eq!(world.route().as_deref(), Some("GET /api/world"));
         assert_eq!(world.capability_path, "game/docs/capability/get_world.md");

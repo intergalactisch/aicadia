@@ -78,7 +78,7 @@ async fn game_mcp_and_studio_share_one_router_without_sharing_capabilities(pool:
     let tools = body["result"]["tools"]
         .as_array()
         .expect("tools/list should return tools");
-    assert_eq!(tools.len(), 15);
+    assert_eq!(tools.len(), 19);
     assert!(tools.iter().all(|tool| {
         tool["name"]
             .as_str()
