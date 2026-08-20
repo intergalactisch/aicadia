@@ -2618,3 +2618,29 @@ its current version, and fan-out across all knowing Characters would create fals
 meaning, write amplification and a hot-subject failure. The remaining question is
 whether Knowledge has any current mutable state of its own; absent such a state,
 `updated_at` would always equal `created_at` and earn no place.
+
+## Per-view Observation proposed; read receipts remain rejected
+
+The User sharpened the recurrence need: meeting an Entity again or returning to a
+Place may deserve its own immutable occurrence, allowing the Character and Agent to
+remember repeated encounters instead of keeping only first and last timestamps.
+The existing canonical term for this candidate is Observation: information acquired
+by one Character through one situated encounter or other accepted observation path.
+Knowledge remains the current information that Character may use; Observation would
+be its occurrence history rather than another copy of current World state.
+
+This does not yet accept an Observation table or capability. “Character views” has
+two materially different readings. An ordinary authorized World/HTTP/MCP read is
+transport and must not write history: repeated calls or retries could otherwise
+manufacture encounters, grow storage without game action and turn API behavior into
+a score. A genuine in-World observation must instead come from one explicit,
+idempotent accepted act with exact bounded observer, subject and structural basis.
+World may validate those typed facts but cannot infer seeing from prose, nearby
+coordinates or Agent narration.
+
+If an occurrence model is accepted, it remains private Character-grounded history.
+It must not expose a global reverse list of who watched another Character, create a
+stored view counter, invoke Agents in the background or update every Character when
+the subject changes. Whether current Movement/Interaction Activities already carry
+enough occurrence identity or a separate Observation record earns its own state is
+downstream of deciding which concrete acts count.

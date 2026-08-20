@@ -213,8 +213,10 @@ At million-Character pressure:
   knowable by an accepted act; the same Discovery also makes its exact Connection
   knowable. Each row stores an immutable server-authored `created_at` for the first
   time that Character gained this Knowledge; reads create no receipt and the
-  establishing Activity retains the exact cause and history. `updated_at` remains
-  open because no current field or lifecycle mutates the row.
+  establishing Activity retains the exact cause and history. The User proposed
+  preserving each later genuine Character view as separate Observation history
+  rather than overwriting that history through `updated_at`; what deterministically
+  qualifies as such a view remains open.
   Whether those two current subject families share one polymorphic row shape or use
   separate typed associations is the next open design choice — User choice A and
   corrected Laravel/PostgreSQL feasibility, 2026-08-20.
@@ -289,10 +291,18 @@ At million-Character pressure:
    Movement operation; do not publish raw Position or Connection CRUD.
 5. **S1 observation after departure and arrival.** Player consequence: who sees a
    Character at an unnamed intermediate Position or at B, and through which bounded
-   read? Technical consequence: current Place reads cannot select a Character with
-   no current Place, while a global Position lookup is rejected. **Preference:** the
+   read, and does a genuine repeat encounter become a separate personal Observation?
+   Technical consequence: current Place reads cannot select a Character with no
+   current Place, while a global Position lookup is rejected. Writing on every API
+   read would make retrying `get` calls create false World history and unbounded
+   storage; a dedicated Observation occurrence or Activity role is justified only by
+   one explicit idempotent in-World act with bounded subjects. **Preference:** the
    moving Character always receives itself; other Characters need an explicit
-   eligible map/local observation path, not guessed-id Position access.
+   eligible map/local observation path, not guessed-id Position access. Preserve a
+   separate occurrence only for an accepted, structurally validated in-World view;
+   ordinary reads, map inspection and prose create none. Store no `view_count`—a
+   bounded eligible history may support later private recurrence without a score or
+   global reverse observer query.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

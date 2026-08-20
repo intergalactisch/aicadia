@@ -124,6 +124,9 @@ into truth or spending tokens in the background.
 - Treating one Place as a universal visibility boundary, lock or infrastructure shard.
 - Letting an Agent decide which protected World facts it is eligible to read.
 - Making audible, visible or otherwise semantic observation a server-inferred first slice.
+- Treating an ordinary World/HTTP/MCP read or retry as a Character Observation;
+  repeated personal occurrences require an explicit accepted in-World act and may
+  not become a stored view counter or global reverse observer list.
 - Writing a durable delivery row for every possible recipient of every change.
 - Using last-write-wins, CRDT merge or prose similarity to settle semantic conflicts.
 - Treating original authorship as permanent exclusive mutation authority over ordinary World content.
@@ -149,6 +152,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
+- Which exact idempotent in-World acts establish a personal Observation occurrence,
+  and whether existing Activity roles preserve enough history before a separate
+  Observation record is earned.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed
