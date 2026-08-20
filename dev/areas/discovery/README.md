@@ -51,6 +51,8 @@ grounded candidate and the User confirms the complete preview before World commi
   for its two current subject families—Place and Connection—is technically viable;
   World-validated target integrity versus separate native-FK associations remains
   open. See the [storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
+  The Knowledge result's immutable server-authored `created_at` records when this
+  Character first gained it, while Activity records that Discovery was the cause.
   Later explicit transmission remains open.
 - One User confirmation covers the complete new-Place candidate: the Place Entity
   with its name, description and optional initial Properties and Traits—including

@@ -211,7 +211,10 @@ At million-Character pressure:
   User direction, 2026-08-20.
 - S1 stores sparse current Character-owned Knowledge for each exact Place made
   knowable by an accepted act; the same Discovery also makes its exact Connection
-  knowable. Reads create no receipt and Activity retains establishment time.
+  knowable. Each row stores an immutable server-authored `created_at` for the first
+  time that Character gained this Knowledge; reads create no receipt and the
+  establishing Activity retains the exact cause and history. `updated_at` remains
+  open because no current field or lifecycle mutates the row.
   Whether those two current subject families share one polymorphic row shape or use
   separate typed associations is the next open design choice — User choice A and
   corrected Laravel/PostgreSQL feasibility, 2026-08-20.
@@ -259,10 +262,11 @@ At million-Character pressure:
    [primary-source storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
    **Preference:** now prefer one polymorphic row shape limited to the two current
    stable aliases `place` and `connection`, with the Character-leading natural key,
-   establishing Activity and deterministic typed World validation in the same
-   transaction. Add no surrogate Knowledge id, User owner, read receipt, arbitrary
-   type string, Entity or Relation target. This earns one table from two present
-   consumers while leaving native target-FK strictness as the exact choice to grill.
+   immutable server-authored `created_at`, establishing Activity and deterministic
+   typed World validation in the same transaction. Add no surrogate Knowledge id,
+   User owner, read receipt, arbitrary type string, Entity or Relation target. This
+   earns one table from two present consumers while leaving native target-FK
+   strictness and any meaningful `updated_at` lifecycle as the exact choices to grill.
 2. **Discovery admission.** Player consequence: must spatial expansion consume a
    successful current Investigation attempt, or may an Agent propose a new Place
    after ordinary exploration discussion? Technical consequence: this decides

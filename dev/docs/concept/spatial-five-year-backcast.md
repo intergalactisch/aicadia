@@ -2602,3 +2602,19 @@ however, provide one native PostgreSQL foreign key whose target table changes wi
 or separate typed associations. The next decision is precisely which strictness
 boundary S1 accepts. Entity and Relation are not current target candidates merely
 because the shape could later accommodate them.
+
+## Knowledge creation time selected; update meaning remains open
+
+The User wants a directly available `created_at` on each Knowledge association so
+an Agent can tell when the Character first gained that Knowledge. It is immutable,
+server-authored and written atomically with the establishing Activity. “Discovered
+at” is not the universal definition: entry, arrival or a later accepted introduction
+may establish the same Knowledge without a Discovery. The Activity retains which
+accepted act established it; `created_at` supplies its direct time.
+
+No `updated_at` meaning has yet been accepted. A change to the known Place or
+Connection itself must not update every Character's Knowledge row: the subject owns
+its current version, and fan-out across all knowing Characters would create false
+meaning, write amplification and a hot-subject failure. The remaining question is
+whether Knowledge has any current mutable state of its own; absent such a state,
+`updated_at` would always equal `created_at` and earn no place.
