@@ -46,7 +46,11 @@ grounded candidate and the User confirms the complete preview before World commi
 - When the Character has an explicit current Place A, the selected new-Place package
   can establish one destination and its explicit A→B connectedness while the
   Character remains at its Position; entering B belongs to a later deliberate
-  Movement action. Connection behavior without current Place is still open.
+  Movement action.
+- When current Place is absent, the same confirmed package first establishes a
+  separately identified, Agent-authored origin Place A at the Character's exact
+  unchanged Position, sets A as current and establishes A→B. It never gives the
+  Character Entity itself the Place role or creates an unnamed origin marker.
 - Accepted Place discovery makes that exact destination and any accepted Connection
   knowable to the discovering Character even though the Character remains where it
   is. It does not reveal every Place connected beyond that destination or every
@@ -64,10 +68,10 @@ grounded candidate and the User confirms the complete preview before World commi
   Position and the explicit A→B Connection with its allowed direction. World accepts
   all of it with one Activity and consumes the opportunity, or writes none of it.
 - A successful new-Place discovery cannot leave an unpositioned Place, and any
-  included Connection cannot exist without both endpoint Places. Whether a discovery
-  from a Position with no current Place includes no Connection or uses another
-  explicit endpoint is the next spatial choice. Retry returns the same complete
-  accepted result rather than repeating any part.
+  included Connection cannot exist without both endpoint Places. From a Position
+  with no current Place, origin A and destination B are both included in the one
+  atomic result. Retry returns that same complete accepted result rather than
+  repeating any part.
 - That established connection explicitly names its allowed direction or directions;
   Discovery does not imply a return path.
 - The established Connection also receives its own Agent-authored name and
@@ -184,11 +188,11 @@ states and errors remain in [`game/docs/`](../../../game/docs/README.md).
 Future discovery keeps the same responsibility split: World owns bounded mechanical
 opportunity and structural validation; an explicitly invoked Agent authors meaning;
 the User confirms; one transaction commits exact state and history. The selected
-new-Place direction grounds that opportunity at the Character's exact Position and
-expands the package with exactly one Place Entity, its direct Position and optional
-initial Properties and Traits while leaving the Character where it is. Whether the
-same package can or must include a Connection depends on the still-open origin-Place
-choice. Broader multi-Entity expansion requires a separate accepted contract.
+new-Place direction grounds that opportunity at the Character's exact Position. With
+a current Place it expands the package with destination B and A→B. Without one it
+also establishes separately identified origin A at the Character's unchanged point,
+sets A as current and connects A→B. Broader multi-Entity expansion requires a
+separate accepted contract.
 
 ### Absent
 

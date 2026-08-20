@@ -53,6 +53,10 @@ immediately tells the User what it retained.
 - When the Agent chooses to seek a genuine natural find, it uses the existing
   Investigation capability from that current Position. Spatial adds no second
   admission path; Agent-authored made or placed things remain ordinary creation.
+- If a successful Place discovery begins without current Place, the Agent authors
+  both a genuine named origin Place at the Character's unchanged point and destination
+  Place B, presents origin, destination, Connection and current-Place consequence in
+  one preview and submits them only after User confirmation.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.

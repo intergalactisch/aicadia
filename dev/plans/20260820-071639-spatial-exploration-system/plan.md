@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T14:03:34+02:00"
+updated_at: "2026-08-20T14:08:26+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -22,10 +22,10 @@ PostgreSQL, HTTP and MCP:
 2. the Character's Agent can inspect one eligible, bounded map window containing
    deliberately established Places and their explicit Connections;
 3. after a successful eligible discovery and explicit User confirmation, the Agent
-   can either establish a new destination Place with its direct Position, initial
-   Entity state and, when the Character has a valid current Place endpoint, one named
-   Connection, or reuse an existing eligible Place under the same endpoint rule; the
-   no-current-Place Connection result remains open below;
+   can establish a new destination Place with its direct Position, initial Entity
+   state and one named Connection from its current Place; when current Place is absent,
+   the same preview first establishes a genuine named origin Place at the Character's
+   unchanged Position and makes it current, then connects that origin to the destination;
 4. discovery never moves the Character and any accepted Connection consequence is
    exact, atomic and idempotent; and
 5. a later explicit Movement traverses all or a selected exact part of that
@@ -287,6 +287,11 @@ At million-Character pressure:
   every current Character Position is eligible and current Place is not required.
   Made or placed things remain ordinary creation — User confirmation and scope
   correction, 2026-08-20.
+- When spatial Discovery starts with no current Place, its complete confirmed result
+  creates a separately identified, Agent-authored origin Place at the Character's
+  unchanged Position, sets it as current and establishes its Connection to the
+  destination. It never makes the Character Entity a Place or silently creates an
+  unnamed marker — User choice B with one-subject correction, 2026-08-20.
 - Movement may stop on an exact course point or arrive, writes ordinary Position and
   Activity and has no durable journey — Movement Area.
 - Connection loops and geographically impossible topology are artistically valid;
@@ -376,24 +381,14 @@ At million-Character pressure:
    User owner, read receipt, arbitrary type string, Entity or Relation target. This
    earns one table from two present consumers while leaving native target-FK
    strictness and any meaningful `updated_at` lifecycle as the exact choices to grill.
-2. **Discovery Connection without current Place.** Player consequence: a Character
-   may discover a Place while standing at an unnamed Position, but Connection accepts
-   only Place endpoints and spatial may not fabricate a dummy origin Place. Decide
-   whether that discovery establishes no Connection, may connect from another exact
-   known Place, or requires the User to establish the current point as a Place.
-   Technical consequence: this determines whether Connection is optional in the
-   discovery transaction and which exact endpoint dependency is valid. **Preference:**
-   establish the discovered Place without a Connection by default; later connection
-   is a separate explicit opportunity, while an already current Place may still be
-   proposed as endpoint in the same confirmed package.
-3. **First Connection deduplication.** Player consequence: when another Agent already
+2. **First Connection deduplication.** Player consequence: when another Agent already
    established an A→C alternative, should the opportunity reuse that exact
    Connection or may it still establish a different named alternative? Technical
    consequence: parallel Connections are accepted long-term, so endpoint uniqueness
    cannot masquerade as permanent identity. **Preference:** S1 explicitly reuses a
    selected eligible Connection when supplied; only an exact idempotency/concurrent
    creation key deduplicates a new alternative.
-4. **Public capability boundaries and names.** Player consequence: which small tool
+3. **Public capability boundaries and names.** Player consequence: which small tool
    set lets an Agent read map context, confirm expansion and move without exposing
    internal rows? Technical consequence: names fix World methods, HTTP routes, MCP
    tools and published context cost. **Preference:** one bounded map read, the
@@ -401,7 +396,7 @@ At million-Character pressure:
    operation, one explicit Observation operation and one bounded private
    Observation-history read named `list_observation`; do not publish raw Position or
    Connection CRUD. Exact names for the other proposed operations remain open.
-5. **S1 observation after departure and arrival.** Player consequence: who sees a
+4. **S1 observation after departure and arrival.** Player consequence: who sees a
    Character at an unnamed intermediate Position or at B, and through which bounded
    read, and does a genuine repeat encounter become a separate personal Observation?
    Technical consequence: current Place reads cannot select a Character with no
@@ -471,13 +466,13 @@ At million-Character pressure:
    those choices from Position with or without a current Place. Still open: how
    three Places become eligible; current-Place reads already cover Characters that
    enter a selected Place.
-6. **History vocabulary.** Player consequence: Activity clearly says a Place was
+5. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
    fixed without a generic spatial payload. **Preference:** distinct expansion and
    Movement operations with typed roles; reuse existing `subject`, `destination` and
    `location` only where their current meanings remain exact.
-7. **Representability and request bounds.** Player consequence: no arbitrary gameplay
+6. **Representability and request bounds.** Player consequence: no arbitrary gameplay
    travel cap, but malformed or enormous windows/courses fail clearly. Technical
    consequence: choose coordinate bound, page size, window volume, course-point
    count, text limits and statement/lock budgets before publishing schemas.

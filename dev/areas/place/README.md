@@ -48,6 +48,11 @@ not a pre-computed complete map.
 - The existing Investigation opportunity remains the admission path for a genuine
   natural find and is extended to any current Character Position. Spatial does not
   redesign Investigation and never requires current Place for it.
+- If Place discovery succeeds while current Place is absent, the complete confirmed
+  result establishes a separately identified named origin Place at the Character's
+  unchanged Position, sets it as current and connects it to the discovered Place.
+  The Character Entity never receives the Place role merely because it supplied that
+  point.
 - The Agent dynamically composes exploration from available bounded MCP tools. Place
   prescribes no universal existing-context/discovery order, and World stores no
   exploration workflow or read receipt; shared proposals still require fresh relevant

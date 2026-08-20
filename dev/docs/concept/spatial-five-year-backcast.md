@@ -3133,3 +3133,34 @@ exact Character and Position state, not a Place, region counter or global explor
 row. The still-open spatial consequence is Connection. When `current_place` is null,
 there is no Place endpoint from which the previously discussed A→B Connection can
 originate, and spatial must not manufacture a dummy Place merely to satisfy it.
+
+## Loose discovery establishes a genuine origin Place
+
+The User selected option B. When a positive Investigation begins from Character M's
+Position P with no current Place and produces destination Place B, the confirmed
+spatial package also deliberately establishes a named origin Place A at P and the
+explicit A→B Connection. M does not move, but A becomes its current Place. Rejecting
+the preview writes nothing and consumes none of the partial package.
+
+One identity correction is mandatory. P is M's Position and Position has no identity
+of its own; assigning the Place role directly to P would make Character Entity M the
+Place. Instead the Agent authors a separate origin Entity A with its own name and
+description, World gives A a direct Position equal to M's resolved World point, and
+the Place role uses A's `entity_id`. M and A are validly co-positioned. A stays at
+that point when M later moves.
+
+The successful transaction therefore settles origin Entity/Position/Place A,
+destination Entity/Position/Place B, Connection A→B, M's explicit current Place,
+the consumed Investigation opportunity and one attributable Activity atomically.
+World never invents A's meaning or name and never infers current Place from coordinate
+equality; Agent authorship and User confirmation make A a genuine Place rather than a
+dummy bookkeeping point.
+
+Concurrency remains exact-subject scoped. The transaction depends on M's admitted
+Position and lack of current Place; concurrent Movement or another winning spatial
+settlement makes the stale proposal fail. Other Characters at P may independently
+establish distinct Places unless eligible context and an explicit User choice reuse
+one stable Place. There is no coordinate uniqueness, region lock or global Place
+counter. Two spatial product questions remain: which established subjects a bounded
+Position-centered read may expose, and how parallel or concurrent Connection
+alternatives are treated.

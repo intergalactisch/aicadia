@@ -44,6 +44,9 @@ reconstruct one accepted move.
   Character fully able to continue discovery without establishing a dummy Place.
 - The Agent chooses dynamically among the MCP tools available after Movement; World
   imposes no look-around/discovery sequence and stores no exploration workflow.
+- When Discovery establishes an origin Place at a loose Character Position, the
+  Character remains at the same coordinates and that Place becomes current explicitly.
+  The origin Place stays behind when later Movement changes the Character Position.
 - Movement must preserve the stable identity of every moved Character, Entity and Place.
 - A move is explicit and deterministically validated by World; prose never implies a route or destination.
 - Accepted movement changes current Position and writes attributable Activity atomically.
