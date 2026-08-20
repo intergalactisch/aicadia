@@ -252,6 +252,12 @@ At million-Character pressure:
   settle atomically. It checks no Position, distance, Connection, sight, attention,
   truth or subject revision and returns no current subject state or mutation right —
   User choice A, 2026-08-20.
+- During one explicitly User-invoked in-World Agent turn, the Agent may store its own
+  Character's private Observation batch without a separate preview and confirmation,
+  then tells the User in that response what the Character noticed and retained.
+  Shared World mutations still require confirmation. No subscription, server event
+  or later process can invoke a BYO Agent or spend tokens — User choice B and BYO
+  correction, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -290,6 +296,9 @@ At million-Character pressure:
 - Observation validation performs one bounded set of indexed existence checks and
   observer-owned inserts. It takes no lock or counter on the observed subject merely
   because many Characters write private accounts about it.
+- The no-extra-confirmation rule is Agent conduct within one explicit invocation,
+  not a durable World session or server-verifiable conversational flag. A subscription
+  may announce change only; it cannot create an Agent turn or Observation.
 
 ### Open questions blocking activation
 
@@ -369,10 +378,15 @@ At million-Character pressure:
    A limits World checks to observing-Character control, admitted target alias,
    existing model id, request/text bounds, idempotency and atomic Activity. World
    checks no current spatial plausibility or subject revision and returns no subject
-   state or mutation authority. **Next open consequence:** decide whether this
-   private observer-owned write still needs its own explicit User preview and
-   confirmation, or whether an already explicitly invoked Agent may record it during
-   the active User turn without another approval step.
+   state or mutation authority. User choice B makes private Observation the narrow
+   exception to per-mutation confirmation: during an explicitly User-invoked
+   in-World turn, the Agent may write one bounded batch for its own Character and
+   immediately disclose what it retained. It cannot write later or in the background;
+   under BYO Agents, a subscription cannot invoke the Agent or spend tokens at all.
+   Shared state changes still require full preview and confirmation. **Next open
+   consequence:** because the immutable private account may be wrong and was not
+   separately approved, decide how a User corrects it without silently rewriting
+   occurrence history.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

@@ -56,6 +56,10 @@ into truth or spending tokens in the background.
 - World checks observer control, admitted alias, target existence and bounded
   idempotent storage, but no spatial plausibility, sight or subject revision. Writes
   remain observer-owned and never update, lock or count against the observed subject.
+- Within one explicitly User-invoked in-World Agent turn, a private Observation batch
+  needs no separate confirmation and is disclosed to the User in that response.
+  Shared mutations still require confirmation; subscriptions never invoke BYO Agents
+  or create Observations in the background.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
   so scanning guessed windows cannot enumerate every established Place. One sparse
@@ -172,9 +176,8 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- Whether private observer-owned Observation storage requires a separate User preview
-  and confirmation or may occur inside an already explicitly invoked active User
-  turn without another approval or any background Agent work.
+- How an Agent and User correct an immutable private Observation that later proves
+  mistaken, without rewriting occurrence history or creating shared subject truth.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

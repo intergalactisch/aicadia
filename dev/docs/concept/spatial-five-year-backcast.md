@@ -2887,3 +2887,25 @@ observe one famous Entity without contending on one shared Entity row. The next
 player-flow choice is confirmation: whether saving this private memory needs a fresh
 preview and approval or may occur within the User's already explicit active Agent
 turn.
+
+## Active-turn Observation needs no separate confirmation
+
+The User selected option B. During one explicitly User-invoked in-World Agent turn,
+the Agent may decide and store a bounded private Observation batch for its own
+Character without pausing for another preview and approval. In the same response it
+tells the User what the Character noticed and retained. This is a narrow exception
+for private Character memory; Movement and every shared or externally consequential
+World change keep their complete preview and confirmation boundary.
+
+The permission belongs to Agent conduct, not World session state. World sees an
+authenticated bounded Observation request and enforces the already selected hard
+checks, but cannot prove what was said in the surrounding conversation. The explicit
+User invocation stands alone; no durable session, delayed continuation or server-side
+Agent exists.
+
+The User also made option C categorically impossible under the BYO AI-Agent
+subscription model. A subscription may notify an already connected client that World
+state changed, but can never invoke a User's Agent, make it reason, call Observation
+or spend tokens. At scale this introduces no queues of Agent work or recipient writes.
+The next dependency is correction: an Agent-authored memory may be wrong, so the User
+needs a clear rule for responding without quietly rewriting an immutable occurrence.

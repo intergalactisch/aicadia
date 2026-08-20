@@ -9,7 +9,10 @@
 Agent Play is the way a User experiences Aicadia through an explicitly invoked AI
 Agent connected over MCP. The Agent reads authoritative World facts, conducts a
 grounded in-world conversation, uses its own intelligence to compose bounded
-proposals and asks the User to confirm every complete World-changing package.
+proposals and asks the User to confirm every complete shared or consequential
+World-changing package. During one explicitly User-invoked in-World turn it may store
+its own Character's private Observation batch without a second confirmation and
+immediately tells the User what it retained.
 
 ## Boundary
 
@@ -17,7 +20,8 @@ proposals and asks the User to confirm every complete World-changing package.
 
 - User-owned intelligence operating through the same public capabilities as every other Agent.
 - An in-world conversation grounded only in authoritative Aicadia MCP reads.
-- Explicit preview and confirmation before each mutation.
+- Explicit preview and confirmation before each mutation except the selected narrow
+  private Observation write inside one active User invocation.
 - Provider-neutral Agent conduct with deterministic World validation.
 
 ### This is not
@@ -34,7 +38,9 @@ proposals and asks the User to confirm every complete World-changing package.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.
-- Every mutation requires a complete preview and explicit User confirmation.
+- Every shared or externally consequential mutation requires a complete preview and
+  explicit User confirmation; only the selected private Observation batch inside one
+  explicit active User invocation is exempt.
 - Capabilities are provider- and model-neutral and have semantic parity across World, HTTP and MCP.
 - If MCP authority is unavailable, the Agent fails closed before mutation.
 - An Agent must be able to express open, nuanced and quantitative relationships
@@ -131,6 +137,12 @@ proposals and asks the User to confirm every complete World-changing package.
   existence, request and text bounds, idempotency and atomic Activity. It checks no
   spatial plausibility or truth and returns no current target fields or authority
   through the Observation write.
+- During an explicitly User-invoked in-World turn, the Agent may store one bounded
+  private Observation batch for its own Character without separate confirmation and
+  immediately tells the User what it retained. This never authorizes shared mutation,
+  another Character's memory or delayed/background work.
+- A subscription may notify an active client of World change but, under the BYO Agent
+  model, can never invoke the Agent, call Observation or spend User tokens.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.
