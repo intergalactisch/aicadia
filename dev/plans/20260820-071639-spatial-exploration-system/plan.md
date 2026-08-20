@@ -413,12 +413,13 @@ At million-Character pressure:
    Observation; the read itself writes nothing. User choice B says a correction is
    another ordinary immutable Observation account: no correction reference, status
    or update operation is added, and Agent intelligence interprets the chronology.
-   **Next open consequence:** first distinguish an entered Character at an unnamed
-   Position from a Character that has not entered World. The current contract uses
-   absent `current_place` for the latter, while intermediate Movement also needs no
-   current Place. Only then decide the bounded spatial read through which another
-   Character can encounter the intermediate traveller; current-Place reads already
-   cover both when they are at B.
+   **Corrected framing:** no Character participation state or ceremony is introduced.
+   A Character with Position and no current Place is simply between Places; later
+   abandonment is a separate control or lifecycle concern. **Next open consequence:**
+   decide whether Character creation retains the delivered short unpositioned setup
+   before first placement or establishes Position immediately. Only then decide the
+   bounded spatial read through which another Character can encounter an intermediate
+   traveller; current-Place reads already cover both when they are at B.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

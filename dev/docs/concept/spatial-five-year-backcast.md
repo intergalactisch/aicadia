@@ -2986,7 +2986,10 @@ correction link may be reconsidered only if later Agent evidence shows that the 
 chronological response is insufficient.
 
 This closes the Observation-correction branch and exposes the next spatial
-prerequisite. The delivered Character contract currently uses absent `current_place`
-to mean “not entered,” while accepted intermediate Movement needs an entered
-Character with Position and no current Place. Before designing how another Character
-can encounter that traveller, those two states need one explicit representation.
+prerequisite. The User rejected “participation” as an extra state or ceremony: a
+Character already exists in World, while being abandoned by its User would be a
+separate later control or lifecycle question. `current_place` only says that a Place
+is the Character's current local context; its absence may validly mean that a
+positioned Character stands between Places. The remaining narrower question is
+whether Character creation may still have a short unpositioned setup state before
+its first Position, or whether every Character receives Position immediately.

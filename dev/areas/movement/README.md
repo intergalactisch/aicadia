@@ -172,9 +172,10 @@ reconstruct one accepted move.
 
 ### Not yet chosen
 
-- How an entered Character at an unnamed Position is distinguished from a Character
-  that has not entered World. The current runtime uses absent `current_place` for the
-  latter, while intermediate Movement also requires no current Place.
+- Whether Character creation keeps a short unpositioned setup state before its first
+  Position or establishes Position immediately. No participation state is needed:
+  absent current Place only means no Place is the current local context, and an
+  abandoned Character is a separate control or lifecycle concern.
 - Whether an open-terrain Connection may exist without a physical Entity and who may establish it.
 - Which exact state lets an Agent say what terrain, Places or Areas a Character
   crosses while traversing one Connection. Endpoint topology alone supplies no
