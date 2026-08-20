@@ -2543,3 +2543,20 @@ Technical synthesis is complete and its first PostgreSQL Position falsifier is k
 Exact production fields, operation names, limits, privacy, geometry, integration
 lock behavior and indexes remain evidence and plan work. No `game/docs`, migration,
 runtime, HTTP, MCP or public Agent surface is authorized by this record.
+
+## Staged delivery plan drafted
+
+The draft [spatial exploration system plan](../../plans/20260820-071639-spatial-exploration-system/plan.md)
+turns the dependency-ordered recommendation into one implementable first slice and a
+non-authorizing preservation map for everything after it. S1 covers direct Position,
+deliberate Place expansion, bounded eligible map context, one stable Connection and
+complete or partial Movement. Later independent slices retain relative carriers,
+open Relation, Area, private arrangement and separately earned Route, terrain,
+protected remote-control and unforeseen-result mechanics.
+
+This planning structure is proposed, not accepted implementation. Seven S1 choices
+remain material: map eligibility, discovery admission, first-Connection
+deduplication, public capability boundaries, observation away from a Place, Activity
+vocabulary and representability/request bounds. `game/docs`, schema, World, HTTP,
+MCP and public Agent text remain unchanged until those choices are resolved and the
+complete plan is explicitly accepted.
