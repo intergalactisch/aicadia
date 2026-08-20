@@ -80,13 +80,12 @@ immediately tells the User what it retained.
 - An Agent may propose the Place role for any positioned Entity when the User wants
   it to become an independent map, discovery or navigation reference. It never
   assumes that Position, prose or a semantic kind already made the Entity a Place.
-- For map context, the Agent requests one exact bounded World window. World first
-  restricts candidates to Places that the acting Character can deterministically
-  know, then filters by resolved Position or known Area intersection and returns
-  bounded eligible spatial state plus continuation. Matching coordinates never give
-  the Agent an omniscient list of every established Place or positioned Entity. One
-  sparse current association remembers each known Character–Place pair; the Agent,
-  User and a read itself never own or create that Knowledge.
+- For Place context, the Agent requests one exact bounded coordinate window. World
+  returns ordinary established Places whose resolved Positions match, with a page
+  limit and continuation. The Agent may look around the Character or inspect a
+  proposed discovery point. The read returns no unrelated positioned Entity and
+  writes no Knowledge, Observation or Activity; base Place geography is shared rather
+  than Character-Knowledge-gated in S1.
 - For every positioned Entity, the Agent grounds either an absolute Position from
   permanent World origin or a Position relative to exactly one Entity. Choosing the
   latter explicitly means mechanical following; free wording and Relations never

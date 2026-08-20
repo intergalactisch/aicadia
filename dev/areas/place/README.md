@@ -69,17 +69,14 @@ not a pre-computed complete map.
   that one subject: Entity owns the name and extensible content, Position owns the
   point and Place owns only the deliberate spatial-reference role. This adds no
   independent Place id or duplicate name, Property, Trait or coordinate storage.
-- A bounded map read first selects only Places that World can deterministically make
-  knowable to the acting Character, then filters those candidates by resolved
-  Position in the exact requested World window or known Area intersection. A window
-  never reveals every established Place merely because its coordinates match. The
-  response can return each selected Entity's name, description and Position,
-  relevant positive Area coverage and bounded eligible Connections, with continuation
-  instead of an unbounded or omniscient World map. One sparse current association per
-  known Character and exact subject is chosen. The current storage choice is between
-  one polymorphic shape limited to Place and Connection or separate typed
-  associations; its lookup feasibility and missing dynamic target foreign key are
-  documented in the [storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
+- A bounded coordinate window returns all ordinary established Places selected by
+  resolved Position in that exact window, with page limit and continuation instead of
+  an unbounded response or count. The Agent may use a window around the Character's
+  current Position or an exact proposed discovery point. Base Place geography is not
+  Character-Knowledge-gated; a future protected Place must earn explicit access state.
+- A Place-window read writes no Knowledge, Observation or Activity and never expands
+  matching coordinates into all Characters, Entities or inventory. Sparse
+  Character–Place Knowledge remains parked outside S1 for a future remembered map.
 - The coordinate-window map read is distinct from Place neighborhood, which remains
   a view of explicit structural relationships around one exact Place. Neither read
   returns every positioned Entity or infers observation and visibility.

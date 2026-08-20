@@ -91,8 +91,8 @@ grounded candidate and the User confirms the complete preview before World commi
   regardless of distance, and the User may confirm it after nearby inspection.
   World validates the structured Position's still-unchosen representable numeric
   bounds, not a discovery radius.
-- Before confirmation, the Agent must inspect a bounded, Character-eligible set of
-  already established Places around B's proposed point and include that returned
+- Before confirmation, the Agent must inspect a bounded set of ordinary established
+  Places around B's proposed point and include that returned
   context in the complete User preview. Their proximity informs the Agent and User
   but never makes World block, merge or reuse B automatically. Hidden or out-of-
   scope Places remain unknown rather than being reported absent.
@@ -152,8 +152,8 @@ grounded candidate and the User confirms the complete preview before World commi
 - Which later Agent- and User-driven behavior can curb, organize or reconcile a
   proven proliferation of overlapping Places without making World infer semantic
   sameness or invalidating their stable identity and history.
-- The exact Character-eligible Place or terrain context available to an Investigation
-  grounded at a non-Place Position.
+- Which later terrain context, beyond the accepted ordinary bounded Place window, is
+  available to an Investigation grounded at a non-Place Position.
 
 ## Research needed
 

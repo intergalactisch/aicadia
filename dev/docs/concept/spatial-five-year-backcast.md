@@ -2561,25 +2561,23 @@ vocabulary and representability/request bounds. `game/docs`, schema, World, HTTP
 MCP and public Agent text remain unchanged until those choices are resolved and the
 complete plan is explicitly accepted.
 
-## Character-scoped map direction accepted; current knowledge state open
+## Superseded S1 direction: Character-scoped map
 
-The User accepted the first map direction: one coordinate window must never reveal
+The User initially accepted this map direction: one coordinate window must never reveal
 every established Place merely because its Position matches. World first needs a
 deterministic reason that the acting Character can know the Place; only those
 candidates enter the bounded spatial filter. Accepted entry and personal Place
 Discovery are concrete positive examples. A guessed window, nearby coordinate or
 arbitrary Connection traversal grants no recursive World map.
 
-This makes exploration meaningful but earned one technical question rather than
-solving it with prose. Activity participation cannot generically prove current
-Knowledge, and current state may not be reconstructed from arbitrary history. The
-User selected one sparse current Character–Place knowledge association below;
-Knowledge transmission, revocation and private Places remain later unless that
-selected S1 basis requires their concrete behavior.
+The later Position-centered choice supersedes this as S1 read eligibility: ordinary
+established Places are spatially public within each bounded window and need no
+Character–Place Knowledge row. The reasoning below remains exploration history for a
+future remembered or protected map, not current S1 authority.
 
-## Sparse Character–Place knowledge selected; generic scope challenged
+## Parked direction: sparse Character–Place Knowledge
 
-The User selected the sparse current association. Each exact Character–Place pair
+The User explored the sparse current association. Each exact Character–Place pair
 that becomes knowable occupies one row; map reads never write a “seen” receipt and
 accepted Activity already owns establishment provenance and time. Knowledge belongs
 to the Character. Storing `user_id` would instead attach in-World understanding to
@@ -2598,10 +2596,10 @@ indexable design: `(character_entity_id, subject_type, subject_id)` can be its u
 Character-leading key. S1 also already has two concrete candidates because accepted
 Discovery makes both its Place and exact Connection knowable. Indexes do not,
 however, provide one native PostgreSQL foreign key whose target table changes with
-`subject_type`; that integrity must come from deterministic typed World validation
-or separate typed associations. The next decision is precisely which strictness
-boundary S1 accepts. Entity and Relation are not current target candidates merely
-because the shape could later accommodate them.
+`subject_type`; that integrity would require deterministic typed World validation or
+separate typed associations. The current S1 needs neither choice because its ordinary
+Place window is not Knowledge-gated. Entity and Relation are not target candidates
+merely because the shape could later accommodate them.
 
 ## Knowledge creation time selected; update meaning remains open
 
@@ -3164,3 +3162,33 @@ one stable Place. There is no coordinate uniqueness, region lock or global Place
 counter. Two spatial product questions remain: which established subjects a bounded
 Position-centered read may expose, and how parallel or concurrent Connection
 alternatives are treated.
+
+## Bounded Place windows expose ordinary shared geography
+
+The User selected option A. One bounded coordinate window returns every ordinary
+established Place whose resolved Position falls inside it, subject to page limit and
+cursor. The Agent may center that window on the Character's current Position to look
+around or on an exact proposed discovery point to inspect existing C, G or Q before
+confirmation. It never returns all positioned Entities, Characters, inventory or a
+total count merely because their coordinates match.
+
+This supersedes Character–Place Knowledge as an S1 read gate. The base Place layer is
+shared public geography: once a Place exists, repeated bounded windows can eventually
+find it. A future secret or protected Place must earn explicit World-enforced access
+state and cannot rely on a conforming Agent to conceal a row it received. A read does
+not itself create Knowledge, Observation, Activity or any other receipt; Agent
+intelligence decides what to narrate and whether an explicit later Observation is
+worth preserving.
+
+World validates only the numeric window and admission bounds, performs a bounded
+Place/Position spatial lookup and returns one page with continuation. At a hot point,
+the page limit bounds hydration and no count, occupant row, map revision or read lock
+is updated. Concurrent establishment may affect a later page under the eventual
+technical cursor contract, but never blocks unrelated discovery. Exact index, window,
+page and cursor shapes are plan design rather than more product questions.
+
+If existing Place C appears at Character M's exact loose Position, the Agent can
+offer C as the origin instead of creating A; the User chooses in the complete
+preview. Coordinate equality never makes C current or merges it automatically. One
+spatial product question remains: whether Connections sharing endpoints are unique,
+explicitly reused or allowed to coexist as parallel alternatives.

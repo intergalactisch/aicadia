@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T14:08:26+02:00"
+updated_at: "2026-08-20T14:13:01+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -19,8 +19,8 @@ PostgreSQL, HTTP and MCP:
 
 1. an entered Character and every deliberately established Place have one direct,
    exact whole-centimetre Position from the permanent World origin;
-2. the Character's Agent can inspect one eligible, bounded map window containing
-   deliberately established Places and their explicit Connections;
+2. the Character's Agent can inspect one bounded coordinate window containing every
+   ordinary established Place in that window plus bounded spatial context;
 3. after a successful eligible discovery and explicit User confirmation, the Agent
    can establish a new destination Place with its direct Position, initial Entity
    state and one named Connection from its current Place; when current Place is absent,
@@ -73,7 +73,7 @@ earlier slice.
 | Slice | Player or World outcome | Added current truth | Gate before the next slice |
 | --- | --- | --- | --- |
 | S0 — evidence base | The candidate can be judged before production. | No game truth; retained model-pressure and PostgreSQL Position labs only. | Completed: bounded Position lineage, cycle race, atomic rollback and carrier conflict observations are kept. |
-| S1 — direct exploration | Read an eligible map, discover or reuse B, establish a Connection, remain at A, then move fully or partially. | Direct Position, deliberate positioned Place, stable named Connection with optional bounded ordered course, map window and Movement. | This plan's deterministic World, PostgreSQL, HTTP/MCP parity, concurrency and two-User outcome evidence. |
+| S1 — direct exploration | Read bounded shared Place geography, discover or reuse B, establish a Connection, remain at A, then move fully or partially. | Direct Position, deliberate positioned Place, stable named Connection with optional bounded ordered course, Place window and Movement. | This plan's deterministic World, PostgreSQL, HTTP/MCP parity, concurrency and two-User outcome evidence. |
 | S2 — relative worlds | Put a birdhouse on a table or a cabin on a moving ship and retrieve both stored basis and resolved point. | Entity-relative Position, bounded resolution, re-reference and moving-Place behavior without descendant writes. | Production lock/revision proof, hot-carrier capacity and no-stale-false-negative map-index proof. |
 | S3 — open meaning | Let Agents retain “sleeps under” or “button activates bomb” meaning without granting mechanics. | Stable directed Relation with free name and description, bounded endpoint reads and ordinary Action citation. | Guessed-id, endpoint, count, cursor, error and timing privacy proof plus ordinary authority proof. |
 | S4 — positive coverage | Show a forest, city or cave's known coverage and which covered portions a shaped Connection crosses. | Place-keyed Area, exact positive 3D coverage and derived revision-specific course intersections. | Geometry arithmetic, overlaps, disconnected coverage, pagination and boundary-change freshness proof. |
@@ -209,21 +209,13 @@ At million-Character pressure:
   Relation or physical road Entity — Place and Movement Areas.
 - Proximity, Area overlap and prose never create or merge Place or Connection —
   Place Area.
-- A map window is Character-scoped: it never reveals every established Place merely
-  because its Position falls inside the coordinates. The current Place and Places
-  the Character has structurally learned through accepted play are the eligible
-  candidates; the exact smallest current knowledge representation remains open —
-  User direction, 2026-08-20.
-- S1 stores sparse current Character-owned Knowledge for each exact Place made
-  knowable by an accepted act; the same Discovery also makes its exact Connection
-  knowable. Each row stores an immutable server-authored `created_at` for the first
-  time that Character gained this Knowledge; reads create no receipt and the
-  establishing Activity retains the exact cause and history. Each later genuine
-  Character view is preserved as separate explicit Observation history rather than
-  overwritten through `updated_at`; the exact accepted observation paths remain open.
-  Whether those two current subject families share one polymorphic row shape or use
-  separate typed associations is the next open design choice — User choice A and
-  corrected Laravel/PostgreSQL feasibility, 2026-08-20.
+- A bounded coordinate window returns all ordinary established Places selected by
+  resolved Position, with page limit and continuation. It may inspect the Character's
+  surroundings or an exact proposed discovery point. It returns no unrelated
+  positioned subjects and writes no Knowledge, Observation or Activity. Base Place
+  geography is public in S1; protected/remembered map behavior and sparse Knowledge
+  are parked — User choice A superseding the prior S1 eligibility direction,
+  2026-08-20.
 - A genuine repeat view is an explicit accepted in-World Observation, never an
   ordinary World/HTTP/MCP read. Every occurrence is immutable and may carry bounded
   free text authored by the observing Character's Agent. That text is private,
@@ -359,36 +351,14 @@ At million-Character pressure:
 
 ### Open questions blocking activation
 
-1. **Knowledge scope and storage type — parked, still blocking implementation.**
-   Player consequence: A has been chosen—one
-   sparse durable association remembers that Character M knows Place B, and the
-   accepted Discovery already makes its exact Connection knowable too. Should these
-   two current subjects share one Knowledge shape, or receive separate typed rows?
-   Knowledge of a subject means only that its identity is eligible for a typed,
-   authorized current read; it never means every fact about that subject is known.
-   Technical consequence: a Laravel-style composite primary key
-   `(character_entity_id, subject_type, subject_id)` can efficiently enforce bounded
-   Character lookup and uniqueness, but one PostgreSQL foreign key cannot choose a
-   target table from `subject_type`. `user_id` still assigns in-World Knowledge to
-   control provenance and `seen_at` still confuses current eligibility with
-   Observation history. See the
-   [primary-source storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
-   This branch is parked and no Observation may silently decide it. **Prior
-   preference retained for later:** one polymorphic row shape limited to the two current
-   stable aliases `place` and `connection`, with the Character-leading natural key,
-   immutable server-authored `created_at`, establishing Activity and deterministic
-   typed World validation in the same transaction. Add no surrogate Knowledge id,
-   User owner, read receipt, arbitrary type string, Entity or Relation target. This
-   earns one table from two present consumers while leaving native target-FK
-   strictness and any meaningful `updated_at` lifecycle as the exact choices to grill.
-2. **First Connection deduplication.** Player consequence: when another Agent already
+1. **First Connection deduplication.** Player consequence: when another Agent already
    established an A→C alternative, should the opportunity reuse that exact
    Connection or may it still establish a different named alternative? Technical
    consequence: parallel Connections are accepted long-term, so endpoint uniqueness
    cannot masquerade as permanent identity. **Preference:** S1 explicitly reuses a
    selected eligible Connection when supplied; only an exact idempotency/concurrent
    creation key deduplicates a new alternative.
-3. **Public capability boundaries and names.** Player consequence: which small tool
+2. **Public capability boundaries and names.** Player consequence: which small tool
    set lets an Agent read map context, confirm expansion and move without exposing
    internal rows? Technical consequence: names fix World methods, HTTP routes, MCP
    tools and published context cost. **Preference:** one bounded map read, the
@@ -396,7 +366,7 @@ At million-Character pressure:
    operation, one explicit Observation operation and one bounded private
    Observation-history read named `list_observation`; do not publish raw Position or
    Connection CRUD. Exact names for the other proposed operations remain open.
-4. **S1 observation after departure and arrival.** Player consequence: who sees a
+3. **S1 observation after departure and arrival.** Player consequence: who sees a
    Character at an unnamed intermediate Position or at B, and through which bounded
    read, and does a genuine repeat encounter become a separate personal Observation?
    Technical consequence: current Place reads cannot select a Character with no
@@ -466,13 +436,13 @@ At million-Character pressure:
    those choices from Position with or without a current Place. Still open: how
    three Places become eligible; current-Place reads already cover Characters that
    enter a selected Place.
-5. **History vocabulary.** Player consequence: Activity clearly says a Place was
+4. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
    fixed without a generic spatial payload. **Preference:** distinct expansion and
    Movement operations with typed roles; reuse existing `subject`, `destination` and
    `location` only where their current meanings remain exact.
-6. **Representability and request bounds.** Player consequence: no arbitrary gameplay
+5. **Representability and request bounds.** Player consequence: no arbitrary gameplay
    travel cap, but malformed or enormous windows/courses fail clearly. Technical
    consequence: choose coordinate bound, page size, window volume, course-point
    count, text limits and statement/lock budgets before publishing schemas.
@@ -518,7 +488,7 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | pending | — | no | Publish the resolved S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and contract inventory/parity audit. |
 | T2 | pending | T1 | no | Persist and read direct Position, positioned Place and versioned Connection safely on existing Worlds. | migration, World models and storage tests | Schema/backfill/constraint/lineage tests on real PostgreSQL. |
-| T3 | pending | T2 | no | Return the accepted eligible bounded map and Connection context without unbounded or unauthorized hydration. | World reads, wire-independent models and World tests | Pagination, eligibility, hot-point and query-bound tests. |
+| T3 | pending | T2 | no | Return the accepted bounded ordinary Place and Connection context without unrelated or unbounded hydration. | World reads, wire-independent models and World tests | Pagination, selection, hot-point and query-bound tests. |
 | T4 | pending | T3 | no | Accept new-or-reused Place expansion plus Connection atomically while Character remains at A. | World mutation, Activity and World tests | Retry, failure rollback, reuse and synchronized equivalent-discovery race tests. |
 | T5 | pending | T4 | no | Move fully or partially over one exact Connection with independent travellers and stale-edit rejection. | World Movement, Activity and World tests | Segment arithmetic, arrival/intermediate, retry and concurrency tests. |
 | T6 | pending | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with complete semantic parity. | wire, server adapters, MCP sources, catalog and server tests | Adapter parity, schema/error/catalog and two-User protocol tests. |
@@ -590,14 +560,14 @@ Connection state with immutable history and no Place-wide spatial revision.
 - Stop before adding a global revision, Position id, duplicate Place coordinates,
   dormant relative behavior or lab-code import.
 
-### T3 — Build bounded eligible map context
+### T3 — Build bounded shared Place context
 
-**Objective:** An Agent can obtain exactly the accepted Character-eligible Place and
-Connection page for one bounded direct-coordinate window.
+**Objective:** An Agent can obtain exactly the accepted ordinary Place and Connection
+page for one bounded direct-coordinate window without Knowledge gating.
 
 **Actions:**
 
-1. Implement eligibility-first candidate selection, stable cursor and maximum page.
+1. Implement bounded Place/Position candidate selection, stable cursor and maximum page.
 2. Hydrate selected Place, Position and touching Connection state in bounded query
    work without counts or per-row follow-up queries.
 3. Cover hot points, boundary coordinates, concurrent writes and cursor stability.
@@ -605,7 +575,8 @@ Connection page for one bounded direct-coordinate window.
 **Invariants:**
 
 - Numeric proximity is read context, never Place identity, merge or Connection.
-- A guessed Entity/Place/Connection id cannot bypass the chosen eligibility rule.
+- A window returns only ordinary Place state selected by its coordinates; it never
+  becomes a guessed-id path to unrelated positioned subjects.
 - No window produces an unbounded response or exact total count.
 
 **Evidence:**
