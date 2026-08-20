@@ -42,6 +42,9 @@ not a pre-computed complete map.
 - A Place is the role of a positioned Entity that World establishes as an independent
   reference for map, discovery, navigation or explicit spatial relationships. It
   uses the Entity's one stable identity.
+- Exploration can begin from every Character Position, including a Position with no
+  current Place. Place is never required or fabricated merely to admit look-around,
+  discovery or ordinary play between named locations.
 - Any positioned Entity may deliberately receive the Place role when Agent and User
   establish it as an independent spatial reference. World applies no city, forest,
   waterfall, building, object or other semantic kind allowlist and never grants the
@@ -292,6 +295,10 @@ not a pre-computed complete map.
 
 ### Not yet chosen
 
+- Whether the User's player-level shorthand “a discovered Position with a name and
+  later properties” changes the existing technical identity boundary, or is exactly
+  represented by Entity identity plus its Position and deliberate Place role. No
+  duplicate Place-owned coordinates or content are accepted while this is open.
 - Which rule makes three existing Places eligible for `enter_world`, what happens
   before three eligible Places exist and whether later explicit exploration first
   reads existing nearby subjects, attempts a new discovery or sequences both.

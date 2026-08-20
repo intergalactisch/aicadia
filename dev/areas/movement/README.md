@@ -39,6 +39,9 @@ reconstruct one accepted move.
   retry never rerolls it and World neither checks nor guarantees that it is unoccupied.
 - Arrival performs no automatic nearby read, Observation or discovery. The User must
   explicitly invoke the Agent for the next look-around or exploration step.
+- That explicit exploration step is grounded in the Character's exact Position even
+  when it has no current Place. Movement may therefore stop anywhere and leave the
+  Character fully able to continue discovery without establishing a dummy Place.
 - Movement must preserve the stable identity of every moved Character, Entity and Place.
 - A move is explicit and deterministically validated by World; prose never implies a route or destination.
 - Accepted movement changes current Position and writes attributable Activity atomically.
@@ -180,10 +183,10 @@ reconstruct one accepted move.
 
 ### Not yet chosen
 
-- Whether an explicit look-around or exploration step first reads existing nearby
-  subjects, attempts a new discovery or sequences both; how three existing Places
-  become eligible without one hot global entry row; and what happens before three
-  eligible Places exist.
+- Whether an explicit Position-grounded look-around or exploration step first reads
+  existing nearby subjects, attempts a new discovery or sequences both; how three
+  existing Places become eligible without one hot global entry row; and what happens
+  before three eligible Places exist.
 - Whether an open-terrain Connection may exist without a physical Entity and who may establish it.
 - Which exact state lets an Agent say what terrain, Places or Areas a Character
   crosses while traversing one Connection. Endpoint topology alone supplies no

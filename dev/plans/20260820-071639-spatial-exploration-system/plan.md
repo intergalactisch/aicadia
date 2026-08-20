@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T07:35:50+02:00"
+updated_at: "2026-08-20T13:52:04+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -268,6 +268,10 @@ At million-Character pressure:
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
+- Explicit exploration begins from the Character's fresh exact Position even when
+  `current_place` is absent. A loose Position is playable World ground and World
+  never creates a dummy Place to admit look-around or discovery — User correction,
+  2026-08-20.
 - Movement may stop on an exact course point or arrive, writes ordinary Position and
   Activity and has no durable journey — Movement Area.
 - Connection loops and geographically impossible topology are artistically valid;
@@ -328,6 +332,10 @@ At million-Character pressure:
 - `enter_world` stops after accepted placement and Activity. It performs no automatic
   nearby read, Observation, Investigation or discovery; only a later explicit User
   request invokes the Agent to begin look-around or exploration gameplay.
+- Until the Place identity wording is resolved, S1 retains the reversible existing
+  one-subject candidate: Entity owns stable identity and authored content, Position
+  owns its current point and Place is the deliberate role. No migration or public
+  schema may be derived from that candidate while this plan remains draft.
 
 ### Open questions blocking activation
 
@@ -355,11 +363,14 @@ At million-Character pressure:
    strictness and any meaningful `updated_at` lifecycle as the exact choices to grill.
 2. **Discovery admission.** Player consequence: must spatial expansion consume a
    successful current Investigation attempt, or may an Agent propose a new Place
-   after ordinary exploration discussion? Technical consequence: this decides
+   after ordinary exploration discussion from any current Position? `current_place`
+   is no longer an admission requirement and no dummy Place may be created.
+   Technical consequence: this decides
    whether the current `submit_discovery` transaction evolves or a separate confirmed
    operation owns Place expansion. **Preference:** evolve the successful Discovery
-   path so finding and confirming one opportunity remain coherent, while movement
-   stays separate.
+   path so finding and confirming one opportunity remain coherent, while changing
+   its spatial grounding from exact current Place to fresh current Position and
+   keeping movement separate.
 3. **First Connection deduplication.** Player consequence: when another Agent already
    established an A→C alternative, should the opportunity reuse that exact
    Connection or may it still establish a different named alternative? Technical
@@ -440,7 +451,8 @@ At million-Character pressure:
    arrival stop there: no automatic nearby context, Observation or discovery is
    returned. **Next open consequence:** decide whether the first later User-invoked
    exploration step reads existing nearby subjects, attempts a new discovery or
-   sequences both. Then decide how three Places become eligible; current-Place reads
+   sequences both. That step is grounded in current Position with or without a
+   current Place. Then decide how three Places become eligible; current-Place reads
    already cover Characters that enter a selected Place.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
@@ -454,6 +466,14 @@ At million-Character pressure:
    count, text limits and statement/lock budgets before publishing schemas.
    **Preference:** conservative server constants proven with checked arithmetic and
    cursors; no unit enum, floating point or distance rule.
+8. **Literal Place identity.** Player consequence: a discovered and named spatial
+   point should feel like one Place that can gain description, Properties and Traits,
+   while an unnamed Position remains freely playable. Technical consequence: decide
+   whether the current one-subject design—Entity identity plus Position plus Place
+   role—is the storage implementation, or whether Place independently owns identity,
+   coordinates and content. **Preference:** keep the one-subject design: it gives
+   Connections and Activity one durable subject, avoids duplicate name/property
+   machinery and keeps coordinates in one Position truth.
 
 The plan remains `draft` until these questions are resolved in the active spatial
 record and current log. Later-slice questions do not block S1 because their concepts

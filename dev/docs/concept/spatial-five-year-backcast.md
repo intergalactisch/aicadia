@@ -3052,3 +3052,29 @@ the first explicit exploration step reads already existing nearby World subjects
 attempts to discover something new or deliberately sequences those two different
 behaviors. How the three Places become eligible and what happens before three exist
 also remain downstream choices.
+
+## Exploration begins at every Character Position
+
+The User clarified the core game loop: after entry, an explicitly invoked Agent may
+explore from the Character's exact current Position whether or not `current_place`
+is set. A loose Position is therefore playable spatial ground, not a waiting room
+until somebody creates a Place. World must never require or fabricate a dummy Place
+merely to admit exploration.
+
+The Agent reads bounded structurally eligible context around the Character's fresh
+Position, uses its own intelligence to imagine and discuss a discovery, and submits
+the exact structured result through the later confirmed discovery boundary. World
+validates identity, coordinates, dependencies, authority, bounds, idempotency and
+atomic Activity; it does not infer the discovery from prose or from the coordinate.
+Millions of Characters exploring unrelated points touch no shared current-Place or
+region row, while genuinely conflicting proposals coordinate only on their exact
+subjects and dependencies.
+
+The User described Place at the player level as a Position that has been discovered,
+named and can later gain properties. That confirms Place is deliberately established
+through play rather than a prerequisite or automatic classification of every point.
+Its literal storage meaning remains the one active vocabulary question: either the
+existing one-subject design is the technical implementation—a named Entity with one
+Position and a Place role—or Place becomes a separate coordinate-and-content owner.
+No canonical vocabulary or runtime contract changes until that distinction is
+settled.

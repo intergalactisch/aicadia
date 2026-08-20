@@ -44,6 +44,10 @@ immediately tells the User what it retained.
   Places without checking or promising solitude. Entry then stops: no surroundings
   read, Observation or discovery occurs until the User explicitly asks the Agent to
   look around or explore.
+- When asked, the Agent can explore from the Character's fresh exact Position whether
+  or not a current Place exists. It needs no invented Place as a gateway; it reads
+  bounded eligible spatial context, supplies the semantic intelligence and later
+  submits exact structured discovery state for deterministic World validation.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.
