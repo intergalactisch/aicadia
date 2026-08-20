@@ -61,10 +61,10 @@ into truth or spending tokens in the background.
   Shared mutations still require confirmation; subscriptions never invoke BYO Agents
   or create Observations in the background.
 - Before narrating an exact model as new, familiar or significant, the Agent reads
-  one bounded grouped history for the exact models it is currently considering. Each
-  model group carries several newest-first accounts, times and available Activity
-  locations with independent continuation. World stores no recognition flag, count
-  or `often` label and never interprets the recurrence.
+  one bounded grouped history through `list_observation` for the exact models it is
+  currently considering. Each model group carries several newest-first accounts,
+  times and available Activity locations with independent continuation. World stores
+  no recognition flag, count or `often` label and never interprets the recurrence.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
   so scanning guessed windows cannot enumerate every established Place. One sparse
@@ -181,10 +181,8 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- The exact public name of the selected batched Observation-history read;
-  `get_observations` conflicts with the current `list`-for-collections and singular-
-  domain-name rules. Explicit correction links remain a separate open story-mechanics
-  choice.
+- Whether an explicit link between a correcting Observation and the earlier
+  Observation it corrects earns its extra story-mechanics and validation cost.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

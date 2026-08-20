@@ -144,12 +144,12 @@ immediately tells the User what it retained.
 - A subscription may notify an active client of World change but, under the BYO Agent
   model, can never invoke the Agent, call Observation or spend User tokens.
 - Before treating an exact model as new, familiar or narratively significant, the
-  Agent first uses one bounded multi-model read for its Character's prior Observation
-  history about the exact models currently under consideration. Each model group
-  contains several newest-first accounts, occurrence times and available Activity
-  locations plus independent continuation. That evidence lets the Agent narrate
-  callbacks and repeated meetings; World never infers recognition, `often` or meaning
-  from the rows.
+  Agent first uses `list_observation`, one bounded multi-model read for its
+  Character's prior Observation history about the exact models currently under
+  consideration. Each model group contains several newest-first accounts, occurrence
+  times and available Activity locations plus independent continuation. That
+  evidence lets the Agent narrate callbacks and repeated meetings; World never
+  infers recognition, `often` or meaning from the rows.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.
@@ -265,9 +265,6 @@ immediately tells the User what it retained.
   returned at all, without reintroducing Position-specific denial or redaction.
 - How a later privacy grill replaces best-effort Agent withholding with actual World-
   enforced information boundaries when concrete gameplay requires them.
-- The exact public name of the batched Observation-history read. `get_observations`
-  is the User's candidate, while current binding rules use `list` for collections and
-  singular Aicadia nouns; this conflict needs one explicit naming choice.
 
 ## Research needed
 

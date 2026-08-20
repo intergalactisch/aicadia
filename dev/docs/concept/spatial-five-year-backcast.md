@@ -2933,9 +2933,8 @@ until its extra value is judged separately.
 
 Technically, the natural lookup begins with observing Character, target alias and
 target id, ordered newest-first. It touches no target row and can use an index shaped
-for exactly that access. The unresolved ceremony question is whether one Agent call
-may request prior context for several selected models, whether every ordinary model
-read carries it automatically, or whether the Agent calls once per model.
+for exactly that access. The ceremony choice between one multi-model call, automatic
+payloads and one call per model is resolved below.
 
 ## One rich batched Observation-history read selected
 
@@ -2964,8 +2963,14 @@ Observation inside this same response rather than requiring another history call
 The database access remains Character-first and subject-addressed. One bounded
 request performs bounded newest-first indexed scans for a bounded number of exact
 subjects; it reads no subject-wide counter, locks no observed model and cannot turn a
-famous Character into one shared write row. The exact operation name remains open:
-the User proposed `get_observations`, while the current Aicadia constitution uses
-`list` for collections and singular domain nouns, as in `list_activity`. Resolving
-that nomenclature conflict must be explicit rather than silently creating an
-exception.
+famous Character into one shared write row.
+
+## `list_observation` selected
+
+The User selected option A. The proposed public capability is named
+`list_observation`: `list` communicates a bounded collection and the singular domain
+noun follows the same convention as `list_activity`. The name does not imply one
+subject; its explicit input may still contain several exact model references and its
+response remains grouped by model. `get_observations` and a one-off naming exception
+are rejected. No runtime capability exists until the draft S1 plan is accepted and
+implemented.

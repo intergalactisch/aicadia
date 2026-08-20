@@ -311,8 +311,8 @@ At million-Character pressure:
   of exact subjects and groups several recent occurrences plus independent
   continuation per subject. The expected database access begins with observing
   Character plus target alias/id, so one famous subject is not a shared read or write
-  row. The exact operation name remains open because `get_observations` conflicts
-  with current `list`-for-collections and singular-domain-name rules.
+  row. The proposed public operation is `list_observation`, matching `list_activity`
+  and the singular-domain-name rule.
 
 ### Open questions blocking activation
 
@@ -358,7 +358,8 @@ At million-Character pressure:
    tools and published context cost. **Preference:** one bounded map read, the
    existing Discovery confirmation evolved for expansion, one conventional Movement
    operation, one explicit Observation operation and one bounded private
-   Observation-history read; do not publish raw Position or Connection CRUD.
+   Observation-history read named `list_observation`; do not publish raw Position or
+   Connection CRUD. Exact names for the other proposed operations remain open.
 5. **S1 observation after departure and arrival.** Player consequence: who sees a
    Character at an unnamed intermediate Position or at B, and through which bounded
    read, and does a genuine repeat encounter become a separate personal Observation?
@@ -409,9 +410,9 @@ At million-Character pressure:
    Observation; the read itself writes nothing. Q12's optional explicit correction
    reference remains open because recurrence retrieval already solves the Duindorp
    callback but not whether one memory mechanically corrects another. **Next open
-   consequence:** choose the public operation name. The User proposed
-   `get_observations`; current binding rules instead use `list` for collections and
-   singular Aicadia domain nouns.
+   consequence:** decide whether a correcting Observation may explicitly reference
+   the earlier Observation it corrects, or whether ordinary appended history and
+   Agent interpretation are sufficient.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
