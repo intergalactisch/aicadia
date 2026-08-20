@@ -213,13 +213,17 @@ At million-Character pressure:
   knowable by an accepted act; the same Discovery also makes its exact Connection
   knowable. Each row stores an immutable server-authored `created_at` for the first
   time that Character gained this Knowledge; reads create no receipt and the
-  establishing Activity retains the exact cause and history. The User proposed
-  preserving each later genuine Character view as separate Observation history
-  rather than overwriting that history through `updated_at`; what deterministically
-  qualifies as such a view remains open.
+  establishing Activity retains the exact cause and history. Each later genuine
+  Character view is preserved as separate explicit Observation history rather than
+  overwritten through `updated_at`; the exact accepted observation paths remain open.
   Whether those two current subject families share one polymorphic row shape or use
   separate typed associations is the next open design choice — User choice A and
   corrected Laravel/PostgreSQL feasibility, 2026-08-20.
+- A genuine repeat view is an explicit accepted in-World Observation, never an
+  ordinary World/HTTP/MCP read. Every occurrence is immutable and may carry bounded
+  free text authored by the observing Character's Agent; whether that text is only
+  private Character memory or can assert shared World truth remains open — User
+  choice A and red-hat example, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -296,13 +300,16 @@ At million-Character pressure:
    current Place, while a global Position lookup is rejected. Writing on every API
    read would make retrying `get` calls create false World history and unbounded
    storage; a dedicated Observation occurrence or Activity role is justified only by
-   one explicit idempotent in-World act with bounded subjects. **Preference:** the
-   moving Character always receives itself; other Characters need an explicit
-   eligible map/local observation path, not guessed-id Position access. Preserve a
-   separate occurrence only for an accepted, structurally validated in-World view;
-   ordinary reads, map inspection and prose create none. Store no `view_count`—a
-   bounded eligible history may support later private recurrence without a score or
-   global reverse observer query.
+   one explicit idempotent in-World act with bounded subjects. User choice A accepts
+   that boundary and accepts optional bounded Agent-authored free text on each
+   occurrence, such as “this time he wore a red hat.” **Open consequence:** decide
+   whether this text is attributed private Character memory which may be mistaken,
+   or shared authoritative truth about the observed subject. **Preference:** private
+   observer-owned memory. World validates actor, eligible exact subjects,
+   idempotency, text bounds and atomic Activity but never interprets the note or lets
+   it mutate the subject. The moving Character always receives itself; other
+   Characters need an explicit eligible map/local observation path, not guessed-id
+   Position access. Store no `view_count` or global reverse observer query.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

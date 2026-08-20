@@ -35,6 +35,10 @@ into truth or spending tokens in the background.
 - Persistent placement and active attention are separate facts.
 - Attention is explicit and opt-in; presence alone does not activate an Agent.
 - Durable public history and a User's private remembered experience are separate.
+- A genuine repeat view is an explicit accepted in-World Observation, not an API
+  read. Several immutable Observations may concern the same Character and subject;
+  each may carry bounded Agent-authored text, while its authority as private memory
+  versus shared World fact remains open.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,

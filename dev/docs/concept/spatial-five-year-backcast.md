@@ -2629,14 +2629,15 @@ by one Character through one situated encounter or other accepted observation pa
 Knowledge remains the current information that Character may use; Observation would
 be its occurrence history rather than another copy of current World state.
 
-This does not yet accept an Observation table or capability. “Character views” has
-two materially different readings. An ordinary authorized World/HTTP/MCP read is
+At this point in the grill, an Observation table or capability was not yet accepted;
+the following section records the subsequent choice. “Character views” had two
+materially different readings. An ordinary authorized World/HTTP/MCP read is
 transport and must not write history: repeated calls or retries could otherwise
 manufacture encounters, grow storage without game action and turn API behavior into
-a score. A genuine in-World observation must instead come from one explicit,
-idempotent accepted act with exact bounded observer, subject and structural basis.
-World may validate those typed facts but cannot infer seeing from prose, nearby
-coordinates or Agent narration.
+a score. A genuine in-World observation instead needs one explicit, idempotent
+accepted act with exact bounded observer, subject and structural basis. World may
+validate those typed facts but cannot infer seeing from prose, nearby coordinates or
+Agent narration.
 
 If an occurrence model is accepted, it remains private Character-grounded history.
 It must not expose a global reverse list of who watched another Character, create a
@@ -2644,3 +2645,34 @@ stored view counter, invoke Agents in the background or update every Character w
 the subject changes. Whether current Movement/Interaction Activities already carry
 enough occurrence identity or a separate Observation record earns its own state is
 downstream of deciding which concrete acts count.
+
+## Explicit Observation selected; per-occurrence free text selected
+
+The User selected explicit in-World Observation rather than writes caused by
+ordinary reads or prose alone. This clarifies the technical split. Knowledge is one
+current sparse Character–subject association used to determine whether the subject
+identity is eligible for its typed authorized read. Observation is append-only
+occurrence history: several records may refer to the same Character and subject,
+each through its exact accepted Activity and occurrence time. A retry of the same
+request returns the same result; a later intentional observation may append another.
+
+Each Observation may carry bounded free text authored by the observing Character's
+Agent. For example, Mara's second Observation of Ivo may say “this time he wore a
+red hat.” World can validate observer control, exact subject eligibility,
+idempotency, bounds and atomic Activity, but it cannot understand whether “red hat”
+is true. The note does not by itself create a Hat Entity, equip it, change Ivo or
+override current structured World state.
+
+The useful artistic consequence is a private, potentially imperfect trail of
+recurrence: Agents can notice familiar people, places and motifs without turning
+every recollection into universal canon. The still-open authority question is
+whether the note is definitively attributed only to the observing Character's
+memory, or whether the User wants it to become shared World truth. The current
+preference is private observer-owned memory; shared truth should require the exact
+ordinary World structures it claims, such as an Entity and Relation for a worn hat.
+
+An illustrative non-canonical storage split is one unique Knowledge row per
+`(character_entity_id, subject_type, subject_id)` and multiple immutable Observation
+occurrences tied to exact Activity. Exact Observation identity, text field name,
+subject limits, eligible acts, pagination and retention remain plan choices rather
+than accepted schema.

@@ -133,16 +133,18 @@ the action.
 _Avoid_: Passive interaction, generic link, relationship
 
 **Observation**:
-World information a Character acquires through one situated encounter, sensory
-situation or other accepted observation path. Observation is distinct from merely
-participating in an Activity and from everything the World knows.
+One situated acquisition of World information by a Character through an encounter,
+sensory situation or other accepted observation path. Repeated encounters may yield
+separate Observations about the same subject; Observation is not mere Activity
+participation, a transport read or all the information World knows.
 _Avoid_: Visibility flag, global state, participation
 
 **Knowledge**:
 World information a Character can justifiably use because it was observed,
 remembered, personally experienced or received through an accepted transmission or
-ripple. Knowledge belongs to the Character, not its User or Agent; it can be partial,
-reported or stale and is never identical to all authoritative World state.
+ripple. Knowledge is durable Character-owned availability across occurrences, not a
+record of each acquisition; it can be partial, reported or stale and is never
+identical to all authoritative World state.
 _Avoid_: Agent memory, User state, read receipt, global query access, omniscience
 
 **Control provenance**:
