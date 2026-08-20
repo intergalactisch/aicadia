@@ -322,7 +322,9 @@ At million-Character pressure:
   begin at Position with no current Place. The latter creates no Place and does not
   claim geometric exclusion from every incomplete Place Area. World selects and
   atomically stores its exact Position once; retry returns it without rerolling. The
-  numeric distribution remains open.
+  point is randomly drawn broadly around one of the three Place Positions without
+  occupancy scan, solitude guarantee or coordinate uniqueness. Exact numeric bounds
+  remain technical entry limits, not Movement limits.
 
 ### Open questions blocking activation
 
@@ -429,10 +431,12 @@ At million-Character pressure:
    selected first Position plus Activity. The loose option creates no Place and
    claims no geometric exclusion from every incomplete Area. User choice B makes
    World select and store the exact loose Position once; retry never rerolls and
-   World infers no terrain or safety. **Next open consequence:** choose the explicit
-   numeric distribution. Only then decide how three Places become eligible and the
-   bounded spatial read through which another Character can encounter an intermediate
-   traveller; current-Place reads already cover both when they are at B.
+   World infers no terrain or safety. User choice A draws it randomly and broadly
+   around one of the three offered Place Positions without checking occupancy or
+   guaranteeing solitude; co-position is valid. **Next open consequence:** choose
+   the bounded spatial read through which an Agent obtains eligible nearby Characters
+   and Entities at that loose Position. Then decide how three Places become eligible;
+   current-Place reads already cover Characters that enter a selected Place.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

@@ -292,10 +292,9 @@ not a pre-computed complete map.
 
 ### Not yet chosen
 
-- Which numeric distribution World uses to select the exact loose Position when
-  `enter_world` selects no current Place, which rule makes three existing Places
-  eligible for the same introduction and what happens before three eligible Places
-  exist.
+- Which rule makes three existing Places eligible for `enter_world`, what happens
+  before three eligible Places exist and which bounded spatial read exposes eligible
+  Characters and Entities around the resulting random loose Position.
 - The exact bounded establish/develop operations, ordinary text bounds, dependency
   revisions and duplicate presentation for the accepted Relation record.
 - Which exact geometry representation Area uses, whether one Place may have

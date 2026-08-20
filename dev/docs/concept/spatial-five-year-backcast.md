@@ -3027,7 +3027,20 @@ World chooses only coordinates under an explicit numeric distribution. It does n
 infer suitable terrain, safety, beauty, accessibility or Place exclusion, and the
 Agent narrates only from structurally available context after arrival. No persistent
 pool of anonymous entry points, coordinate uniqueness or shared random counter is
-needed; several Characters may validly receive the same Position. The next
-prerequisite is the distribution: broadly around established beginnings, anywhere
-within representable World space or another explicit numeric boundary. How the three
-Places become eligible and what happens before three exist remain downstream choices.
+needed; several Characters may validly receive the same Position.
+
+The User selected a random point broadly around one of the three offered Places. The
+anchor contributes only its exact Position; World draws an offset under a bounded
+numeric distribution and still stores no current Place. “Good point” means valid
+under that entry distribution, not empty: World neither scans for occupants nor
+avoids, prefers or reserves another Character's Position. A new Character may arrive
+alone, beside one other traveller or amid many, and exact Position equality remains
+valid rather than a uniqueness conflict.
+
+This distribution keeps the open-space beginning related to established World
+geography without forcing social isolation or one central origin. Exact distance and
+random-generation bounds remain technical choices, never later Movement limits. The
+next player-facing prerequisite is how an Agent obtains a bounded current view of
+eligible Characters and Entities around a Character whose Position has no current
+Place. How the three Places become eligible and what happens before three exist also
+remain downstream choices.

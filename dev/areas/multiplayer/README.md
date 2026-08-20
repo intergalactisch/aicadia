@@ -79,6 +79,10 @@ into truth or spending tokens in the background.
 - Two Characters must eventually be able to retain the same unnamed Position
   between Places; World may not force that Position to become a Place
   merely so multiplayer presence can exist there.
+- Open-space `enter_world` draws a random Position broadly around one of three offered
+  Places without scanning, avoiding or reserving current occupancy. A Character may
+  arrive near nobody or near other Characters; co-position remains valid and creates
+  no shared counter or correctness lock.
 - Ordinary current World content is jointly changeable rather than permanently
   locked to its first author or Entity controller. Every accepted change remains
   attributable and concurrent attempts still settle against exact current subjects.

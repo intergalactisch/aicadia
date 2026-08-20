@@ -40,7 +40,9 @@ immediately tells the User what it retained.
   plus one option to begin at a Position with no current Place, and lets the User
   choose. If the User selects open space, World chooses and atomically stores one
   exact Position; the Agent never invents those coordinates and narrates only after
-  receiving the accepted result. The numeric distribution remains under negotiation.
+  receiving the accepted result. World draws broadly around one of the three offered
+  Places without checking or promising solitude, so nearby-Entity context must come
+  from a separate bounded current read whose exact boundary remains open.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.

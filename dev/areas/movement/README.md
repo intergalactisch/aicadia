@@ -35,7 +35,8 @@ reconstruct one accepted move.
   and establishes its first Position plus Activity from one User-selected option:
   three explained existing Places or one choice for Position with no current Place.
   It is not a participation flag and the loose result creates no Place. World chooses
-  and stores that exact loose Position once; retry never rerolls it.
+  and stores that exact loose Position once, broadly around one of those Places;
+  retry never rerolls it and World neither checks nor guarantees that it is unoccupied.
 - Movement must preserve the stable identity of every moved Character, Entity and Place.
 - A move is explicit and deterministically validated by World; prose never implies a route or destination.
 - Accepted movement changes current Position and writes attributable Activity atomically.
@@ -177,9 +178,9 @@ reconstruct one accepted move.
 
 ### Not yet chosen
 
-- Which numeric distribution World uses for a loose `enter_world` Position, how three
-  existing Places become eligible without one hot global entry row and what happens
-  before three eligible Places exist.
+- Which bounded spatial read exposes eligible Characters and Entities around a loose
+  Character Position, how three existing Places become eligible without one hot
+  global entry row and what happens before three eligible Places exist.
 - Whether an open-terrain Connection may exist without a physical Entity and who may establish it.
 - Which exact state lets an Agent say what terrain, Places or Areas a Character
   crosses while traversing one Connection. Endpoint topology alone supplies no
