@@ -235,6 +235,12 @@ At million-Character pressure:
   its Entity, while Position, Property and Trait remain state described through
   their owning Entity or Place. Runtime class/table names and speculative later
   types are absent — User choice A, 2026-08-20.
+- S1 provisionally lets a structurally grounding accepted action explicitly include
+  its Observation result. Movement may record what the Character observed on
+  arrival and Interaction may record the exact interacted-with model; World never
+  infers either result and ordinary reads still write nothing. A later pure-look
+  behavior may earn a dedicated Observation operation — User choice A for initial
+  trial, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -261,6 +267,11 @@ At million-Character pressure:
   never gameplay distance limits.
 - Studio needs only the smallest read-only projection required to inspect the new
   current rows and Activity; it receives no gameplay action.
+- Embedding an explicit Observation result in Movement or Interaction is the first
+  shape to test, not an irreversible public abstraction. The grounding mutation,
+  Activity and its Observation rows commit atomically; failure writes none and the
+  same idempotent retry creates no duplicates. If concrete payloads or confirmation
+  become unclear, a dedicated Observation operation remains the clean fallback.
 
 ### Open questions blocking activation
 
@@ -325,9 +336,15 @@ At million-Character pressure:
    Observation never automatically creates Knowledge or identification, but always
    stores one exact model reference. User choice A admits only explicit stable
    `entity`, `place` and `connection` aliases now; adding another model is a later
-   deliberate contract change. **Next open consequence:** decide whether Observation
-   is created only by one dedicated operation or may be an explicit optional result
-   of the structurally grounding Movement, Interaction or other accepted action.
+   deliberate contract change. User choice A provisionally selects an explicit
+   optional Observation result inside the structurally grounding Movement,
+   Interaction or other specifically accepted action; World never derives it from
+   the action, and a later pure look may use a dedicated operation. The state change,
+   Activity and Observation commit atomically; failure and retry cannot leave or
+   duplicate the occurrence. A dedicated-only operation remains the reversible
+   fallback if the first concrete flow proves the combined contract unclear.
+   **Next open consequence:** decide whether one grounding action may explicitly
+   record several independently targeted Observations or exactly one.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

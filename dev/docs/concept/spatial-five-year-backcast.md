@@ -2741,3 +2741,27 @@ subject-aware index shape. It still does not decide Knowledge or expose the targ
 current fields. The next Observation-only choice is creation: a dedicated operation
 for every look, or an explicit optional Observation inside another structurally
 grounding action such as Movement or Interaction.
+
+## Operation-embedded Observation selected provisionally
+
+The User selected option A as the first shape to try. A structurally grounding
+accepted action may explicitly carry its Observation result. For example, Movement
+to Place B may explicitly record the acting Character's private account of B, and an
+Interaction with Ivo may explicitly record one Entity Observation. World does not
+infer that either was seen from movement, distance, Position or prose: the Agent must
+name the exact admitted model reference and bounded account in the proposal.
+
+The grounding state change, its Activity and its Observation occurrence commit in
+one transaction. If the Movement or Interaction fails, no Observation survives. A
+retry of the same request returns the same accepted result without appending another
+occurrence. An ordinary map or model read still writes nothing. A future act whose
+only purpose is looking may earn a dedicated Observation operation rather than a
+dummy Movement or Interaction.
+
+This is a reversible first design to test, not an irrevocable generic action-effects
+framework. Observation is added only to each concrete operation that earns it. If a
+real payload or confirmation becomes confusing, a dedicated Observation operation
+remains the smaller fallback without changing Observation identity, privacy or
+history. The next dependent choice is cardinality: whether one grounding action may
+explicitly produce several independently targeted Observation occurrences or exactly
+one.

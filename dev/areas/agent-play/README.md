@@ -117,6 +117,11 @@ proposals and asks the User to confirm every complete World-changing package.
 - The Agent selects an Observation subject through the explicit stable `entity`,
   `place` or `connection` model alias. It never invents a table/class name or treats
   Position, Property or Trait as an independent observed subject.
+- The first shape to try lets the Agent explicitly include an Observation result in
+  a structurally grounding Movement or Interaction. World never invents that result,
+  the whole action either commits with its Activity and Observation or not at all,
+  and retry adds no duplicate. A later act whose sole purpose is looking may receive
+  its own Observation operation.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

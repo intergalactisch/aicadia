@@ -46,6 +46,11 @@ into truth or spending tokens in the background.
 - Observation admits an explicit expandable model list: `entity`, `place` and
   `connection` now. Runtime class/table names and speculative types are rejected;
   adding another model requires its own accepted behavior and authorization.
+- The provisional first creation shape lets a structurally grounding accepted
+  Movement or Interaction explicitly include its Observation result. The action,
+  Activity and occurrence settle atomically; failure writes none and an idempotent
+  retry adds no duplicate. World never infers an Observation from the action, and a
+  later pure-look act may use a dedicated operation.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
@@ -163,9 +168,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- Which exact idempotent in-World acts establish a personal Observation occurrence,
-  and whether existing Activity roles preserve enough history before a separate
-  Observation record is earned.
+- Whether one grounding in-World action may explicitly establish several
+  independently targeted Observation occurrences or exactly one, and what bounded
+  request shape the first concrete flow earns.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed
