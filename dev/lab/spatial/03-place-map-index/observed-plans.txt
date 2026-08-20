@@ -1,0 +1,226 @@
+PostgreSQL 17.8 EXPLAIN (ANALYZE, BUFFERS) observations
+Run: DATABASE_URL=postgres://localhost/postgres cargo test --manifest-path dev/lab/spatial/03-place-map-index/Cargo.toml -- --nocapture --test-threads=1
+
+=== dense_candidate_first ===
+Limit  (cost=0.42..7.20 rows=100 width=56) (actual time=0.008..0.018 rows=100 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..67732.43 rows=1000000 width=56) (actual time=0.008..0.013 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-1'::bigint) AND (x_cm <= '1'::bigint) AND (y_cm >= '-1'::bigint) AND (y_cm <= '1'::bigint) AND (z_cm >= '-1'::bigint) AND (z_cm <= '1'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.045 ms
+Execution Time: 0.030 ms
+
+=== dense_candidate_continued ===
+Limit  (cost=0.42..4.46 rows=1 width=56) (actual time=0.004..0.022 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..4.46 rows=1 width=56) (actual time=0.004..0.017 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-1'::bigint) AND (x_cm <= '1'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('0'::bigint, '0'::bigint, '0'::bigint, '00000000-0000-0000-0000-000000000064'::uuid)) AND (y_cm >= '-1'::bigint) AND (y_cm <= '1'::bigint) AND (z_cm >= '-1'::bigint) AND (z_cm <= '1'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=9
+Planning Time: 0.044 ms
+Execution Time: 0.035 ms
+
+=== dense_three_index_first ===
+Limit  (cost=0.42..7.20 rows=100 width=56) (actual time=0.009..0.019 rows=100 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..67732.43 rows=1000000 width=56) (actual time=0.009..0.014 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-1'::bigint) AND (x_cm <= '1'::bigint) AND (y_cm >= '-1'::bigint) AND (y_cm <= '1'::bigint) AND (z_cm >= '-1'::bigint) AND (z_cm <= '1'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=38
+Planning Time: 0.111 ms
+Execution Time: 0.033 ms
+
+=== dense_three_index_continued ===
+Limit  (cost=0.42..4.46 rows=1 width=56) (actual time=0.004..0.025 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..4.46 rows=1 width=56) (actual time=0.004..0.019 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-1'::bigint) AND (x_cm <= '1'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('0'::bigint, '0'::bigint, '0'::bigint, '00000000-0000-0000-0000-000000000064'::uuid)) AND (y_cm >= '-1'::bigint) AND (y_cm <= '1'::bigint) AND (z_cm >= '-1'::bigint) AND (z_cm <= '1'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=9
+Planning Time: 0.057 ms
+Execution Time: 0.040 ms
+
+=== adversarial_candidate_first ===
+Limit  (cost=21728.84..21740.50 rows=100 width=56) (actual time=26.048..27.683 rows=100 loops=1)
+  Buffers: shared hit=7463 read=2975 written=34
+  ->  Gather Merge  (cost=21728.84..21745.17 rows=140 width=56) (actual time=26.048..27.672 rows=100 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=7463 read=2975 written=34
+        ->  Sort  (cost=20728.81..20728.99 rows=70 width=56) (actual time=24.516..24.520 rows=67 loops=3)
+              Sort Key: x_cm, y_cm, z_cm, place_entity_id
+              Sort Method: quicksort  Memory: 35kB
+              Buffers: shared hit=7463 read=2975 written=34
+              Worker 0: Sort Method: quicksort  Memory: 37kB
+              Worker 1: Sort Method: quicksort  Memory: 28kB
+              ->  Parallel Seq Scan on place_map_index  (cost=0.00..20726.67 rows=70 width=56) (actual time=24.458..24.464 rows=67 loops=3)
+                    Filter: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (y_cm >= '0'::bigint) AND (y_cm <= '0'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+                    Rows Removed by Filter: 333267
+                    Buffers: shared hit=7335 read=2975 written=34
+Planning:
+  Buffers: shared hit=44
+Planning Time: 0.168 ms
+Execution Time: 27.706 ms
+
+=== adversarial_candidate_continued ===
+Limit  (cost=0.42..6.59 rows=1 width=56) (actual time=0.006..0.020 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..6.59 rows=1 width=56) (actual time=0.006..0.015 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('499899'::bigint, '0'::bigint, '0'::bigint, '00000000-0000-0000-0000-0000000f41dc'::uuid)) AND (y_cm >= '0'::bigint) AND (y_cm <= '0'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=18
+Planning Time: 0.070 ms
+Execution Time: 0.039 ms
+
+=== adversarial_two_index_first ===
+Limit  (cost=10.75..11.00 rows=100 width=56) (actual time=0.049..0.057 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Sort  (cost=10.75..11.00 rows=100 width=56) (actual time=0.049..0.052 rows=100 loops=1)
+        Sort Key: x_cm, y_cm, z_cm, place_entity_id
+        Sort Method: quicksort  Memory: 51kB
+        Buffers: shared hit=5
+        ->  Index Only Scan using place_map_index_yzx_entity_index on place_map_index  (cost=0.42..7.42 rows=100 width=56) (actual time=0.010..0.027 rows=200 loops=1)
+              Index Cond: ((y_cm >= '0'::bigint) AND (y_cm <= '0'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint) AND (x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint))
+              Heap Fetches: 0
+              Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=45
+Planning Time: 0.105 ms
+Execution Time: 0.070 ms
+
+=== adversarial_two_index_continued ===
+Limit  (cost=0.42..6.75 rows=1 width=56) (actual time=0.005..0.019 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..6.75 rows=1 width=56) (actual time=0.005..0.014 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('499899'::bigint, '0'::bigint, '0'::bigint, '00000000-0000-0000-0000-0000000f41dc'::uuid)) AND (y_cm >= '0'::bigint) AND (y_cm <= '0'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=21
+Planning Time: 0.074 ms
+Execution Time: 0.035 ms
+
+=== adversarial_three_index_first ===
+Limit  (cost=30.64..30.89 rows=100 width=56) (actual time=0.046..0.054 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Sort  (cost=30.64..31.31 rows=267 width=56) (actual time=0.046..0.049 rows=100 loops=1)
+        Sort Key: x_cm, y_cm, z_cm, place_entity_id
+        Sort Method: quicksort  Memory: 51kB
+        Buffers: shared hit=5
+        ->  Index Only Scan using place_map_index_yzx_entity_index on place_map_index  (cost=0.42..20.43 rows=267 width=56) (actual time=0.010..0.026 rows=200 loops=1)
+              Index Cond: ((y_cm >= '0'::bigint) AND (y_cm <= '0'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint) AND (x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint))
+              Heap Fetches: 0
+              Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=46
+Planning Time: 0.129 ms
+Execution Time: 0.068 ms
+
+=== adversarial_three_index_continued ===
+Limit  (cost=0.42..6.80 rows=1 width=56) (actual time=0.005..0.018 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..6.80 rows=1 width=56) (actual time=0.004..0.013 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('499899'::bigint, '0'::bigint, '0'::bigint, '00000000-0000-0000-0000-0000000f41dc'::uuid)) AND (y_cm >= '0'::bigint) AND (y_cm <= '0'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=21
+Planning Time: 0.078 ms
+Execution Time: 0.034 ms
+
+=== rotated_one_index_first ===
+Limit  (cost=21728.84..21740.50 rows=100 width=56) (actual time=28.167..29.630 rows=100 loops=1)
+  Buffers: shared hit=7702 read=2736 written=96
+  ->  Gather Merge  (cost=21728.84..21745.17 rows=140 width=56) (actual time=28.166..29.621 rows=100 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=7702 read=2736 written=96
+        ->  Sort  (cost=20728.81..20728.99 rows=70 width=56) (actual time=26.615..26.617 rows=58 loops=3)
+              Sort Key: x_cm, y_cm, z_cm, place_entity_id
+              Sort Method: quicksort  Memory: 28kB
+              Buffers: shared hit=7702 read=2736 written=96
+              Worker 0: Sort Method: quicksort  Memory: 37kB
+              Worker 1: Sort Method: quicksort  Memory: 35kB
+              ->  Parallel Seq Scan on place_map_index  (cost=0.00..20726.67 rows=70 width=56) (actual time=26.560..26.566 rows=67 loops=3)
+                    Filter: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (y_cm >= '-500000'::bigint) AND (y_cm <= '500000'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+                    Rows Removed by Filter: 333267
+                    Buffers: shared hit=7574 read=2736 written=96
+Planning:
+  Buffers: shared hit=11
+Planning Time: 0.093 ms
+Execution Time: 29.644 ms
+
+=== rotated_one_index_continued ===
+Limit  (cost=0.42..6.59 rows=1 width=56) (actual time=0.004..0.017 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..6.59 rows=1 width=56) (actual time=0.004..0.013 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('499899'::bigint, '499899'::bigint, '0'::bigint, '00000000-0000-0000-0000-0000000f41dc'::uuid)) AND (y_cm >= '-500000'::bigint) AND (y_cm <= '500000'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=15
+Planning Time: 0.049 ms
+Execution Time: 0.033 ms
+
+=== rotated_two_index_first ===
+Limit  (cost=0.42..21545.99 rows=100 width=56) (actual time=45.656..45.671 rows=100 loops=1)
+  Buffers: shared hit=8275 read=1073 written=956
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..57527.10 rows=267 width=56) (actual time=45.656..45.666 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (y_cm >= '-500000'::bigint) AND (y_cm <= '500000'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=8275 read=1073 written=956
+Planning:
+  Buffers: shared hit=53
+Planning Time: 0.227 ms
+Execution Time: 45.688 ms
+
+=== rotated_two_index_continued ===
+Limit  (cost=0.42..6.68 rows=1 width=56) (actual time=0.003..0.020 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..6.68 rows=1 width=56) (actual time=0.003..0.014 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('499899'::bigint, '499899'::bigint, '0'::bigint, '00000000-0000-0000-0000-0000000f41dc'::uuid)) AND (y_cm >= '-500000'::bigint) AND (y_cm <= '500000'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=29
+Planning Time: 0.068 ms
+Execution Time: 0.034 ms
+
+=== rotated_three_index_first ===
+Limit  (cost=30.64..30.89 rows=100 width=56) (actual time=0.049..0.059 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Sort  (cost=30.64..31.31 rows=267 width=56) (actual time=0.049..0.052 rows=100 loops=1)
+        Sort Key: x_cm, y_cm, z_cm, place_entity_id
+        Sort Method: quicksort  Memory: 51kB
+        Buffers: shared hit=5
+        ->  Index Only Scan using place_map_index_zxy_entity_index on place_map_index  (cost=0.42..20.43 rows=267 width=56) (actual time=0.010..0.026 rows=200 loops=1)
+              Index Cond: ((z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint) AND (x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (y_cm >= '-500000'::bigint) AND (y_cm <= '500000'::bigint))
+              Heap Fetches: 0
+              Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=34
+Planning Time: 0.087 ms
+Execution Time: 0.077 ms
+
+=== rotated_three_index_continued ===
+Limit  (cost=0.42..6.64 rows=1 width=56) (actual time=0.003..0.021 rows=100 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using place_map_index_xyz_entity_index on place_map_index  (cost=0.42..6.64 rows=1 width=56) (actual time=0.003..0.015 rows=100 loops=1)
+        Index Cond: ((x_cm >= '-500000'::bigint) AND (x_cm <= '500000'::bigint) AND (ROW(x_cm, y_cm, z_cm, place_entity_id) > ROW('499899'::bigint, '499899'::bigint, '0'::bigint, '00000000-0000-0000-0000-0000000f41dc'::uuid)) AND (y_cm >= '-500000'::bigint) AND (y_cm <= '500000'::bigint) AND (z_cm >= '0'::bigint) AND (z_cm <= '0'::bigint))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.059 ms
+Execution Time: 0.030 ms

@@ -17,6 +17,7 @@ models.
 
 - [01 — Model pressure](01-model-pressure/README.md) — Which of four temporary model shapes best explains all thirteen fixed spatial scenarios without conflating exact Position, authored meaning, movement, topology, visibility or remote causality?
 - [02 — PostgreSQL Position lineage](02-postgres-position-lineage/README.md) — Can the candidate PostgreSQL Position lineage and carrier lock boundary survive the fixed eight-case fixture?
+- [03 — PostgreSQL Place-map index](03-place-map-index/README.md) — Can the accepted one-index Place projection keep exact box pages bounded, and what is the smallest PostgreSQL-only correction when it cannot?
 
 ## Spatial-specific boundaries
 

@@ -160,8 +160,13 @@ Indexes exist only for current behavior:
 - partial unique `place(is_entry) WHERE is_entry` arbitrates World genesis;
 - unique Position root/successor indexes and the Position primary/current-pointer
   indexes serve one-Entity lineage validation and current read;
-- `place_map_index(x_cm, y_cm, z_cm, place_entity_id)` covers candidate selection,
-  ordering and continuation for an axis-aligned Place window;
+- three covering Place-map indexes lead respectively with X, Y and Z:
+  `(x_cm, y_cm, z_cm, place_entity_id)`,
+  `(y_cm, z_cm, x_cm, place_entity_id)` and
+  `(z_cm, x_cm, y_cm, place_entity_id)`, each including
+  `position_activity_id`. PostgreSQL may choose the useful leading axis while the
+  query preserves canonical `(x_cm, y_cm, z_cm, place_entity_id)` ordering and
+  continuation;
 - `connection(source_place_entity_id, id)` and
   `connection(destination_place_entity_id, id)` serve incident paging without course
   hydration; `connection_point` primary key serves one selected ordered course;

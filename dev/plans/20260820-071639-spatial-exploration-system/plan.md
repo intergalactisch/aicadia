@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T15:28:13+02:00"
+updated_at: "2026-08-20T15:53:34+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
@@ -345,23 +345,29 @@ hot point cannot pollute Place selection. It has no domain identity, authorship,
 Activity or API and never decides Place truth. Every result exact-rechecks the Place's
 current Position before hydration.
 
-The initial covering B-tree is `(x_cm, y_cm, z_cm, place_entity_id)`. `list_place`
-orders and continues on that same tuple. Its opaque cursor binds the exact window and
-last tuple; changing the window invalidates the cursor. Concurrent inserts before a
-cursor may appear only after a fresh query, so pagination promises stable bounded
-progress, not a cross-request snapshot or exact enumeration.
+Three covering B-trees on the same projection lead respectively with X, Y and Z:
+`(x_cm, y_cm, z_cm, place_entity_id)`,
+`(y_cm, z_cm, x_cm, place_entity_id)` and
+`(z_cm, x_cm, y_cm, place_entity_id)`, each including
+`position_activity_id`. PostgreSQL may choose the useful leading axis; `list_place`
+still orders and continues canonically on `(x_cm, y_cm, z_cm, place_entity_id)`.
+Its opaque cursor binds the exact window and last tuple; changing the window
+invalidates the cursor. Concurrent inserts before a cursor may appear only after a
+fresh query, so pagination promises stable bounded progress, not a cross-request
+snapshot or exact enumeration.
 
 `list_connection` uses separate `(source_place_entity_id, id)` and
 `(destination_place_entity_id, id)` indexes and stable id continuation. It hydrates
 at most two endpoint summaries per selected row without per-row queries.
 `get_connection` alone hydrates course points. No list returns exact total count.
 
-T1E falsifies this leading index before production migration work. If the candidate
-fails the one-million-row dense or adversarial `EXPLAIN (ANALYZE, BUFFERS)` gate,
-root refines only the rebuildable index/projection seam and reruns the lab before T2.
-It may not add canonical cells, PostGIS, another Place coordinate truth or global map
-state merely to make the benchmark pass. A changed product truth, public semantic or
-evidence claim still returns the plan to draft for renewed acceptance.
+T1E refuted the one-index candidate and a two-axis correction, then supported the
+three-axis set above for the exact dense, cross-axis and rotated million-row
+fixtures. This does not mathematically bound every correlated 3D distribution; the
+three-second statement budget remains the bounded failure contract and T3 must prove
+the production query still matches the retained candidate. The correction changes
+only rebuildable indexes. Canonical cells, PostGIS, another Place coordinate truth
+or global map state remain prohibited without renewed acceptance.
 
 ### Exact Movement
 
@@ -506,8 +512,8 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | ID | State | Depends | Parallel-safe | Objective | Owned surfaces | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | completed | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
-| T1E | in_progress | T1 | no | Falsify the leading Place-map projection and covering B-tree before production schema work. | `dev/lab/spatial/03-place-map-index/` only | Real PostgreSQL 17 dense/adversarial million-row `EXPLAIN (ANALYZE, BUFFERS)` verdict and cleanup. |
-| T2 | pending | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
+| T1E | completed | T1 | no | Falsify the leading Place-map projection and covering B-tree before production schema work. | `dev/lab/spatial/03-place-map-index/` only | Real PostgreSQL 17 dense/adversarial million-row `EXPLAIN (ANALYZE, BUFFERS)` verdict and cleanup. |
+| T2 | in_progress | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
 | T3 | pending | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
 | T4 | pending | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
 | T5 | pending | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
@@ -574,10 +580,19 @@ stable continuation; the adversarial empty or sparse page does not inspect work
 proportional to one million candidates. Raw plans and cleanup result remain in the
 lab record.
 
-**Stop:** a refuted one-index candidate blocks T2. Root may compare the smallest
-rebuildable PostgreSQL-only alternative and update this technical seam in place, but
-must re-run T1E. Any need for canonical spatial cells, PostGIS, changed window/public
-semantics or another World truth returns the plan to draft for User re-acceptance.
+**T1E review record:** PostgreSQL 17.8 ran three independent disposable fixtures of
+exactly 1,000,000 rows. The accepted X-leading index and then X+Y were refuted by
+cross-axis and rotated first pages that did work proportional to the fixture. The
+final X+Y+Z set returned dense first/continued pages through 4–5 shared blocks and
+cross/rotated first/continued pages through 5 shared blocks, with no sequential scan.
+The retained suite is 3/3 green; the independent cleanup audit found zero leaks.
+This supports only the three fixed distributions, not every correlated 3D workload,
+production World behavior, throughput or hosted latency.
+
+**Stop resolution:** the smallest tested rebuildable PostgreSQL-only correction is
+the three-axis covering set now adopted by T2. Any need for canonical spatial cells,
+PostGIS, changed window/public semantics or another World truth still returns the
+plan to draft for User re-acceptance.
 
 ### T2 — Build direct Position and immutable Connection
 
