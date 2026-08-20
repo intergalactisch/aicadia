@@ -114,6 +114,9 @@ proposals and asks the User to confirm every complete World-changing package.
   its identity. The Agent may record “a dark figure on the ridge” without receiving
   a hidden Character's name or current Entity state. World still retains the exact
   existing model reference on the Observation; Knowledge design is parked.
+- The Agent selects an Observation subject through the explicit stable `entity`,
+  `place` or `connection` model alias. It never invents a table/class name or treats
+  Position, Property or Trait as an independent observed subject.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

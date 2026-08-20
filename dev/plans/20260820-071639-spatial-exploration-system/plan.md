@@ -230,6 +230,11 @@ At million-Character pressure:
   gaining its current Entity read. Every Observation nevertheless references exactly
   one existing model record through required subject type and id. Knowledge design is
   explicitly parked — User corrections, 2026-08-20.
+- Observation target types use one explicit World-owned expandable list. S1 admits
+  only stable `entity`, `place` and `connection` aliases; Character is observed as
+  its Entity, while Position, Property and Trait remain state described through
+  their owning Entity or Place. Runtime class/table names and speculative later
+  types are absent — User choice A, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -318,9 +323,11 @@ At million-Character pressure:
    itself; other Characters need an explicit eligible map/local observation path,
    not guessed-id Position access. Store no `view_count` or global reverse observer query.
    Observation never automatically creates Knowledge or identification, but always
-   stores one exact model reference. **Next open consequence:** decide which current
-   model types the polymorphic Observation target admits; arbitrary runtime class or
-   table names remain rejected.
+   stores one exact model reference. User choice A admits only explicit stable
+   `entity`, `place` and `connection` aliases now; adding another model is a later
+   deliberate contract change. **Next open consequence:** decide whether Observation
+   is created only by one dedicated operation or may be an explicit optional result
+   of the structurally grounding Movement, Interaction or other accepted action.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

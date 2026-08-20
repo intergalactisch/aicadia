@@ -2718,3 +2718,26 @@ cost is polymorphic target integrity: World must dispatch and validate the selec
 model type deterministically, because one ordinary PostgreSQL foreign key cannot
 change its table based on `subject_type`. The next Observation-only choice is the
 current admitted model-type set, not whether a target exists.
+
+## Explicit expandable Observation model list selected
+
+The User selected an explicit World-owned list rather than arbitrary model, table or
+runtime class names. The current stable aliases are `entity`, `place` and
+`connection`. An observed Character, animal, plant or object uses `entity`. A city,
+forest or other positioned Entity observed specifically in its spatial reference
+role uses `place`. A direct travel alternative uses `connection`.
+
+Position, Property and Trait are not separate current Observation targets: an Agent
+may describe their eligible details in the private account of the owning Entity or
+Place. Relation, Area and every future model remain absent until one concrete
+accepted Observation behavior earns each type. This keeps dispatch, authorization,
+querying and target validation exhaustive without preventing an additive extension.
+Stored aliases are stable game/server vocabulary and never Rust type paths or table
+names.
+
+The chosen list makes the polymorphic row technically bounded: World switches over
+three current types, validates that exact record and uses a Character-leading and
+subject-aware index shape. It still does not decide Knowledge or expose the target's
+current fields. The next Observation-only choice is creation: a dedicated operation
+for every look, or an explicit optional Observation inside another structurally
+grounding action such as Movement or Interaction.

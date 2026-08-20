@@ -43,6 +43,9 @@ into truth or spending tokens in the background.
   identity. A distant unclear figure may be observed without exposing the exact
   Character behind it, while every Observation still stores one required exact model
   reference for deterministic validation and repeat matching.
+- Observation admits an explicit expandable model list: `entity`, `place` and
+  `connection` now. Runtime class/table names and speculative types are rejected;
+  adding another model requires its own accepted behavior and authorization.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
