@@ -53,6 +53,10 @@ not a pre-computed complete map.
   `entity_id`, while Entity keeps name, description, Properties and Traits. Area and
   Connections add only Place-specific spatial state, with Activity for the accepted
   state change.
+- The player-level shorthand is “a named, discovered Position,” implemented through
+  that one subject: Entity owns the name and extensible content, Position owns the
+  point and Place owns only the deliberate spatial-reference role. This adds no
+  independent Place id or duplicate name, Property, Trait or coordinate storage.
 - A bounded map read first selects only Places that World can deterministically make
   knowable to the acting Character, then filters those candidates by resolved
   Position in the exact requested World window or known Area intersection. A window
@@ -295,10 +299,6 @@ not a pre-computed complete map.
 
 ### Not yet chosen
 
-- Whether the User's player-level shorthand “a discovered Position with a name and
-  later properties” changes the existing technical identity boundary, or is exactly
-  represented by Entity identity plus its Position and deliberate Place role. No
-  duplicate Place-owned coordinates or content are accepted while this is open.
 - Which rule makes three existing Places eligible for `enter_world`, what happens
   before three eligible Places exist and whether later explicit exploration first
   reads existing nearby subjects, attempts a new discovery or sequences both.

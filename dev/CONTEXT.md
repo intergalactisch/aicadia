@@ -56,9 +56,12 @@ _Avoid_: Prose, Position prose, mechanical constraint
 
 **Place**:
 The deliberately established role of a positioned Entity used as an independent
-reference for map, discovery, navigation or explicit spatial relationships. It uses
-the Entity's stable identity, may have an Area and is never inferred from Position,
-name, description or Entity kind; the current World has at most one entry Place.
+reference for map, discovery, navigation or explicit spatial relationships. In play
+it is a discovered and named spatial reference: Entity owns its stable identity,
+name, description, Properties and Traits; Position owns its current point; and Place
+owns the role and any Area, while Connections may name it as an endpoint. It is never
+inferred from Position, name, description or Entity kind; the current World has at
+most one entry Place.
 _Avoid_: Position, Location id, scene, node, coordinates
 
 **Area**:

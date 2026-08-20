@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T13:52:04+02:00"
+updated_at: "2026-08-20T13:56:17+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -199,6 +199,10 @@ At million-Character pressure:
   though its database evolution must remain possible — Terry order.
 - Place is a deliberate role of a positioned Entity; Position never promotes it
   automatically — Place Area.
+- The User's shorthand “a named, discovered Position” uses that one-subject design:
+  Entity owns identity and authored content, Position owns the current point and the
+  Place role marks the independent spatial reference. No separate Place identity or
+  duplicate content/coordinate owner exists — User choice A, 2026-08-20.
 - Connection is a stable non-Entity direct travel alternative with explicit
   direction, name, description and optional ordered exact course; it is not a Route,
   Relation or physical road Entity — Place and Movement Areas.
@@ -332,10 +336,10 @@ At million-Character pressure:
 - `enter_world` stops after accepted placement and Activity. It performs no automatic
   nearby read, Observation, Investigation or discovery; only a later explicit User
   request invokes the Agent to begin look-around or exploration gameplay.
-- Until the Place identity wording is resolved, S1 retains the reversible existing
-  one-subject candidate: Entity owns stable identity and authored content, Position
-  owns its current point and Place is the deliberate role. No migration or public
-  schema may be derived from that candidate while this plan remains draft.
+- S1 uses the confirmed one-subject Place identity: Entity owns stable identity and
+  authored content, Position owns its current point and Place is the deliberate role.
+  This settled domain choice still authorizes no migration or public schema while
+  the plan remains draft.
 
 ### Open questions blocking activation
 
@@ -466,15 +470,6 @@ At million-Character pressure:
    count, text limits and statement/lock budgets before publishing schemas.
    **Preference:** conservative server constants proven with checked arithmetic and
    cursors; no unit enum, floating point or distance rule.
-8. **Literal Place identity.** Player consequence: a discovered and named spatial
-   point should feel like one Place that can gain description, Properties and Traits,
-   while an unnamed Position remains freely playable. Technical consequence: decide
-   whether the current one-subject design—Entity identity plus Position plus Place
-   role—is the storage implementation, or whether Place independently owns identity,
-   coordinates and content. **Preference:** keep the one-subject design: it gives
-   Connections and Activity one durable subject, avoids duplicate name/property
-   machinery and keeps coordinates in one Position truth.
-
 The plan remains `draft` until these questions are resolved in the active spatial
 record and current log. Later-slice questions do not block S1 because their concepts
 are explicitly absent here and require child plans.

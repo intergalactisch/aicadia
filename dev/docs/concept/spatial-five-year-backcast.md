@@ -3073,8 +3073,16 @@ subjects and dependencies.
 The User described Place at the player level as a Position that has been discovered,
 named and can later gain properties. That confirms Place is deliberately established
 through play rather than a prerequisite or automatic classification of every point.
-Its literal storage meaning remains the one active vocabulary question: either the
-existing one-subject design is the technical implementation—a named Entity with one
-Position and a Place role—or Place becomes a separate coordinate-and-content owner.
-No canonical vocabulary or runtime contract changes until that distinction is
-settled.
+The User then selected the one-subject technical implementation: Entity owns the
+stable identity, name, description, Properties and Traits; Position owns its current
+point; and the Place role makes that positioned Entity an explicit map, discovery,
+navigation and Connection reference. There is no separate Place identity and no
+duplicate Place-owned coordinate or content system.
+
+For example, discovering Windcliff establishes one Entity named Windcliff, one
+Position keyed by Windcliff's `entity_id` and one Place role keyed by that same id.
+A Connection and Activity refer to that stable subject. A positioned cup or Character
+does not become a Place merely because it has a name or Position; the role is an
+explicit accepted part of the discovery. This resolves the Place vocabulary branch.
+The next open gameplay choice is the ordering of existing-context inspection and a
+new discovery attempt during one User-invoked exploration turn.
