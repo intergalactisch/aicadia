@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T17:04:21+02:00"
+updated_at: "2026-08-20T18:06:03+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
@@ -514,8 +514,8 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T1 | completed | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
 | T1E | completed | T1 | no | Falsify the leading Place-map projection and covering B-tree before production schema work. | `dev/lab/spatial/03-place-map-index/` only | Real PostgreSQL 17 dense/adversarial million-row `EXPLAIN (ANALYZE, BUFFERS)` verdict and cleanup. |
 | T2 | completed | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
-| T3 | in_progress | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
-| T4 | pending | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
+| T3 | completed | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
+| T4 | in_progress | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
 | T5 | pending | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
 | T6 | pending | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
 | T7 | pending | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
@@ -646,6 +646,20 @@ Knowledge gating, unrelated hydration or course explosion.
 **Evidence:** functional pagination and authorization tests plus T1E's retained
 index verdict show no unbounded hydration, no count and bounded production query
 count for each public operation.
+
+**T3 review record:** real PostgreSQL passed all 9 functional spatial-read cases and
+3 focused query-plan/query-count cases. Exact production first and continued Place
+queries remained bounded across dense, cross-axis and rotated fixtures of 1,000,000
+projection rows; deep `force_generic_plan` continuations at row 900,000 remained
+bounded for both Places and a 1,000,000-row hot Connection anchor. Review replaced
+nullable cursor predicates that degraded to proportional filtering under a generic
+plan with separate static first/continued forms, bounded both cursor decoders before
+base64 work, made stale-projection evidence deterministic and put User,
+Character and Position eligibility under the same three-second retryable budget.
+The full `aicadia-game` crate passed 54 library tests, 14 server tests with one
+existing ignored generator and 95 World tests; workspace checking, focused
+documentation lint, formatting and diff checks were clean. T3 adds no Activity and
+does not claim hosted throughput, T4 Discovery, T5 Movement or T6 HTTP/MCP parity.
 
 **Stop:** stop if the production query no longer matches the proved T1E shape; do not
 silently add canonical cells, PostGIS, Place coordinates or a global map revision.

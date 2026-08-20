@@ -84,6 +84,7 @@ pub struct Position {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConnectionPoint {
+    pub ordinal: u16,
     pub x_cm: i64,
     pub y_cm: i64,
     pub z_cm: i64,
@@ -91,8 +92,27 @@ pub struct ConnectionPoint {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConnectionEndpoint {
-    pub place: PlaceSummary,
-    pub position_revision: PositionRevision,
+    pub place: PlacePosition,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PlacePosition {
+    pub id: EntityId,
+    pub name: String,
+    pub description: String,
+    pub is_entry: bool,
+    pub position: Position,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ConnectionSummary {
+    pub id: ConnectionId,
+    pub source: ConnectionEndpoint,
+    pub destination: ConnectionEndpoint,
+    pub allows_reverse: bool,
+    pub name: String,
+    pub description: String,
+    pub has_course: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -105,6 +125,44 @@ pub struct Connection {
     pub description: String,
     pub shape_description: Option<String>,
     pub course: Vec<ConnectionPoint>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ListPlace {
+    pub min_x_cm: i64,
+    pub max_x_cm: i64,
+    pub min_y_cm: i64,
+    pub max_y_cm: i64,
+    pub min_z_cm: i64,
+    pub max_z_cm: i64,
+    pub cursor: Option<String>,
+    pub limit: u16,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PlacePage {
+    pub place: Vec<PlacePosition>,
+    pub next: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ListConnection {
+    pub place_id: EntityId,
+    pub cursor: Option<String>,
+    pub limit: u16,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ConnectionPage {
+    pub place: PlacePosition,
+    pub connection: Vec<ConnectionSummary>,
+    pub next: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GetConnection {
+    pub place_id: EntityId,
+    pub connection_id: ConnectionId,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

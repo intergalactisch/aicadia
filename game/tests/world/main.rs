@@ -6,6 +6,7 @@ mod interaction;
 mod investigation_schema;
 mod property_behavior;
 mod property_schema;
+mod spatial_read;
 mod spatial_storage;
 mod trait_behavior;
 mod trait_storage;
@@ -14,10 +15,11 @@ use aicadia::{
     AcceptedActionConsequence, ActionConsequence, ActionField, ActivityEntityRole,
     ActivityOperation, ActivityTraitChange, ChangeEntityState, CreateCharacter, CreateEntity,
     CreateEntryPlace, EntityCurrentAssociation, EntityField, EntityId, EntityPropertyChangeInput,
-    EntityTraitChangeInput, EntityTraitId, GetEntityAtCurrentPlace, GetEntityCurrentState,
-    InteractionField, IntroduceEntity, InvalidReason, ListActivity, ListActivityAtCurrentPlace,
-    ListEntityAtCurrentPlace, PlaceRevision, PropertyField, PropertyInput, PropertyValue,
-    SubmitAction, SubmitInteraction, TraitInput, UserId, World, WorldError,
+    EntityTraitChangeInput, EntityTraitId, GetConnection, GetEntityAtCurrentPlace,
+    GetEntityCurrentState, InteractionField, IntroduceEntity, InvalidReason, ListActivity,
+    ListActivityAtCurrentPlace, ListConnection, ListEntityAtCurrentPlace, ListPlace, PlaceRevision,
+    PropertyField, PropertyInput, PropertyValue, SubmitAction, SubmitInteraction, TraitInput,
+    UserId, World, WorldError,
 };
 use chrono::{TimeZone, Utc};
 use sha2::{Digest, Sha256};

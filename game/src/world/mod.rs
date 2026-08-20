@@ -13,6 +13,7 @@ const MAX_ENTITY_NAME_LENGTH: usize = 120;
 const MAX_ENTITY_DESCRIPTION_LENGTH: usize = 4_000;
 const MAX_POSITION_DESCRIPTION_LENGTH: usize = 4_000;
 const MAX_COORDINATE_CM: i64 = 1_000_000_000_000_000;
+const MAX_PLACE_WINDOW_SPAN_CM: i64 = 100_000_000;
 const MAX_ACTION_PROSE_LENGTH: usize = 4_000;
 const MAX_INTERACTION_PROSE_LENGTH: usize = 4_000;
 const MAX_INTERACTION_TARGET_COUNT: usize = 100;
@@ -30,6 +31,8 @@ mod mutation;
 mod property;
 mod read;
 mod spatial;
+#[cfg(test)]
+mod spatial_read_plan_test;
 
 pub use activity::*;
 pub use error::*;
@@ -60,6 +63,17 @@ enum TraitQueryKind {
     Hydration,
 }
 
+#[derive(Clone, Copy)]
+enum SpatialReadQueryKind {
+    PlaceCandidate,
+    PlaceHydration,
+    ConnectionAnchor,
+    ConnectionCandidate,
+    ConnectionHydration,
+    ConnectionGet,
+    ConnectionCourse,
+}
+
 #[cfg(test)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct PropertyQueryCount {
@@ -77,6 +91,18 @@ struct TraitQueryCount {
 }
 
 #[cfg(test)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct SpatialReadQueryCount {
+    place_candidate: usize,
+    place_hydration: usize,
+    connection_anchor: usize,
+    connection_candidate: usize,
+    connection_hydration: usize,
+    connection_get: usize,
+    connection_course: usize,
+}
+
+#[cfg(test)]
 tokio::task_local! {
     static PROPERTY_QUERY_COUNT: RefCell<PropertyQueryCount>;
 }
@@ -84,6 +110,11 @@ tokio::task_local! {
 #[cfg(test)]
 tokio::task_local! {
     static TRAIT_QUERY_COUNT: RefCell<TraitQueryCount>;
+}
+
+#[cfg(test)]
+tokio::task_local! {
+    static SPATIAL_READ_QUERY_COUNT: RefCell<SpatialReadQueryCount>;
 }
 
 #[inline]
@@ -105,6 +136,25 @@ fn record_trait_query(kind: TraitQueryKind) {
         TraitQueryKind::Write => count.borrow_mut().write += 1,
         TraitQueryKind::CurrentRead => count.borrow_mut().current_read += 1,
         TraitQueryKind::Hydration => count.borrow_mut().hydration += 1,
+    });
+    #[cfg(not(test))]
+    let _ = kind;
+}
+
+#[inline]
+fn record_spatial_read_query(kind: SpatialReadQueryKind) {
+    #[cfg(test)]
+    let _ = SPATIAL_READ_QUERY_COUNT.try_with(|count| {
+        let mut count = count.borrow_mut();
+        match kind {
+            SpatialReadQueryKind::PlaceCandidate => count.place_candidate += 1,
+            SpatialReadQueryKind::PlaceHydration => count.place_hydration += 1,
+            SpatialReadQueryKind::ConnectionAnchor => count.connection_anchor += 1,
+            SpatialReadQueryKind::ConnectionCandidate => count.connection_candidate += 1,
+            SpatialReadQueryKind::ConnectionHydration => count.connection_hydration += 1,
+            SpatialReadQueryKind::ConnectionGet => count.connection_get += 1,
+            SpatialReadQueryKind::ConnectionCourse => count.connection_course += 1,
+        }
     });
     #[cfg(not(test))]
     let _ = kind;
@@ -159,6 +209,213 @@ impl World {
             .await
             .map_err(|error| storage_error(operation, error))?;
         Ok(transaction)
+    }
+
+    async fn begin_spatial_read(
+        &self,
+        operation: &'static str,
+    ) -> Result<Transaction<'_, Postgres>, WorldError> {
+        let mut transaction = self.begin_repeatable_read(operation).await?;
+        sqlx::query("SET LOCAL statement_timeout = '3s'")
+            .execute(&mut *transaction)
+            .await
+            .map_err(|error| spatial_read_error(operation, error))?;
+        Ok(transaction)
+    }
+}
+
+#[cfg(test)]
+mod spatial_read_query_count_test {
+    use super::*;
+
+    #[sqlx::test(migrations = "./migration")]
+    async fn spatial_reads_use_one_fixed_query_per_selected_data_seam(pool: PgPool) {
+        SPATIAL_READ_QUERY_COUNT
+            .scope(RefCell::new(SpatialReadQueryCount::default()), async move {
+                let world = World::new(pool.clone());
+                let user = world.create_user().await.unwrap();
+                let character = world
+                    .create_character(
+                        user.id,
+                        CreateCharacter {
+                            name: "Query Reader".to_owned(),
+                            description: "Reads bounded spatial state.".to_owned(),
+                            property: Vec::new(),
+                            r#trait: Vec::new(),
+                        },
+                    )
+                    .await
+                    .unwrap();
+                world
+                    .create_entry_place(
+                        user.id,
+                        CreateEntryPlace {
+                            name: "Query Origin".to_owned(),
+                            description: "Origin for bounded query evidence.".to_owned(),
+                            property: Vec::new(),
+                            r#trait: Vec::new(),
+                        },
+                    )
+                    .await
+                    .unwrap();
+                let entered = world.enter_world(user.id).await.unwrap();
+                let source = entered.current_place.unwrap();
+
+                world
+                    .list_place(
+                        user.id,
+                        ListPlace {
+                            min_x_cm: 0,
+                            max_x_cm: 0,
+                            min_y_cm: 0,
+                            max_y_cm: 0,
+                            min_z_cm: 0,
+                            max_z_cm: 0,
+                            cursor: None,
+                            limit: 100,
+                        },
+                    )
+                    .await
+                    .unwrap();
+                world
+                    .list_connection(
+                        user.id,
+                        ListConnection {
+                            place_id: source.entity.id,
+                            cursor: None,
+                            limit: 100,
+                        },
+                    )
+                    .await
+                    .unwrap();
+
+                let destination_id = EntityId(Uuid::new_v4());
+                let activity_id = ActivityId(Uuid::new_v4());
+                let connection_id = ConnectionId(Uuid::new_v4());
+                let mut transaction = pool.begin().await.unwrap();
+                sqlx::query("INSERT INTO entity (id, name, description, introduced_by_user_id) VALUES ($1, 'Query Destination', 'Destination for query evidence.', $2)")
+                    .bind(destination_id.0)
+                    .bind(user.id.0)
+                    .execute(&mut *transaction)
+                    .await
+                    .unwrap();
+                sqlx::query(
+                    r#"
+                    INSERT INTO activity (
+                        id, operation, requested_by_user_id,
+                        actor_character_entity_id, context_place_entity_id,
+                        prose, request_id, request_fingerprint
+                    ) VALUES (
+                        $1, 'submit_discovery', $2, $3, $4,
+                        'A query destination and Connection are established.', $5, $6
+                    )
+                    "#,
+                )
+                .bind(activity_id.0)
+                .bind(user.id.0)
+                .bind(character.entity.id.0)
+                .bind(source.entity.id.0)
+                .bind(Uuid::new_v4())
+                .bind(vec![12_u8; 32])
+                .execute(&mut *transaction)
+                .await
+                .unwrap();
+                sqlx::query("INSERT INTO activity_entity (activity_id, entity_id, role) VALUES ($1, $2, 'subject'), ($1, $2, 'destination'), ($1, $3, 'location')")
+                    .bind(activity_id.0)
+                    .bind(destination_id.0)
+                    .bind(source.entity.id.0)
+                    .execute(&mut *transaction)
+                    .await
+                    .unwrap();
+                let destination = insert_root_position(
+                    &mut transaction,
+                    destination_id,
+                    activity_id,
+                    100,
+                    0,
+                    0,
+                    None,
+                    "spatial_read_query_count_test",
+                )
+                .await
+                .unwrap();
+                sqlx::query("INSERT INTO place (entity_id, is_entry, latest_activity_id) VALUES ($1, false, $2)")
+                    .bind(destination_id.0)
+                    .bind(activity_id.0)
+                    .execute(&mut *transaction)
+                    .await
+                    .unwrap();
+                insert_place_map_projection(
+                    &mut transaction,
+                    destination_id,
+                    &destination,
+                    "spatial_read_query_count_test",
+                )
+                .await
+                .unwrap();
+                sqlx::query(
+                    r#"
+                    INSERT INTO connection (
+                        id, source_place_entity_id, destination_place_entity_id,
+                        source_position_activity_id, destination_position_activity_id,
+                        allows_reverse, has_course, name, description,
+                        created_by_activity_id
+                    ) VALUES ($1, $2, $3, $4, $5, true, false,
+                              'Query Connection', 'Unshaped query evidence.', $6)
+                    "#,
+                )
+                .bind(connection_id.0)
+                .bind(source.entity.id.0)
+                .bind(destination_id.0)
+                .bind(source.position.position_revision.activity_id().0)
+                .bind(activity_id.0)
+                .bind(activity_id.0)
+                .execute(&mut *transaction)
+                .await
+                .unwrap();
+                sqlx::query("INSERT INTO activity_connection (activity_id, connection_id) VALUES ($1, $2)")
+                    .bind(activity_id.0)
+                    .bind(connection_id.0)
+                    .execute(&mut *transaction)
+                    .await
+                    .unwrap();
+                transaction.commit().await.unwrap();
+
+                world
+                    .list_connection(
+                        user.id,
+                        ListConnection {
+                            place_id: source.entity.id,
+                            cursor: None,
+                            limit: 100,
+                        },
+                    )
+                    .await
+                    .unwrap();
+                world
+                    .get_connection(
+                        user.id,
+                        GetConnection {
+                            place_id: source.entity.id,
+                            connection_id,
+                        },
+                    )
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    SPATIAL_READ_QUERY_COUNT.with(|count| *count.borrow()),
+                    SpatialReadQueryCount {
+                        place_candidate: 1,
+                        place_hydration: 1,
+                        connection_anchor: 2,
+                        connection_candidate: 2,
+                        connection_hydration: 1,
+                        connection_get: 1,
+                        connection_course: 1,
+                    }
+                );
+            })
+            .await;
     }
 }
 

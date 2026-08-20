@@ -289,6 +289,14 @@ impl ErrorOutput {
                 "limit",
                 "out_of_range",
             ),
+            // T3's World-only reads are not adapter routes until T6. Keep the
+            // current fifteen-capability error schema closed until that parity task.
+            WorldError::InvalidPlaceWindow
+            | WorldError::InvalidPlaceLimit
+            | WorldError::InvalidConnectionLimit => Self::new(
+                ErrorCode::InvalidRequest,
+                "The request does not match the selected World operation.",
+            ),
             WorldError::UserNotFound => Self::new(
                 ErrorCode::UserNotFound,
                 format!("{USER_CONTEXT_HEADER} does not identify an existing User."),
@@ -316,6 +324,10 @@ impl ErrorOutput {
             WorldError::EntryPlaceNotFound => Self::new(
                 ErrorCode::EntryPlaceNotFound,
                 "The World does not have an entry Place yet.",
+            ),
+            WorldError::PlaceNotFound | WorldError::ConnectionNotFound => Self::new(
+                ErrorCode::Unavailable,
+                "The World could not complete the request; retry later.",
             ),
             WorldError::ActionRequestConflict => Self::new(
                 ErrorCode::ActionRequestConflict,
@@ -361,7 +373,7 @@ impl ErrorOutput {
                 ErrorCode::InvestigationNotAdmitted,
                 "The investigation was not admitted.",
             ),
-            WorldError::Unavailable => Self::new(
+            WorldError::Unavailable | WorldError::TemporarilyUnavailable => Self::new(
                 ErrorCode::Unavailable,
                 "The World could not complete the request; retry later.",
             ),

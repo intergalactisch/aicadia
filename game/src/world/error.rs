@@ -90,6 +90,12 @@ pub enum WorldError {
     InvalidActivityLimit,
     #[error("property list limit must be between 1 and 100")]
     InvalidPropertyLimit,
+    #[error("place window is invalid")]
+    InvalidPlaceWindow,
+    #[error("place list limit must be between 1 and 100")]
+    InvalidPlaceLimit,
+    #[error("connection list limit must be between 1 and 100")]
+    InvalidConnectionLimit,
     #[error("user was not found")]
     UserNotFound,
     #[error("character was not found")]
@@ -102,6 +108,10 @@ pub enum WorldError {
     EntryPlaceAlreadyExists,
     #[error("entry place was not found")]
     EntryPlaceNotFound,
+    #[error("place was not found")]
+    PlaceNotFound,
+    #[error("connection was not found")]
+    ConnectionNotFound,
     #[error("character has not entered the world")]
     CharacterNotEntered,
     #[error("action request id has already been used with different content")]
@@ -128,6 +138,8 @@ pub enum WorldError {
     PlaceRevisionConflict,
     #[error("world storage is unavailable")]
     Unavailable,
+    #[error("world storage is temporarily unavailable")]
+    TemporarilyUnavailable,
 }
 
 pub(super) fn invalid_stored_relation() -> WorldError {
@@ -161,4 +173,16 @@ pub(super) fn storage_error(operation: &'static str, error: sqlx::Error) -> Worl
         })
     );
     WorldError::Unavailable
+}
+
+pub(super) fn spatial_read_error(operation: &'static str, error: sqlx::Error) -> WorldError {
+    if error
+        .as_database_error()
+        .and_then(|error| error.code())
+        .as_deref()
+        == Some("57014")
+    {
+        return WorldError::TemporarilyUnavailable;
+    }
+    storage_error(operation, error)
 }
