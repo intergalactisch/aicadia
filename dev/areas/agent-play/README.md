@@ -117,18 +117,16 @@ proposals and asks the User to confirm every complete World-changing package.
 - The Agent selects an Observation subject through the explicit stable `entity`,
   `place` or `connection` model alias. It never invents a table/class name or treats
   Position, Property or Trait as an independent observed subject.
-- Movement settles first and returns its bounded authorized arrival result. Only
-  then may the Agent issue a separate explicit Observation action grounded by that
-  Movement; it never pretends to know a newly returned Entity before arrival.
-- One follow-up action may include several Observation occurrences. Each has one
-  exact model and its own optional private account; the batch and its own Activity
-  settle atomically and idempotently while referring to the Movement Activity.
-  Recording failure leaves the Character moved.
-- For Movement, the Agent may select only the exact traversed Connection,
-  destination Place and Entities in World's bounded authorized arrival result. A
-  guessed or hidden identifier is absent and makes the Observation action fail;
-  World never silently removes it, undoes Movement or widens the result to every
-  Entity at the Place.
+- World tools return bounded structurally authorized context; the Agent uses its own
+  judgment to decide what its Character could see or notice and explicitly shapes
+  the resulting Observations. World creates no visibility candidate list or proof.
+- One Observation action may include several occurrences. Each has one exact model
+  and its own optional private account; the bounded batch and its own Activity settle
+  atomically and idempotently. It may follow Movement, but recording failure leaves
+  the Character moved and Movement is not a required server receipt.
+- Hidden or otherwise unauthorized content remains absent from the Agent's tool
+  context. Guessing an identifier grants no current read or mutation, while World
+  never interprets Observation prose to decide semantic sight or attention.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

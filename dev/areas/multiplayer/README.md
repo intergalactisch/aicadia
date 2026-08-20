@@ -46,16 +46,13 @@ into truth or spending tokens in the background.
 - Observation admits an explicit expandable model list: `entity`, `place` and
   `connection` now. Runtime class/table names and speculative types are rejected;
   adding another model requires its own accepted behavior and authorization.
-- Movement settles before a separate explicit Observation action grounded by its
-  bounded authorized arrival result. The follow-up may write several occurrences,
-  each with one exact model and private account, plus its own Activity atomically and
-  idempotently. Failure leaves Movement intact; World never infers or auto-writes an
-  Observation.
-- Movement limits those subjects to its exact traversed Connection, destination
-  Place and Entities in the acting Character's bounded authorized arrival result.
-  Guessed or hidden identifiers are ineligible, and one invalid subject rejects the
-  Observation action rather than being silently discarded or undoing Movement.
-- World determines structural eligibility for information; the Agent decides how to present eligible facts.
+- World tools bound and authorize the structural information a Character receives;
+  the Agent decides what the Character could notice and explicitly authors the
+  resulting Observations. World stores no visibility candidate list, arrival proof
+  or semantic sight decision.
+- One Observation action may write several one-model private accounts plus its own
+  Activity atomically and idempotently. It may follow Movement, but Movement is not a
+  required receipt and recording failure leaves it intact.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
   so scanning guessed windows cannot enumerate every established Place. One sparse
@@ -172,9 +169,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- How any World instance validates that a follow-up Observation subject belonged to
-  the exact earlier bounded arrival result, without permanently storing every
-  returned candidate or trusting a guessed identifier.
+- Which smallest structural checks World applies to Agent-selected Observation
+  references without interpreting sight, attention or prose and without making a
+  guessed id grant current read or mutation authority.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

@@ -2818,6 +2818,10 @@ about a new dog until World has returned it.
 
 ## Post-Movement Observation selected
 
+**Partly superseded by the Agent-owned selection correction below.** Movement may
+still precede Observation in ordinary play, but it is no longer required as a
+grounding receipt and its result is not a server-owned visibility candidate set.
+
 The User selected option B and thereby superseded the provisional embedded design.
 Movement first commits the Character Position and its own Activity, then returns its
 bounded authorized arrival result. Only after seeing that result may the Agent issue
@@ -2835,3 +2839,28 @@ keeps transactions short at scale. Any World instance must still be able to veri
 that each submitted subject belonged to the exact earlier arrival result. How that
 proof survives the gap—without permanently copying every returned candidate into
 World history—is now the next open technical and player-timing choice.
+
+## Agent chooses Observations; server visibility proof rejected
+
+The User rejected all three server-proof alternatives and corrected the abstraction.
+World does not decide that Mara could see the dog, persist a candidate list, issue an
+arrival proof or reconstruct past visibility. Its tools return bounded information
+the Character is structurally allowed to receive. Mara's invoked Agent understands
+that context, decides what Mara could notice and uses an explicit Observation action
+to shape the exact private accounts it wants to retain.
+
+Movement followed by Observation remains a natural conversation flow, not a required
+database dependency. The Observation action may contain several exact one-model
+occurrences and writes those plus its own Activity atomically and idempotently. A
+failed recording never affects Movement. It need not cite Movement merely to satisfy
+World, and World adds no visibility state, arrival-result rows, cryptographic receipt
+or current-scene recheck pretending to prove what the Agent understood.
+
+This keeps the intended split honest. World is still strict about what its read tools
+return: a hidden sword absent from the Agent's authorized context is not available
+for the Agent to reason from, and guessing an id grants no current subject read or
+mutation authority. But Observation text may be selective, imaginative or wrong, so
+World cannot validate semantic sight without becoming the intelligence layer. The
+remaining boundary is deliberately smaller: which structural checks—observer
+control, admitted target alias, target existence, bounds and perhaps no more—apply
+when the Agent submits its chosen references. That is the next grill choice.

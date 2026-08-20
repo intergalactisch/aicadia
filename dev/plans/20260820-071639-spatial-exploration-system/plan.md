@@ -235,20 +235,17 @@ At million-Character pressure:
   its Entity, while Position, Property and Trait remain state described through
   their owning Entity or Place. Runtime class/table names and speculative later
   types are absent — User choice A, 2026-08-20.
-- S1 settles Movement first and returns its bounded authorized arrival result. Only
-  then may the Agent issue a separate explicit Observation action grounded by that
-  Movement. The earlier operation-embedded atomic direction is superseded because an
-  Agent cannot author an informed account of a newly returned Entity before arrival
-  — User correction B, 2026-08-20.
-- One follow-up Observation action may include several occurrences. Each references
-  exactly one model and owns its own optional private account; the batch and its own
-  Activity settle atomically and refer to the grounding Movement Activity. Movement
-  itself remains committed if recording fails — User choices A/B, 2026-08-20.
-- The grounding Movement's exact traversed Connection, destination Place and Entities
-  in its bounded authorized arrival result are the only candidate subjects. The
-  Agent selects among them after receiving the result; a guessed, hidden or otherwise
-  absent subject rejects only the follow-up Observation action — User choice A
-  corrected by timing choice B, 2026-08-20.
+- Observation is an explicit Agent-authored action, not a server-derived Movement
+  result. World tools return bounded structurally authorized information; the Agent
+  uses that context and its own judgment to decide what the Character could observe,
+  which exact admitted models to reference and what private account to write. World
+  stores no visibility decision, arrival candidate list or arrival proof — User
+  correction, 2026-08-20.
+- One Observation action may include several occurrences. Each references exactly
+  one model and owns its own optional private account; the bounded batch and its own
+  Activity settle atomically and idempotently. Movement may precede it in play but is
+  neither rolled back nor required as server proof — User choices A/B corrected by
+  Agent-owned judgment, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -275,17 +272,15 @@ At million-Character pressure:
   never gameplay distance limits.
 - Studio needs only the smallest read-only projection required to inspect the new
   current rows and Activity; it receives no gameplay action.
-- Movement and its Activity commit before a separate Observation action. That second
-  action writes its bounded occurrence batch and own Activity atomically, refers to
-  the Movement Activity and is independently idempotent. Recording failure never
-  rolls back or repeats Movement.
+- An Observation action writes its bounded occurrence batch and own Activity
+  atomically and idempotently. It may follow Movement or another tool-assisted scene,
+  but World keeps no generic visibility candidates or required grounding receipt.
 - The multi-Observation request is bounded by a later selected technical admission
   limit. That limit protects one transaction and response at scale; it is not a
   gameplay score or a total cap on how many Observations a Character may retain.
-- The admitted arrival result is not every Entity at a Place. It is one bounded
-  Character-authorized result under the operation's structural rules; it creates no
-  semantic visibility inference or subject-wide read. The timing by which the Agent
-  receives a newly encountered subject before authoring its Observation remains open.
+- Tools expose only bounded structurally authorized context, never every Entity in a
+  hot Place or hidden inventory by implication. The Agent—not World—decides semantic
+  sight, attention and the resulting Observation from what it receives.
 
 ### Open questions blocking activation
 
@@ -329,8 +324,9 @@ At million-Character pressure:
    set lets an Agent read map context, confirm expansion and move without exposing
    internal rows? Technical consequence: names fix World methods, HTTP routes, MCP
    tools and published context cost. **Preference:** one bounded map read, the
-   existing Discovery confirmation evolved for expansion, and one conventional
-   Movement operation; do not publish raw Position or Connection CRUD.
+   existing Discovery confirmation evolved for expansion, one conventional Movement
+   operation and one explicit Observation operation; do not publish raw Position or
+   Connection CRUD.
 5. **S1 observation after departure and arrival.** Player consequence: who sees a
    Character at an unnamed intermediate Position or at B, and through which bounded
    read, and does a genuine repeat encounter become a separate personal Observation?
@@ -350,21 +346,20 @@ At million-Character pressure:
    Observation never automatically creates Knowledge or identification, but always
    stores one exact model reference. User choice A admits only explicit stable
    `entity`, `place` and `connection` aliases now; adding another model is a later
-   deliberate contract change. Timing choice B supersedes the provisional embedded
-   transaction: Movement and its Activity settle first and return the bounded
-   authorized arrival result; the Agent may then issue a separate explicit
-   Observation action grounded by that Movement. Recording failure leaves the
-   Character moved. One follow-up action may atomically write several independently
-   targeted occurrences plus its own Activity, with separate private accounts and a
-   reference to the Movement Activity. The request will have a technical admission
-   bound selected with the other S1 limits; no total history cap follows from it.
-   Its candidate subjects are only the exact traversed Connection, destination Place
-   and Entities in that bounded arrival result. A guessed, hidden or absent model
-   rejects the Observation action but cannot undo Movement. World checks structural
-   membership, not prose or semantic visibility, and never expands the result to
-   every Entity at a hot Place. **Next open consequence:** decide how any World
-   instance later verifies that exact arrival-result membership without permanently
-   copying every returned candidate into World history.
+   deliberate contract change. The User's latest correction rejects a server-owned
+   arrival candidate set and all three proposed ways of proving it. World tools
+   return bounded structurally authorized information; the Agent decides whether and
+   how its Character observed any exact admitted models in that context, then invokes
+   one explicit Observation action. One action may atomically write several
+   independently targeted occurrences plus its own Activity, with separate private
+   accounts. Movement may naturally happen first but supplies no required receipt,
+   candidate rows or server visibility judgment, and recording failure cannot undo
+   it. The request will have a technical admission bound selected with the other S1
+   limits; no total history cap follows from it. Hidden inventory remains absent from
+   Agent context rather than being semantically filtered by Observation. **Next open
+   consequence:** decide the smallest deterministic checks World still applies to an
+   Agent-selected Observation reference without taking semantic sight or attention
+   away from the Agent.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
