@@ -3007,8 +3007,17 @@ Place. That keeps first arrival a meaningful scene and allows a mature World to 
 geographically different beginnings. It does not require a Character participation
 field, per-location arrival counter or update to one hot global row.
 
-“World locations” is deliberately temporary wording rather than a new domain term.
-The next prerequisite is whether each offered choice must be an established Place
-with Position and local context, or may instead be a raw Position point without a
-Place. How choices become eligible, how many are returned and which operation lists
-them remain downstream of that distinction.
+“World locations” was deliberately temporary wording rather than a new domain term.
+The User selected a small hybrid presentation: three existing Places with a short
+explanation of each, plus one explicit “do not begin in an existing Place” choice.
+Selecting a Place establishes the Character at that Place's Position and makes it
+the current Place. Selecting the other choice establishes a Position with no current
+Place and creates no Place merely for the arrival.
+
+The latter wording is intentional. World cannot generally prove that an exact point
+lies geometrically outside every Place because Area coverage may be absent or
+incomplete. It can prove that the Character selected no existing Place as its local
+context. The next prerequisite is who supplies that exact loose Position: the Agent
+with User confirmation, deterministic World selection or a previously established
+unnamed entry point. How the three Places become eligible and what happens before
+three exist remain downstream choices.

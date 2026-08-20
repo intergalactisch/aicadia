@@ -318,8 +318,10 @@ At million-Character pressure:
   the chronology and Agent intelligence interprets it.
 - `enter_world` remains a meaningful first spatial introduction after
   `create_character`. It establishes the Character's first Position and Activity
-  from one User-selected item in a bounded set of several World locations rather
-  than forcing one global entry Place. The exact item model remains open.
+  from one User-selected option: three explained existing Places or one choice to
+  begin at Position with no current Place. The latter creates no Place and does not
+  claim geometric exclusion from every incomplete Place Area. Who supplies its exact
+  Position remains open.
 
 ### Open questions blocking activation
 
@@ -421,10 +423,12 @@ At million-Character pressure:
    A Character with Position and no current Place is simply between Places; later
    abandonment is a separate control or lifecycle concern. The User retained
    `enter_world` as a fun first spatial introduction and superseded immediate
-   placement during `create_character`; it offers several bounded World locations
-   and establishes the selected first Position plus Activity. **Next open
-   consequence:** decide whether each offered location is an established Place or a
-   raw Position point. Only then decide the bounded spatial read through which
+   placement during `create_character`. It offers three explained existing Places
+   plus one option to begin at Position with no current Place, then establishes the
+   selected first Position plus Activity. The loose option creates no Place and
+   claims no geometric exclusion from every incomplete Area. **Next open
+   consequence:** decide who supplies that exact loose Position. Only then decide
+   how three Places become eligible and the bounded spatial read through which
    another Character can encounter an intermediate traveller; current-Place reads
    already cover both when they are at B.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was

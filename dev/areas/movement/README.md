@@ -32,9 +32,9 @@ reconstruct one accepted move.
 ### Chosen
 
 - `enter_world` remains the Character's first spatial introduction after creation
-  and establishes its first Position plus Activity from one User-selected option in
-  a bounded set of several World locations. It is not a participation flag; the exact
-  model of those offered locations remains open.
+  and establishes its first Position plus Activity from one User-selected option:
+  three explained existing Places or one choice for Position with no current Place.
+  It is not a participation flag and the loose result creates no Place.
 - Movement must preserve the stable identity of every moved Character, Entity and Place.
 - A move is explicit and deterministically validated by World; prose never implies a route or destination.
 - Accepted movement changes current Position and writes attributable Activity atomically.
@@ -176,9 +176,9 @@ reconstruct one accepted move.
 
 ### Not yet chosen
 
-- Whether each starting choice offered before `enter_world` is an established Place
-  or a raw Position point, and how those choices become eligible without one hot
-  global entry row.
+- Who supplies the exact loose Position selected during `enter_world`, how three
+  existing Places become eligible without one hot global entry row and what happens
+  before three eligible Places exist.
 - Whether an open-terrain Connection may exist without a physical Entity and who may establish it.
 - Which exact state lets an Agent say what terrain, Places or Areas a Character
   crosses while traversing one Connection. Endpoint topology alone supplies no

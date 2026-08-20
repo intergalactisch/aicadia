@@ -292,9 +292,9 @@ not a pre-computed complete map.
 
 ### Not yet chosen
 
-- Whether each starting choice offered before `enter_world` must be an established
-  Place or may be a raw Position point, and which exact rule makes several such
-  choices eligible without forcing one global entry Place.
+- Who supplies the exact loose Position when `enter_world` selects no current Place,
+  which exact rule makes three existing Places eligible for the same introduction
+  and what happens before three eligible Places exist.
 - The exact bounded establish/develop operations, ordinary text bounds, dependency
   revisions and duplicate presentation for the accepted Relation record.
 - Which exact geometry representation Area uses, whether one Place may have
