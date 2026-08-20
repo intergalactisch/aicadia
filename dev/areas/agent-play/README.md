@@ -150,6 +150,10 @@ immediately tells the User what it retained.
   times and available Activity locations plus independent continuation. That
   evidence lets the Agent narrate callbacks and repeated meetings; World never
   infers recognition, `often` or meaning from the rows.
+- If a prior private Observation was mistaken, the Agent appends an ordinary new
+  Observation account explaining the correction or reinterpretation. It edits
+  nothing and supplies no correction link; `list_observation` returns the chronology
+  and the Agent decides what it means.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

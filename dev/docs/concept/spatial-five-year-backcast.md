@@ -2907,8 +2907,7 @@ The User also made option C categorically impossible under the BYO AI-Agent
 subscription model. A subscription may notify an already connected client that World
 state changed, but can never invoke a User's Agent, make it reason, call Observation
 or spend tokens. At scale this introduces no queues of Agent work or recipient writes.
-The next dependency is correction: an Agent-authored memory may be wrong, so the User
-needs a clear rule for responding without quietly rewriting an immutable occurrence.
+The correction rule for an Agent-authored memory that proves wrong is resolved below.
 
 ## Prior Observation context required before encounter narration
 
@@ -2926,10 +2925,8 @@ patterns, revive running jokes or reinterpret an earlier mistake. Further histor
 cursor-paginated; there is no stored view count or omniscient recognition flag.
 
 This also clarifies Q12. An explicit link saying “Observation B corrects Observation
-A” may still be useful, but it is not what enables ordinary callbacks across Places.
-The subject-addressed history query does that. A correction link would only add
-machine-readable correction meaning inside the returned history, so it remains open
-until its extra value is judged separately.
+A” is not what enables callbacks across Places; the subject-addressed history query
+does that. The correction choice is resolved below without adding such a link.
 
 Technically, the natural lookup begins with observing Character, target alias and
 target id, ordered newest-first. It touches no target row and can use an index shaped
@@ -2956,9 +2953,7 @@ cost.
 For example, one response about Ivo can contain three recent occurrences in
 Duindorp, the dunes and the harbour, plus a continuation. The exact public response
 schema and bounds remain technical design work, but the contract must preserve the
-model grouping, multiple recent occurrences and independent continuation. If a
-machine-readable correction reference is accepted later, it belongs on its
-Observation inside this same response rather than requiring another history call.
+model grouping, multiple recent occurrences and independent continuation.
 
 The database access remains Character-first and subject-addressed. One bounded
 request performs bounded newest-first indexed scans for a bounded number of exact
@@ -2974,3 +2969,24 @@ subject; its explicit input may still contain several exact model references and
 response remains grouped by model. `get_observations` and a one-off naming exception
 are rejected. No runtime capability exists until the draft S1 plan is accepted and
 implemented.
+
+## Corrections remain ordinary chronological Observations
+
+The User selected option B. When Mara later learns that Ivo's apparent red hat was a
+lamp behind him, her Agent appends a new Observation account explaining that mistake.
+The earlier Observation remains unchanged. `list_observation` returns both in
+newest-first order, and the Agent—not World—understands the newer account as a
+correction, joke, doubt or reinterpretation.
+
+Observation therefore receives no correction reference, corrected status, active
+version or update operation. World validates and stores the new occurrence exactly
+like any other private Observation and never decides which account is true. This is
+the smallest model that preserves fallible memory and its story value; a structural
+correction link may be reconsidered only if later Agent evidence shows that the rich
+chronological response is insufficient.
+
+This closes the Observation-correction branch and exposes the next spatial
+prerequisite. The delivered Character contract currently uses absent `current_place`
+to mean “not entered,” while accepted intermediate Movement needs an entered
+Character with Position and no current Place. Before designing how another Character
+can encounter that traveller, those two states need one explicit representation.

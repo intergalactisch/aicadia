@@ -262,9 +262,9 @@ At million-Character pressure:
   significant, it first retrieves that Character's prior Observation history about
   the model. The read returns bounded occurrence context—including account, time and
   available Activity location—so the Agent can create callbacks such as “last time
-  I saw you in Duindorp”; World never infers recognition. Q12's explicit correction
-  link remains open because recurrence context and correction are distinct needs —
-  User direction, 2026-08-20.
+  I saw you in Duindorp”; World never infers recognition. A mistaken account is
+  corrected by appending another ordinary Observation, never by editing or linking
+  history — User directions A/A/B, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -313,6 +313,9 @@ At million-Character pressure:
   Character plus target alias/id, so one famous subject is not a shared read or write
   row. The proposed public operation is `list_observation`, matching `list_activity`
   and the singular-domain-name rule.
+- Observation has no correction link, active version or update operation. A later
+  correction is another ordinary immutable occurrence; `list_observation` returns
+  the chronology and Agent intelligence interprets it.
 
 ### Open questions blocking activation
 
@@ -407,12 +410,15 @@ At million-Character pressure:
    available Activity location, with independent continuation. That gives the Agent
    enough concrete evidence to narrate repeated meetings without World storing a
    count, recognition flag or `often` label. An empty group means no stored prior
-   Observation; the read itself writes nothing. Q12's optional explicit correction
-   reference remains open because recurrence retrieval already solves the Duindorp
-   callback but not whether one memory mechanically corrects another. **Next open
-   consequence:** decide whether a correcting Observation may explicitly reference
-   the earlier Observation it corrects, or whether ordinary appended history and
-   Agent interpretation are sufficient.
+   Observation; the read itself writes nothing. User choice B says a correction is
+   another ordinary immutable Observation account: no correction reference, status
+   or update operation is added, and Agent intelligence interprets the chronology.
+   **Next open consequence:** first distinguish an entered Character at an unnamed
+   Position from a Character that has not entered World. The current contract uses
+   absent `current_place` for the latter, while intermediate Movement also needs no
+   current Place. Only then decide the bounded spatial read through which another
+   Character can encounter the intermediate traveller; current-Place reads already
+   cover both when they are at B.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

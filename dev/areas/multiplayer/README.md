@@ -65,6 +65,10 @@ into truth or spending tokens in the background.
   currently considering. Each model group carries several newest-first accounts,
   times and available Activity locations with independent continuation. World stores
   no recognition flag, count or `often` label and never interprets the recurrence.
+- A mistaken private Observation is corrected only by appending another ordinary
+  Observation account. World stores no correction reference or active version;
+  immutable chronological history and Agent interpretation preserve the mistake and
+  its later reinterpretation.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
   so scanning guessed windows cannot enumerate every established Place. One sparse
@@ -181,8 +185,6 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- Whether an explicit link between a correcting Observation and the earlier
-  Observation it corrects earns its extra story-mechanics and validation cost.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed
