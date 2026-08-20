@@ -110,6 +110,10 @@ proposals and asks the User to confirm every complete World-changing package.
   note never creates the hat, equips it or changes the observed Entity merely because
   the Agent wrote it. It is private attributed Character memory, may be mistaken and
   is never returned as shared World fact through the observed Entity.
+- Observing something at a distance never automatically means recognizing or knowing
+  its identity. The Agent may record “a dark figure on the ridge” without receiving
+  a hidden Character's name or current Entity state. World still retains the exact
+  existing model reference on the Observation; Knowledge design is parked.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

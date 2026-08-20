@@ -2678,7 +2678,7 @@ occurrences tied to exact Activity. Exact Observation identity, text field name,
 subject limits, eligible acts, pagination and retention remain plan choices rather
 than accepted schema.
 
-## Private Observation account selected; Knowledge consequence open
+## Private Observation account selected; Knowledge consequence parked
 
 Option A is accepted for per-occurrence text. Mara's “this time he wore a red hat”
 is Mara-attributed memory, not a Property of Ivo, not proof that a Hat Entity exists
@@ -2688,9 +2688,33 @@ subjects, request identity, occurrence time and Activity atomically. A conformin
 Agent can later narrate the note explicitly as memory and compare it creatively with
 fresh current World information.
 
-This keeps free authorship safe without making memory mechanically useless. It also
-opens the next dependency: when an Observation of exact subject X is accepted, does
-that same transaction always establish the one current Knowledge association for X?
-Without that rule, a Character could possess private Observation history about a
-subject which its ordinary known-subject read refuses to address; with it, first
-Observation inserts Knowledge and every later Observation leaves that one row intact.
+This keeps free authorship safe without making memory mechanically useless. The User
+then parked Knowledge and rejected any automatic consequence from Observation to
+Knowledge. Seeing something at a distance does not mean recognizing, identifying or
+knowing it. A Character may therefore possess private Observation history which
+grants no current read of the possible subject. The separate Knowledge storage,
+establishment and hydration branch remains unresolved and may not be decided by
+Observation implementation.
+
+## Distant Observation may lack Character knowledge; exact model reference selected
+
+Concrete case: Mara sees a dark figure on a far ridge. Her Agent may preserve “a
+dark figure stood motionless against the sunset” as private Observation text. World
+must not thereby reveal Ivo's name, grant Ivo's current Entity state or pretend Mara
+recognized him, even if the authoritative World internally contains Ivo at that
+location.
+
+The User selected an exact model reference for every Observation. Even the distant
+figure occurrence therefore stores one required `subject_type` and `subject_id`
+pointing at the exact existing model record World accepted. There is no subjectless
+Observation. This lets World match repeated occurrences deterministically and reject
+a missing target without interpreting the text.
+
+That internal reference still proves neither Character recognition nor Knowledge.
+The authorized Observation view may preserve “unknown figure” without hydrating the
+subject's name, current fields or other Character-private data. Exact subject
+hydration remains part of the parked Knowledge/eligibility design. The technical
+cost is polymorphic target integrity: World must dispatch and validate the selected
+model type deterministically, because one ordinary PostgreSQL foreign key cannot
+change its table based on `subject_type`. The next Observation-only choice is the
+current admitted model-type set, not whether a target exists.

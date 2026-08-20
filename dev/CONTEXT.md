@@ -133,10 +133,11 @@ the action.
 _Avoid_: Passive interaction, generic link, relationship
 
 **Observation**:
-One situated acquisition of World information by a Character through an encounter,
-sensory situation or other accepted observation path. Each occurrence and its
-authored account belong to that Character; repeated encounters may yield separate
-Observations about the same subject without making the account shared World truth.
+One situated acquisition of World information by a Character about one exact Entity,
+Place, Connection or other explicitly accepted model through an encounter, sensory
+situation or other accepted observation path. Each occurrence and its authored
+account belong to that Character; the exact subject reference proves neither
+recognition, exposed identity, Knowledge nor shared World truth.
 _Avoid_: Visibility flag, global state, participation, shared subject fact
 
 **Knowledge**:

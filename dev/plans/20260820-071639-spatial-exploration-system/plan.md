@@ -225,6 +225,11 @@ At million-Character pressure:
   attributed Character memory which may be selective or wrong; it never asserts
   shared World truth or mutates the subject — User choices A/A and red-hat example,
   2026-08-20.
+- Observation never automatically establishes Knowledge or proves recognition. A
+  Character may see an unclear figure at a distance without learning its identity or
+  gaining its current Entity read. Every Observation nevertheless references exactly
+  one existing model record through required subject type and id. Knowledge design is
+  explicitly parked — User corrections, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -254,7 +259,8 @@ At million-Character pressure:
 
 ### Open questions blocking activation
 
-1. **Knowledge scope and storage type.** Player consequence: A has been chosen—one
+1. **Knowledge scope and storage type — parked, still blocking implementation.**
+   Player consequence: A has been chosen—one
    sparse durable association remembers that Character M knows Place B, and the
    accepted Discovery already makes its exact Connection knowable too. Should these
    two current subjects share one Knowledge shape, or receive separate typed rows?
@@ -267,7 +273,8 @@ At million-Character pressure:
    control provenance and `seen_at` still confuses current eligibility with
    Observation history. See the
    [primary-source storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
-   **Preference:** now prefer one polymorphic row shape limited to the two current
+   This branch is parked and no Observation may silently decide it. **Prior
+   preference retained for later:** one polymorphic row shape limited to the two current
    stable aliases `place` and `connection`, with the Character-leading natural key,
    immutable server-authored `created_at`, establishing Activity and deterministic
    typed World validation in the same transaction. Add no surrogate Knowledge id,
@@ -307,11 +314,13 @@ At million-Character pressure:
    private observer-owned memory which may be selective or mistaken, never shared
    authoritative truth about the observed subject. World validates actor, eligible
    exact subjects, idempotency, text bounds and atomic Activity but never interprets
-   the note or lets it mutate the subject. The moving Character always receives itself; other
-   Characters need an explicit eligible map/local observation path, not guessed-id
-   Position access. Store no `view_count` or global reverse observer query. **Next
-   open consequence:** decide whether accepting an Observation must atomically
-   establish current Knowledge of every exact observed subject.
+   the note or lets it mutate the subject. The moving Character always receives
+   itself; other Characters need an explicit eligible map/local observation path,
+   not guessed-id Position access. Store no `view_count` or global reverse observer query.
+   Observation never automatically creates Knowledge or identification, but always
+   stores one exact model reference. **Next open consequence:** decide which current
+   model types the polymorphic Observation target admits; arbitrary runtime class or
+   table names remain rejected.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

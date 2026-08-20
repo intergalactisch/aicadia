@@ -39,6 +39,10 @@ into truth or spending tokens in the background.
   read. Several immutable Observations may concern the same Character and subject;
   each may carry bounded Agent-authored text which is private attributed memory of
   the observing Character, may be wrong and never becomes shared subject truth.
+- Observation does not automatically establish Knowledge, recognition or known
+  identity. A distant unclear figure may be observed without exposing the exact
+  Character behind it, while every Observation still stores one required exact model
+  reference for deterministic validation and repeat matching.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
