@@ -126,6 +126,10 @@ proposals and asks the User to confirm every complete World-changing package.
   one exact model and its own optional private account, while all share the action's
   Activity and atomic settlement. The Agent never combines several models into one
   Observation or uses the list to name subjects the action cannot structurally admit.
+- For Movement, the Agent may select only the exact traversed Connection,
+  destination Place and Entities in World's bounded authorized arrival result. A
+  guessed or hidden identifier is absent and makes the atomic proposal fail; World
+  never silently removes it or widens the result to every Entity at the Place.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

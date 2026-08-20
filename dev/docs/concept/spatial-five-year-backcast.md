@@ -2789,3 +2789,27 @@ million-Character scale, one action writes only its own bounded observer-owned r
 it updates no subject counter and fans out to nobody. The next dependent choice is
 structural eligibility: which exact Entity, Place or Connection references each
 kind of grounding action is allowed to include.
+
+## Movement Observation subjects selected from its exact result
+
+The User selected option A. A Movement may admit three sources of Observation
+subjects: the exact Connection it traverses, its destination Place and any Entities
+included in World's bounded authorized arrival result for that Character. The Agent
+chooses which of those exact references receive private Observation accounts. The
+result is not a semantic claim that everything present was visible, nor a read of
+every Entity at the Place.
+
+For example, if the allowed result contains Connection 7, Duindorp and a dog on the
+square, the Agent may submit separate Observations about Duindorp and the dog. If a
+sword inside another Character's hidden inventory is absent, guessing its identifier
+does not make it eligible. Including that sword rejects the whole atomic proposal;
+World never silently drops an invalid Observation while accepting a different action
+than the User confirmed.
+
+Technically, World checks exact typed membership and the current structural versions
+that justify the bounded result. It interprets no prose and creates no subject
+counter, global visibility list or fan-out. At a Place with millions of associated
+records, only the already bounded authorized result can participate. This choice
+exposes the next timing question: the Agent cannot author an informed note about a
+new dog until World has returned it, but an atomic Movement proposal would ordinarily
+have to contain its Observation text before Movement settles.

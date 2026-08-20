@@ -246,6 +246,11 @@ At million-Character pressure:
   account; all share the action's Activity and atomic idempotent settlement. One
   multi-model Observation and forced follow-up actions are rejected — User choice A,
   2026-08-20.
+- A Movement may admit as Observation subjects only its exact traversed Connection,
+  its destination Place and Entities included in World's bounded authorized arrival
+  result. The Agent selects among those exact references; a guessed, hidden or
+  otherwise absent subject makes the proposal fail atomically instead of being
+  silently ignored — User choice A, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -280,6 +285,10 @@ At million-Character pressure:
 - The multi-Observation request is bounded by a later selected technical admission
   limit. That limit protects one transaction and response at scale; it is not a
   gameplay score or a total cap on how many Observations a Character may retain.
+- The admitted arrival result is not every Entity at a Place. It is one bounded
+  Character-authorized result under the operation's structural rules; it creates no
+  semantic visibility inference or subject-wide read. The timing by which the Agent
+  receives a newly encountered subject before authoring its Observation remains open.
 
 ### Open questions blocking activation
 
@@ -357,8 +366,16 @@ At million-Character pressure:
    the same Activity. A single multi-model Observation and mandatory artificial
    follow-up actions are rejected. The request will have a technical admission
    bound selected with the other S1 limits; no total history cap follows from it.
-   **Next open consequence:** decide which exact models a particular grounding
-   action makes structurally eligible for these Observation occurrences.
+   For Movement, User choice A admits only the exact traversed Connection,
+   destination Place and Entities in World's bounded authorized arrival result. The
+   Agent may select a subset but cannot add a guessed, hidden or otherwise absent
+   model; one invalid subject rejects the atomic proposal. World checks structured
+   membership and current versions, not prose or semantic visibility, and never
+   expands the bounded result to every Entity at a hot Place. **Next open
+   consequence:** a newly encountered Entity appears in the arrival result only
+   after Movement settles, so decide when the Agent receives that result and authors
+   the private Observation account without falsely claiming it knew the subject
+   beforehand.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

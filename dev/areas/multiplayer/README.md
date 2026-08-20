@@ -55,6 +55,10 @@ into truth or spending tokens in the background.
   with one exact model reference and its own optional private account. They share
   one Activity and settle atomically; the request is technically bounded without a
   stored total, subject counter or observer fan-out.
+- Movement limits those subjects to its exact traversed Connection, destination
+  Place and Entities in the acting Character's bounded authorized arrival result.
+  Guessed or hidden identifiers are ineligible, and one invalid subject rejects the
+  atomic proposal rather than being silently discarded.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
@@ -172,9 +176,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- Which exact Entity, Place or Connection references each grounding in-World action
-  may structurally admit as Observation subjects, including a hot Place with many
-  otherwise hidden or unrelated subjects.
+- When the Agent receives a newly encountered Entity from Movement's bounded arrival
+  result and may author its private Observation account, given that it could not know
+  that Entity before arrival and ordinary result reads may not write history.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed
