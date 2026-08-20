@@ -52,10 +52,12 @@ proposals and asks the User to confirm every complete World-changing package.
 - An Agent may propose the Place role for any positioned Entity when the User wants
   it to become an independent map, discovery or navigation reference. It never
   assumes that Position, prose or a semantic kind already made the Entity a Place.
-- For map context, the Agent requests one exact bounded World window. World returns
-  only established Places selected by resolved Position or known Area intersection,
-  plus bounded relevant spatial state and continuation; the Agent never asks for or
-  receives one unbounded list of every Place or positioned Entity.
+- For map context, the Agent requests one exact bounded World window. World first
+  restricts candidates to Places that the acting Character can deterministically
+  know, then filters by resolved Position or known Area intersection and returns
+  bounded eligible spatial state plus continuation. Matching coordinates never give
+  the Agent an omniscient list of every established Place or positioned Entity; the
+  smallest durable Character–Place knowledge representation remains open.
 - For every positioned Entity, the Agent grounds either an absolute Position from
   permanent World origin or a Position relative to exactly one Entity. Choosing the
   latter explicitly means mechanical following; free wording and Relations never

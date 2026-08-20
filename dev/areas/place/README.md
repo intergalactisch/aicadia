@@ -50,11 +50,14 @@ not a pre-computed complete map.
   `entity_id`, while Entity keeps name, description, Properties and Traits. Area and
   Connections add only Place-specific spatial state, with Activity for the accepted
   state change.
-- A bounded map read selects established Places whose resolved Position falls in an
-  exact requested World window or whose known Area intersects it. It can return each
-  selected Entity's name, description and Position, relevant positive Area coverage
-  and bounded Connections touching those Places, with continuation instead of an
-  unbounded World map.
+- A bounded map read first selects only Places that World can deterministically make
+  knowable to the acting Character, then filters those candidates by resolved
+  Position in the exact requested World window or known Area intersection. A window
+  never reveals every established Place merely because its coordinates match. The
+  response can return each selected Entity's name, description and Position,
+  relevant positive Area coverage and bounded eligible Connections, with continuation
+  instead of an unbounded or omniscient World map. The minimum current representation
+  of durable Character–Place knowledge remains open.
 - The coordinate-window map read is distinct from Place neighborhood, which remains
   a view of explicit structural relationships around one exact Place. Neither read
   returns every positioned Entity or infers observation and visibility.

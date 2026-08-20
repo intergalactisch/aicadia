@@ -2560,3 +2560,20 @@ deduplication, public capability boundaries, observation away from a Place, Acti
 vocabulary and representability/request bounds. `game/docs`, schema, World, HTTP,
 MCP and public Agent text remain unchanged until those choices are resolved and the
 complete plan is explicitly accepted.
+
+## Character-scoped map direction accepted; current knowledge state open
+
+The User accepted the first map direction: one coordinate window must never reveal
+every established Place merely because its Position matches. World first needs a
+deterministic reason that the acting Character can know the Place; only those
+candidates enter the bounded spatial filter. Accepted entry and personal Place
+Discovery are concrete positive examples. A guessed window, nearby coordinate or
+arbitrary Connection traversal grants no recursive World map.
+
+This makes exploration meaningful but earns one technical question rather than
+solving it with prose. Activity participation cannot generically prove current
+Knowledge, and current state may not be reconstructed from arbitrary history. The
+next choice is therefore whether S1 adds one sparse current Character–Place knowledge
+association established by exact accepted acts, or proves a smaller current
+structural basis. Knowledge transmission, revocation and private Places remain later
+unless the selected S1 basis requires their concrete behavior.

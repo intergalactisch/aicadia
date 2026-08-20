@@ -43,6 +43,11 @@ grounded candidate and the User confirms the complete preview before World commi
 - The selected new-Place discovery establishes one destination and its explicit
   connectedness while the Character remains at the origin; entering it belongs to
   a later deliberate Movement action.
+- Accepted Place discovery makes that exact destination and accepted Connection
+  knowable to the discovering Character even though the Character remains at the
+  origin. It does not reveal every Place connected beyond that destination or every
+  other Place in the same coordinate window; the minimum current knowledge storage
+  and later explicit transmission path remain open.
 - One User confirmation covers the complete new-Place candidate: the Place Entity
   with its name, description and optional initial Properties and Traits—including
   authored landscape state—one exact direct Position and the explicit A→B Connection

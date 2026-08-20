@@ -36,6 +36,10 @@ into truth or spending tokens in the background.
 - Attention is explicit and opt-in; presence alone does not activate an Agent.
 - Durable public history and a User's private remembered experience are separate.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
+- A bounded coordinate window does not widen Place knowledge: World selects only
+  Places the acting Character can deterministically know before spatial filtering,
+  so scanning guessed windows cannot enumerate every established Place. The sparse
+  current representation and later transmission rules remain open.
 - Conflicts follow exact bounded subjects and declared causal dependencies, not a global revision.
 - Delivery hints may be disposable or coalesced because clients recover from authoritative bounded reads.
 - Two Characters must eventually be able to retain the same unnamed Position
