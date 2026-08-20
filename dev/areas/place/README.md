@@ -57,8 +57,10 @@ not a pre-computed complete map.
   response can return each selected Entity's name, description and Position,
   relevant positive Area coverage and bounded eligible Connections, with continuation
   instead of an unbounded or omniscient World map. One sparse current association per
-  known Character–Place pair is chosen; whether its storage stays Place-typed or
-  participates in a later generic Knowledge identity remains open.
+  known Character and exact subject is chosen. The current storage choice is between
+  one polymorphic shape limited to Place and Connection or separate typed
+  associations; its lookup feasibility and missing dynamic target foreign key are
+  documented in the [storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
 - The coordinate-window map read is distinct from Place neighborhood, which remains
   a view of explicit structural relationships around one exact Place. Neither read
   returns every positioned Entity or infers observation and visibility.

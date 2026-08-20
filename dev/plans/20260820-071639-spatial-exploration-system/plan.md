@@ -209,11 +209,12 @@ At million-Character pressure:
   the Character has structurally learned through accepted play are the eligible
   candidates; the exact smallest current knowledge representation remains open —
   User direction, 2026-08-20.
-- S1 stores one sparse current association for each Character–Place pair that an
-  exact accepted act makes knowable. The Character, not its controlling User, owns
-  that Knowledge; reads create no receipt and Activity retains establishment time.
-  Whether this first association remains typed to Place or sits behind a generic
-  Knowledge identity is the next open design choice — User choice A, 2026-08-20.
+- S1 stores sparse current Character-owned Knowledge for each exact Place made
+  knowable by an accepted act; the same Discovery also makes its exact Connection
+  knowable. Reads create no receipt and Activity retains establishment time.
+  Whether those two current subject families share one polymorphic row shape or use
+  separate typed associations is the next open design choice — User choice A and
+  corrected Laravel/PostgreSQL feasibility, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -244,17 +245,24 @@ At million-Character pressure:
 ### Open questions blocking activation
 
 1. **Knowledge scope and storage type.** Player consequence: A has been chosen—one
-   sparse durable association remembers that Character M knows Place B—but does this
-   row mean only “B is an eligible known Place,” or should one generic Knowledge
-   subject immediately represent Entities, Places, Connections and Relations?
-   Technical consequence: a generic `(subject_type, subject_id)` cannot carry normal
-   foreign keys to differently typed targets, while `user_id` assigns in-World
-   Knowledge to control provenance and `seen_at` confuses current eligibility with
-   Observation history. **Preference:** start with one typed Character–Place
-   association whose natural identity is `(character_entity_id, place_entity_id)`
-   and whose establishing Activity supplies provenance/time. Add no Knowledge id,
-   User owner, polymorphic target or read receipt; later concrete knowledge families
-   may earn a typed common identity only if they prove one shared lifecycle.
+   sparse durable association remembers that Character M knows Place B, and the
+   accepted Discovery already makes its exact Connection knowable too. Should these
+   two current subjects share one Knowledge shape, or receive separate typed rows?
+   Knowledge of a subject means only that its identity is eligible for a typed,
+   authorized current read; it never means every fact about that subject is known.
+   Technical consequence: a Laravel-style composite primary key
+   `(character_entity_id, subject_type, subject_id)` can efficiently enforce bounded
+   Character lookup and uniqueness, but one PostgreSQL foreign key cannot choose a
+   target table from `subject_type`. `user_id` still assigns in-World Knowledge to
+   control provenance and `seen_at` still confuses current eligibility with
+   Observation history. See the
+   [primary-source storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
+   **Preference:** now prefer one polymorphic row shape limited to the two current
+   stable aliases `place` and `connection`, with the Character-leading natural key,
+   establishing Activity and deterministic typed World validation in the same
+   transaction. Add no surrogate Knowledge id, User owner, read receipt, arbitrary
+   type string, Entity or Relation target. This earns one table from two present
+   consumers while leaving native target-FK strictness as the exact choice to grill.
 2. **Discovery admission.** Player consequence: must spatial expansion consume a
    successful current Investigation attempt, or may an Agent propose a new Place
    after ordinary exploration discussion? Technical consequence: this decides

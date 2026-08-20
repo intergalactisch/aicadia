@@ -2588,9 +2588,17 @@ per User.
 
 The suggested generic `Knowledge(user_id, subject_type, subject_id, seen_at)` remains
 under negotiation and exposes two different meanings. “Seen at” is Observation
-history, while the selected row is current eligibility. A polymorphic subject pair
-also cannot natively prove a foreign key to Entity, Place, Connection and Relation
-targets, and one Entity-level row cannot say which Place role, Relation, Position or
-Property the Character actually knows. The next decision is whether S1 stays with a
-typed Character–Place natural identity or pays for a typed common Knowledge identity
-before a second concrete knowledge family exists.
+history, while the selected row is current eligibility. The owner remains the
+Character and Knowledge of a subject would mean only that its identity is eligible
+for a typed, authorized current read—not that every fact about it is known.
+
+[Primary-source storage research](../research/polymorphic-character-knowledge-storage.md)
+corrected one overly broad objection. A Laravel-style polymorphic row is a normal,
+indexable design: `(character_entity_id, subject_type, subject_id)` can be its unique
+Character-leading key. S1 also already has two concrete candidates because accepted
+Discovery makes both its Place and exact Connection knowable. Indexes do not,
+however, provide one native PostgreSQL foreign key whose target table changes with
+`subject_type`; that integrity must come from deterministic typed World validation
+or separate typed associations. The next decision is precisely which strictness
+boundary S1 accepts. Entity and Relation are not current target candidates merely
+because the shape could later accommodate them.

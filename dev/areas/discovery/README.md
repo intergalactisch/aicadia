@@ -47,8 +47,11 @@ grounded candidate and the User confirms the complete preview before World commi
   knowable to the discovering Character even though the Character remains at the
   origin. It does not reveal every Place connected beyond that destination or every
   other Place in the same coordinate window. Discovery writes the one sparse current
-  Character–Place knowledge association atomically with its result; generic Knowledge
-  identity and later explicit transmission remain open.
+  Character-owned Knowledge result atomically with its result. One polymorphic shape
+  for its two current subject families—Place and Connection—is technically viable;
+  World-validated target integrity versus separate native-FK associations remains
+  open. See the [storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
+  Later explicit transmission remains open.
 - One User confirmation covers the complete new-Place candidate: the Place Entity
   with its name, description and optional initial Properties and Traits—including
   authored landscape state—one exact direct Position and the explicit A→B Connection
