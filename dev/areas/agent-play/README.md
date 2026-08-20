@@ -56,8 +56,9 @@ proposals and asks the User to confirm every complete World-changing package.
   restricts candidates to Places that the acting Character can deterministically
   know, then filters by resolved Position or known Area intersection and returns
   bounded eligible spatial state plus continuation. Matching coordinates never give
-  the Agent an omniscient list of every established Place or positioned Entity; the
-  smallest durable Character–Place knowledge representation remains open.
+  the Agent an omniscient list of every established Place or positioned Entity. One
+  sparse current association remembers each known Character–Place pair; the Agent,
+  User and a read itself never own or create that Knowledge.
 - For every positioned Entity, the Agent grounds either an absolute Position from
   permanent World origin or a Position relative to exactly one Entity. Choosing the
   latter explicitly means mechanical following; free wording and Relations never

@@ -2570,10 +2570,27 @@ candidates enter the bounded spatial filter. Accepted entry and personal Place
 Discovery are concrete positive examples. A guessed window, nearby coordinate or
 arbitrary Connection traversal grants no recursive World map.
 
-This makes exploration meaningful but earns one technical question rather than
+This makes exploration meaningful but earned one technical question rather than
 solving it with prose. Activity participation cannot generically prove current
 Knowledge, and current state may not be reconstructed from arbitrary history. The
-next choice is therefore whether S1 adds one sparse current Character–Place knowledge
-association established by exact accepted acts, or proves a smaller current
-structural basis. Knowledge transmission, revocation and private Places remain later
-unless the selected S1 basis requires their concrete behavior.
+User selected one sparse current Character–Place knowledge association below;
+Knowledge transmission, revocation and private Places remain later unless that
+selected S1 basis requires their concrete behavior.
+
+## Sparse Character–Place knowledge selected; generic scope challenged
+
+The User selected the sparse current association. Each exact Character–Place pair
+that becomes knowable occupies one row; map reads never write a “seen” receipt and
+accepted Activity already owns establishment provenance and time. Knowledge belongs
+to the Character. Storing `user_id` would instead attach in-World understanding to
+private control provenance merely because the current product allows one Character
+per User.
+
+The suggested generic `Knowledge(user_id, subject_type, subject_id, seen_at)` remains
+under negotiation and exposes two different meanings. “Seen at” is Observation
+history, while the selected row is current eligibility. A polymorphic subject pair
+also cannot natively prove a foreign key to Entity, Place, Connection and Relation
+targets, and one Entity-level row cannot say which Place role, Relation, Position or
+Property the Character actually knows. The next decision is whether S1 stays with a
+typed Character–Place natural identity or pays for a typed common Knowledge identity
+before a second concrete knowledge family exists.

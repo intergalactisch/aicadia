@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T07:28:14+02:00"
+updated_at: "2026-08-20T07:35:50+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -209,6 +209,11 @@ At million-Character pressure:
   the Character has structurally learned through accepted play are the eligible
   candidates; the exact smallest current knowledge representation remains open —
   User direction, 2026-08-20.
+- S1 stores one sparse current association for each Character–Place pair that an
+  exact accepted act makes knowable. The Character, not its controlling User, owns
+  that Knowledge; reads create no receipt and Activity retains establishment time.
+  Whether this first association remains typed to Place or sits behind a generic
+  Knowledge identity is the next open design choice — User choice A, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -238,16 +243,18 @@ At million-Character pressure:
 
 ### Open questions blocking activation
 
-1. **Durable Place knowledge basis.** Player consequence: the Character-scoped map
-   direction is fixed, but what exact accepted act makes a Place remain knowable
-   after the Character leaves—personal Discovery/Movement only, an explicit
-   introduction by another Character, or another bounded path? Technical consequence:
-   Activity participation cannot generically stand in for current Knowledge, so S1
-   must either add one sparse current Character–Place knowledge association or prove
-   an even smaller current structural basis. **Preference:** one sparse current
-   association established atomically by entry, accepted Discovery, arrival and
-   later explicit introduction; never infer it from arbitrary Activity or recursively
-   reveal every Place connected to a known Place.
+1. **Knowledge scope and storage type.** Player consequence: A has been chosen—one
+   sparse durable association remembers that Character M knows Place B—but does this
+   row mean only “B is an eligible known Place,” or should one generic Knowledge
+   subject immediately represent Entities, Places, Connections and Relations?
+   Technical consequence: a generic `(subject_type, subject_id)` cannot carry normal
+   foreign keys to differently typed targets, while `user_id` assigns in-World
+   Knowledge to control provenance and `seen_at` confuses current eligibility with
+   Observation history. **Preference:** start with one typed Character–Place
+   association whose natural identity is `(character_entity_id, place_entity_id)`
+   and whose establishing Activity supplies provenance/time. Add no Knowledge id,
+   User owner, polymorphic target or read receipt; later concrete knowledge families
+   may earn a typed common identity only if they prove one shared lifecycle.
 2. **Discovery admission.** Player consequence: must spatial expansion consume a
    successful current Investigation attempt, or may an Agent propose a new Place
    after ordinary exploration discussion? Technical consequence: this decides

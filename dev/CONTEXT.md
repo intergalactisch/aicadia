@@ -141,9 +141,9 @@ _Avoid_: Visibility flag, global state, participation
 **Knowledge**:
 World information a Character can justifiably use because it was observed,
 remembered, personally experienced or received through an accepted transmission or
-ripple. Knowledge can be partial, reported or stale and is never identical to all
-authoritative World state.
-_Avoid_: Agent memory, global query access, omniscience
+ripple. Knowledge belongs to the Character, not its User or Agent; it can be partial,
+reported or stale and is never identical to all authoritative World state.
+_Avoid_: Agent memory, User state, read receipt, global query access, omniscience
 
 **Control provenance**:
 The private operational association between a User and their Character Entity. It

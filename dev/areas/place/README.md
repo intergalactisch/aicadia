@@ -56,8 +56,9 @@ not a pre-computed complete map.
   never reveals every established Place merely because its coordinates match. The
   response can return each selected Entity's name, description and Position,
   relevant positive Area coverage and bounded eligible Connections, with continuation
-  instead of an unbounded or omniscient World map. The minimum current representation
-  of durable Character–Place knowledge remains open.
+  instead of an unbounded or omniscient World map. One sparse current association per
+  known Character–Place pair is chosen; whether its storage stays Place-typed or
+  participates in a later generic Knowledge identity remains open.
 - The coordinate-window map read is distinct from Place neighborhood, which remains
   a view of explicit structural relationships around one exact Place. Neither read
   returns every positioned Entity or infers observation and visibility.
