@@ -45,6 +45,9 @@ not a pre-computed complete map.
 - Exploration can begin from every Character Position, including a Position with no
   current Place. Place is never required or fabricated merely to admit look-around,
   discovery or ordinary play between named locations.
+- The existing Investigation opportunity remains the admission path for a genuine
+  natural find and is extended to any current Character Position. Spatial does not
+  redesign Investigation and never requires current Place for it.
 - The Agent dynamically composes exploration from available bounded MCP tools. Place
   prescribes no universal existing-context/discovery order, and World stores no
   exploration workflow or read receipt; shared proposals still require fresh relevant

@@ -33,6 +33,9 @@ grounded candidate and the User confirms the complete preview before World commi
 
 - World resolves the investigation chance before an Agent may author candidate content.
 - The Agent selects an investigation from current Character context but cannot control the roll.
+- Future spatial Investigation extends that current context to every exact Character
+  Position; current Place is not required and World creates no Place merely for
+  admission. The existing chance and opportunity behavior otherwise remains intact.
 - A positive opportunity is retry-stable and remains bound to its authoritative Character context.
 - The Agent re-grounds after a positive result and previews the complete candidate for User confirmation.
 - Naturally occurring finds use Discovery; made, brought or placed things use ordinary Action.
@@ -40,12 +43,13 @@ grounded candidate and the User confirms the complete preview before World commi
 - For the selected future new-Place scene, independently confirmed discoveries stay
   distinct unless exact existing identity is structurally established; World does
   not infer sameness from names or descriptions.
-- The selected new-Place discovery establishes one destination and its explicit
-  connectedness while the Character remains at the origin; entering it belongs to
-  a later deliberate Movement action.
-- Accepted Place discovery makes that exact destination and accepted Connection
-  knowable to the discovering Character even though the Character remains at the
-  origin. It does not reveal every Place connected beyond that destination or every
+- When the Character has an explicit current Place A, the selected new-Place package
+  can establish one destination and its explicit A→B connectedness while the
+  Character remains at its Position; entering B belongs to a later deliberate
+  Movement action. Connection behavior without current Place is still open.
+- Accepted Place discovery makes that exact destination and any accepted Connection
+  knowable to the discovering Character even though the Character remains where it
+  is. It does not reveal every Place connected beyond that destination or every
   other Place in the same coordinate window. Discovery writes the one sparse current
   Character-owned Knowledge result atomically with its result. One polymorphic shape
   for its two current subject families—Place and Connection—is technically viable;
@@ -54,22 +58,25 @@ grounded candidate and the User confirms the complete preview before World commi
   The Knowledge result's immutable server-authored `created_at` records when this
   Character first gained it, while Activity records that Discovery was the cause.
   Later explicit transmission remains open.
-- One User confirmation covers the complete new-Place candidate: the Place Entity
-  with its name, description and optional initial Properties and Traits—including
-  authored landscape state—one exact direct Position and the explicit A→B Connection
-  with its allowed direction. World accepts all of it with one Activity and consumes
-  the opportunity, or writes none of it.
-- A successful new-Place discovery cannot leave an unpositioned Place, a Place
-  without the confirmed Connection or a Connection without its endpoint Place.
-  Retry returns the same complete result rather than repeating any part.
+- With a valid selected origin Place A, one User confirmation covers the complete
+  new-Place candidate: the Place Entity with its name, description and optional
+  initial Properties and Traits—including authored landscape state—one exact direct
+  Position and the explicit A→B Connection with its allowed direction. World accepts
+  all of it with one Activity and consumes the opportunity, or writes none of it.
+- A successful new-Place discovery cannot leave an unpositioned Place, and any
+  included Connection cannot exist without both endpoint Places. Whether a discovery
+  from a Position with no current Place includes no Connection or uses another
+  explicit endpoint is the next spatial choice. Retry returns the same complete
+  accepted result rather than repeating any part.
 - That established connection explicitly names its allowed direction or directions;
   Discovery does not imply a return path.
 - The established Connection also receives its own Agent-authored name and
   description. They let later Agents explain the travel alternative but never cause
   its direction, shape, access or movement behavior.
-- For the selected new-Place scene, the Agent reads A's exact current Position and
-  revision, reasons about the location itself and submits B's exact absolute World
-  point as whole-centimetre `x`, `y` and `z` in structured data, with `z` as height.
+- For the selected new-Place scene, the Agent reads the Character's exact current
+  Position and revision, reasons about the location itself and submits B's exact
+  absolute World point as whole-centimetre `x`, `y` and `z` in structured data, with
+  `z` as height.
   Increasing `x` is east, `y` north and `z` up. The Agent performs any compass
   conversion; World never derives that point, its unit or axes from prose, a Place
   description or a Property.
@@ -141,8 +148,8 @@ grounded candidate and the User confirms the complete preview before World commi
 - Which later Agent- and User-driven behavior can curb, organize or reconcile a
   proven proliferation of overlapping Places without making World infer semantic
   sameness or invalidating their stable identity and history.
-- How an investigation is grounded at a non-Place Position and which broader
-  Place or terrain context, if any, also applies.
+- The exact Character-eligible Place or terrain context available to an Investigation
+  grounded at a non-Place Position.
 
 ## Research needed
 
@@ -177,10 +184,11 @@ states and errors remain in [`game/docs/`](../../../game/docs/README.md).
 Future discovery keeps the same responsibility split: World owns bounded mechanical
 opportunity and structural validation; an explicitly invoked Agent authors meaning;
 the User confirms; one transaction commits exact state and history. The selected
-new-Place direction expands that package with exactly one Place Entity, its direct
-Position, optional initial Properties and Traits and one A→B Connection while
-leaving the Character at A. Broader multi-Entity expansion requires a separate
-accepted contract.
+new-Place direction grounds that opportunity at the Character's exact Position and
+expands the package with exactly one Place Entity, its direct Position and optional
+initial Properties and Traits while leaving the Character where it is. Whether the
+same package can or must include a Connection depends on the still-open origin-Place
+choice. Broader multi-Entity expansion requires a separate accepted contract.
 
 ### Absent
 

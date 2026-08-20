@@ -3083,9 +3083,11 @@ Position keyed by Windcliff's `entity_id` and one Place role keyed by that same 
 A Connection and Activity refer to that stable subject. A positioned cup or Character
 does not become a Place merely because it has a name or Position; the role is an
 explicit accepted part of the discovery. This resolves the Place vocabulary branch.
-The dynamic Agent tool-use choice below resolves the ordering branch. The next open
-gameplay choice is whether finding a new Place must begin with a successful current
-Investigation or may begin as a directly Agent-authored proposal.
+The dynamic Agent tool-use choice below resolves the ordering branch. The existing
+Investigation layer remains the admission path for a genuine find; spatial only
+changes its grounding from mandatory current Place to the Character's current
+Position. The next open spatial choice is what happens to Connection when that
+Position has no current Place.
 
 ## Agent dynamically composes exploration from MCP tools
 
@@ -3110,3 +3112,24 @@ map context and invoke Investigation. Another already well-grounded turn may nee
 different sequence. The tool contracts supply hard inputs and consequences; Agent
 intelligence supplies orchestration and narrative. At scale, this creates no global
 exploration coordinator or server-side Agent work and keeps every World call bounded.
+
+## Existing Investigation extends to every Position
+
+The User confirmed that genuine discovery continues to require the already delivered
+Investigation opportunity and corrected the grill for reopening that established
+layer. Spatial does not redesign its chance, retry-stable attempt, Agent authorship,
+User confirmation or natural-find versus made-object boundary. It only removes exact
+current Place as its spatial prerequisite.
+
+An entered Character with any current Position may therefore invoke Investigation
+through its Agent. The admitted attempt binds to that exact current Position state so
+a later spatial proposal cannot silently borrow a different origin after Movement.
+A positive opportunity still lets the Agent author one bounded candidate; World
+still validates structure and commits only after confirmation. A birdhouse made by
+the Character remains ordinary creation rather than a discovery.
+
+This is subject-local at scale: attempt admission and later settlement depend on the
+exact Character and Position state, not a Place, region counter or global exploration
+row. The still-open spatial consequence is Connection. When `current_place` is null,
+there is no Place endpoint from which the previously discussed A→B Connection can
+originate, and spatial must not manufacture a dummy Place merely to satisfy it.

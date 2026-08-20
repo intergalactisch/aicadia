@@ -1,7 +1,7 @@
 ---
 status: draft
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T13:58:36+02:00"
+updated_at: "2026-08-20T14:03:34+02:00"
 accepted_at: null
 completed_at: null
 ---
@@ -23,10 +23,11 @@ PostgreSQL, HTTP and MCP:
    deliberately established Places and their explicit Connections;
 3. after a successful eligible discovery and explicit User confirmation, the Agent
    can either establish a new destination Place with its direct Position, initial
-   Entity state and one named Connection from the current Place, or reuse an existing
-   eligible Place and establish only the Connection;
-4. discovery never moves the Character and an already established equivalent first
-   Connection produces neither a duplicate nor another Activity; and
+   Entity state and, when the Character has a valid current Place endpoint, one named
+   Connection, or reuse an existing eligible Place under the same endpoint rule; the
+   no-current-Place Connection result remains open below;
+4. discovery never moves the Character and any accepted Connection consequence is
+   exact, atomic and idempotent; and
 5. a later explicit Movement traverses all or a selected exact part of that
    Connection, changes only the Character's ordinary Position and optional current
    Place context and appends one attributable Activity atomically.
@@ -281,6 +282,11 @@ At million-Character pressure:
   `explore` World operation, workflow state or read receipt; each selected capability
   keeps its own grounding, bounds, freshness and confirmation contract — User
   correction, 2026-08-20.
+- Genuine natural discovery keeps the existing successful Investigation opportunity,
+  Agent-authored candidate and User confirmation. Spatial changes only its grounding:
+  every current Character Position is eligible and current Place is not required.
+  Made or placed things remain ordinary creation — User confirmation and scope
+  correction, 2026-08-20.
 - Movement may stop on an exact course point or arrive, writes ordinary Position and
   Activity and has no durable journey — Movement Area.
 - Connection loops and geographically impossible topology are artistically valid;
@@ -370,16 +376,16 @@ At million-Character pressure:
    User owner, read receipt, arbitrary type string, Entity or Relation target. This
    earns one table from two present consumers while leaving native target-FK
    strictness and any meaningful `updated_at` lifecycle as the exact choices to grill.
-2. **Discovery admission.** Player consequence: must spatial expansion consume a
-   successful current Investigation attempt, or may an Agent propose a new Place
-   after ordinary exploration discussion from any current Position? `current_place`
-   is no longer an admission requirement and no dummy Place may be created.
-   Technical consequence: this decides
-   whether the current `submit_discovery` transaction evolves or a separate confirmed
-   operation owns Place expansion. **Preference:** evolve the successful Discovery
-   path so finding and confirming one opportunity remain coherent, while changing
-   its spatial grounding from exact current Place to fresh current Position and
-   keeping movement separate.
+2. **Discovery Connection without current Place.** Player consequence: a Character
+   may discover a Place while standing at an unnamed Position, but Connection accepts
+   only Place endpoints and spatial may not fabricate a dummy origin Place. Decide
+   whether that discovery establishes no Connection, may connect from another exact
+   known Place, or requires the User to establish the current point as a Place.
+   Technical consequence: this determines whether Connection is optional in the
+   discovery transaction and which exact endpoint dependency is valid. **Preference:**
+   establish the discovered Place without a Connection by default; later connection
+   is a separate explicit opportunity, while an already current Place may still be
+   proposed as endpoint in the same confirmed package.
 3. **First Connection deduplication.** Player consequence: when another Agent already
    established an A→C alternative, should the opportunity reuse that exact
    Connection or may it still establish a different named alternative? Technical

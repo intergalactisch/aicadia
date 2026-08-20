@@ -50,6 +50,9 @@ immediately tells the User what it retained.
   judges useful. Exploration is not a World operation or workflow; each eventual
   shared proposal remains freshly grounded, exact and confirmed before deterministic
   World validation.
+- When the Agent chooses to seek a genuine natural find, it uses the existing
+  Investigation capability from that current Position. Spatial adds no second
+  admission path; Agent-authored made or placed things remain ordinary creation.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.
