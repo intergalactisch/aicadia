@@ -60,6 +60,10 @@ into truth or spending tokens in the background.
   needs no separate confirmation and is disclosed to the User in that response.
   Shared mutations still require confirmation; subscriptions never invoke BYO Agents
   or create Observations in the background.
+- Before narrating an exact model as new, familiar or significant, the Agent reads
+  that Character's bounded newest-first Observation history for it. The private result
+  carries account, time and available Activity location with cursor continuation;
+  World stores no recognition flag or count and never interprets the recurrence.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
   so scanning guessed windows cannot enumerate every established Place. One sparse
@@ -176,8 +180,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- How an Agent and User correct an immutable private Observation that later proves
-  mistaken, without rewriting occurrence history or creating shared subject truth.
+- Whether prior Observation context for several currently considered models is read
+  in one bounded call, attached automatically to every model read or fetched once per
+  model; explicit correction links remain a separate open story-mechanics choice.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

@@ -2909,3 +2909,30 @@ state changed, but can never invoke a User's Agent, make it reason, call Observa
 or spend tokens. At scale this introduces no queues of Agent work or recipient writes.
 The next dependency is correction: an Agent-authored memory may be wrong, so the User
 needs a clear rule for responding without quietly rewriting an immutable occurrence.
+
+## Prior Observation context required before encounter narration
+
+The User made recurrence context a firm requirement. Before an Agent treats an exact
+Entity, Place or Connection as newly encountered, familiar or narratively important,
+it first asks World for that Character's prior Observations about the same model. An
+empty result means there is no stored prior occurrence; an ordinary history read
+never creates one.
+
+The result must contain a bounded newest-first slice of the private occurrence
+history, including each Agent-authored account, its occurrence time and the location
+available from its Activity. That is enough for the Agent—not World—to create a line
+such as “Vorige keer zag ik je in Duindorp, en nu zie ik je mijlenver hier,” notice
+patterns, revive running jokes or reinterpret an earlier mistake. Further history is
+cursor-paginated; there is no stored view count or omniscient recognition flag.
+
+This also clarifies Q12. An explicit link saying “Observation B corrects Observation
+A” may still be useful, but it is not what enables ordinary callbacks across Places.
+The subject-addressed history query does that. A correction link would only add
+machine-readable correction meaning inside the returned history, so it remains open
+until its extra value is judged separately.
+
+Technically, the natural lookup begins with observing Character, target alias and
+target id, ordered newest-first. It touches no target row and can use an index shaped
+for exactly that access. The unresolved ceremony question is whether one Agent call
+may request prior context for several selected models, whether every ordinary model
+read carries it automatically, or whether the Agent calls once per model.

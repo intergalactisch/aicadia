@@ -143,6 +143,10 @@ immediately tells the User what it retained.
   another Character's memory or delayed/background work.
 - A subscription may notify an active client of World change but, under the BYO Agent
   model, can never invoke the Agent, call Observation or spend User tokens.
+- Before treating an exact model as new, familiar or narratively significant, the
+  Agent first reads its Character's bounded prior Observation history about that
+  model. Account, occurrence time and available Activity location let it build
+  callbacks across Places; World never infers recognition or meaning from the rows.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.

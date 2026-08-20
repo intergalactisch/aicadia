@@ -258,6 +258,13 @@ At million-Character pressure:
   Shared World mutations still require confirmation. No subscription, server event
   or later process can invoke a BYO Agent or spend tokens — User choice B and BYO
   correction, 2026-08-20.
+- Before the Agent treats an exact model as newly encountered, familiar or narratively
+  significant, it first retrieves that Character's prior Observation history about
+  the model. The read returns bounded occurrence context—including account, time and
+  available Activity location—so the Agent can create callbacks such as “last time
+  I saw you in Duindorp”; World never infers recognition. Q12's explicit correction
+  link remains open because recurrence context and correction are distinct needs —
+  User direction, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -299,6 +306,10 @@ At million-Character pressure:
 - The no-extra-confirmation rule is Agent conduct within one explicit invocation,
   not a durable World session or server-verifiable conversational flag. A subscription
   may announce change only; it cannot create an Agent turn or Observation.
+- Observation-history reads are Character-private, subject-addressed, newest-first,
+  bounded and cursor-paginated with no stored count. The expected database access
+  begins with observing Character plus target alias/id, so one famous subject is not
+  a shared read or write row; whether one call accepts one or several subjects is open.
 
 ### Open questions blocking activation
 
@@ -343,8 +354,8 @@ At million-Character pressure:
    internal rows? Technical consequence: names fix World methods, HTTP routes, MCP
    tools and published context cost. **Preference:** one bounded map read, the
    existing Discovery confirmation evolved for expansion, one conventional Movement
-   operation and one explicit Observation operation; do not publish raw Position or
-   Connection CRUD.
+   operation, one explicit Observation operation and one bounded private
+   Observation-history read; do not publish raw Position or Connection CRUD.
 5. **S1 observation after departure and arrival.** Player consequence: who sees a
    Character at an unnamed intermediate Position or at B, and through which bounded
    read, and does a genuine repeat encounter become a separate personal Observation?
@@ -383,10 +394,17 @@ At million-Character pressure:
    in-World turn, the Agent may write one bounded batch for its own Character and
    immediately disclose what it retained. It cannot write later or in the background;
    under BYO Agents, a subscription cannot invoke the Agent or spend tokens at all.
-   Shared state changes still require full preview and confirmation. **Next open
-   consequence:** because the immutable private account may be wrong and was not
-   separately approved, decide how a User corrects it without silently rewriting
-   occurrence history.
+   Shared state changes still require full preview and confirmation. Before treating
+   a selected exact model as new, familiar or narratively significant, the Agent must
+   first read that Character's prior Observation history for it. The bounded result
+   includes each account, occurrence time and available Activity location, allowing
+   creative spatial callbacks without World inferring recognition. An empty result
+   means no stored prior Observation; the read itself writes nothing. Q12's optional
+   explicit correction reference remains open because recurrence retrieval already
+   solves the Duindorp callback but not whether one memory mechanically corrects
+   another. **Next open consequence:** decide whether the Agent retrieves prior
+   context for several currently considered models in one bounded call, receives it
+   automatically on every model read, or makes one call per model.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be
