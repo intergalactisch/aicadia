@@ -46,19 +46,15 @@ into truth or spending tokens in the background.
 - Observation admits an explicit expandable model list: `entity`, `place` and
   `connection` now. Runtime class/table names and speculative types are rejected;
   adding another model requires its own accepted behavior and authorization.
-- The provisional first creation shape lets a structurally grounding accepted
-  Movement or Interaction explicitly include its Observation result. The action,
-  Activity and occurrence settle atomically; failure writes none and an idempotent
-  retry adds no duplicate. World never infers an Observation from the action, and a
-  later pure-look act may use a dedicated operation.
-- One grounding action may explicitly produce several Observation occurrences, each
-  with one exact model reference and its own optional private account. They share
-  one Activity and settle atomically; the request is technically bounded without a
-  stored total, subject counter or observer fan-out.
+- Movement settles before a separate explicit Observation action grounded by its
+  bounded authorized arrival result. The follow-up may write several occurrences,
+  each with one exact model and private account, plus its own Activity atomically and
+  idempotently. Failure leaves Movement intact; World never infers or auto-writes an
+  Observation.
 - Movement limits those subjects to its exact traversed Connection, destination
   Place and Entities in the acting Character's bounded authorized arrival result.
   Guessed or hidden identifiers are ineligible, and one invalid subject rejects the
-  atomic proposal rather than being silently discarded.
+  Observation action rather than being silently discarded or undoing Movement.
 - World determines structural eligibility for information; the Agent decides how to present eligible facts.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
@@ -176,9 +172,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- When the Agent receives a newly encountered Entity from Movement's bounded arrival
-  result and may author its private Observation account, given that it could not know
-  that Entity before arrival and ordinary result reads may not write history.
+- How any World instance validates that a follow-up Observation subject belonged to
+  the exact earlier bounded arrival result, without permanently storing every
+  returned candidate or trusting a guessed identifier.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

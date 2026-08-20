@@ -235,22 +235,20 @@ At million-Character pressure:
   its Entity, while Position, Property and Trait remain state described through
   their owning Entity or Place. Runtime class/table names and speculative later
   types are absent — User choice A, 2026-08-20.
-- S1 provisionally lets a structurally grounding accepted action explicitly include
-  its Observation result. Movement may record what the Character observed on
-  arrival and Interaction may record the exact interacted-with model; World never
-  infers either result and ordinary reads still write nothing. A later pure-look
-  behavior may earn a dedicated Observation operation — User choice A for initial
-  trial, 2026-08-20.
-- One grounding action may explicitly include several Observation occurrences. Each
-  occurrence still references exactly one model and owns its own optional private
-  account; all share the action's Activity and atomic idempotent settlement. One
-  multi-model Observation and forced follow-up actions are rejected — User choice A,
-  2026-08-20.
-- A Movement may admit as Observation subjects only its exact traversed Connection,
-  its destination Place and Entities included in World's bounded authorized arrival
-  result. The Agent selects among those exact references; a guessed, hidden or
-  otherwise absent subject makes the proposal fail atomically instead of being
-  silently ignored — User choice A, 2026-08-20.
+- S1 settles Movement first and returns its bounded authorized arrival result. Only
+  then may the Agent issue a separate explicit Observation action grounded by that
+  Movement. The earlier operation-embedded atomic direction is superseded because an
+  Agent cannot author an informed account of a newly returned Entity before arrival
+  — User correction B, 2026-08-20.
+- One follow-up Observation action may include several occurrences. Each references
+  exactly one model and owns its own optional private account; the batch and its own
+  Activity settle atomically and refer to the grounding Movement Activity. Movement
+  itself remains committed if recording fails — User choices A/B, 2026-08-20.
+- The grounding Movement's exact traversed Connection, destination Place and Entities
+  in its bounded authorized arrival result are the only candidate subjects. The
+  Agent selects among them after receiving the result; a guessed, hidden or otherwise
+  absent subject rejects only the follow-up Observation action — User choice A
+  corrected by timing choice B, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -277,11 +275,10 @@ At million-Character pressure:
   never gameplay distance limits.
 - Studio needs only the smallest read-only projection required to inspect the new
   current rows and Activity; it receives no gameplay action.
-- Embedding an explicit Observation result in Movement or Interaction is the first
-  shape to test, not an irreversible public abstraction. The grounding mutation,
-  Activity and its Observation rows commit atomically; failure writes none and the
-  same idempotent retry creates no duplicates. If concrete payloads or confirmation
-  become unclear, a dedicated Observation operation remains the clean fallback.
+- Movement and its Activity commit before a separate Observation action. That second
+  action writes its bounded occurrence batch and own Activity atomically, refers to
+  the Movement Activity and is independently idempotent. Recording failure never
+  rolls back or repeats Movement.
 - The multi-Observation request is bounded by a later selected technical admission
   limit. That limit protects one transaction and response at scale; it is not a
   gameplay score or a total cap on how many Observations a Character may retain.
@@ -353,29 +350,21 @@ At million-Character pressure:
    Observation never automatically creates Knowledge or identification, but always
    stores one exact model reference. User choice A admits only explicit stable
    `entity`, `place` and `connection` aliases now; adding another model is a later
-   deliberate contract change. User choice A provisionally selects an explicit
-   optional Observation result inside the structurally grounding Movement,
-   Interaction or other specifically accepted action; World never derives it from
-   the action, and a later pure look may use a dedicated operation. The state change,
-   Activity and Observation commit atomically; failure and retry cannot leave or
-   duplicate the occurrence. A dedicated-only operation remains the reversible
-   fallback if the first concrete flow proves the combined contract unclear.
-   One grounding action may explicitly record several independently targeted
-   Observation occurrences. For example, one Movement may record its exact
-   Connection and destination Place as two rows with separate private accounts but
-   the same Activity. A single multi-model Observation and mandatory artificial
-   follow-up actions are rejected. The request will have a technical admission
+   deliberate contract change. Timing choice B supersedes the provisional embedded
+   transaction: Movement and its Activity settle first and return the bounded
+   authorized arrival result; the Agent may then issue a separate explicit
+   Observation action grounded by that Movement. Recording failure leaves the
+   Character moved. One follow-up action may atomically write several independently
+   targeted occurrences plus its own Activity, with separate private accounts and a
+   reference to the Movement Activity. The request will have a technical admission
    bound selected with the other S1 limits; no total history cap follows from it.
-   For Movement, User choice A admits only the exact traversed Connection,
-   destination Place and Entities in World's bounded authorized arrival result. The
-   Agent may select a subset but cannot add a guessed, hidden or otherwise absent
-   model; one invalid subject rejects the atomic proposal. World checks structured
-   membership and current versions, not prose or semantic visibility, and never
-   expands the bounded result to every Entity at a hot Place. **Next open
-   consequence:** a newly encountered Entity appears in the arrival result only
-   after Movement settles, so decide when the Agent receives that result and authors
-   the private Observation account without falsely claiming it knew the subject
-   beforehand.
+   Its candidate subjects are only the exact traversed Connection, destination Place
+   and Entities in that bounded arrival result. A guessed, hidden or absent model
+   rejects the Observation action but cannot undo Movement. World checks structural
+   membership, not prose or semantic visibility, and never expands the result to
+   every Entity at a hot Place. **Next open consequence:** decide how any World
+   instance later verifies that exact arrival-result membership without permanently
+   copying every returned candidate into World history.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

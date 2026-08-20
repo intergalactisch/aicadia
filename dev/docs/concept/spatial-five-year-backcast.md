@@ -2744,6 +2744,9 @@ grounding action such as Movement or Interaction.
 
 ## Operation-embedded Observation selected provisionally
 
+**Superseded by the later timing choice below.** This was deliberately selected as a
+reversible first direction and remains here only as the explored alternative.
+
 The User selected option A as the first shape to try. A structurally grounding
 accepted action may explicitly carry its Observation result. For example, Movement
 to Place B may explicitly record the acting Character's private account of B, and an
@@ -2766,21 +2769,21 @@ history. The next dependent choice is cardinality: whether one grounding action 
 explicitly produce several independently targeted Observation occurrences or exactly
 one.
 
-## Several Observations per grounding action selected
+## Several Observations per one recording action selected
 
-The User selected option A. One grounding action may explicitly produce several
-Observation occurrences. Mara's one Movement through a sandy Connection into
-Duindorp may therefore preserve one private account about that Connection and a
-different private account about the destination Place. These are two Observation
+The User selected option A for cardinality. Under the later timing correction, one
+follow-up Observation action may produce several occurrences grounded by the same
+Movement. Mara's arrival through a sandy Connection into Duindorp may therefore be
+followed by one recording action that preserves one private account about that
+Connection and another about the destination Place. These are two Observation
 records, each with exactly one model reference and its own optional text, not one
 ambiguous record pointing at several models.
 
-All occurrences share the grounding action's Activity and settle atomically with
-that action. A failed action stores none, and retrying the same request appends none.
-World still interprets no account and infers no extra observer or subject. Requiring
-one artificial action per Observation is rejected because it would fragment one
-experienced moment and multiply confirmations, writes and Activities without adding
-game meaning.
+All occurrences share the follow-up action's Activity, refer to the grounding
+Movement Activity and settle atomically with each other, not with Movement. A failed
+recording stores none but leaves Mara moved; retrying the same recording request
+appends none. World still interprets no account and infers no extra observer or
+subject. Requiring one separate recording action per occurrence remains rejected.
 
 The submitted collection must receive a finite technical admission limit with the
 other S1 request bounds so one action cannot create an unbounded transaction. That
@@ -2802,14 +2805,33 @@ every Entity at the Place.
 For example, if the allowed result contains Connection 7, Duindorp and a dog on the
 square, the Agent may submit separate Observations about Duindorp and the dog. If a
 sword inside another Character's hidden inventory is absent, guessing its identifier
-does not make it eligible. Including that sword rejects the whole atomic proposal;
-World never silently drops an invalid Observation while accepting a different action
-than the User confirmed.
+does not make it eligible. Including that sword rejects the whole follow-up
+Observation action; World never silently drops an invalid occurrence, but the earlier
+Movement remains accepted.
 
 Technically, World checks exact typed membership and the current structural versions
 that justify the bounded result. It interprets no prose and creates no subject
 counter, global visibility list or fan-out. At a Place with millions of associated
 records, only the already bounded authorized result can participate. This choice
-exposes the next timing question: the Agent cannot author an informed note about a
-new dog until World has returned it, but an atomic Movement proposal would ordinarily
-have to contain its Observation text before Movement settles.
+exposed the timing conflict resolved below: the Agent cannot author an informed note
+about a new dog until World has returned it.
+
+## Post-Movement Observation selected
+
+The User selected option B and thereby superseded the provisional embedded design.
+Movement first commits the Character Position and its own Activity, then returns its
+bounded authorized arrival result. Only after seeing that result may the Agent issue
+a separate explicit Observation action containing its chosen model references and
+private accounts. No ordinary read writes history and World still invokes no Agent.
+
+That follow-up writes its bounded Observation occurrences and its own Activity in
+one idempotent transaction while referring to the grounding Movement Activity. If it
+fails, the Character remains at the destination and no partial Observation batch is
+stored. This reflects what happened: failing to preserve memory cannot teleport Mara
+back, repeat her Movement or erase its durable history.
+
+The split costs one additional bounded write but makes information flow honest and
+keeps transactions short at scale. Any World instance must still be able to verify
+that each submitted subject belonged to the exact earlier arrival result. How that
+proof survives the gap—without permanently copying every returned candidate into
+World history—is now the next open technical and player-timing choice.
