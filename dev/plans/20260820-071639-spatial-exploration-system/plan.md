@@ -325,6 +325,9 @@ At million-Character pressure:
   point is randomly drawn broadly around one of the three Place Positions without
   occupancy scan, solitude guarantee or coordinate uniqueness. Exact numeric bounds
   remain technical entry limits, not Movement limits.
+- `enter_world` stops after accepted placement and Activity. It performs no automatic
+  nearby read, Observation, Investigation or discovery; only a later explicit User
+  request invokes the Agent to begin look-around or exploration gameplay.
 
 ### Open questions blocking activation
 
@@ -433,10 +436,12 @@ At million-Character pressure:
    World select and store the exact loose Position once; retry never rerolls and
    World infers no terrain or safety. User choice A draws it randomly and broadly
    around one of the three offered Place Positions without checking occupancy or
-   guaranteeing solitude; co-position is valid. **Next open consequence:** choose
-   the bounded spatial read through which an Agent obtains eligible nearby Characters
-   and Entities at that loose Position. Then decide how three Places become eligible;
-   current-Place reads already cover Characters that enter a selected Place.
+   guaranteeing solitude; co-position is valid. The latest User correction makes
+   arrival stop there: no automatic nearby context, Observation or discovery is
+   returned. **Next open consequence:** decide whether the first later User-invoked
+   exploration step reads existing nearby subjects, attempts a new discovery or
+   sequences both. Then decide how three Places become eligible; current-Place reads
+   already cover Characters that enter a selected Place.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

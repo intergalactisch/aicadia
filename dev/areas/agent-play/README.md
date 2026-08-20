@@ -41,8 +41,9 @@ immediately tells the User what it retained.
   choose. If the User selects open space, World chooses and atomically stores one
   exact Position; the Agent never invents those coordinates and narrates only after
   receiving the accepted result. World draws broadly around one of the three offered
-  Places without checking or promising solitude, so nearby-Entity context must come
-  from a separate bounded current read whose exact boundary remains open.
+  Places without checking or promising solitude. Entry then stops: no surroundings
+  read, Observation or discovery occurs until the User explicitly asks the Agent to
+  look around or explore.
 - Aicadia MCP is the sole live-game authority available to a conforming player Agent.
 - The User supplies the Agent and pays for its intelligence; World remains dumb and strict.
 - Player conversation renders named people, places, things, events and affordances rather than internal types.

@@ -83,6 +83,10 @@ into truth or spending tokens in the background.
   Places without scanning, avoiding or reserving current occupancy. A Character may
   arrive near nobody or near other Characters; co-position remains valid and creates
   no shared counter or correctness lock.
+- Possible proximity at entry does not automatically reveal another Character or
+  create Observation. Entry stops after placement; a later explicitly User-invoked
+  exploration step obtains bounded current context and the Agent decides what is
+  noticed.
 - Ordinary current World content is jointly changeable rather than permanently
   locked to its first author or Entity controller. Every accepted change remains
   attributable and concurrent attempts still settle against exact current subjects.

@@ -3040,7 +3040,15 @@ valid rather than a uniqueness conflict.
 This distribution keeps the open-space beginning related to established World
 geography without forcing social isolation or one central origin. Exact distance and
 random-generation bounds remain technical choices, never later Movement limits. The
-next player-facing prerequisite is how an Agent obtains a bounded current view of
-eligible Characters and Entities around a Character whose Position has no current
-Place. How the three Places become eligible and what happens before three exist also
-remain downstream choices.
+arrival itself returns only the accepted Character placement and stops. It performs
+no automatic surroundings read, Observation, Investigation or discovery merely
+because other Characters might be nearby.
+
+The User starts the next gameplay step explicitly by asking the Agent to look around
+or explore. Only that invoked turn may obtain bounded current surroundings, interpret
+them, preserve Observations or pursue a new discovery. This separates a possible
+encounter from an automatically consumed encounter. The next prerequisite is whether
+the first explicit exploration step reads already existing nearby World subjects,
+attempts to discover something new or deliberately sequences those two different
+behaviors. How the three Places become eligible and what happens before three exist
+also remain downstream choices.

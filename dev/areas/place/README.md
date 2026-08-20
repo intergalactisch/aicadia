@@ -293,8 +293,8 @@ not a pre-computed complete map.
 ### Not yet chosen
 
 - Which rule makes three existing Places eligible for `enter_world`, what happens
-  before three eligible Places exist and which bounded spatial read exposes eligible
-  Characters and Entities around the resulting random loose Position.
+  before three eligible Places exist and whether later explicit exploration first
+  reads existing nearby subjects, attempts a new discovery or sequences both.
 - The exact bounded establish/develop operations, ordinary text bounds, dependency
   revisions and duplicate presentation for the accepted Relation record.
 - Which exact geometry representation Area uses, whether one Place may have
