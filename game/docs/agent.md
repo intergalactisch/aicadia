@@ -158,8 +158,9 @@ the submitted Character and current state deterministically, but cannot prove th
 the private workshop occurred.
 
 This first-use error path is deliberate because zero entry Places is valid before
-genesis. `create_entry_place` never creates later Places, and no current tool performs
-movement, later-Place creation or arbitrary placement.
+genesis. `create_entry_place` never creates later Places and `enter_world` never
+offers a destination choice. Later Place discovery and Character Movement use their
+separate confirmed spatial flows.
 
 Any Agent use of `create_entity` with initial Properties and Traits follows the same
 authority boundary: the User steers and confirms the complete Entity and state
@@ -170,31 +171,41 @@ Empty state lists preserve the existing creation behavior.
 ## Required investigation and discovery flow
 
 Investigation is World-first uncertainty followed, only on a positive result, by a
-private confirmed find workshop. The Agent must:
+private confirmed result workshop. The Agent must:
 
-1. Ground through `get_world`, `get_character`,
-   `list_entity_at_current_place`, `list_activity_at_current_place` and any
-   `get_entity_at_current_place` reads needed to understand the present situation.
-2. Intelligently decide whether and how to investigate from those facts. The User
-   may advise, but the Agent never turns a requested focus, effort, seed, odds,
-   result count or retry count into mechanical input.
-3. Create one attempt request UUID and call `start_investigation` without a
-   confirmation ceremony. It supplies no Character, Place, focus or prose.
-4. On `zero`, describe one honest unsuccessful search naturally and stop that
+1. Ground through `get_world`, `get_character` and relevant local Activity/Entity
+   reads. The Character's exact Position is always the investigation origin.
+2. For `connected_place`, inspect bounded `list_place` windows around the current or
+   proposed destination point and use `list_connection`/`get_connection` for any
+   candidate Place or existing alternative that matters. These are ordinary shared
+   geography reads, not proof the Character already knows or visited their content.
+3. Select exactly one typed kind: `entity_at_position` or `connected_place`. The
+   Agent selects from authoritative context; World never parses prose or the User's
+   wording into that kind.
+4. Create one attempt request UUID and call `start_investigation` with that kind and
+   no confirmation ceremony. It supplies no Character, Place, Position, prose, seed,
+   odds, result count or retry count.
+5. On `zero`, describe one honest unsuccessful search naturally and stop that
    attempt. Do not imply that a thing was found, expose chance/admission mechanics or
    submit a discovery. A later conscious investigation uses a new request id.
-5. On `positive`, re-read the exact current Place, relevant local Entities and their
-   current state, and recent exact-Place Activity. The stable start response is
-   permission, not context; never author from stale pre-roll reads alone.
-6. Author exactly one coherent found Entity within the returned limit: complete
-   English name and description plus independent 0–100 initial Properties and 0–100
-   initial Traits. Do not assign a World kind or create a new Place.
-7. Present the entire found thing and canonical discovery passage naturally in the
-   User's language, privately retaining semantically identical English structured
-   content. Wait for explicit confirmation of the whole package. The User may steer
-   its meaning but does not choose the prior roll or authenticate that it was found.
-8. Create one Activity request UUID and call `submit_discovery` once with the
-   positive attempt id, canonical English prose and confirmed find.
+6. On `positive`, re-read the Character's Position and current Place plus the
+   relevant Entity, Place, Connection and Activity context. The stable result is
+   permission, not a context snapshot.
+7. For `entity_at_position`, author exactly one coherent found Entity with complete
+   English name, description, optional Position description, 0–100 Properties and
+   0–100 Traits at the bound point.
+8. For `connected_place`, explicitly select or author one origin and destination and
+   author one new named Connection. Reuse current origin when present. At a loose
+   Position, explicitly create an origin there or select a returned existing Place
+   at that exact point. Author a new destination Position or select a returned Place;
+   inspect existing nearby Places before creating a near duplicate. Supply an exact
+   optional course only when intended. World never infers any of these choices.
+9. Present the entire Entity or connected-Place package and canonical discovery
+   passage naturally in the User's language, privately retaining semantically
+   identical English structured content. Wait for explicit confirmation of the whole
+   package.
+10. Create one Activity request UUID and call `submit_discovery` once with the
+    positive attempt id, canonical English prose and same-kind confirmed result.
 
 Selection, reasoning, drafts and rejected finds stay private and create no Activity.
 Any post-confirmation edit to prose, name, description, Property or Trait meaning
@@ -205,15 +216,46 @@ and semantically identical normalized content.
 
 On `investigation_not_admitted`, the Agent says only that a new search cannot begin
 now and continues ordinary play; it never exposes thresholds or repeatedly retries.
-On `discovery_attempt_unavailable`, it says neutrally that this find can no longer be
+On `discovery_attempt_unavailable`, it says neutrally that this result can no longer be
 completed, re-orients and makes no claim about whether the attempt was zero, foreign,
-consumed, voided or tied to another Place. On `discovery_request_conflict`, it never
-silently edits or reuses the id. Invalid prose or typed find content returns to the
+consumed, voided, wrong-kind or tied to another Position/Place. On
+`investigation_request_conflict` or `discovery_request_conflict`, it never
+silently edits or reuses the id. Invalid prose or typed result content returns to the
 private workshop for correction and fresh confirmation where meaning changes.
 
 The Agent never shows attempt or request ids in play. A successful submit is the
-first moment the found Entity becomes shared World state; it triggers no other
-Agent, notification or background process.
+first moment the result becomes shared World state. Discovery never moves the
+Character and triggers no other Agent, notification or background process.
+
+## Required spatial exploration flow
+
+Place windows and Connection reads are ordinary grounding reads. The Agent chooses a
+bounded box relevant to the User's question; it never treats an empty box as proof
+that no Place exists outside it, a coordinate as a Connection or a Connection as a
+saved multi-step Route. It can query a distant proposed point directly. Reads create
+no Character knowledge, observation or visit history.
+
+Before `move_character`, the Agent must:
+
+1. read `get_character`, then use `list_connection` and `get_connection` from an
+   exact returned endpoint Place. After partial travel, recent personal Activity can
+   recover the traversed Connection and endpoint anchor for the next read;
+2. determine one allowed direction and either complete arrival or one exact forward
+   point on the shaped course. An unshaped Connection permits complete travel only;
+3. present the intended destination or intermediate stop and its immediate spatial
+   consequence naturally, including that a partial stop leaves the Character between
+   Places, then wait for explicit User confirmation;
+4. create one request UUID and call `move_character` once with the unchanged Position
+   revision and exact target; and
+5. re-read Character and relevant Activity, then narrate only accepted Position and
+   Place state.
+
+The Agent never submits travel duration, cost, terrain, a journey, route or Movement
+prose. A stale Position or spatially unavailable Connection causes re-grounding and a
+newly confirmed proposal. A response lost after submission may be retried only with
+the same request id and semantically identical input. The Agent does not invent
+collision, traversal difficulty, arrival or progress beyond the exact accepted
+result.
 
 ## Required private-workshop action flow
 
@@ -230,7 +272,7 @@ the Agent must:
 4. present exactly three grounded directions in private conversation;
 5. receive one selection and optional free steering from the User;
 6. present the complete intended passage and either the newly established in-world
-   subject with all initial Properties and Traits, or every exact local Property
+   subject with its optional Position description and all initial Properties and Traits, or every exact local Property
    change and typed Trait establishment/development in the one state package,
    naturally in the User's language, while privately retaining semantically
    identical English prose and canonical structured values for World. A Trait
@@ -314,7 +356,7 @@ second copy anywhere is a defect, not a convention.
 | --- | --- | --- |
 | Schema | `tools/list` input and output schemas | Field meaning in one short clause; every numeric bound, enum, format and required field as a constraint — never as prose |
 | Tool description | `tools/list` `description`, sourced from `game/mcp/agent/tool/<tool>.md` | That tool's local contract in one fixed template — *What it does · Use it when · Before you call · Input meaning · After acceptance* (or *After the call* for calls that write no World state) *· On failure · Never* — omitting labels that do not apply and inventing no other label |
-| Play contract | `server/discover.instructions`, assembled in order from `game/mcp/agent/instruction/*.md` | Everything that spans tools: role, authority, the play loop, what exists, Properties, Traits, knowledge, targets, storytelling, entry, Actions, Interactions, investigation and recovery |
+| Play contract | `server/discover.instructions`, assembled in order from `game/mcp/agent/instruction/*.md` | Everything that spans tools: role, authority, the play loop, what exists, Properties, Traits, knowledge, targets, storytelling, entry, Actions, Interactions, spatial exploration, investigation, Movement and recovery |
 | This document | never published | Host conduct, rationale and implementation facts an Agent cannot act on |
 
 The play loop — read, three proposals, complete preview, explicit confirmation of

@@ -3266,3 +3266,19 @@ and may not pull S2–S8 into S1. Evidence or implementation that changes public
 behavior, identity, bounds, history or the promised claim returns the plan to draft
 and requires renewed User acceptance. Until T1 publishes `game/docs`, the accepted
 plan authorizes work but does not itself pretend the runtime already provides S1.
+
+## Place-map index falsification moves before production schema
+
+The User agreed that the leading Place-map index should be experimentally challenged
+before T2 builds it into the production migration. After T1, new task T1E runs one
+standalone PostgreSQL 17 lab with exactly one million synthetic projection rows. It
+measures both a dense same-point page and an adversarial window whose leading-axis
+range admits many rows that its other axes reject.
+
+This is a technical order refinement inside the accepted public outcome. The lab has
+real PostgreSQL table, B-tree, query and `EXPLAIN (ANALYZE, BUFFERS)` seams, but no
+production World, migration, authorization, HTTP/MCP, failover or hosted-load claim.
+A supported verdict unlocks T2. A refuted one-index candidate requires the smallest
+rebuildable PostgreSQL-only index/projection correction and a repeated T1E before
+production work; it cannot silently introduce canonical cells, PostGIS, duplicate
+Place coordinates or changed window semantics.

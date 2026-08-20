@@ -7,7 +7,7 @@ storage_table: [entity, entity_location]
 
 > **Role / side:** Entity model contract / runtime side.
 > **Authority:** the durable World subject, what it may carry and its explicit current Place relation.
-> **Excludes:** Property and Trait value rules, role contracts and delivery status; see the Property, Trait, Character and Place contracts and `dev/docs/evidence/`.
+> **Excludes:** Property and Trait value rules — defined in [Property](../property/README.md) and [Trait](../trait/README.md); exact spatial state — defined in [Position](../position/README.md); Entity roles — defined in [Character](../character/README.md) and [Place](../place/README.md).
 
 ```rust
 struct Entity {
@@ -62,5 +62,8 @@ provenance. World applies the ordinary key/value validation rules and has no
 control-word denylist; structural provenance comes only from authorized typed World
 fields, never Property content.
 
-An ordinary Entity may have zero or one explicit current Place relation. Absence is
-valid and is never inferred from prose or Activity.
+An Entity may have zero or one Position. Position is separate current state of this
+same Entity and never changes Entity identity or role. An ordinary Entity may also
+have zero or one explicit current Place relation. Either absence is valid;
+coordinate equality never creates the Place relation, and neither state is inferred
+from prose or Activity.

@@ -17,6 +17,30 @@ The action migration leaves historical Activity prose, request id and fingerprin
 null and assigns no historical Entity location. Current Entity location remains
 ordinary authoritative state, not a replayed projection or inference from Activity.
 
+Migration `0011_spatial_exploration.sql` adds direct Position and immutable
+Connection only after a fail-closed preflight proves every required old spatial fact
+has one establishing Activity. It backfills in this order:
+
+1. the sole old entry Place receives `(0, 0, 0)` under its original
+   `create_entry_place` Activity;
+2. each Character with a current Place receives that Place point under its own one
+   `enter_world` Activity;
+3. each old `entity_location` subject receives its Place point under the one
+   `submit_action.introduce_entity` or `submit_discovery` Activity that established
+   that exact Entity/location pair; and
+4. an unentered Character or Entity without exact spatial establishment remains
+   without Position.
+
+The migration fails before schema acceptance when a required subject has zero or
+several qualifying Activities, when an old current Place lacks Position or when an
+old location disagrees with its Activity context. It creates no synthetic Activity,
+guesses no coordinate from prose, rewrites no timestamp and imports no lab row.
+After backfill it validates the required Place-to-Position foreign key, builds the
+Place map projection from canonical current Position and leaves every old Activity
+immutable. Each backfilled Position version receives one `activity_position` result
+association to its already-existing establishing Activity; no historical origin
+association is fabricated.
+
 
 ## PostgreSQL model and indexes
 
@@ -25,7 +49,14 @@ user(id PK, created_at)
 entity(id PK, name, description, introduced_by_user_id FK user, introduced_at)
 character(entity_id PK/FK entity, owner_user_id UNIQUE/FK user,
           current_place_entity_id NULL/FK place)
-place(entity_id PK/FK entity, is_entry, latest_activity_id FK activity NOT NULL)
+position_version(entity_id FK entity, activity_id FK activity,
+                 previous_activity_id NULL,
+                 x_cm, y_cm, z_cm, description NULL,
+                 PK(entity_id, activity_id), FK previous same Entity)
+position(entity_id PK/FK entity, current_activity_id,
+         FK current same Entity/version)
+place(entity_id PK/FK entity/FK position, is_entry,
+      latest_activity_id FK activity NOT NULL)
 entity_location(entity_id PK/FK entity, place_entity_id FK place)
 activity(id PK, operation, requested_by_user_id FK user,
          actor_character_entity_id NULL/FK character,
@@ -34,6 +65,26 @@ activity(id PK, operation, requested_by_user_id FK user,
          action_consequence NULL, occurred_at)
 activity_entity(activity_id FK activity, entity_id FK entity, role,
                 PK(activity_id, entity_id, role))
+activity_position(activity_id FK activity, role,
+                  position_entity_id, position_activity_id,
+                  PK(activity_id, role, position_entity_id,
+                     position_activity_id),
+                  FK Position version)
+connection(id PK, source_place_entity_id FK place,
+           destination_place_entity_id FK place,
+           source_position_activity_id,
+           destination_position_activity_id,
+           allows_reverse, name, description, shape_description NULL,
+           created_by_activity_id UNIQUE/FK activity,
+           FK both endpoint Position versions)
+connection_point(connection_id FK connection, ordinal,
+                 x_cm, y_cm, z_cm,
+                 PK(connection_id, ordinal))
+activity_connection(activity_id FK activity, connection_id FK connection,
+                    PK(activity_id, connection_id))
+place_map_index(place_entity_id PK/FK place,
+                position_activity_id, x_cm, y_cm, z_cm,
+                FK Place Position version)
 property_key(id BIGINT identity PK, key UNIQUE, value_type,
              first_activity_id FK activity)
 entity_property_history(entity_id FK entity, property_key_id,
@@ -55,12 +106,42 @@ investigation_attempt(id UUID PK,
                       requested_by_user_id FK user,
                       request_id UUID,
                       character_entity_id FK character,
-                      place_entity_id FK place,
+                      kind,
+                      position_activity_id,
+                      place_entity_id NULL/FK place,
                       outcome,
                       consumed_by_activity_id NULL UNIQUE/FK activity,
                       voided_by_attempt_id NULL/FK investigation_attempt,
-                      created_at)
+                      created_at,
+                      FK Character Position version)
 ```
+
+`position_version` is append-only. Partial unique indexes enforce one root and one
+successor per prior version. Deferred per-Entity commit checks require exactly one
+root, exactly one current pointer and that pointer at the lineage tip; insertion may
+therefore create Activity, version and current pointer in ordinary transaction order
+without permitting an incomplete commit. Updates may only advance `position` from
+its current tip to the one direct successor. Deleting Position state, backtracking,
+branching, updating a version or advancing a Place Position is rejected.
+
+Connection and point rows reject update and delete. Endpoint Places must differ and
+the stored endpoint Position revisions must be current at creation. Deferred
+per-Connection checks require either zero points or contiguous ordinals `0..n-1`
+with `2 <= n <= 128`, exact first/last endpoint points, distinct consecutive points
+and no non-adjacent segment intersection. No endpoint, direction, text or geometry
+unique index exists. `created_by_activity_id` is unique because one S1 discovery
+Activity creates exactly one Connection.
+
+`activity_position` accepts only `origin` and `result`; all its rows and
+`activity_connection` rows are immutable. Each result Position must name the same
+Activity as its version. Every Connection-creation Activity names its created
+Connection, and every Movement Activity names its traversed Connection.
+
+`place_map_index` is synchronous rebuildable candidate state, not a second Position
+truth. Place insertion writes its one row in the same transaction. Reads exact-check
+the indexed `(place_entity_id, position_activity_id, coordinates)` against `place`,
+`position` and `position_version` before hydration. Rebuild truncates and repopulates
+only from that canonical join and creates no Activity.
 
 The Property relations above are the delivered schema. `entity_property_history` is
 the sole value store and is
@@ -77,6 +158,15 @@ Indexes exist only for current behavior:
 - unique `character(owner_user_id)` serves contextual lookup and one-Character
   arbitration;
 - partial unique `place(is_entry) WHERE is_entry` arbitrates World genesis;
+- unique Position root/successor indexes and the Position primary/current-pointer
+  indexes serve one-Entity lineage validation and current read;
+- `place_map_index(x_cm, y_cm, z_cm, place_entity_id)` covers candidate selection,
+  ordering and continuation for an axis-aligned Place window;
+- `connection(source_place_entity_id, id)` and
+  `connection(destination_place_entity_id, id)` serve incident paging without course
+  hydration; `connection_point` primary key serves one selected ordered course;
+- `activity_position(position_entity_id, position_activity_id, activity_id)` and
+  `activity_connection(connection_id, activity_id)` serve typed history hydration;
 - `entity_location(place_entity_id, entity_id)` serves exact-Place Entity lookup;
 - partial `character(current_place_entity_id, entity_id) WHERE
   current_place_entity_id IS NOT NULL` serves exact-Place Character target lookup;
@@ -90,7 +180,7 @@ Indexes exist only for current behavior:
   exactly 32 bytes;
 - primary-key indexes serve role joins and involved-Entity lookup;
 - unique `investigation_attempt(requested_by_user_id, request_id)` serves stable
-  start retry identity in its namespace;
+  start retry identity and stored-kind comparison in its namespace;
 - `investigation_attempt(requested_by_user_id, created_at DESC)` serves the inclusive
   rolling-hour admission window; and
 - partial `investigation_attempt(requested_by_user_id, created_at) WHERE outcome
@@ -142,7 +232,7 @@ discriminator and three Property relations above. Activity is inserted before a
 first-use key and its history, so every provenance foreign key names a real accepted
 Activity. One shared private writer normalizes and sorts keys and Entity/key pairs,
 locks existing pointers in stable order, arbitrates first-use keys, bulk-inserts
-history and bulk-upserts current pointers. Route-specific Entity, role and placement
+history and bulk-upserts current pointers. Capability-specific Entity, role and placement
 writes remain in the same transaction. No public generic Property-write capability
 or deterministic external-factor writer is delivered by this slice.
 
@@ -173,3 +263,47 @@ initial Trait would fail at commit. Accepted submit locks User then Place and, i
 transaction, inserts the Entity, placement, initial Property/Trait state, Activity
 and `subject`/`location` roles, points `consumed_by_activity_id` to that Activity and
 advances `place.latest_activity_id`. Rejection changes none of them.
+
+## S1 transaction and query admission
+
+New spatial reads use one short read-only Repeatable Read transaction with a local
+three-second `statement_timeout`. New spatial mutations normalize and bound all
+input, resolve accepted request identity, set the same statement timeout and a local
+500-millisecond `lock_timeout`, then lock in this order:
+
+1. responsible User;
+2. controlled Character;
+3. existing affected Entity rows in ascending UUID-byte order; and
+4. the exact attempt and current pointers needed by that capability.
+
+Connection creation never locks or arbitrates an endpoint pair. Movement reads the
+immutable Connection and locks no traveller, course or Place-wide coordinator. A
+timeout maps to retryable `temporarily_unavailable` and the complete transaction
+writes nothing. An unrelated User, Character, Place or Connection shares no new S1
+lock.
+
+For an unseen mutation request, World rechecks Position revision, nullable current
+Place, attempt and selected Place/Connection eligibility after locks; inserts
+prerequisite Entity rows; appends Activity; inserts Position, Place, Connection and
+typed history; consumes the attempt when applicable; and commits once. Discovery
+does not advance the old broad `place.latest_activity_id` for Connection
+establishment. `entity_at_position` retains its existing exact-Place pointer advance
+when it has a current Place. Movement neither reads nor advances that pointer.
+
+The shared partial unique `(requested_by_user_id, request_id)` Activity index covers
+Action, Interaction, discovery and Movement. A versioned normalized SHA-256
+fingerprint includes the complete tagged input, exact ordered course, selected ids,
+Position revision and Movement target. Same id and fingerprint reconstructs the
+accepted canonical result; different operation or content conflicts. Independently
+confirmed Connections never deduplicate by meaning. Investigation start remains in
+its separate attempt namespace and compares stored kind directly instead of adding a
+fingerprint.
+
+## S1 numeric storage constraints
+
+Every stored coordinate is a signed `bigint` constrained inclusively to
+`-1_000_000_000_000_000..=+1_000_000_000_000_000`. Course validation and Movement
+use checked `i128` cross and dot products; overflow is invalid input and writes
+nothing. Name, description and optional Position/shape description checks repeat the
+shared normalized text invariants. The Place map projection repeats the coordinate
+checks but never becomes canonical.

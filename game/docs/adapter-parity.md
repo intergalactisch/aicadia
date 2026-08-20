@@ -8,9 +8,8 @@
 
 Automated tests require:
 
-1. Executable catalog tests prove that `get_entity_at_current_place` replaces
-   `list_entity_property_at_current_place` in the exact fifteen-name OpenAPI/MCP
-   catalog; loopback operator Entity reads remain absent.
+1. Executable catalog tests prove the exact nineteen-name OpenAPI/MCP catalog,
+   including four spatial capabilities; loopback operator Entity reads remain absent.
 2. MCP descriptions, annotations and schemas equal the checked-in fixture.
 3. Character creation and reads expose `current_place: null`, then both adapters
    expose the complete same entry Place after World entry.
@@ -32,7 +31,7 @@ Automated tests require:
     local values the other adapter reads without role/control leakage.
 11. Property bounds, duplicates, key/type conflict, neutral Entity eligibility,
     retry normalization and full rollback have the same canonical HTTP/MCP errors.
-12. Stateless MCP `2026-07-28` exposes all fifteen tools, the one global play
+12. Stateless MCP `2026-07-28` exposes all nineteen tools, the one global play
     contract and complete cache metadata without creating a transport session; older
     revisions fail closed.
 13. All creation routes establish optional 0–100 initial Traits; mixed 0–100 Action
@@ -53,16 +52,29 @@ Automated tests require:
 16. Agent contract evidence proves full natural Trait preview, whole-package User
     confirmation/rejection, no direct Trait editor, no hidden post-confirm mutation
     and no executable interpretation of Trait prose.
-17. Start investigation proves zero/positive through a scripted private chance
-    source, byte-identical no-reroll retry, pre-roll admission, positive-only FIFO
-    voiding and stable results across restart without mutable context snapshots.
-18. Discovery proves strict normalization, Activity-namespace retry/conflict
-    precedence, neutral attempt availability, atomic Entity/Property/Trait/Activity/
-    placement/consumption/pointer commit and the exact `{activity,entity,place}`
-    result across both adapters.
-19. A conforming Agent re-grounds after positive, previews one found Entity and
-    commits only after confirmation; a co-present Character reads the same Entity,
-    initial state and canonical discovery Activity.
+17. Start investigation proves both selected kinds, zero/positive through a scripted
+    private chance source, same-kind no-reroll retry, changed-kind conflict, pre-roll
+    admission, Position grounding, positive-only FIFO voiding and stable restart.
+18. Discovery proves strict tagged normalization, Activity-namespace retry/conflict
+    precedence, neutral stale attempt availability and atomic Entity/Place/Position/
+    Connection/Property/Trait/Activity/consumption commit for both result kinds.
+19. A conforming Agent re-grounds after positive, previews the complete selected
+    result and commits only after confirmation; another Character reads the same
+    shared spatial state and canonical discovery Activity.
+20. `get_character` and exact-Place Entity pages return complete direct Position;
+    positioned-between-Places remains distinct from not entered.
+21. `list_place` proves box-bound cursor, canonical Position recheck, 100-row maximum,
+    no count and bounded dense, sparse and concurrent-insert behavior.
+22. `list_connection` and `get_connection` prove anchored neutral selection, bounded
+    summaries, course hydration only for one selected Connection and stable paging.
+23. Connected-Place discovery proves new and existing destination, current/new/
+    existing origin, unchanged Character Position, one new immutable Connection,
+    rollback and two equal-looking concurrent Connections that both commit.
+24. `move_character` proves exact complete and partial travel, direction, integer
+    course validation, current-Place transition, retry, stale Position, bounded lock
+    timeout and independent travellers through both adapters.
+25. Stateless MCP and OpenAPI publish exactly nineteen capabilities with all new
+    tool descriptions and schema constraints equal to the generated catalog.
 
 ## Cross-contract evidence obligations
 
@@ -85,9 +97,9 @@ Automated tests require:
   while changed content under the same request id conflicts;
 - non-Interaction Place history, including trail markers and discoveries, remains
   available to Characters currently there under the existing scoped-Place rule;
-- the fifteen player capabilities have one semantic World/HTTP/MCP contract,
+- the nineteen player capabilities have one semantic World/HTTP/MCP contract,
   strict schemas, complete catalog/OpenAPI publication and matching errors;
-- the schema, World, both adapters, the exact fifteen-tool catalog, the Agent
+- the schema, World, both adapters, the exact nineteen-tool catalog, the Agent
   contract and the token-free fake controller agree on the deterministic
   Property/Trait contract, and none of that evidence is a paid or real-model claim;
 - every creation route roots each initial Trait in its own creation Activity, while
@@ -111,6 +123,16 @@ Automated tests require:
 - declared indexes and query plans support the 100-write and 100-read bounds, stable
   lock order prevents deadlocks, accepted history stays immutable and current
   pointers stay on one lineage;
+- every Place and entered Character has one direct Position, every situated Entity
+  read returns its complete Position without fan-out, and Position versions remain
+  one immutable lineage with a same-Entity tip pointer;
+- a Place box hydrates at most 100 canonical rechecked Places, Connection lists never
+  hydrate courses and one Connection read hydrates at most 128 points;
+- equal-looking Connection creations never share an endpoint-pair lock or uniqueness
+  key, while exact retries reconstruct only their own accepted Connection;
+- discovery never moves the Character, partial Movement clears current Place,
+  complete Movement sets the exact endpoint Place and two travellers write no shared
+  progress state;
 - current structured Property wins presentation of its exact key over conflicting
   introductory prose while both Activities remain immutable history;
 - the local launcher preserves one database and User across restart, refuses

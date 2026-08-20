@@ -6,8 +6,10 @@
 
 This document is the current game authority. Aicadia has one persistent `World`,
 durable `User` records, shared `Entity` records, at most one owned `Character` Entity
-role per User, and zero or one shared entry `Place`. A Character may remain unplaced
-or explicitly enter that Place. Every Entity may carry zero or more compact typed
+role per User and positioned `Place` Entity roles. An Entity may have one exact
+direct `Position`; an entered Character always has one and may stand at a current
+Place or between Places. Immutable named `Connection` records provide explicit
+direct travel alternatives between positioned Places. Every Entity may carry zero or more compact typed
 Properties and stable, developing, non-executable Traits, established at creation or
 changed through confirmed local Actions and actor/target Interactions. An entered
 Character may submit one Action that introduces one Entity with initial Property and
@@ -17,10 +19,11 @@ requires at least one change. One directed Interaction toward 1–100 existing
 co-present Entities may carry optional actor/target Property changes and 0–100 mixed
 Trait establishments/developments without authoring their responses. Accepted game mutations append
 immutable normalized `activity` in the same PostgreSQL transaction as current state.
-An entered Character may also begin one World-resolved investigation and, after a
-positive result and User-confirmed Agent authorship, establish exactly one found
-Entity at that Place with the same initial Property/Trait rules and attributable
-Activity.
+An entered Character may also begin one typed World-resolved investigation and,
+after a positive result and User-confirmed Agent authorship, establish exactly one
+Entity at its bound Position or one origin, destination and new Connection package
+without moving. A separately confirmed Movement traverses one Connection completely
+or partially and changes only that Character's Position and optional current Place.
 
 ## Model contracts
 
@@ -31,6 +34,10 @@ Each durable subject, role, seam and state carries its own contract in `model/`:
 - [Entity](model/entity/README.md) — the durable World subject and what it may carry.
 - [Character](model/character/README.md) — the User-owned Entity role.
 - [Place](model/place/README.md) — the Place Entity role and World entry.
+- [Position](model/position/README.md) — exact whole-centimetre Entity state and
+  immutable revisions.
+- [Connection](model/connection/README.md) — immutable direct travel alternatives
+  between positioned Places.
 - [Activity](model/activity/README.md) — immutable normalized history.
 - [Property](model/property/README.md) — canonical `key = value` Entity state.
 - [Trait](model/trait/README.md) — stable, developing Entity statements.
@@ -38,22 +45,27 @@ Each durable subject, role, seam and state carries its own contract in `model/`:
 
 ## Shared value validation
 
-Entity, Character and entry Place input is trimmed, requires 1 through 120 Unicode
+Entity, Character, Place and Connection name input is trimmed, requires 1 through 120 Unicode
 characters for `name` and 1 through 4,000 for `description`, and rejects U+0000.
-Action and Interaction prose use the same normalization, require 1 through 4,000
-Unicode characters and reject U+0000. PostgreSQL repeats the stored text invariants.
+Optional Position and Connection shape descriptions and Action, Interaction and
+discovery prose use the same normalization, require 1 through 4,000 Unicode
+characters when present and reject U+0000. PostgreSQL repeats the stored text
+invariants. World never interprets any of these values as spatial mechanics.
 
 ## Error taxonomy
 
-World distinguishes malformed request or revision input; invalid Entity, Character,
-Place, Action, Interaction, discovery prose, Property or Trait input; invalid Entity or Activity
-limit; User, Entity,
-Character or entry Place not found; unplaced Character; existing Character,
+World distinguishes malformed request, cursor or revision input; invalid Entity,
+Character, Place, Position, Place window, Connection, Movement, Action, Interaction,
+discovery prose, Property or Trait input; invalid Entity, Activity, Place or
+Connection limit; User, Entity, Character, Place, Connection or entry Place not
+found; unentered Character; existing Character,
 already-entered Character or existing entry Place; request-id conflict; neutral
 Interaction-target, discovery-attempt, Property-Entity, scoped-Entity or Trait
 unavailability; Action, Interaction or discovery request-id conflict; investigation
 admission; Property-key conflict;
-exact-Place revision conflict; and unavailable storage.
+exact-Place or Position revision conflict; disallowed Connection direction;
+off-course or non-progress Movement; retryable bounded contention; and unavailable
+storage.
 Adapters expose the canonical spellings and status mapping in
 [Protocol contract](protocol.md#canonical-errors).
 

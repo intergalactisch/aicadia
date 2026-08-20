@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T14:51:58+02:00"
+updated_at: "2026-08-20T15:28:13+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
@@ -325,11 +325,11 @@ dependencies, not a second coordinate copy.
 
 No points means unshaped direct endpoint travel. A shaped Connection has 2 through
 128 contiguous points ordered source→destination. First and last equal the exact
-endpoint Position revisions used at creation, consecutive points differ and
-non-adjacent segments may not intersect in S1. This keeps progress derivable from
-ordinary Position without storing journey or segment membership. World validates
-the course with checked integer arithmetic; database constraints and one affected-row
-constraint trigger reject invalid count or ordering.
+endpoint points named by the Position revisions used at creation, consecutive points
+differ and non-adjacent segments may not intersect in S1. This keeps progress
+derivable from ordinary Position without storing journey or segment membership.
+World validates the course with checked integer arithmetic; database constraints and
+one affected-row constraint trigger reject invalid count or ordering.
 
 Because no S1 operation edits a Connection or Place Position, neither receives a
 speculative version family or editor lock. A later accepted Connection/Place
@@ -356,10 +356,12 @@ progress, not a cross-request snapshot or exact enumeration.
 at most two endpoint summaries per selected row without per-row queries.
 `get_connection` alone hydrates course points. No list returns exact total count.
 
-T3 must stop and revise the accepted plan if the one-index Place candidate fails the
-one-million-row dense or adversarial `EXPLAIN (ANALYZE, BUFFERS)` gate. It may not
-silently add canonical cells, PostGIS, another Place coordinate truth or global map
-state merely to make the benchmark pass.
+T1E falsifies this leading index before production migration work. If the candidate
+fails the one-million-row dense or adversarial `EXPLAIN (ANALYZE, BUFFERS)` gate,
+root refines only the rebuildable index/projection seam and reruns the lab before T2.
+It may not add canonical cells, PostGIS, another Place coordinate truth or global map
+state merely to make the benchmark pass. A changed product truth, public semantic or
+evidence claim still returns the plan to draft for renewed acceptance.
 
 ### Exact Movement
 
@@ -503,9 +505,10 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 
 | ID | State | Depends | Parallel-safe | Objective | Owned surfaces | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| T1 | in_progress | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
-| T2 | pending | T1 | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
-| T3 | pending | T2 | no | Ship bounded Place and Connection reads with the rebuildable projection. | World reads and tests | Pagination, cursor, hot-point, one-million-row plan and query-bound evidence. |
+| T1 | completed | — | no | Publish the accepted S1 runtime contract and exact migration design. | `game/docs/`, plan file map | Documentation lint and public-contract inventory. |
+| T1E | in_progress | T1 | no | Falsify the leading Place-map projection and covering B-tree before production schema work. | `dev/lab/spatial/03-place-map-index/` only | Real PostgreSQL 17 dense/adversarial million-row `EXPLAIN (ANALYZE, BUFFERS)` verdict and cleanup. |
+| T2 | pending | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
+| T3 | pending | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
 | T4 | pending | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
 | T5 | pending | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
 | T6 | pending | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
@@ -533,6 +536,48 @@ new rule's one owner and every generated consumer.
 
 **Stop:** return the plan to `draft` if the contract needs Observation, entry-choice,
 Area, Relation, privacy, Route, terrain, Connection editing or another new concept.
+
+**T1 review record:** focused documentation lint and `git diff --check` pass. The
+public inventory contains 19 capability contracts and 15 published tool-text
+sources; exactly `get_connection`, `list_connection`, `list_place` and
+`move_character` are absent from publication until T6. The broad Studio lint is
+therefore deliberately 4/5 green at this intermediate checkpoint: only exact
+capability/tool-text parity fails. T1 neither publishes placeholder tool text nor
+claims adapter delivery; T6 must close this named gap and restore the full lint.
+
+### T1E — Falsify the Place-map index before production
+
+**Objective:** Determine whether the accepted rebuildable `place_map_index` plus one
+covering `(x_cm, y_cm, z_cm, place_entity_id)` B-tree keeps the exact S1 window read
+bounded under five-year-scale dense and adversarial distributions.
+
+**Real seams:** local PostgreSQL 17 query planner, table/index storage, one million
+synthetic Place projection rows, keyset query and `EXPLAIN (ANALYZE, BUFFERS)`.
+
+**Simulated or absent seams:** production migration and World schema, authorization,
+HTTP/MCP, Position exact-recheck, concurrent production traffic, failover and hosted
+latency. The fixture proves no behavior outside its SQL candidate.
+
+**Actions:**
+
+1. Create a standalone Rust/SQLx lab under `dev/lab/spatial/03-place-map-index/`
+   without importing production or prior lab code.
+2. Load exactly one million rows for a dense same-point case and an adversarial case
+   where the leading-axis range is broad but other axes exclude almost every row.
+3. Execute first and continued 100-row pages using the exact accepted ordering and
+   window predicates; capture plans, actual rows, rows removed, buffers and time.
+4. Drop the disposable database through the repository's ownership-safe cleanup
+   pattern and record the exact supported or refuted verdict and non-claims.
+
+**Evidence:** no sequential scan; dense first/continued pages return at most 100 with
+stable continuation; the adversarial empty or sparse page does not inspect work
+proportional to one million candidates. Raw plans and cleanup result remain in the
+lab record.
+
+**Stop:** a refuted one-index candidate blocks T2. Root may compare the smallest
+rebuildable PostgreSQL-only alternative and update this technical seam in place, but
+must re-run T1E. Any need for canonical spatial cells, PostGIS, changed window/public
+semantics or another World truth returns the plan to draft for User re-acceptance.
 
 ### T2 — Build direct Position and immutable Connection
 
@@ -568,15 +613,13 @@ Knowledge gating, unrelated hydration or course explosion.
 2. Implement incident `list_connection` summaries and anchored `get_connection` with
    one bounded course.
 3. Prove dense hot-point, sparse adversarial, concurrent insert and cursor semantics.
-4. Run the retained one-million synthetic Place projection evidence with
-   `EXPLAIN (ANALYZE, BUFFERS)` and record actual scanned/returned work.
 
-**Evidence:** functional pagination and authorization tests plus the exact scale
-fixture show no sequential scan, no unbounded hydration, no count and bounded query
+**Evidence:** functional pagination and authorization tests plus T1E's retained
+index verdict show no unbounded hydration, no count and bounded production query
 count for each public operation.
 
-**Stop:** revise and re-accept if one covering index fails; do not silently add
-canonical cells, PostGIS, Place coordinates or a global map revision.
+**Stop:** stop if the production query no longer matches the proved T1E shape; do not
+silently add canonical cells, PostGIS, Place coordinates or a global map revision.
 
 ### T4 — Build Position-grounded Investigation and Discovery
 
@@ -694,7 +737,7 @@ own slice. It never authorizes pulling S2–S8 into S1.
 ## Completion conditions
 
 - this complete technical contract has explicit User acceptance before T1;
-- T1–T7 are `completed` and the validation ladder passes;
+- T1, T1E and T2–T7 are `completed` and the validation ladder passes;
 - the S1 player outcome is demonstrated through World, PostgreSQL, HTTP and MCP;
 - current contract, vocabulary, Areas, synthesis, backlog, public text and evidence
   agree without duplicating one another;

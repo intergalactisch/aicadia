@@ -6,7 +6,8 @@
 
 ## Purpose
 
-Place the current unplaced Character at the server-derived entry Place; retry returns the same placement.
+Place the current unentered Character at the server-derived entry Place and its exact
+Position; retry returns the same placement.
 
 ## Input
 
@@ -14,15 +15,22 @@ World call `enter_world(context.user_id)`; HTTP `POST /api/world/entry` with no 
 
 ## Validation
 
-World derives the Character and entry Place. The Character must be unplaced; genesis must already have established the entry Place. The Character may remain unplaced indefinitely.
+World derives the Character and entry Place. The Character must have no Position and
+no current Place; genesis must already have established the entry Place. The
+Character may remain unentered indefinitely.
 
 ## Result
 
-Atomically sets `character.current_place_entity_id` only when absent. Retrying or racing a successful entry returns the same Character. The destination cannot be selected and this is not movement.
+Atomically creates the Character's root Position equal to the entry Place Position
+and sets `character.current_place_entity_id`. Retrying or racing a successful entry
+returns the same Character. The destination cannot be selected and this is not
+Movement.
 
 ## Activity footprint
 
-First acceptance appends one `enter_world` Activity with entering Character as actor, entry Place as context and `destination`. A successful retry appends none.
+First acceptance appends one `enter_world` Activity with entering Character as
+actor, entry Place as context and `destination`, and new Character Position as
+`result`. A successful retry appends none.
 
 ## Annotations and retry class
 

@@ -6,7 +6,8 @@
 
 ## Purpose
 
-Create the one shared entry Place with independent 0–100 optional initial Properties and Traits from the current unplaced Character; accepts semantic content only.
+Create the one shared entry Place at World origin with independent 0–100 optional
+initial Properties and Traits from the current unplaced Character.
 
 ## Input
 
@@ -30,15 +31,24 @@ World call `create_entry_place(context.user_id, input)`; HTTP `POST /api/place/e
 
 ## Validation
 
-The derived Character must exist and be unplaced. Zero entry Places is valid before genesis; exactly one concurrent request may establish the sole entry Place. Name, description, Property and Trait items — constrained by [shared value validation](../domain.md#shared-value-validation), [Property](../model/property/README.md) and [Trait](../model/trait/README.md); this capability adds only the unplaced-Character and single-genesis rules.
+The derived Character must exist with no Position and no current Place. Zero entry
+Places is valid before genesis; exactly one concurrent request may establish the sole
+entry Place. Name, description, Property and Trait items — constrained by
+[shared value validation](../domain.md#shared-value-validation),
+[Property](../model/property/README.md) and [Trait](../model/trait/README.md); this
+capability adds only the unentered-Character and single-genesis rules.
 
 ## Result
 
-Atomically creates Entity, Place, Activity and initial Property/Trait state. This is World genesis, not discovery; a second entry Place is rejected with `entry_place_already_exists` without orphan state.
+Atomically creates Entity, direct Position `(0, 0, 0)`, Place, Activity and initial
+Property/Trait state. Position description is absent. This is World genesis, not
+discovery; a second entry Place is rejected with
+`entry_place_already_exists` without orphan state.
 
 ## Activity footprint
 
-One `create_entry_place` Activity: proposing unplaced Character as actor, no context Place, new Place Entity as `subject`.
+One `create_entry_place` Activity: proposing unplaced Character as actor, no context
+Place, new Place Entity as `subject` and new Place Position as `result`.
 
 ## Annotations and retry class
 

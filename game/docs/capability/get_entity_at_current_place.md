@@ -18,7 +18,9 @@ Eligible subjects are the actor, current Place, co-present Characters and explic
 
 ## Result
 
-Returns one safe Entity, safe current Place, matching `place_revision` and one tagged current Property/Trait page. Orientation and Activity references remain compact and never inline this page.
+Returns one safe Entity with its complete current Position, safe current Place,
+matching `place_revision` and one tagged current Property/Trait page. Orientation and
+Activity references remain compact and never inline this page.
 
 ## Activity footprint
 
@@ -26,7 +28,11 @@ None. Reads are not Activity.
 
 ## Annotations and retry class
 
-Read-only and idempotent. A continuation copies `next` unchanged and repeats the same Entity and revision; changed state rejects it with `place_revision_conflict` — constrained by [shared capability inputs](../protocol.md#shared-capability-inputs); this capability adds no local rule.
+Read-only and idempotent. A continuation copies `next` unchanged and repeats the same
+Entity, Position and Place revisions. Changed Place state rejects with
+`place_revision_conflict`; a moved or no-longer-local Entity rejects neutrally —
+constrained by [shared capability inputs](../protocol.md#shared-capability-inputs);
+this capability adds no local rule.
 
 ## Evidence obligations
 

@@ -74,7 +74,9 @@ knowledge. A co-present Character that is neither actor nor target receives no
 `submit_interaction` Activity automatically. Any response is a separately authored
 later Activity with its own actor and confirmation.
 
-Repeated accepted targeting remains possible in this slice; it triggers no target Agent, background work or notification. Private attention controls must be designed before movement, notifications or broader Interaction reach.
+Repeated accepted targeting remains possible; it triggers no target Agent,
+background work or notification. Private attention controls must be designed before
+notifications or broader Interaction reach.
 
 ## Input example
 

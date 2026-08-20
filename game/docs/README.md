@@ -9,12 +9,13 @@ Aicadia has one current game contract. Read it in this order:
 1. [Domain contract](domain.md) — domain overview, shared value validation, error taxonomy and the domain-wide evidence obligation.
 2. [Model contracts](#model-contracts) (`model/`) — one folder per durable subject, role, seam and state.
 3. [Capability catalog](#capability-catalog) and the linked per-capability contracts.
-4. [Protocol contract](protocol.md) — request context, wire shapes, freshness, HTTP/MCP and errors.
-5. [Adapter parity contract](adapter-parity.md) — cross-adapter and cross-contract proof obligations.
-6. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
-7. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
-8. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
-9. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only Studio.
+4. [Wire contract](wire.md) — shared compact and complete response shapes.
+5. [Protocol contract](protocol.md) — request context, freshness, HTTP/MCP and errors.
+6. [Adapter parity contract](adapter-parity.md) — cross-adapter and cross-contract proof obligations.
+7. [Agent play contract](agent.md) — host conduct, player communication and private workshops.
+8. [Storage contract](storage.md) — PostgreSQL relations, migrations, locks and indexes.
+9. [Deferred game scope](deferred.md) — behavior and models intentionally absent.
+10. [Local play](local-play.md) — supported local launcher, Agent adapter and read-only Studio.
 
 The current contract is authoritative over exploration history.
 
@@ -26,7 +27,7 @@ facts it owns and is edited only when its own fact changes.
 
 | Change | Read in this order | Owner to edit |
 | --- | --- | --- |
-| One capability's input, validation, result, Activity footprint or annotation class | [its capability contract](#capability-contracts) → the model contracts it is constrained by ([model contracts](#model-contracts)) → [shared value validation](domain.md#shared-value-validation) → [wire shapes](protocol.md#wire-shapes) and [canonical errors](protocol.md#canonical-errors) → [adapter parity](adapter-parity.md) → the owning flow in [Agent play contract](agent.md) → its description in `../mcp/agent/tool/<tool>.md` | `capability/<tool>.md`, then `../src/`, `../tests/world/`, `../tests/server/` |
+| One capability's input, validation, result, Activity footprint or annotation class | [its capability contract](#capability-contracts) → the model contracts it is constrained by ([model contracts](#model-contracts)) → [shared value validation](domain.md#shared-value-validation) → [wire shapes](wire.md#wire-shapes) and [canonical errors](protocol.md#canonical-errors) → [adapter parity](adapter-parity.md) → the owning flow in [Agent play contract](agent.md) → its description in `../mcp/agent/tool/<tool>.md` | `capability/<tool>.md`, then `../src/`, `../tests/world/`, `../tests/server/` |
 | A model's fields, roles, uniqueness or storage | [its model contract](#model-contracts) → [domain contract](domain.md) → [storage contract](storage.md) → `../migration/` → every capability contract that names the model | `model/<model>/README.md`, then `storage.md` and a new migration |
 | Request context, delivery identity, wire shape, HTTP mapping or error code | [protocol contract](protocol.md) → [adapter parity](adapter-parity.md) → `../src/wire/*.rs` → [MCP publication invariants](protocol.md#mcp-publication-invariants) → `../mcp/tool-catalog.json` | `protocol.md`, then `../src/wire/`, one catalog regeneration |
 | What a playing Agent is told — the play contract, a tool description or a schema description | [instruction layering](agent.md#instruction-layering) → `../mcp/agent/instruction/*.md` → `../mcp/agent/tool/*.md` → doc comments in `../src/wire/*.rs` → pins in `../src/agent_contract.rs` → `../mcp/tool-catalog.json` | the one source file of that layer, then one catalog regeneration |
@@ -42,6 +43,8 @@ table; the documentation constitution's home table names their owning files.
 - [Entity](model/entity/README.md)
 - [Character](model/character/README.md)
 - [Place](model/place/README.md)
+- [Position](model/position/README.md)
+- [Connection](model/connection/README.md)
 - [Activity](model/activity/README.md)
 - [Property](model/property/README.md)
 - [Trait](model/trait/README.md)
@@ -64,10 +67,14 @@ Catalog order is deterministic:
 | `list_entity_at_current_place` | `list_entity_at_current_place(context.user_id, input)` | `GET /api/place/current/entity` | `list_entity_at_current_place` | required |
 | `list_activity_at_current_place` | `list_activity_at_current_place(context.user_id, input)` | `GET /api/place/current/activity` | `list_activity_at_current_place` | required |
 | `get_entity_at_current_place` | `get_entity_at_current_place(context.user_id, input)` | `GET /api/place/current/entity/{entity_id}?cursor&limit` | `get_entity_at_current_place` | required |
+| `list_place` | `list_place(context.user_id, input)` | `GET /api/place` | `list_place` | required |
+| `list_connection` | `list_connection(context.user_id, input)` | `GET /api/place/{place_id}/connection` | `list_connection` | required |
+| `get_connection` | `get_connection(context.user_id, input)` | `GET /api/place/{place_id}/connection/{connection_id}` | `get_connection` | required |
 | `start_investigation` | `start_investigation(context.user_id, input)` | `POST /api/investigation` | `start_investigation` | required |
 | `submit_action` | `submit_action(context.user_id, input)` | `POST /api/action` | `submit_action` | required |
 | `submit_interaction` | `submit_interaction(context.user_id, input)` | `POST /api/interaction` | `submit_interaction` | required |
 | `submit_discovery` | `submit_discovery(context.user_id, input)` | `POST /api/discovery` | `submit_discovery` | required |
+| `move_character` | `move_character(context.user_id, input)` | `POST /api/character/movement` | `move_character` | required |
 
 `create_user` is deliberately absent. Database creation, migration, diagnostics,
 administration, global Entity reads and every other operational action are not Agent
@@ -87,7 +94,11 @@ projection; it adds no game HTTP or MCP operation.
 - [`list_entity_at_current_place`](capability/list_entity_at_current_place.md)
 - [`list_activity_at_current_place`](capability/list_activity_at_current_place.md)
 - [`get_entity_at_current_place`](capability/get_entity_at_current_place.md)
+- [`list_place`](capability/list_place.md)
+- [`list_connection`](capability/list_connection.md)
+- [`get_connection`](capability/get_connection.md)
 - [`start_investigation`](capability/start_investigation.md)
 - [`submit_action`](capability/submit_action.md)
 - [`submit_interaction`](capability/submit_interaction.md)
 - [`submit_discovery`](capability/submit_discovery.md)
+- [`move_character`](capability/move_character.md)

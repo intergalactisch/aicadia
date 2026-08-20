@@ -18,7 +18,11 @@ The User may own at most one Character. Initial Trait items contain only one `st
 
 ## Result
 
-Atomically creates Entity, Character, Activity and initial Property/Trait state. Concurrent creates for one User yield exactly one Character without orphan state. The result is unplaced. Absence means the Character exists but has not entered the World; it is not a missing lookup or unknown coordinate.
+Atomically creates Entity, Character, Activity and initial Property/Trait state.
+Concurrent creates for one User yield exactly one Character without orphan state.
+The result has no Position or current Place: the Character exists but has not yet
+entered the World. This is distinct from an entered Character between Places, which
+has Position but no current Place.
 
 ## Activity footprint
 

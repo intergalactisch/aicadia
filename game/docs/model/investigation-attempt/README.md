@@ -6,34 +6,37 @@ storage_table: [investigation_attempt]
 # Investigation attempt
 
 > **Role / side:** Investigation attempt model contract / runtime side.
-> **Authority:** the durable internal attempt, the discovery it permits and every investigation chance and admission value.
-> **Excludes:** the found Entity's own state, Activity shape and delivery status; see the Entity, Property, Trait and Activity contracts and `dev/docs/evidence/`.
+> **Authority:** the durable internal attempt, its Agent-selected result kind, exact Position grounding and every investigation chance and admission value.
+> **Excludes:** discovered Entity, Place and Connection state — defined in their model contracts; accepted history — defined in [Activity](../activity/README.md).
 
 An investigation is one explicit request by the Agent for World to test whether the
-entered Character can find something at its exact current Place. World derives both
-Character and Place, applies per-User admission, reads the bounded recent Place
-history signal and performs one authoritative random draw before the Agent authors
-content. The User may advise the Agent but supplies no mechanical focus, seed, odds,
-result count or retry count.
+entered Character can find something from its exact current Position. The Agent
+selects exactly one mechanical result kind from authoritative reads:
+`entity_at_position` or `connected_place`. World derives the Character, current
+Position and optional current Place, applies per-User admission and performs one
+authoritative random draw before the Agent authors content. The User may advise the
+Agent, but World never infers the kind from prose and the User supplies no seed,
+odds, result count or retry count.
 
 Every admitted start creates one durable internal attempt with one World-assigned id,
-the responsible User, derived Character and Place, stored `zero` or `positive`
-outcome, creation time and optional consumed/voided provenance. The attempt is not an
-Entity, Activity, pending opportunity, session or player-visible history. It exists
-only to make retry, admission, bounded coexistence and one-time consumption exact
-across processes and restarts. A start retry returns its stored outcome and immutable
-limit without another draw. Zero and unconsumed positive attempts change no current
-World state and append no Activity. A voided positive always names a distinct newer
-attempt as provenance and can never point to itself.
+the responsible User, derived Character, selected kind, exact Position revision,
+nullable current Place, stored `zero` or `positive` outcome, creation time and
+optional consumed/voided provenance. The attempt is not an Entity, Activity, pending
+opportunity, session or player-visible history. It exists only to make retry,
+admission, grounding, bounded coexistence and one-time consumption exact across
+processes and restarts. A same-kind start retry returns its stored outcome and
+immutable limit without another draw; reusing the request id for the other kind
+conflicts. Zero and unconsumed positive attempts change no current World state and
+append no Activity. A voided positive always names a distinct newer attempt as
+provenance and can never point to itself.
 
-A positive attempt permits one discovery: an Agent-authored Entity representing
-something found rather than made, brought or placed. After re-reading current
-exact-Place context, the Agent previews the complete name, description, 0–100
-Properties and 0–100 Traits and the User confirms them. World cannot infer or prove
-the found-versus-made distinction; the Agent contract owns it. World verifies only
-the typed attempt and find rules, then atomically creates and places the Entity,
-establishes its state, appends `submit_discovery` Activity, consumes the attempt and
-advances the Place pointer. There is no generic Discovery record or World-typed kind.
+A positive `entity_at_position` attempt permits one Agent-authored Entity at the
+bound point. A positive `connected_place` attempt permits one exact origin,
+destination and newly identified Connection package without moving the Character.
+After re-reading current Position and relevant spatial context, the Agent previews
+the complete package and the User confirms it. World verifies only the typed attempt,
+fresh grounding and submitted structure. There is no generic Discovery record,
+Agent session, semantic parser or automatic read receipt.
 
 ## Investigation chance and admission
 
@@ -51,12 +54,13 @@ change rather than configuration.
 | `A` | `12` | new attempts admitted per User in one inclusive rolling hour |
 | `P` | `3` | live unconsumed positives per User before the oldest is voided |
 
-The signal `n` is the number of `submit_discovery` Activities among the last `W`
-Activities at that Place, and chance is `p = p_min + (p_max − p_min) · 2^(−n/h)`,
-resolved from operating-system entropy behind World's private chance component. A
-fresh admitted attempt is independent. Elapsed time, prior zero outcomes and
-consecutive misses never improve odds; there is no pity, accumulated luck or
-runtime-configurable chance input.
+When the Character has a current Place, signal `n` is the number of
+`submit_discovery` Activities among the last `W` Activities at that Place. A loose
+Position has no truthful aggregation owner, so `n = 0`. Chance is
+`p = p_min + (p_max − p_min) · 2^(−n/h)`, resolved from operating-system entropy
+behind World's private chance component. A fresh admitted attempt is independent.
+Elapsed time, prior zero outcomes and consecutive misses never improve odds; there
+is no pity, accumulated luck, region counter or runtime-configurable chance input.
 
 Admission is decided before the roll: a User who already has `A` attempts inside the
 inclusive rolling hour is rejected without an attempt row or draw. Only a newly

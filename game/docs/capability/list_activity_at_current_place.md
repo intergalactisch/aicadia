@@ -14,7 +14,9 @@ World call `list_activity_at_current_place(context.user_id, input)`; HTTP `GET /
 
 ## Validation
 
-World derives the Character and exact current Place; an unplaced Character is rejected. The Place must be stored context or linked in any involved-Entity role.
+World derives the Character and exact current Place; an unentered Character or an
+entered Character currently between Places is rejected. The Place must be stored
+context or linked in any involved-Entity role.
 
 ## Result
 

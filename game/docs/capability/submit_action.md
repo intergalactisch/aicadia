@@ -31,6 +31,7 @@ struct SubmitAction {
 struct IntroduceEntity {
     name: String,
     description: String,
+    position_description: Option<String>,
     property: Vec<PropertyInput>,
     trait: Vec<TraitInput>,
 }
@@ -50,8 +51,9 @@ struct PlaceRevision {
 
 `ActionConsequence` is a strict tagged union:
 
-- `introduce_entity { name, description, property[0..100], trait[0..100] }` creates
-  and places one Entity with optional initial state; or
+- `introduce_entity { name, description, position_description?, property[0..100],
+  trait[0..100] }` creates and places one Entity at the actor's exact Position with
+  optional Position description and initial state; or
 - `change_entity_state { property_change[0..100], trait_change[0..100] }` atomically
   combines unique exact `(entity_id, key)` Property changes with typed
   `establish { entity_id, statement }` and `develop { trait_id, statement }` Trait
@@ -67,15 +69,16 @@ controlled by a User.
 
 Input accepts no User, Character or Place selector and no effective time. World
 derives the User's Character and exact current Place; a missing Character is not
-found and an unplaced Character cannot act. World assigns new Entity, Activity,
+found and a Character without current Place cannot act. World assigns new Entity, Activity,
 Property-key and Trait identities and the acceptance time. Establishment names an
 eligible Entity; development names one stable current Trait id and World derives its
 Entity. Expected Place revision plus the locked current pointer selects the
 predecessor atomically; development accepts no predecessor selector.
 
-One accepted introduction atomically creates and places the Entity, writes its
-initial Properties and Trait roots, inserts one Activity with one canonical prose
-value and records explicit Entity roles. One accepted state-change Action atomically
+One accepted introduction atomically creates and places the Entity at the acting
+Character's exact Position, writes the Entity's root Position with the submitted
+optional Position description, its initial Properties and Trait roots, inserts one Activity with one
+canonical prose value and records explicit Entity and Position roles. One accepted state-change Action atomically
 writes every Property value/current pointer and every Trait root/version/current
 pointer under that same Activity; each affected Entity has `subject` participation
 and the Place remains `location`.
@@ -144,7 +147,11 @@ The canonical result is the `AcceptedAction` described above. The introduction b
 
 ## Activity footprint
 
-One Activity per accepted Action, with each affected Entity as `subject` and the Place as `location` as stated in the contract; the general Activity semantics and roles — defined in [Activity](../model/activity/README.md); this capability narrows them only as the contract states.
+One Activity per accepted Action, with each affected Entity as `subject` and the
+Place as `location` as stated in the contract. An introduction also records the
+acting Character Position as `origin` and new Entity Position as `result`; the
+general Activity semantics and roles — defined in [Activity](../model/activity/README.md);
+this capability narrows them only as the contract states.
 
 ## Annotations and retry class
 

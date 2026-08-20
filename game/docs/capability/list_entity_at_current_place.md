@@ -14,11 +14,19 @@ World call `list_entity_at_current_place(context.user_id, input)`; HTTP `GET /ap
 
 ## Validation
 
-World derives the Character and exact current Place; an unplaced Character is rejected rather than receiving an empty page.
+World derives the Character and exact current Place; an unentered Character or an
+entered Character currently between Places is rejected rather than receiving an
+empty page.
 
 ## Result
 
-Returns the complete safe Place, `place_revision`, page and `next`. Excludes the requester; entries expose only stable id, name and description and order by `(introduced_at, id)` descending. The Place Entity remains an eligible Interaction target.
+Returns the complete safe Place, `place_revision`, page and `next`. Excludes the
+requester; entries expose stable id, name, description and complete current Position
+and order by `(introduced_at, id)` descending. Every selected Entity has Position
+because current Place association is established only with Position. The Place
+Entity remains an eligible Interaction target. Position is returned in the same
+bounded query package; there is no per-Entity follow-up or Position-specific
+redaction.
 
 ## Activity footprint
 
