@@ -799,6 +799,7 @@ pub enum ActivityOperation {
     SubmitAction,
     SubmitInteraction,
     SubmitDiscovery,
+    MoveCharacter,
 }
 
 impl ActivityOperation {
@@ -811,6 +812,7 @@ impl ActivityOperation {
             Self::SubmitAction => "submit_action",
             Self::SubmitInteraction => "submit_interaction",
             Self::SubmitDiscovery => "submit_discovery",
+            Self::MoveCharacter => "move_character",
         }
     }
 
@@ -823,6 +825,7 @@ impl ActivityOperation {
             "submit_action" => Ok(Self::SubmitAction),
             "submit_interaction" => Ok(Self::SubmitInteraction),
             "submit_discovery" => Ok(Self::SubmitDiscovery),
+            "move_character" => Ok(Self::MoveCharacter),
             _ => Err(invalid_stored_relation()),
         }
     }

@@ -517,6 +517,7 @@ pub enum ActivityOperationOutput {
     SubmitAction,
     SubmitInteraction,
     SubmitDiscovery,
+    MoveCharacter,
 }
 
 impl From<ActivityOperation> for ActivityOperationOutput {
@@ -529,6 +530,7 @@ impl From<ActivityOperation> for ActivityOperationOutput {
             ActivityOperation::SubmitAction => Self::SubmitAction,
             ActivityOperation::SubmitInteraction => Self::SubmitInteraction,
             ActivityOperation::SubmitDiscovery => Self::SubmitDiscovery,
+            ActivityOperation::MoveCharacter => Self::MoveCharacter,
         }
     }
 }

@@ -42,6 +42,13 @@ pub enum ConnectionField {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MovementField {
+    OriginSegmentOrdinal,
+    TargetSegmentOrdinal,
+    Target,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyField {
     Property,
     PropertyChange,
@@ -103,6 +110,11 @@ pub enum WorldError {
         field: ConnectionField,
         reason: InvalidReason,
     },
+    #[error("movement input is invalid")]
+    InvalidMovement {
+        field: MovementField,
+        reason: InvalidReason,
+    },
     #[error("property input is invalid")]
     InvalidProperty {
         field: PropertyField,
@@ -146,6 +158,8 @@ pub enum WorldError {
     InteractionRequestConflict,
     #[error("discovery request id has already been used with different content")]
     DiscoveryRequestConflict,
+    #[error("movement request id has already been used with different content")]
+    MovementRequestConflict,
     #[error("investigation request id has already been used for another kind")]
     InvestigationRequestConflict,
     #[error("investigation attempt is unavailable")]
@@ -154,6 +168,14 @@ pub enum WorldError {
     InvestigationNotAdmitted,
     #[error("selected place is unavailable for discovery")]
     PlaceUnavailable,
+    #[error("selected connection is unavailable for movement")]
+    ConnectionUnavailable,
+    #[error("selected connection does not allow that direction")]
+    ConnectionDirectionDisallowed,
+    #[error("character or target is off the submitted course segment")]
+    MovementOffCourse,
+    #[error("movement target makes no progress")]
+    MovementNoProgress,
     #[error("one or more interaction targets are unavailable")]
     InteractionTargetUnavailable,
     #[error("one or more property entities are unavailable")]
@@ -166,6 +188,8 @@ pub enum WorldError {
     PropertyKeyConflict,
     #[error("current place has changed since it was read")]
     PlaceRevisionConflict,
+    #[error("current position has changed since it was read")]
+    PositionRevisionConflict,
     #[error("world storage is unavailable")]
     Unavailable,
     #[error("world storage is temporarily unavailable")]
@@ -194,8 +218,10 @@ pub(super) fn storage_error(operation: &'static str, error: sqlx::Error) -> Worl
         .as_database_error()
         .and_then(|error| error.code())
         .map(|code| code.into_owned());
-    if matches!(operation, "start_investigation" | "submit_discovery")
-        && matches!(database_code.as_deref(), Some("57014" | "55P03"))
+    if matches!(
+        operation,
+        "start_investigation" | "submit_discovery" | "move_character"
+    ) && matches!(database_code.as_deref(), Some("57014" | "55P03"))
     {
         return WorldError::TemporarilyUnavailable;
     }

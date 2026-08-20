@@ -27,6 +27,7 @@ mod entity_trait;
 mod error;
 mod investigation;
 mod model;
+mod movement;
 mod mutation;
 mod property;
 mod read;
@@ -43,6 +44,7 @@ pub use investigation::{
     PlaceEntityInput, StartInvestigation, SubmitDiscovery,
 };
 pub use model::*;
+pub use movement::{AcceptedMovement, MoveCharacter, MovementDirection, MovementTarget};
 pub use property::*;
 pub use spatial::ActivityPositionRole;
 

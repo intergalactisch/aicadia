@@ -246,9 +246,11 @@ impl ErrorOutput {
                 )
             }
             // T6 publishes the accepted spatial-specific wire codes. Until then
-            // these World-only T4 branches are unreachable through the legacy
+            // these World-only T4/T5 branches are unreachable through the legacy
             // adapter input and remain a generic malformed request if surfaced.
-            WorldError::InvalidPosition { .. } | WorldError::InvalidConnection { .. } => Self::new(
+            WorldError::InvalidPosition { .. }
+            | WorldError::InvalidConnection { .. }
+            | WorldError::InvalidMovement { .. } => Self::new(
                 ErrorCode::InvalidRequest,
                 "The request does not match the selected World operation.",
             ),
@@ -347,6 +349,15 @@ impl ErrorOutput {
             WorldError::DiscoveryRequestConflict => Self::new(
                 ErrorCode::DiscoveryRequestConflict,
                 "request_id was already accepted with different discovery content.",
+            ),
+            WorldError::MovementRequestConflict
+            | WorldError::ConnectionUnavailable
+            | WorldError::ConnectionDirectionDisallowed
+            | WorldError::MovementOffCourse
+            | WorldError::MovementNoProgress
+            | WorldError::PositionRevisionConflict => Self::new(
+                ErrorCode::InvalidRequest,
+                "The request does not match the selected World operation.",
             ),
             WorldError::InvestigationRequestConflict => Self::new(
                 ErrorCode::InvalidRequest,

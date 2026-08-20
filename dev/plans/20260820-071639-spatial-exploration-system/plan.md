@@ -1,7 +1,7 @@
 ---
 status: active
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T19:05:24+02:00"
+updated_at: "2026-08-20T19:44:46+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
 completed_at: null
 ---
@@ -516,8 +516,8 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T2 | completed | T1E | no | Persist direct Position, positioned Place, immutable Connection and typed Activity footprint on existing Worlds. | migration, World models/storage, focused tests | Backfill, constraint, lineage and rollback tests on real PostgreSQL. |
 | T3 | completed | T2 | no | Ship bounded Place and Connection reads with the proved rebuildable projection. | World reads and tests | Pagination, cursor, hot-point and production query-bound evidence. |
 | T4 | completed | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
-| T5 | in_progress | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
-| T6 | pending | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
+| T5 | completed | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
+| T6 | in_progress | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
 | T7 | pending | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
 
 ## Task details
@@ -724,6 +724,26 @@ one exact course point while other travellers remain independent.
 
 **Evidence:** focused World tests prove exact coordinates, Activity, current Place,
 rollback, subject isolation and timeout classification.
+
+**T5 review record:** real PostgreSQL passed 11/11 focused Movement cases. The full
+library suite passed 76/76 and the production World integration suite passed 95/95;
+13/13 otherwise-current server tests passed with one existing ignored catalog
+regenerator and the one deliberately filtered T6 catalog-pin mismatch. Workspace
+all-target checking, focused documentation lint, formatting and diff checks were
+clean. Unshaped and shaped Connections support exact complete travel, shaped courses
+support forward and reverse partial progress, equal-coordinate endpoint Places stay
+topologically distinct and the full coordinate range uses checked `i128` without
+floating point. One Character's 500-millisecond lock failure does not block another
+User's Character on the same immutable Connection. Exact retries reconstruct the
+accepted historical Position and Place after later Movement; one bounded result-row
+check fails closed unless the result directly follows the typed origin and has no
+description. Fingerprint evidence varies every semantic field and proves conflict
+with the shared Action request-id namespace. Injected deferred failure rolls back
+Position, current Place, Activity and typed history. Independent Standards and Spec
+reviews both ended with zero findings after these evidence and reconstruction fixes.
+T5 adds no route, tool, catalog publication, journey, timer, trace, occupancy,
+traveller count, terrain behavior or Connection mutation; T6 owns the named catalog
+and adapter gap.
 
 **Stop:** no journey, timer, trace, Connection occupancy, editor, traveller count,
 terrain cost or inferred destination.
