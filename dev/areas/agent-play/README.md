@@ -317,10 +317,10 @@ immediately tells the User what it retained.
 
 ### Delivered
 
-One compiled Agent contract and MCP capability catalogue expose the current World
-reads and confirmed mutations through the same `World` semantics as HTTP. The
-current local Studio is read-only development context, not player conversation.
-Exact conduct and capabilities remain in [`game/docs/agent.md`](../../../game/docs/agent.md).
+The current play surface is one compiled Agent contract and capability catalogue;
+the local Studio remains development context rather than player conversation. Exact
+Agent conduct and capabilities are defined in
+[`game/docs/agent.md`](../../../game/docs/agent.md).
 
 ### Directional
 
@@ -343,4 +343,6 @@ capability are absent from the current contract.
 - Exact Agent conduct — [`game/docs/agent.md`](../../../game/docs/agent.md).
 - Exact capabilities — [`game/docs/`](../../../game/docs/README.md) and the generated public catalogue it governs.
 - Related synthesis — [Multiplayer](../multiplayer/README.md), [Discovery](../discovery/README.md) and [World Change](../world-change/README.md).
-- Research, experiments and delivery — [`dev/docs/research/`](../../docs/research/README.md), [`dev/lab/`](../../lab/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).
+- Research is recorded in [`dev/docs/research/`](../../docs/research/README.md).
+- Experiments are recorded in [`dev/lab/`](../../lab/README.md).
+- Delivery history and current status: see [direct spatial exploration evidence](../../docs/evidence/spatial-exploration.md).

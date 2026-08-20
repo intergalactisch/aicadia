@@ -10,12 +10,12 @@ status: active
 
 Date: 2026-08-18
 
-Status: **complete exploration and technical synthesis; spatial product-choice
-frontier empty; implementation planning pending**. The initial five-year recommendation
-is retained as the starting hypothesis; later sections that record what the User
+Status: **complete exploration and technical synthesis; later spatial directions
+remain separately gated**. The initial five-year recommendation is retained as the
+starting hypothesis; later sections that record what the User
 selected, accepted, rejected or corrected supersede it wherever they differ. Every
 illustrated field or table remains descriptive unless a later section explicitly
-accepts its domain meaning; no production schema or build is authorized here.
+accepts its domain meaning; this record authorizes no production build.
 
 The primary-source basis is the
 [spatial foundation research report](../research/spatial-five-year-foundation.md).
@@ -3283,3 +3283,10 @@ correction changes no Position, Place, Connection, window or cursor truth and ad
 canonical cell or PostGIS. It does not mathematically bound every correlated 3D
 distribution or prove production World, concurrency, throughput, failover or hosted
 latency; exact canonical recheck and the three-second statement budget remain.
+
+## Preserved spatial direction
+
+The accepted direct-foundation choices remain the rationale against which later
+spatial exploration must compose or deliberately revise; this synthesis does not
+select or order later work. Delivery history and current status: see [direct spatial
+exploration evidence](../evidence/spatial-exploration.md).

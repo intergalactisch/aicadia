@@ -91,9 +91,9 @@ not a pre-computed complete map.
 - The World is semantically unbounded and technically sparse; only established state needs storage.
 - Exact Place equality is a useful narrow context boundary, not a universal co-presence or observation rule.
 - Spatial facts are explicit typed structural truths validated by World, while Agents author their meaning.
-- The first selected spatial scene establishes a second Place and lets a Character
-  reach it through explicit connectedness; its exact discovery, connection and
-  movement contracts remain open.
+- Direct spatial exploration is no longer an open Place decision. Its exact behavior
+  is defined in the [current game contract](../../../game/docs/README.md); later
+  Place questions remain below.
 - Independently confirmed discoveries that are not structurally proven to be one
   known Place keep distinct stable identities; the first spatial slice performs no
   inferred merge or reconciliation.
@@ -320,15 +320,13 @@ not a pre-computed complete map.
 - Whether one Place falling spatially within or across another is calculated from
   Position and Area, recorded as an explicit structural fact, or both for distinct
   purposes. Overlap may return several candidates and never implies one parent.
-- The exact point-count and coordinate bounds, endpoint alignment and freshness
-  behavior when an endpoint Place Position changes.
+- Endpoint freshness and course consequences if a later capability can change a
+  Place Position or immutable S1 Connection.
 - Whether Area intersections are calculated from the ordered points on read and how
   incomplete or impossible geography reports unknown portions without separately
   authored crossing truth.
 - Which concrete later gameplay, if any, earns exact Entity surfaces, geometry or
   internal reference points beyond the foundation's one Position point.
-- The integer width, signed range and maximum extent of Position's three centimetre
-  values.
 - How an Agent may additionally establish a free quantitative spatial statement such
   as “two centimetres from the ground” when that statement alone does not identify
   one exact point.
@@ -351,8 +349,6 @@ not a pre-computed complete map.
 - Which explicit later evidence can relate or reconcile independently established Places.
 - Which later player behavior can prevent or organize a proven wild growth of
   overlapping Places while preserving stable identity, history and a dumb World.
-- Which exact Discovery authority confirms a new Place and its connectedness.
-- Which minimum placement and traversal facts are sufficient for its first Movement capability.
 
 ## Research needed
 
@@ -381,29 +377,21 @@ not a pre-computed complete map.
 
 ### Delivered
 
-The current World has at most one entry Place represented by an Entity-role row.
-Characters and Entities can be established at that exact Place, contextual writes
-advance its latest Activity, and bounded reads expose its current contents. Exact
-fields and rules remain in [`game/docs/`](../../../game/docs/README.md).
+The current spatial foundation makes Place usable for shared exploration rather than
+only entry context. Exact behavior is defined in
+[`game/docs/`](../../../game/docs/README.md).
 
 ### Directional
 
-One broad Entity identity represents each independently addressable World subject
-and Place is a typed spatial role of that Entity. Separate optional Position state
-uses the same Entity id and stores that Entity's exact absolute or one-Entity-
-relative current point; a Place uses that Position as its map point and may have a
-separate positive Area. One stable named Connection alternative may own ordered World
-points, and Movement may stop at an exact point on them without journey state.
-Position integer range, relative-reference bounds, exact Area geometry and concrete
-capabilities remain open.
-Transactions lock the smallest affected subjects; no Place becomes a global World
-partition.
+Later spatial work may add relative Position and positive Area coverage without
+changing Entity identity or making Place a World partition. Their exact shape and
+lifecycle remain open.
 
 ### Absent
 
-Additional Places, Connections, Area, general Position, inventory, routes,
-geometry, coordinate frames, Place establishment and identity-reconciliation
-behavior are absent from the current game contract.
+Entity-relative Position, Area, inventory, routes, surfaces, coordinate frames,
+Connection editing and Place identity-reconciliation behavior are absent from the
+current game contract.
 
 ## Sources
 
@@ -412,6 +400,7 @@ behavior are absent from the current game contract.
 - Sourced findings — [spatial multiplayer foundation](../../docs/research/spatial-multiplayer-foundation.md).
 - Sourced Entity/Place comparison — [game-framework boundary](../../docs/research/entity-place-framework-boundary.md).
 - Sourced extent/traversal comparison — [Place extent, spatial inclusion and Connection traversal](../../docs/research/place-area-connection-traversal.md).
-- Current technical candidate — the [completed spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill) translates the chosen Place direction into a falsifiable PostgreSQL and World shape without authorizing implementation.
+- Current spatial rationale and preservation direction are recorded in the [spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill).
 - Related synthesis — [Movement](../movement/README.md), [Discovery](../discovery/README.md) and [Multiplayer](../multiplayer/README.md).
-- Exact behavior and delivery — [`game/docs/`](../../../game/docs/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).
+- Exact behavior is defined in [`game/docs/`](../../../game/docs/README.md).
+- Delivery history and current status: see [direct spatial exploration evidence](../../docs/evidence/spatial-exploration.md).

@@ -694,7 +694,7 @@ impl ScenarioCatalogue {
             index.push((id, title, pressure));
         }
         if index.is_empty() {
-            return Err("scenario index contains no Sxx rows".to_owned());
+            return Err("scenario index contains no Sxx or SPxx rows".to_owned());
         }
 
         let mut detail = BTreeMap::new();
@@ -780,7 +780,11 @@ fn scenario_heading(heading: &str) -> Option<(String, String)> {
 }
 
 fn scenario_id(id: &str) -> bool {
-    id.len() == 3 && id.starts_with('S') && id.as_bytes()[1..].iter().all(u8::is_ascii_digit)
+    let digits = id
+        .strip_prefix("SP")
+        .or_else(|| id.strip_prefix('S'))
+        .unwrap_or_default();
+    digits.len() == 2 && digits.as_bytes().iter().all(u8::is_ascii_digit)
 }
 
 #[cfg(test)]
@@ -801,6 +805,26 @@ mod tests {
         assert_eq!(catalogue.scenario.last().unwrap().id, "S14");
         assert!(catalogue.method.contains("Observation layers"));
         assert!(catalogue.coverage.contains("| S14 |"));
+    }
+
+    #[test]
+    fn the_spatial_catalogue_keeps_its_sp_prefixed_scenario_identity() {
+        let source = include_str!("../../../dev/areas/place/scenarios.md");
+        let catalogue = ScenarioCatalogue::parse(source).expect("spatial catalogue should parse");
+
+        assert_eq!(catalogue.scenario.len(), 15);
+        assert_eq!(catalogue.scenario.first().unwrap().id, "SP01");
+        assert_eq!(catalogue.scenario.last().unwrap().id, "SP15");
+    }
+
+    #[test]
+    fn an_empty_scenario_index_names_both_supported_id_forms() {
+        let source = "## How to use a scenario\nUse it.\n\n## Scenario index\n| ID | Scenario | Primary pressure |\n| --- | --- | --- |\n\n## Coverage matrix for future experiments\nNone.";
+
+        assert_eq!(
+            ScenarioCatalogue::parse(source),
+            Err("scenario index contains no Sxx or SPxx rows".to_owned())
+        );
     }
 
     #[test]

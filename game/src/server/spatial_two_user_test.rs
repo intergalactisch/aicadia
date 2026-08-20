@@ -132,6 +132,27 @@ async fn two_user_spatial_flow_has_exact_shared_state_and_private_movement_histo
     let origin_position = origin.position;
     let server = TestServer::start(world).await;
 
+    let before_map_read = activity_count(&readback_pool).await;
+    let actor_places = server
+        .tool(
+            "list_place",
+            json!({
+                "min_x_cm": origin_position.x_cm, "max_x_cm": origin_position.x_cm,
+                "min_y_cm": origin_position.y_cm, "max_y_cm": origin_position.y_cm,
+                "min_z_cm": origin_position.z_cm, "max_z_cm": origin_position.z_cm
+            }),
+            actor,
+        )
+        .await;
+    assert!(
+        structured(&actor_places)["place"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|place| place["id"] == origin_id.0.to_string())
+    );
+    assert_eq!(activity_count(&readback_pool).await, before_map_read);
+
     let investigation = server
         .tool(
             "start_investigation",

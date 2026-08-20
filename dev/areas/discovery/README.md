@@ -18,7 +18,8 @@ grounded candidate and the User confirms the complete preview before World commi
 - A Character-grounded investigation followed by a World-owned chance result.
 - A bounded opportunity for an Agent to author plausible new shared state.
 - Explicit User confirmation of the full candidate before mutation.
-- A future way to establish natural objects and, when separately designed, new Places.
+- A direction for establishing natural objects and connected Places through grounded
+  investigation.
 
 ### This is not
 
@@ -33,14 +34,14 @@ grounded candidate and the User confirms the complete preview before World commi
 
 - World resolves the investigation chance before an Agent may author candidate content.
 - The Agent selects an investigation from current Character context but cannot control the roll.
-- Future spatial Investigation extends that current context to every exact Character
-  Position; current Place is not required and World creates no Place merely for
-  admission. The existing chance and opportunity behavior otherwise remains intact.
+- Spatial Investigation may be grounded away from a named Place without minting one
+  merely for admission. Exact current mechanics are defined in the [game
+  contract](../../../game/docs/README.md).
 - A positive opportunity is retry-stable and remains bound to its authoritative Character context.
 - The Agent re-grounds after a positive result and previews the complete candidate for User confirmation.
 - Naturally occurring finds use Discovery; made, brought or placed things use ordinary Action.
-- The first slice can commit exactly one found Entity and no new Place or movement.
-- For the selected future new-Place scene, independently confirmed discoveries stay
+- Discovery distinguishes a natural find from a connected destination and from
+  Movement. For connected-Place discovery, independently confirmed destinations stay
   distinct unless exact existing identity is structurally established; World does
   not infer sameness from names or descriptions.
 - When the Character has an explicit current Place A, the selected new-Place package
@@ -51,17 +52,8 @@ grounded candidate and the User confirms the complete preview before World commi
   separately identified, Agent-authored origin Place A at the Character's exact
   unchanged Position, sets A as current and establishes A→B. It never gives the
   Character Entity itself the Place role or creates an unnamed origin marker.
-- Accepted Place discovery makes that exact destination and any accepted Connection
-  knowable to the discovering Character even though the Character remains where it
-  is. It does not reveal every Place connected beyond that destination or every
-  other Place in the same coordinate window. Discovery writes the one sparse current
-  Character-owned Knowledge result atomically with its result. One polymorphic shape
-  for its two current subject families—Place and Connection—is technically viable;
-  World-validated target integrity versus separate native-FK associations remains
-  open. See the [storage research](../../docs/research/polymorphic-character-knowledge-storage.md).
-  The Knowledge result's immutable server-authored `created_at` records when this
-  Character first gained it, while Activity records that Discovery was the cause.
-  Later explicit transmission remains open.
+- Connected-Place discovery contributes shared geography rather than Character-owned
+  memory; situated memory and transmission remain separately gated.
 - With a valid selected origin Place A, one User confirmation covers the complete
   new-Place candidate: the Place Entity with its name, description and optional
   initial Properties and Traits—including authored landscape state—one exact direct
@@ -86,11 +78,8 @@ grounded candidate and the User confirms the complete preview before World commi
   description or a Property.
 - Absolute discovery Positions are measured from the permanent `(0, 0, 0)` World
   origin. That origin is not a discoverable or mutable World subject.
-- The first slice applies no gameplay distance limit between A and the proposed
-  destination. The Agent may choose any technically valid absolute World point,
-  regardless of distance, and the User may confirm it after nearby inspection.
-  World validates the structured Position's still-unchosen representable numeric
-  bounds, not a discovery radius.
+- The selected direction does not make proximity itself a discovery authority or
+  identity rule.
 - Before confirmation, the Agent must inspect a bounded set of ordinary established
   Places around B's proposed point and include that returned
   context in the complete User preview. Their proximity informs the Agent and User
@@ -114,8 +103,8 @@ grounded candidate and the User confirms the complete preview before World commi
 - Concurrent discoveries at equal or nearby points remain independent Places unless
   later explicit World state establishes otherwise. A newly committed nearby Place
   does not invalidate an otherwise fresh proposal merely by entering its map window.
-- Future spatial Discovery must be able to occur at an unnamed persistent Position
-  between Places without first turning it into a new Place.
+- Discovery may remain grounded at an unnamed Position between Places without first
+  turning that Position into a Place.
 
 ### Rejected
 
@@ -147,8 +136,7 @@ grounded candidate and the User confirms the complete preview before World commi
 - How discoveries expose information differently to present, distant or returning Characters.
 - How later evidence relates two independently discovered subjects that may be the same.
 - Which later concrete capability may develop or retire a Connection; parallel
-  establishment between the same Places is already allowed, while the first scene
-  still needs only one selected A→C alternative.
+  establishment between the same Places is already allowed.
 - Which later Agent- and User-driven behavior can curb, organize or reconcile a
   proven proliferation of overlapping Places without making World infer semantic
   sameness or invalidating their stable identity and history.
@@ -178,31 +166,25 @@ grounded candidate and the User confirms the complete preview before World commi
 
 ### Delivered
 
-The current capability exposes an investigation attempt, retry-stable World result,
-one positive-opportunity token, complete Entity preview and confirmed commit with
-Activity. It can establish exactly one Entity in the existing Place. Exact inputs,
-states and errors remain in [`game/docs/`](../../../game/docs/README.md).
+The current spatial foundation extends Discovery beyond an existing Place. Exact
+behavior is defined in [`game/docs/`](../../../game/docs/README.md).
 
 ### Directional
 
-Future discovery keeps the same responsibility split: World owns bounded mechanical
-opportunity and structural validation; an explicitly invoked Agent authors meaning;
-the User confirms; one transaction commits exact state and history. The selected
-new-Place direction grounds that opportunity at the Character's exact Position. With
-a current Place it expands the package with destination B and A→B. Without one it
-also establishes separately identified origin A at the Character's unchanged point,
-sets A as current and connects A→B. Broader multi-Entity expansion requires a
-separate accepted contract.
+Later discovery keeps the same responsibility split between World-owned opportunity,
+Agent-authored meaning and User confirmation. Broader multi-Entity expansion,
+situated memory and Connection lifecycle remain separate directions.
 
 ### Absent
 
-New-Place discovery, several results per attempt, server-authored content, Agent
-background invocation, caller-controlled odds, a generic Discovery table and
-universal novelty mechanics are absent.
+Several results per attempt, situated memory, Connection editing, server-authored
+content, Agent background invocation, caller-controlled odds, a generic Discovery
+table and universal novelty mechanics are absent.
 
 ## Sources
 
 - Retained rationale and corrections — [Discovery and investigation](../../docs/concept/discovery.md).
 - Exact behavior — [current game contract](../../../game/docs/README.md).
 - Related synthesis — [Place](../place/README.md), [Agent Play](../agent-play/README.md) and [World Change](../world-change/README.md).
-- Experiments and delivery — [`dev/lab/`](../../lab/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).
+- Experiments are recorded in [`dev/lab/`](../../lab/README.md).
+- Delivery history and current status: see [direct spatial exploration evidence](../../docs/evidence/spatial-exploration.md).

@@ -1,9 +1,9 @@
 ---
-status: active
+status: complete
 created_at: "2026-08-20T07:16:39+02:00"
-updated_at: "2026-08-20T21:46:24+02:00"
+updated_at: "2026-08-20T22:27:21+02:00"
 accepted_at: "2026-08-20T14:51:58+02:00"
-completed_at: null
+completed_at: "2026-08-20T22:27:21+02:00"
 ---
 
 # Build the first spatial exploration slice without losing the complete system
@@ -518,7 +518,7 @@ Allowed states are `pending`, `in_progress`, `completed` and `blocked`.
 | T4 | completed | T3 | no | Extend Investigation and accept Entity or connected-Place Discovery atomically without Movement. | Investigation, World mutation, Activity and tests | Retry, both kinds, loose origin, rollback and parallel-Connection races. |
 | T5 | completed | T4 | no | Move fully or partially over one exact Connection with independent travellers. | World Movement, Activity and tests | Integer geometry, arrival/intermediate, retry, stale Position and lock-bound evidence. |
 | T6 | completed | T5 | no | Ship S1 through HTTP, MCP and concise Agent text with full parity. | wire, adapters, MCP sources, catalog and server tests | Schema/error/catalog parity and two-User protocol flow. |
-| T7 | in_progress | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
+| T7 | completed | T6 | no | Prove the complete outcome, align authorities and record exact evidence/non-claims. | evidence, Areas/synthesis/log/backlog, plan | Validation ladder, focused review and clean builder brief. |
 
 ## Task details
 
@@ -803,6 +803,12 @@ the next spatial risk remains explicit without beginning S2.
 
 **Evidence:** workspace tests, documentation lint, public catalog parity,
 `git diff --check`, focused scope review and `cargo brief` all pass.
+
+**T7 review record:** completion evidence and exact non-claims are recorded once in
+[direct spatial exploration evidence](../../docs/evidence/spatial-exploration.md).
+T7 repaired the existing Studio Area projection, aligned current development
+authorities and changed no gameplay, schema, protocol or public capability. No next
+edge was selected.
 
 **Stop:** do not claim production throughput, privacy, Agent comprehension, Area,
 relative Position or Connection editing that the evidence did not exercise.

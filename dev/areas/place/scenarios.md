@@ -8,7 +8,7 @@ Status: **active catalogue**. A scenario makes one difficult scene repeatable. I
 does not authorize the scene as current gameplay, select a term or imply that one
 kind of state must solve every question.
 
-## How to use the catalogue
+## How to use a scenario
 
 Work scenario-first. A candidate spatial model receives a temporary label such as
 `Candidate A`; it does not enter canonical vocabulary merely because it appears in
@@ -68,26 +68,18 @@ Apply these unless a scenario explicitly makes one irrelevant:
 been discovered earlier without being entered. M's Agent now proposes that M travels
 to and enters B.
 
-**Known.** A, B and M retain stable identities. One confirmed discovery either
-atomically established new B's direct absolute World Position, optional initial
-Entity state and A→B Connection, or reused already established B and established
-only that explicit Connection. In the new-Place result, the Agent supplied Position
-as exact structured state after reading A's fresh Position; World did not derive it
-from prose. Nearby Places neither blocked nor merged B, and proximity alone never
-created the Connection. If the required A→B direction already existed, Discovery
-created no duplicate or Activity and retained its opportunity. M remained at A. An
-accepted destination could be at any technically valid distance from A. An accepted
-Movement may name the complete Connection or one exact target point on a named
-segment. World validates direction, point membership and exact revisions, then
-writes M's ordinary Position and Activity atomically. M may stop between A and B
-without a Place, journey, timer or background process; another Character may
-independently occupy that Position.
+**Known.** A, B and M retain stable identities. The scene requires explicit spatial
+grounding and connectedness; discovery need not move M, while Movement must support
+both arrival and an unnamed intermediate stop. Equal-looking Connection alternatives
+are not automatically one subject. Exact accepted mechanics are defined in the
+[current game contract](../../../game/docs/README.md).
 
-**Unknown.** The concrete Movement operation and limits, endpoint alignment,
-observation during concurrent arrival and which later gameplay might add time.
+**Unknown.** Observation during concurrent arrival and which later gameplay might
+add time or another travel method.
 
-**Questions.** What exact validation and retry errors does the operation expose? What
-does a concurrent move observe, conflict with or retry against?
+**Questions.** What does a concurrent arrival let another Character observe? Which
+later scene earns travel time without turning partial Movement into a background
+journey?
 
 ## SP02 — An Entity is in somebody's coat
 
@@ -286,9 +278,8 @@ involved between A and B.
 **Known.** A physical road, door or bridge is an Entity; the direct topology is not.
 No Connection is inferred from distance, overlapping Area or visible infrastructure.
 
-**Unknown.** Whether `Connection` remains the final name, whether open terrain needs
-one, current access, travel cost and whether a later named Route combines several
-direct steps.
+**Unknown.** Whether open terrain needs a Connection, current access, travel cost and
+whether a later named Route combines several direct steps.
 
 **Questions.** Can an Agent list bounded direct options without treating C as
 reachable? What changes when the physical Entity closes or breaks? Which truth
@@ -321,13 +312,13 @@ named World subjects. Agents want to map, revisit and describe all three.
 requires Position and must be established as an independent map, discovery,
 navigation or spatial reference. Area remains optional Place coverage.
 
-**Unknown.** Which subjects earn the Place role; whether the forest has an Area;
-whether the waterfall is merely an Entity at a Position; and what “map” may reveal
-to a Character that has not discovered them.
+**Unknown.** Which subjects earn the Place role, whether the forest has an Area,
+whether the waterfall is merely an Entity at a Position and what later explicit
+access state could distinguish protected geography.
 
-**Questions.** Which gameplay fails if each candidate is or is not a Place? Can a
-map list Places without enumerating all Entities or disclosing undiscovered ones?
-Does Area describe extent without deciding travel, ownership or visibility?
+**Questions.** Which gameplay fails if each candidate is or is not a Place? Does Area
+describe extent without deciding travel, ownership or visibility? Which concrete
+protected-Place scene would earn a different access model?
 
 ## SP14 — Cursed glasses are hidden from their possessor
 
@@ -375,3 +366,9 @@ Character-specific destinations rather than one stable Connection.
 graph-wide lock? Does destroying one stair Entity remove, block or leave the
 Connection? Can an Agent describe impossible geography without confusing it with an
 unresolved Position?
+
+## Coverage matrix for future experiments
+
+Each future experiment selects the smallest applicable scenarios and records only
+the probes it actually exercises. An unselected scenario is an explicit non-claim,
+not evidence for or against the candidate.

@@ -67,9 +67,9 @@ reconstruct one accepted move.
   C and committed only the explicit allowed A→C Connection and Activity. Later
   Movement uses that Connection in exactly the same way; C's proximity did not
   create it automatically.
-- The first slice has at most one required A→C travel direction. A concurrent or
-  pre-existing direction is reused for later Movement rather than duplicated by
-  Discovery.
+- Equal-looking Connection alternatives remain distinct; the exact current choice
+  between reuse and another alternative is defined in the [game
+  contract](../../../game/docs/README.md).
 - Movement follows only a direction explicitly allowed by the connection; World
   never assumes that a traversable return direction also exists.
 - The first movement capability is walking from Place A to Place B over one explicit
@@ -83,7 +83,7 @@ reconstruct one accepted move.
   intermediate Positions or another Movement rule; those remain separate choices.
 - The first spatial slice stores no Route concept; an Agent may choose one or more
   Connections as a temporary travel plan without creating further World state.
-- A Character must eventually be able to retain an unnamed Position between
+- A Character can retain an unnamed Position between
   established Places, stop there and participate in World play without that Position
   first becoming another Place.
 - Position is the canonical name for an Entity's optional exact current point;
@@ -164,13 +164,10 @@ reconstruct one accepted move.
 - A Character may therefore stop, meet, discover or act at an unnamed intermediate
   Position. Leaving the Connection is a separate explicit Movement, while a portal
   or another Connection without spatial shape permits only direct endpoint travel.
-- At arrival the Agent supplies one complete resulting Position and may deliberately
-  make it relative to the destination Place. World never silently rebases the
-  Character or invents offsets, and no completed travel trace is stored.
-- Concurrent travellers read the same Connection revision but update their own
-  Position rows. They do not lock one another, either endpoint Place or the whole
-  course; a concurrent Connection edit makes only proposals depending on its old
-  revision stale.
+- Entity-relative arrival remains a later direction rather than an assumption of
+  direct Movement.
+- Concurrent travellers remain independent; later Connection-change semantics are
+  still unchosen.
 
 ### Rejected
 
@@ -213,11 +210,7 @@ reconstruct one accepted move.
 
 ## Research needed
 
-- Design the smallest move transaction and retry contract for one hot origin or destination.
 - Test nested relative Position without unbounded traversal or duplicated truth.
-- Compare explicit directed connections with other minimal topology against a concrete scene.
-- Test whole-centimetre Position range and indexing under sparse exploration,
-  concurrent co-location and arbitrary Entity placement.
 - Establish bounded history and observation semantics during concurrent departure and arrival.
 
 ## Components
@@ -237,24 +230,19 @@ reconstruct one accepted move.
 
 ### Delivered
 
-`enter_world` can place an unplaced Character into the one entry Place and writes
-the corresponding Activity. The current contract provides no subsequent movement,
-additional Place or route capability. Exact behavior remains in
+The current spatial foundation lets a Character travel through explicit shared
+connectedness and also remain between named Places. Exact behavior is defined in
 [`game/docs/`](../../../game/docs/README.md).
 
 ### Directional
 
-A future move names one mover, fresh origin and explicit destination. It uses an
-explicit Connection where structural travel requires one, while ordinary movement
-must also support exact whole-centimetre Position between Places and an explicit
-one-Entity reference when the mover must follow another Entity. World validates
-authority and exact affected subjects, changes Position and writes history in one
-bounded transaction.
+Later Movement may support Entity-relative Position, carried or jointly moved
+Entities and separately earned travel mechanics.
 
 ### Absent
 
-General movement, general Position, Connections, routes, additional Places, travel
-intervals, pathfinding, carrying, moving containers, background travel and movement
+Entity-general movement, relative Position, routes, travel intervals, pathfinding,
+carrying, moving containers, background travel, Connection editing and movement
 subscriptions are absent from the current game contract.
 
 ## Sources
@@ -263,6 +251,7 @@ subscriptions are absent from the current game contract.
 - Retained rationale — [spatial direction](../../docs/concept/spatial.md).
 - Sourced findings — [spatial multiplayer foundation](../../docs/research/spatial-multiplayer-foundation.md).
 - Sourced extent/traversal comparison — [Place extent, spatial inclusion and Connection traversal](../../docs/research/place-area-connection-traversal.md).
-- Current technical candidate — the [completed spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill) translates the chosen Movement direction into a falsifiable PostgreSQL and World shape without authorizing implementation.
+- Current spatial rationale and preservation direction are recorded in the [spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill).
 - Related synthesis — [Place](../place/README.md), [Multiplayer](../multiplayer/README.md) and [World Change](../world-change/README.md).
-- Exact behavior and delivery — [`game/docs/`](../../../game/docs/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).
+- Exact behavior is defined in [`game/docs/`](../../../game/docs/README.md).
+- Delivery history and current status: see [direct spatial exploration evidence](../../docs/evidence/spatial-exploration.md).

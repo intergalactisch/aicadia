@@ -69,11 +69,8 @@ into truth or spending tokens in the background.
   Observation account. World stores no correction reference or active version;
   immutable chronological history and Agent interpretation preserve the mistake and
   its later reinterpretation.
-- A bounded coordinate window does not widen Place knowledge: World selects only
-  Places the acting Character can deterministically know before spatial filtering,
-  so scanning guessed windows cannot enumerate every established Place. One sparse
-  current association per known Character–Place pair is chosen; its first exact
-  establishment acts, storage typing and later transmission rules remain open.
+- Ordinary spatial context is shared World geography rather than Character-owned
+  Knowledge. Protected geography requires a later explicit access model.
 - Conflicts follow exact bounded subjects and declared causal dependencies, not a global revision.
 - Delivery hints may be disposable or coalesced because clients recover from authoritative bounded reads.
 - Two Characters must eventually be able to retain the same unnamed Position
@@ -224,10 +221,8 @@ into truth or spending tokens in the background.
 
 ### Delivered
 
-The current World uses PostgreSQL as authority, commits state and attributable
-Activity atomically, supports bounded history reads and safe confirmed retries, and
-serializes contextual writes through the affected Place. It has no live subscription
-or collective-settlement capability. Exact delivered behavior remains in
+The current spatial foundation supports shared geography while preserving the
+Area's subject-local concurrency direction. Exact behavior is defined in
 [`game/docs/`](../../../game/docs/README.md).
 
 ### Directional
@@ -249,5 +244,6 @@ settlement are absent. Their mention here does not authorize their implementatio
 - Retained rationale — [mass concurrency and living World direction](../../docs/concept/concurrency-and-world-dynamics.md).
 - Sourced findings — [multiplayer concurrency and World observation](../../docs/research/multiplayer-concurrency-and-world-observation.md) and the [spatial multiplayer foundation](../../docs/research/spatial-multiplayer-foundation.md).
 - Experiments — [Multiplayer Lab track](../../lab/multiplayer/README.md).
-- Current technical candidate — the [completed spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill) applies the selected spatial facts to bounded conflicts and hot subjects without claiming production evidence.
-- Exact behavior and delivery — [`game/docs/`](../../../game/docs/README.md) and [`dev/docs/evidence/`](../../docs/evidence/README.md).
+- Current spatial rationale and later concurrency risks are recorded in the [spatial technical synthesis](../../docs/concept/spatial-five-year-backcast.md#technical-synthesis-after-the-completed-grill).
+- Exact behavior is defined in [`game/docs/`](../../../game/docs/README.md).
+- Delivery history and current status: see [direct spatial exploration evidence](../../docs/evidence/spatial-exploration.md).

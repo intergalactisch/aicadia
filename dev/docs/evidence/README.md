@@ -20,6 +20,7 @@ front matter.
 - [Uniform Entity state packages](entity-state.md)
 - [Investigation and discovery](discovery.md) · [Agent runner contract](runner/agent-playtest.md)
 - [Agent contract delivery](agent-contract.md)
+- [Direct spatial exploration](spatial-exploration.md)
 
 ## Runner contracts
 
