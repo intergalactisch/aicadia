@@ -246,6 +246,12 @@ At million-Character pressure:
   Activity settle atomically and idempotently. Movement may precede it in play but is
   neither rolled back nor required as server proof — User choices A/B corrected by
   Agent-owned judgment, 2026-08-20.
+- World validates only hard Observation administration: the User controls the
+  observing Character; every target uses an admitted alias and existing model id;
+  batch and text are bounded; retry is idempotent; and Observation plus Activity
+  settle atomically. It checks no Position, distance, Connection, sight, attention,
+  truth or subject revision and returns no current subject state or mutation right —
+  User choice A, 2026-08-20.
 - Discovery may create a Place at any technically representable distance or reuse an
   existing eligible Place; neither result moves the Character — Discovery and
   Movement Areas.
@@ -281,6 +287,9 @@ At million-Character pressure:
 - Tools expose only bounded structurally authorized context, never every Entity in a
   hot Place or hidden inventory by implication. The Agent—not World—decides semantic
   sight, attention and the resulting Observation from what it receives.
+- Observation validation performs one bounded set of indexed existence checks and
+  observer-owned inserts. It takes no lock or counter on the observed subject merely
+  because many Characters write private accounts about it.
 
 ### Open questions blocking activation
 
@@ -356,10 +365,14 @@ At million-Character pressure:
    candidate rows or server visibility judgment, and recording failure cannot undo
    it. The request will have a technical admission bound selected with the other S1
    limits; no total history cap follows from it. Hidden inventory remains absent from
-   Agent context rather than being semantically filtered by Observation. **Next open
-   consequence:** decide the smallest deterministic checks World still applies to an
-   Agent-selected Observation reference without taking semantic sight or attention
-   away from the Agent.
+   Agent context rather than being semantically filtered by Observation. User choice
+   A limits World checks to observing-Character control, admitted target alias,
+   existing model id, request/text bounds, idempotency and atomic Activity. World
+   checks no current spatial plausibility or subject revision and returns no subject
+   state or mutation authority. **Next open consequence:** decide whether this
+   private observer-owned write still needs its own explicit User preview and
+   confirmation, or whether an already explicitly invoked Agent may record it during
+   the active User turn without another approval step.
 6. **History vocabulary.** Player consequence: Activity clearly says a Place was
    discovered/connected or a Character moved. Technical consequence: exact new
    Activity operations, Entity roles and Position/Connection dependency rows must be

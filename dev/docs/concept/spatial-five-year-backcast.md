@@ -2864,3 +2864,26 @@ World cannot validate semantic sight without becoming the intelligence layer. Th
 remaining boundary is deliberately smaller: which structural checks—observer
 control, admitted target alias, target existence, bounds and perhaps no more—apply
 when the Agent submits its chosen references. That is the next grill choice.
+
+## Minimal deterministic Observation validation selected
+
+The User selected option A. World checks that the authenticated User controls the
+observing Character, every occurrence names one admitted target alias and existing
+model id, the batch and each account fit technical bounds, the request is idempotent
+and the Observation rows plus their Activity commit atomically. Missing or invalid
+targets fail the bounded action; exact error disclosure remains a later public
+contract detail.
+
+World does not check the target's Position, distance, Connection, co-presence,
+visibility, attention, semantic truth or current revision. It does not return the
+target's current fields through the write and grants no Knowledge, read access or
+mutation authority. Thus a private account may be mistaken without becoming a path
+to inspect or alter its subject.
+
+At scale, World performs bounded typed primary-key existence checks followed by
+observer-owned inserts. An Observation does not update or lock the target, increment
+a subject counter or fan out to anyone; millions of Characters can privately
+observe one famous Entity without contending on one shared Entity row. The next
+player-flow choice is confirmation: whether saving this private memory needs a fresh
+preview and approval or may occur within the User's already explicit active Agent
+turn.

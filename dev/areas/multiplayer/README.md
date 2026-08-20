@@ -53,6 +53,9 @@ into truth or spending tokens in the background.
 - One Observation action may write several one-model private accounts plus its own
   Activity atomically and idempotently. It may follow Movement, but Movement is not a
   required receipt and recording failure leaves it intact.
+- World checks observer control, admitted alias, target existence and bounded
+  idempotent storage, but no spatial plausibility, sight or subject revision. Writes
+  remain observer-owned and never update, lock or count against the observed subject.
 - A bounded coordinate window does not widen Place knowledge: World selects only
   Places the acting Character can deterministically know before spatial filtering,
   so scanning guessed windows cannot enumerate every established Place. One sparse
@@ -169,9 +172,9 @@ into truth or spending tokens in the background.
 - How one explicitly invited unforeseen result remains bounded to exact eligible
   subjects and current revisions without granting cross-User authority or creating
   a hot global mode.
-- Which smallest structural checks World applies to Agent-selected Observation
-  references without interpreting sight, attention or prose and without making a
-  guessed id grant current read or mutation authority.
+- Whether private observer-owned Observation storage requires a separate User preview
+  and confirmation or may occur inside an already explicitly invoked active User
+  turn without another approval or any background Agent work.
 - The first deterministic collective-settlement capability and its eligible participants.
 
 ## Research needed

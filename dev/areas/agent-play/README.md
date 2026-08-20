@@ -127,6 +127,10 @@ proposals and asks the User to confirm every complete World-changing package.
 - Hidden or otherwise unauthorized content remains absent from the Agent's tool
   context. Guessing an identifier grants no current read or mutation, while World
   never interprets Observation prose to decide semantic sight or attention.
+- World validates only observing-Character control, admitted target alias, target
+  existence, request and text bounds, idempotency and atomic Activity. It checks no
+  spatial plausibility or truth and returns no current target fields or authority
+  through the Observation write.
 - The Agent composes Relation meaning, optional exact Position, movement behavior,
   visibility and intended action explicitly; it never receives one generic
   Containment operation that silently decides those concerns.
