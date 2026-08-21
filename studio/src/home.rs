@@ -22,7 +22,7 @@ const GOVERNED_DIRECTORY: [&str; 9] = [
 const GOVERNED_FILE: [&str; 3] = ["AGENTS.md", "CLAUDE.md", "dev/CONTEXT.md"];
 
 /// Per-record read bound; a larger governed file is an explicit error.
-pub const MAX_RECORD_BYTES: usize = 512 * 1024;
+pub const MAX_RECORD_BYTES: usize = 1024 * 1024;
 
 /// Total governed-record bound; more records than this is an explicit error.
 pub const MAX_RECORD_COUNT: usize = 1_000;
