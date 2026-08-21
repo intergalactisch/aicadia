@@ -1,0 +1,35 @@
+{
+  "accepted_at_unix_ms": 1787295684181,
+  "accepted_request_count": 1,
+  "activity": [
+    {
+      "accepted_state": {
+        "color": "deep blue",
+        "orientation": "upside down",
+        "leg_count": 3
+      },
+      "activity_id": "activity-blue-table-experiment-1",
+      "actor": "the explicitly invoked Agent",
+      "canonical_prose": "The deep-blue Table now balances upside down on three legs.",
+      "request_id": "blue-table-experiment-1",
+      "selected_source_ids": [
+        "turn-table-over",
+        "remove-one-leg"
+      ],
+      "subject_id": "table-at-the-old-inn"
+    }
+  ],
+  "collision_opened_at_unix_ms": 1787295684165,
+  "collision_resolution_latency_ms": 16,
+  "open_collision_count": 0,
+  "subject": {
+    "name": "the Table at the Old Inn",
+    "state": {
+      "color": "deep blue",
+      "orientation": "upside down",
+      "leg_count": 3
+    },
+    "subject_id": "table-at-the-old-inn",
+    "version": 8
+  }
+}

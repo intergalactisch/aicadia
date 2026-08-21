@@ -11,7 +11,7 @@ era: August Activity-Property-Trait
 > **Excludes:** product decisions and current implementation contracts; see
 > `game/docs/`.
 
-Date: 2026-08-16
+Date: 2026-08-16; corrected with host and lab evidence on 2026-08-21
 
 Status: complete transport and host-compatibility research; no subscription,
 resource, polling, webhook or socket behavior below is accepted Aicadia behavior
@@ -38,25 +38,29 @@ Every material statement is labelled as one of:
 - **Candidate implication:** an unaccepted direction that still requires product
   choice, an accepted plan and exact evidence.
 
-No live Agent host or LLM was invoked. No Codex, ChatGPT or Claude model turn was
-tested. Host documentation, protocol capability, SDK capability, configured
-transport and observed host behavior are separate claims.
+The original research invoked no live Agent host or LLM. The retained
+[`exact-resource subscription` lab](../../lab/multiplayer/06-place-resource-subscription/README.md)
+later added one pinned `codex-cli 0.149.0` plus `gpt-5.6-sol` high run. It connected
+and listed tools but never listed, read or followed the exact resource. No ChatGPT
+plugin or Claude host was live-tested. Host documentation, protocol capability, SDK
+capability, configured transport and observed host behavior remain separate claims.
 
 ## Result in one sentence
 
 **Inference.** The widest portable Agent capability today is an explicit User turn
-followed by one authoritative bounded MCP read or tool call. Current MCP resource
-subscriptions are the least-ceremonial *optional accelerator* for a host that
-actually implements them, but neither ChatGPT nor Codex publicly guarantees that
-host behavior, and no push transport may be required for correctness or described
-as an Agent having perceived or understood a change.
+followed by one authoritative bounded MCP read or tool call. Realtime player
+attention requires a persistent compatible host or client process, not a constantly
+running Agent. Current MCP resource subscriptions remain an optional adapter, but
+the pinned Codex smoke refutes treating them as the universal carrier and no push
+transport may be described as an Agent having perceived or understood a change.
 
-**Candidate implication.** If Aicadia experiments, keep one semantic invalidation
-contract: an exact World representation may be stale, so refetch current
-authoritative state. Carry that hint through MCP `subscriptions/listen` for a
-proven compatible host; use the same ordinary read on the next explicit User turn
-when the host does not listen, disconnected or dropped every hint. Do not add a raw
-SSE API, WebSocket protocol, webhook registry or background model invocation first.
+**Candidate implication.** Keep one host-independent invalidation contract: a
+bounded authorized World representation may be stale, so refetch current truth.
+Compatible ChatGPT-like Apps, Claude-like Apps, terminal clients and browsers may
+carry that hint through adapters over one deployed Aicadia distribution capability.
+An already active generic Agent may instead use one bounded waiting MCP tool; an
+inactive Agent rereads on its next explicit User turn. The public transport remains
+open and no adapter may invoke a model automatically.
 
 ## The four layers that “subscribe an Agent” can hide
 
@@ -261,8 +265,8 @@ claim. `Unknown` means it must be tested and may not be assumed.
 
 | Host surface | MCP tools | Ordinary runtime resources | Catalog `list_changed` | Exact `subscriptions/listen` / resource update | Stream recovery and User surfacing | Automatic model invocation |
 |---|---|---|---|---|---|---|
-| Codex host in ChatGPT desktop, Codex CLI and IDE extension | **Yes.** OpenAI documents direct configured MCP servers; current local Aicadia tool discovery works | **Unknown.** Current official Codex MCP feature list does not claim generic resource list/read UX | **Unknown** | **Unknown.** Current protocol mode does not prove the host opens listen | Streamable HTTP is supported; listen lifecycle and presentation are **unknown** | **No documented guarantee; never assume** |
-| ChatGPT web / Work plugin | **Yes.** Developer mode scans, lists and calls MCP tools | Generic live Entity resources are **unknown**; skill resources are import-time snapshots and UI resources are special-purpose | **Unknown.** Metadata refresh is documented as a manual rescan/snapshot flow | **Unknown; no official guarantee found** | Remote Streamable HTTP is required, but long-lived resource-listen behavior and surfacing are **unknown** | **No documented notification-to-model path; never assume** |
+| Codex host in ChatGPT desktop, Codex CLI and IDE extension | **Yes.** OpenAI documents direct configured MCP servers; current local Aicadia tool discovery works | **Refuted for the pinned `codex-cli 0.149.0` smoke.** It did not list or read the exact resource | **Unknown** | **Refuted for the pinned smoke.** It never opened exact listen | Streamable HTTP is supported; generic listen lifecycle and presentation remain **unknown** | **No documented guarantee; never assume** |
+| ChatGPT plugin with optional MCP App UI | **Yes.** The host discovers tools and the model selects them during a User conversation | Generic live Entity resources are **unknown**; UI resources are special-purpose | **Unknown** | **Unknown; no official guarantee found** | UI may use picture-in-picture for an ongoing game and connect to declared domains; exact long-lived realtime behavior needs a host smoke | **No documented notification-to-model path; never assume** |
 | Claude Code core MCP | **Yes** | **Yes.** Resources appear through `@`, are fetched when referenced, and list/read tools are supplied | **Yes.** Claude Code refreshes tool, prompt and resource catalogs and documents reconnect/backoff | **Unknown.** Official docs do not claim current exact resource `subscriptions/listen`; `list_changed` is not resource-content invalidation | HTTP/SSE reconnect is documented; core Entity-update presentation remains **unknown** | **No core resource-update guarantee; never assume** |
 | Claude Code `claude/channel` extension | Tools may accompany the channel | Not the mechanism | Not the mechanism | **No.** It uses vendor methods such as `notifications/claude/channel` | Local stdio bridge, opt-in flags and visible session injection are documented | **Yes, it can make Claude react, but only as an Anthropic research-preview extension** |
 | Future or other Agent app | Only if implemented | Only if implemented | Only if implemented | Only if it implements `2026-07-28` and opts in | Unknown until one pinned host smoke | Unknown; protocol support never proves invocation policy |
@@ -276,32 +280,51 @@ page's stated supported server features do not claim generic runtime resources,
 resource subscriptions or notification presentation.
 [OpenAI Codex MCP documentation](https://learn.chatgpt.com/docs/extend/mcp)
 
-**Evidence.** The installed local host is `codex-cli 0.147.0`. Its read-only feature
-list reports `mcp_2026_07_28` enabled and under development. Existing Aicadia
-evidence establishes current tool discovery through that mode, not resources or
-listen. No live subscription smoke exists in this checkout.
+**Evidence.** The retained exact-resource lab first proved listen, content-free
+invalidation, authoritative reread and reconnect through the official Rust SDK. Its
+one pinned `codex-cli 0.149.0` plus `gpt-5.6-sol` high run then connected and issued
+only server discovery and tool listing. It never listed, read or followed the exact
+resource. Independent readback remained the unchanged fixture, so the Agent's
+expected-output sentence was not World-grounded.
+[`exact-resource subscription` lab](../../lab/multiplayer/06-place-resource-subscription/README.md)
 
-**Evidence.** Current ChatGPT plugin guidance is tools-first: developer mode connects
-to a public or tunneled Streamable HTTP endpoint, discovers tools and metadata, and
-tests model tool selection. Metadata changes require refresh. MCP-hosted skill
-resources are explicitly submission-time snapshots rather than live runtime
-resources. The current guidance does not promise `subscriptions/listen`, resource
-update surfacing or notification-triggered model execution.
-[Connect and test a plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt),
-[Build an MCP server](https://developers.openai.com/plugins/build/mcp-server)
+**Evidence.** Current ChatGPT plugin guidance remains tools-first: the client
+discovers MCP tools, the model selects one after a matching User request, the server
+returns its result and the model continues the conversation. Optional MCP App UI may
+present an ongoing game in picture-in-picture and declare exact domains to which its
+isolated component may connect. The guidance does not promise
+`subscriptions/listen`, notification-triggered model execution or that every
+declared connection style remains alive while the host is suspended.
+[OpenAI MCP server concept](https://developers.openai.com/plugins/concepts/mcp-server),
+[OpenAI MCP App UI](https://developers.openai.com/plugins/build/chatgpt-ui)
 
 **Inference.** OpenAI transport support is not evidence of OpenAI subscription
 behavior. “It can connect to a Streamable HTTP endpoint” proves requests can reach
 the server, not that the host opens a long-lived listen request, rereads an updated
 Entity, shows a badge or starts a model turn.
 
-**Candidate implication.** Aicadia must keep a normal explicit-turn read usable in
-Codex and ChatGPT. Before claiming realtime support for either, run one direct smoke
-against a disposable World that proves all of: acknowledged exact subscription,
-commit after baseline, received notification, authoritative refetch, reconnect
-refetch and zero automatic model calls.
+**Candidate implication.** Aicadia must keep a normal explicit-turn MCP read or
+bounded waiting tool usable in Codex and ChatGPT. A ChatGPT UI adapter is plausible
+and could make realtime contention visible without model work, but must be proven
+with its own disposable-host smoke, including allowed connection transport,
+suspension, reconnect, refetch and zero automatic model calls.
 
-### Claude Code evidence and the vendor-extension trap
+### Claude hosts and the vendor-extension trap
+
+**Evidence.** Current Claude Managed Agents documentation connects remote MCP
+servers as toolsets inside an Agent session. MCP tool activity appears in the
+session event stream, and connection retry occurs on a later idle-to-running session
+transition. Anthropic's TypeScript SDK separately recommends a client-managed MCP
+connection when an application needs prompts, resources or more control than the
+remote tool-only connector. Neither surface promises portable exact-resource push
+that wakes an inactive Agent.
+[Claude Managed Agents MCP connector](https://platform.claude.com/docs/en/managed-agents/mcp-connector),
+[Anthropic TypeScript MCP helpers](https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/typescript)
+
+**Inference.** A custom Claude-like application can maintain its own Aicadia client
+connection and choose when to supply current authorized state to an explicit model
+turn. That is a host adapter, not a World-owned Agent and not evidence that the
+consumer Claude product will support the same live presentation automatically.
 
 **Evidence.** Claude Code documents tools, ordinary MCP resources referenced through
 `@`, automatic tools for resource list/read, dynamic `list_changed` refresh for
@@ -440,33 +463,32 @@ authorizes one explicit Agent turn.
 ## Smallest candidate architecture, not a decision
 
 ```text
-explicit User turn or compatible active host
+World transaction commits current state plus Activity
         |
-        | 1. normal authorized bounded MCP read (always works)
+        | transient content-free "bounded subject may be stale"
         v
-durable current Entity / Place representation
-
-World transaction commits a later change
+host-independent Aicadia distribution capability
         |
-        | 2. transient content-free "this exact URI may be stale"
-        |    only to connected, authorized, opted-in hosts
+        +-- compatible ChatGPT-like App UI adapter
+        +-- compatible Claude-like App adapter
+        +-- terminal client adapter
+        +-- browser adapter
+        +-- optional MCP resource adapter
+        +-- bounded waiting MCP tool during one active invocation
+        |
+        | coalesce; no model call; no correctness state
         v
-MCP subscriptions/listen stream (optional acceleration)
+active client presents attention and performs authorized bounded refetch
         |
-        | 3. coalesce; no model call
-        v
-host marks representation stale
-        |
-        | 4. on explicit use, authorized refetch + observed revision
+        | next dependent explicit Agent action carries observed revision
         v
 World validates current state before any mutation
 ```
 
 **Inference.** This is one semantic system because both the no-push and push paths
-end in the same bounded authoritative read. Replacing the optional transport later
-does not change World correctness. Raw SSE, WebSocket, webhook delivery and durable
-replay are absent until a concrete current host or game behavior proves why MCP
-invalidation plus pull is insufficient.
+end in the same bounded authoritative read. Replacing one host adapter does not
+change World correctness. The public transport and adapter API remain unchosen;
+durable per-recipient replay and automatic model invocation remain absent.
 
 ## What is and is not established
 
@@ -487,16 +509,21 @@ invalidation plus pull is insufficient.
   current exact-resource `subscriptions/listen`.
 - Claude Code's automatic external-event reaction uses a vendor-specific,
   research-preview channel extension and is not portable core MCP.
-- OpenAI documents Streamable HTTP and MCP tools for current Codex and ChatGPT
-  surfaces, but does not currently guarantee exact resource listen, update
-  presentation or notification-triggered model work.
+- The pinned Codex `0.149.0` smoke did not list, read or follow the exact MCP
+  resource even though the official Rust SDK path succeeded.
+- OpenAI documents MCP tool calls and an optional UI capable of ongoing-game
+  picture-in-picture plus declared network domains, but does not currently guarantee
+  exact resource listen or notification-triggered model work.
+- Anthropic documents MCP tools inside active Managed Agent sessions and
+  client-managed MCP when an application needs resources or more connection
+  control; neither guarantees portable inactive-Agent wake-up.
 - Aicadia's Rust SDK can implement a local subscription experiment; current Aicadia
   advertises tools only and has no resource, listen, authentication or hosted fan-out
   behavior.
 
 ### Not established
 
-- that Codex, ChatGPT desktop, ChatGPT web or Work currently opens
+- that ChatGPT desktop or a ChatGPT plugin currently opens
   `subscriptions/listen` for an Aicadia resource;
 - that Claude Code implements the `2026-07-28` exact-resource listen operation;
 - that any core resource update is shown to a User, inserted into context or causes
@@ -534,6 +561,14 @@ invalidation plus pull is insufficient.
   [Connect and test a plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt)
 - OpenAI,
   [Build an MCP server](https://developers.openai.com/plugins/build/mcp-server)
+- OpenAI,
+  [MCP server concept](https://developers.openai.com/plugins/concepts/mcp-server)
+- OpenAI,
+  [MCP App UI](https://developers.openai.com/plugins/build/chatgpt-ui)
+- Anthropic,
+  [Managed Agents MCP connector](https://platform.claude.com/docs/en/managed-agents/mcp-connector)
+- Anthropic,
+  [TypeScript MCP helpers](https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/typescript)
 - Anthropic,
   [Claude Code MCP](https://code.claude.com/docs/en/mcp)
 - Anthropic,

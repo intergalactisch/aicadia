@@ -1,9 +1,11 @@
 ---
-status: draft
+status: dropped
 created_at: "2026-08-16T15:34:10+02:00"
-updated_at: "2026-08-17T11:47:38+02:00"
+updated_at: "2026-08-19T10:41:03+02:00"
 accepted_at: null
 completed_at: null
+dropped_at: 2026-08-19T10:41:03+02:00
+dropped_reason: The User reopened the root Multiplayer shape for a five-year backcast; the remaining unified-package tasks encode the unaccepted direction now being grilled and cannot be executed or repaired without new decisions.
 ---
 
 # Grill- and experiment-grounded multiplayer foundation
@@ -21,12 +23,21 @@ completed_at: null
 > Affordance/causal-runtime decomposition as too abstract and premature. T3–T6 are
 > not executable or decision-ready. First resolve one flat game scene with the
 > existing game vocabulary; then rewrite this draft before requesting acceptance.
+>
+> **Planning reset, 2026-08-19:** the User reopened the overall Multiplayer shape
+> and requested a five-year backcast. The prior universal World-change-package
+> direction is now one unaccepted candidate rather than this plan's fixed outcome.
+> The active grill is owned by the
+> [five-year Multiplayer backcast](../../docs/concept/multiplayer-five-year-backcast.md).
+> T3–T6 remain non-executable and this draft must be rewritten after the first
+> concrete collision scene is resolved.
 
-Root and User resolve one smallest powerful **World change substrate** through which
-every Entity creation or mutation is submitted, deterministically settled, recorded
-as one Activity and exposed as dirty authoritative resources to active Agents. A
-proposal or collective round may assemble the same change package when an explicit
-authority requires it, but cannot become a parallel state or truth system.
+Root and User resolve the smallest powerful Multiplayer foundation through which
+concrete game operations remain coherent under distributed work, one hot subject,
+live attention, reconnect and explicit multi-Agent cooperation. The current leading
+recommendation is operation-owned meaning with one shared internal settlement
+discipline, but that recommendation remains open until the grill resolves the
+ordinary same-fact collision scene.
 
 When reasoning alone cannot settle a factual risk, one retained experiment in
 `dev/lab/multiplayer/` tests it. The first new experiment must prove or refute that one
@@ -264,11 +275,12 @@ change-resource contract and cannot redefine game truth.
   may hold one pending stale signal and refetch current state plus bounded recent
   Activities instead of accumulating an unbounded per-Activity delivery backlog.
   World stores each Activity once and no Agent invocation follows from delivery.
-- Use one unified World change substrate for every Entity create or change — User
-  rejected the prior several-system decomposition. One bounded Agent-authored package
-  must settle once into current state, one Activity and mechanically derived dirty
-  resources; live reads/listens and optional collective assembly must refer to that
-  same accepted package. New tools are permitted when they preserve this invariant.
+- Retain singular settlement and truth while reopening its domain shape — the User
+  previously selected one unified World-change substrate, then reopened the overall
+  Multiplayer direction for a five-year backcast on 2026-08-19. Concrete operations
+  must still settle into coherent current state and one Activity, and delivery or
+  collective work may not become parallel truth; whether they require one universal
+  package, only a shared internal discipline or another shape is now open.
 - Treat huge contextual World change and literal mass rewrite differently — one
   structurally scoped effect may represent a World-wide condition through the same
   substrate, while millions of independent Entity fact rewrites remain proportional

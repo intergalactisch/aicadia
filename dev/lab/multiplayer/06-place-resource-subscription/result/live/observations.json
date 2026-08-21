@@ -1,0 +1,1 @@
+[{"sequence":1,"event":"http_request","detail":"http_method=POST mcp_method=server/discover"},{"sequence":2,"event":"http_request","detail":"http_method=POST mcp_method=tools/list"}]

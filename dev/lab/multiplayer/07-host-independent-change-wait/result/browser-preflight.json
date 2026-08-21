@@ -1,0 +1,41 @@
+{
+  "observed_in": "Codex In-app Browser",
+  "agent_processes_launched": 0,
+  "dom": {
+    "status": "changed and reread",
+    "version": 2,
+    "description": "blue wooden table"
+  },
+  "controller_state": {
+    "subject": "lab://entity/table",
+    "version": 2,
+    "description": "blue wooden table"
+  },
+  "observations": [
+    {
+      "sequence": 1,
+      "event": "state_read",
+      "detail": "adapter=component subject=lab://entity/table version=1"
+    },
+    {
+      "sequence": 2,
+      "event": "wait_registered",
+      "detail": "adapter=component subject=lab://entity/table known_version=1 max_wait_ms=30000"
+    },
+    {
+      "sequence": 3,
+      "event": "state_advanced",
+      "detail": "subject=lab://entity/table version=2 description=blue wooden table"
+    },
+    {
+      "sequence": 4,
+      "event": "wait_returned",
+      "detail": "adapter=component result=changed source=hint"
+    },
+    {
+      "sequence": 5,
+      "event": "state_read",
+      "detail": "adapter=component subject=lab://entity/table version=2"
+    }
+  ]
+}

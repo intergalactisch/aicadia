@@ -1,0 +1,36 @@
+{
+  "evidence_kind": "live_exact_resource_subscription",
+  "started_at": "2026-08-21T12:08:04Z",
+  "preflight_status": "passed",
+  "run_status": "completed",
+  "agent_processes": 1,
+  "retries": 0,
+  "authorization_consumed": true,
+  "codex": {
+    "version": "codex-cli 0.149.0",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high"
+  },
+  "fixed_input_sha256": {
+    "fixture": "166f917949c05bbafd99b8249b80607e540307a20578e258a7a3b348972b83fb",
+    "prompt": "3e7258177f405fa4a5ed9457741f88a9c54c74570f9c1963ba4bf5f89ed78078",
+    "instructions": "9ceeec2b3328f654f8e2d5519d4aa758b37279d8241a304543cae8686abc5dd8",
+    "harness": "48a11a4616a663d60170b01e0dc34973a4b8ecd8f6b8e0d05d57e6ddeee735e8"
+  },
+  "expected_final_line": "UPDATED_PLACE: Table colour is blue; revision is 2.",
+  "agent_timeout_seconds": 120,
+  "agent_exit_status": 0,
+  "timed_out": false,
+  "initial_read_seen": false,
+  "listen_seen": false,
+  "mutation_performed": false,
+  "notification_written": false,
+  "post_change_read_seen": false,
+  "exact_agent_line_seen": true,
+  "controller_readback_blue": false,
+  "cleanup_status": "passed",
+  "classification_reason": "Codex connected, but the complete exact subscription path did not finish before the task ended",
+  "verdict": "refuted",
+  "agent_wall_seconds": 11,
+  "completed_at": "2026-08-21T12:08:15Z"
+}

@@ -1,0 +1,14 @@
+{
+  "status": "accepted",
+  "opening_message": "Oeh, deze Tafel is populair: Ivo draait haar om, Nia haalt een poot weg en Oren maakt haar rood.",
+  "final_player_message": "De Tafel is diepblauw geworden en balanceert nu ondersteboven op drie poten.",
+  "accepted_state": {
+    "color": "deep blue",
+    "orientation": "upside down",
+    "leg_count": 3
+  },
+  "selected_source_ids": [
+    "turn-table-over",
+    "remove-one-leg"
+  ]
+}

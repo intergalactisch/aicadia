@@ -1165,11 +1165,48 @@ may earn PostgreSQL partitioning, replicas, caching or operational sharding.
 
 ## Immediate decision gate
 
-The next gate is not acceptance of a broad change kernel, propagation mechanism or
-experiment route. Root and User first resolve one small game scene using only the
-current game vocabulary: actor, initial game-state, Action or Interaction, immediate
-Consequence, any later Agent response, resulting state and retained history.
+The User reopened the broad Multiplayer direction on 2026-08-19 and requested a
+five-year backcast before continuing mechanism-first work. The resulting
+[five-year Multiplayer backcast](multiplayer-five-year-backcast.md) reopened the
+earlier universal change-package direction and is now retained as superseded
+exploration after the later first-principles reset.
 
-Only after that scene is unambiguous may the draft lab plan be rewritten around the
-smallest system it actually requires. `game/docs/`, `dev/CONTEXT.md`, code and production
-behavior remain unchanged.
+The User challenged that first-valid-commit plus stale replan on 2026-08-19: it can
+be correct while producing poor GX under real multiplayer pressure. The new sourced
+[persistent Multiplayer GX research](../research/persistent-multiplayer-gx-concurrency-patterns.md)
+distinguishes canonical content copies from a later virtual execution authority,
+and shows that neither an actor nor an action frame makes contradictory outcomes
+simultaneously true.
+
+The User then corrected the player boundary: concurrency preservation policy is not
+something a player should have to express. MCP resource listeners can optionally
+mark an active host's bounded context dirty, but they cannot invoke an Agent,
+guarantee delivery or settle a conflict. The mandatory path remains a final
+authoritative reread and exact World validation.
+
+The User then required a complete zero-based game design in which everything is
+multiplayer. The active [first-principles synthesis](multiplayer-first-principles.md)
+and [sourced resolution research](../research/multiplayer-first-principles-resolution.md)
+now separate its accepted game meaning from the technical shorthand used while
+deriving it. Every state-changing capability call uses one lifecycle and neither
+User nor Agent chooses a procedural mode. Only Agents may author the exact meaning
+and complete semantically combined final state of one or many changes. World may
+bound and structurally route input, validate authority and current structure, apply
+a content-blind simultaneous-input rule and settle one complete Agent-authored
+result, but it never infers grouping or mechanically composes meaning.
+
+That common lifecycle and intelligence boundary are accepted. The current
+recursive technical candidate is now superseded because World cannot know semantic
+grouping and Aicadia cannot launch or depend on additional BYO Agent inference. The
+active [BYO-Agent coordination research](../research/byo-agent-coordination-without-server-inference.md)
+instead pressures attributable World-history as non-blocking shared Agent context,
+an optional bounded handoff only while one BYO Agent is already active, cooldown as
+stability and a separate future branch for previously Agent-authored deterministic
+behavior. No User choice is currently requested. Earlier exact-fact mechanical
+composition remains superseded; exact facts remain structural validation input only.
+
+Only after that foundation is unambiguous may a new proportional plan be written
+around the smallest system it actually requires. The earlier Multiplayer lab plan is
+dropped as frozen history because its remaining tasks assume the reopened universal
+package. `game/docs/`, code and production behavior remain unchanged; only the
+User-defined GX development term was added to `dev/CONTEXT.md`.

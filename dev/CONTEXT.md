@@ -9,6 +9,13 @@ their own AI Agents.
 
 ## Language
 
+**Game experience (GX)**:
+The quality of playing Aicadia, including clarity, flow, responsiveness, social
+legibility and fun. Deterministic correctness and infrastructure health are
+necessary but do not by themselves establish good GX.
+_Avoid_: UX when specifically discussing the experience of play, treating a correct
+error as a satisfactory game outcome
+
 **World**:
 The single persistent shared space in which every Entity exists. World is the sole
 authority that deterministically accepts or rejects game commands and creates or

@@ -1,0 +1,2 @@
+During this active lab turn, treat lab://place/current as the exact watched World context. Read it once, do not poll it, and when its subscription reports a change, reread it before answering.
+

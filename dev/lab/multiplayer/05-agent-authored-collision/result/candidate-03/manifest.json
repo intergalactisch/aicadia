@@ -1,0 +1,42 @@
+{
+  "evidence_kind": "live_candidate",
+  "started_at": "2026-08-21T07:07:47Z",
+  "preflight_status": "passed",
+  "run_status": "validation_failed",
+  "model_calls": 1,
+  "retries": 0,
+  "authorization_consumed": true,
+  "codex": {
+    "version": "codex-cli 0.148.0",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high"
+  },
+  "fixed_input_sha256": {
+    "fixture": "5afe1269bc839ab2d8615fb93a8e4ddf597eed4079ad65c6c030a9ca6a7c5242",
+    "prompt": "f60064c6c5d2f2240ff18e32095afafc290e719a43436240e71f44e35212d44a",
+    "schema": "d38c362deec9f8f83b27becc9c7ece39b922f5cac74d6631fe3ce42e3708b258",
+    "harness": "37125b57459acc9b3c71b2e9ec0915d6614611e26766a149c74eb550483ed059"
+  },
+  "prior_guards": {
+    "candidate_01": "consumed",
+    "candidate_02": "consumed"
+  },
+  "full_protocol_preflight": true,
+  "response_schema_api_proven": true,
+  "agent_timeout_seconds": 180,
+  "agent_exit_status": 0,
+  "total_agent_latency_ms": 33117,
+  "actual_usage_events": [
+    {
+      "input_tokens": 42927,
+      "cached_input_tokens": 19968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1053,
+      "reasoning_output_tokens": 483
+    }
+  ],
+  "controller_readback": true,
+  "event_validation": false,
+  "cleanup_status": "passed",
+  "verdict": "inconclusive"
+}

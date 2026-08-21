@@ -1,0 +1,182 @@
+{
+  "protocol_version": "2026-07-28",
+  "connected_update": {
+    "scenario": "connected_update",
+    "initial": {
+      "place": {
+        "name": "Workshop",
+        "revision": 1
+      },
+      "entity": [
+        {
+          "name": "Table",
+          "properties": {
+            "colour": "brown"
+          }
+        }
+      ]
+    },
+    "final_state": {
+      "place": {
+        "name": "Workshop",
+        "revision": 2
+      },
+      "entity": [
+        {
+          "name": "Table",
+          "properties": {
+            "colour": "blue"
+          }
+        }
+      ]
+    },
+    "notification_uri": "lab://place/current",
+    "observations": [
+      {
+        "sequence": 1,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=server/discover"
+      },
+      {
+        "sequence": 2,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=resources/list"
+      },
+      {
+        "sequence": 3,
+        "event": "resources_listed",
+        "detail": "lab://place/current"
+      },
+      {
+        "sequence": 4,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=subscriptions/listen"
+      },
+      {
+        "sequence": 5,
+        "event": "listen_started",
+        "detail": "lab://place/current"
+      },
+      {
+        "sequence": 6,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=resources/read"
+      },
+      {
+        "sequence": 7,
+        "event": "resource_read",
+        "detail": "uri=lab://place/current revision=1 colour=brown"
+      },
+      {
+        "sequence": 8,
+        "event": "state_advanced",
+        "detail": "revision=2 colour=blue"
+      },
+      {
+        "sequence": 9,
+        "event": "notification_written",
+        "detail": "uri=lab://place/current revision=2"
+      },
+      {
+        "sequence": 10,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=resources/read"
+      },
+      {
+        "sequence": 11,
+        "event": "resource_read",
+        "detail": "uri=lab://place/current revision=2 colour=blue"
+      },
+      {
+        "sequence": 12,
+        "event": "listen_cancelled",
+        "detail": "lab://place/current"
+      }
+    ]
+  },
+  "reconnect_recovery": {
+    "scenario": "reconnect_recovery",
+    "initial": {
+      "place": {
+        "name": "Workshop",
+        "revision": 1
+      },
+      "entity": [
+        {
+          "name": "Table",
+          "properties": {
+            "colour": "brown"
+          }
+        }
+      ]
+    },
+    "final_state": {
+      "place": {
+        "name": "Workshop",
+        "revision": 2
+      },
+      "entity": [
+        {
+          "name": "Table",
+          "properties": {
+            "colour": "blue"
+          }
+        }
+      ]
+    },
+    "notification_uri": null,
+    "observations": [
+      {
+        "sequence": 1,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=server/discover"
+      },
+      {
+        "sequence": 2,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=resources/read"
+      },
+      {
+        "sequence": 3,
+        "event": "resource_read",
+        "detail": "uri=lab://place/current revision=1 colour=brown"
+      },
+      {
+        "sequence": 4,
+        "event": "state_advanced",
+        "detail": "revision=2 colour=blue"
+      },
+      {
+        "sequence": 5,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=server/discover"
+      },
+      {
+        "sequence": 6,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=subscriptions/listen"
+      },
+      {
+        "sequence": 7,
+        "event": "listen_started",
+        "detail": "lab://place/current"
+      },
+      {
+        "sequence": 8,
+        "event": "http_request",
+        "detail": "http_method=POST mcp_method=resources/read"
+      },
+      {
+        "sequence": 9,
+        "event": "resource_read",
+        "detail": "uri=lab://place/current revision=2 colour=blue"
+      },
+      {
+        "sequence": 10,
+        "event": "listen_cancelled",
+        "detail": "lab://place/current"
+      }
+    ]
+  },
+  "agent_processes_launched": 0
+}

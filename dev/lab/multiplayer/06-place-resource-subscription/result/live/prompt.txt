@@ -1,0 +1,5 @@
+Je bent even in de Workshop. Blijf hier kort en vertel me de eerste verandering die je in deze omgeving opmerkt. Ga niet pollen en gebruik geen shell, web of andere MCP-server.
+
+Als de verandering via de actuele World-context is bevestigd, eindig dan exact met:
+UPDATED_PLACE: Table colour is blue; revision is 2.
+

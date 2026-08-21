@@ -1,0 +1,578 @@
+#!/usr/bin/env bash
+set -u
+set -o pipefail
+
+readonly LAB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_DIR="$(cd "$LAB_DIR/../../../.." && pwd)"
+readonly CARGO_PATH="$LAB_DIR/Cargo.toml"
+readonly LAB_BINARY="$LAB_DIR/target/debug/aicadia-place-resource-subscription-lab"
+readonly FIXTURE_PATH="$LAB_DIR/fixture/place.json"
+readonly PROMPT_PATH="$LAB_DIR/fixture/prompt.txt"
+readonly INSTRUCTIONS_PATH="$LAB_DIR/fixture/server-instructions.txt"
+readonly RESULT_DIR="$LAB_DIR/result"
+readonly PREFLIGHT_PATH="$RESULT_DIR/token-free-preflight.json"
+readonly LIVE_DIR="$RESULT_DIR/live"
+readonly GUARD_DIR="$RESULT_DIR/live.guard"
+readonly MANIFEST_PATH="$LIVE_DIR/manifest.json"
+readonly CODEX_VERSION='codex-cli 0.149.0'
+readonly CODEX_MODEL='gpt-5.6-sol'
+readonly CODEX_EFFORT='high'
+readonly MAX_AGENT_SECONDS=120
+readonly INITIAL_READ_SECONDS=30
+readonly EXPECTED_FINAL='UPDATED_PLACE: Table colour is blue; revision is 2.'
+readonly DISABLED_FEATURES=(
+    apps auth_elicitation browser_use browser_use_external browser_use_full_cdp_access
+    computer_use goals hooks image_generation in_app_browser multi_agent multi_agent_v2
+    plugins remote_plugin shell_snapshot shell_tool skill_mcp_dependency_install
+    tool_call_mcp_elicitation tool_suggest unified_exec view_image workspace_dependencies
+)
+
+SERVER_PID=''
+AGENT_PID=''
+WATCHDOG_PID=''
+ISOLATED_CODEX_DIR=''
+AGENT_WORK=''
+CAPTURE_DIR=''
+CONTROL_TOKEN=''
+MCP_URL=''
+CONTROL_URL=''
+LIVE_STARTED=0
+
+fail() {
+    printf 'subscription-lab: %s\n' "$*" >&2
+    return 1
+}
+
+owned_temp_delete() {
+    local path="$1" name
+    [[ -n "$path" && -d "$path" && ! -L "$path" ]] || return 0
+    name="$(basename "$path")"
+    [[ "$name" == aicadia-subscription-* ]] || return 1
+    find "$path" -depth -delete
+}
+
+atomic_manifest_update() {
+    local filter="$1" temporary
+    shift
+    [[ -f "$MANIFEST_PATH" && ! -L "$MANIFEST_PATH" ]] || return 1
+    temporary="$(mktemp "$LIVE_DIR/manifest-update-XXXXXXXX")" || return 1
+    if ! jq "$@" "$filter" "$MANIFEST_PATH" >"$temporary"; then
+        find "$temporary" -delete
+        return 1
+    fi
+    chmod 600 "$temporary"
+    mv "$temporary" "$MANIFEST_PATH"
+}
+
+stop_processes() {
+    if [[ -n "$WATCHDOG_PID" ]]; then
+        kill "$WATCHDOG_PID" 2>/dev/null || true
+        wait "$WATCHDOG_PID" 2>/dev/null || true
+        WATCHDOG_PID=''
+    fi
+    if [[ -n "$AGENT_PID" ]]; then
+        kill -TERM "-$AGENT_PID" 2>/dev/null || true
+        wait "$AGENT_PID" 2>/dev/null || true
+        AGENT_PID=''
+    fi
+    if [[ -n "$SERVER_PID" ]]; then
+        kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+        SERVER_PID=''
+    fi
+}
+
+cleanup() {
+    local cleanup_status='passed'
+    stop_processes
+    owned_temp_delete "$ISOLATED_CODEX_DIR" || cleanup_status='failed'
+    owned_temp_delete "$AGENT_WORK" || cleanup_status='failed'
+    owned_temp_delete "$CAPTURE_DIR" || cleanup_status='failed'
+    [[ -z "$ISOLATED_CODEX_DIR" || ! -e "$ISOLATED_CODEX_DIR" ]] || cleanup_status='failed'
+    [[ -z "$AGENT_WORK" || ! -e "$AGENT_WORK" ]] || cleanup_status='failed'
+    [[ -z "$CAPTURE_DIR" || ! -e "$CAPTURE_DIR" ]] || cleanup_status='failed'
+    ISOLATED_CODEX_DIR=''
+    AGENT_WORK=''
+    CAPTURE_DIR=''
+    CONTROL_TOKEN=''
+    if [[ $LIVE_STARTED -eq 1 && -f "$MANIFEST_PATH" ]]; then
+        atomic_manifest_update '
+            .cleanup_status = $cleanup
+            | if .verdict == "pending" then
+                .verdict = "inconclusive"
+                | .run_status = "aborted_after_authority_consumption"
+                | .classification_reason = "runner stopped after the sole Agent authority was consumed"
+              else . end
+        ' --arg cleanup "$cleanup_status" || true
+    fi
+    [[ "$cleanup_status" == passed ]]
+}
+
+trap 'cleanup || true' EXIT INT TERM
+
+digest() {
+    shasum -a 256 "$1" | awk '{print $1}'
+}
+
+harness_digest() {
+    shasum -a 256 \
+        "$CARGO_PATH" "$LAB_DIR/Cargo.lock" "$LAB_DIR/src/lib.rs" \
+        "$LAB_DIR/src/main.rs" "$LAB_DIR/run" "$FIXTURE_PATH" \
+        "$PROMPT_PATH" "$INSTRUCTIONS_PATH" \
+        | shasum -a 256 | awk '{print $1}'
+}
+
+codex_base_command() {
+    local codex_bin="$1" mcp_url="$2" feature
+    CODEX_COMMAND=(
+        "$codex_bin" --ask-for-approval never --sandbox read-only --model "$CODEX_MODEL"
+        --enable mcp_2026_07_28
+        --config 'suppress_unstable_features_warning=true'
+        --config "model_reasoning_effort=\"$CODEX_EFFORT\""
+        --config 'web_search="disabled"'
+        --config 'tools.web_search=false'
+        --config "mcp_servers.subscription_lab.url=\"$mcp_url\""
+        --config 'mcp_servers.subscription_lab.enabled=true'
+        --config 'mcp_servers.subscription_lab.required=true'
+    )
+    for feature in "${DISABLED_FEATURES[@]}"; do
+        CODEX_COMMAND+=(--disable "$feature")
+    done
+}
+
+static_checks() {
+    local prerequisite required codex_bin version login model_catalog features parse_dir parsed parse_status
+    for prerequisite in cargo curl jq openssl perl shasum codex; do
+        command -v "$prerequisite" >/dev/null 2>&1 \
+            || fail "missing prerequisite: $prerequisite" || return
+    done
+    for required in "$CARGO_PATH" "$LAB_DIR/Cargo.lock" "$LAB_DIR/src/lib.rs" \
+        "$LAB_DIR/src/main.rs" "$LAB_DIR/run" "$FIXTURE_PATH" "$PROMPT_PATH" \
+        "$INSTRUCTIONS_PATH"; do
+        [[ -f "$required" && ! -L "$required" ]] \
+            || fail "missing or linked fixed input: $required" || return
+    done
+    jq -e '
+        .place == {name:"Workshop",revision:1}
+        and .entity == [{name:"Table",properties:{colour:"brown"}}]
+    ' "$FIXTURE_PATH" >/dev/null || fail 'unexpected Place fixture' || return
+    grep -Fx "$EXPECTED_FINAL" "$PROMPT_PATH" >/dev/null \
+        || fail 'the natural prompt lost its exact final line' || return
+    grep -F 'lab://place/current' "$INSTRUCTIONS_PATH" >/dev/null \
+        || fail 'the server instructions lost the exact resource URI' || return
+
+    cargo fmt --manifest-path "$CARGO_PATH" -- --check || return
+    cargo build --quiet --manifest-path "$CARGO_PATH" || return
+    cargo test --quiet --manifest-path "$CARGO_PATH" || return
+
+    codex_bin="$(command -v codex)" || return
+    version="$("$codex_bin" --version)" || return
+    [[ "$version" == "$CODEX_VERSION" ]] \
+        || fail "expected $CODEX_VERSION; found $version" || return
+    login="$("$codex_bin" login status 2>&1)" \
+        || fail 'Codex authentication is unavailable' || return
+    [[ "$login" == Logged\ in\ using\ * ]] || fail 'Codex is not logged in' || return
+    model_catalog="$("$codex_bin" debug models)" \
+        || fail 'Codex model catalog is unavailable' || return
+    jq -e --arg model "$CODEX_MODEL" --arg effort "$CODEX_EFFORT" '
+        [.models[] | select(.slug == $model)] as $entry
+        | ($entry | length) == 1
+        and any($entry[0].supported_reasoning_levels[]; .effort == $effort)
+    ' <<<"$model_catalog" >/dev/null \
+        || fail "$CODEX_MODEL/$CODEX_EFFORT is unavailable" || return
+    features="$("$codex_bin" features list)" || return
+    awk '$1 == "mcp_2026_07_28" && $2 != "removed" { found = 1 } END { exit !found }' \
+        <<<"$features" || fail 'required Codex MCP feature is absent' || return
+
+    parse_dir="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-subscription-config-XXXXXXXX")" || return
+    codex_base_command "$codex_bin" 'http://127.0.0.1:9/mcp'
+    parsed="$(CODEX_HOME="$parse_dir" "${CODEX_COMMAND[@]}" mcp get subscription_lab --json 2>/dev/null)"
+    parse_status=$?
+    owned_temp_delete "$parse_dir" || true
+    [[ $parse_status -eq 0 ]] \
+        || fail 'Codex rejected the isolated MCP configuration' || return
+    jq -e '
+        .name == "subscription_lab" and .enabled == true
+        and .transport.type == "streamable_http"
+        and .transport.url == "http://127.0.0.1:9/mcp"
+        and .enabled_tools == null and .disabled_tools == null
+    ' <<<"$parsed" >/dev/null \
+        || fail 'Codex parsed a different MCP configuration' || return
+}
+
+write_preflight() {
+    local temporary
+    if [[ -e "$RESULT_DIR" ]]; then
+        [[ -d "$RESULT_DIR" && ! -L "$RESULT_DIR" ]] \
+            || fail 'result root must be a real directory' || return
+    else
+        mkdir "$RESULT_DIR" || return
+    fi
+    temporary="$(mktemp "$RESULT_DIR/preflight-XXXXXXXX")" || return
+    if ! cargo run --quiet --manifest-path "$CARGO_PATH" -- preflight >"$temporary"; then
+        find "$temporary" -delete
+        return 1
+    fi
+    jq -e '
+        .protocol_version == "2026-07-28"
+        and .agent_processes_launched == 0
+        and .connected_update.initial.place.revision == 1
+        and .connected_update.initial.entity[0].properties.colour == "brown"
+        and .connected_update.final_state.place.revision == 2
+        and .connected_update.final_state.entity[0].properties.colour == "blue"
+        and .connected_update.notification_uri == "lab://place/current"
+        and any(.connected_update.observations[]; .event == "listen_started")
+        and any(.connected_update.observations[]; .event == "notification_written")
+        and any(.connected_update.observations[];
+            .event == "resource_read" and (.detail | contains("revision=2 colour=blue")))
+        and .reconnect_recovery.initial.place.revision == 1
+        and .reconnect_recovery.final_state.place.revision == 2
+        and .reconnect_recovery.final_state.entity[0].properties.colour == "blue"
+        and .reconnect_recovery.notification_uri == null
+    ' "$temporary" >/dev/null || {
+        find "$temporary" -delete
+        fail 'token-free report did not prove the exact scenarios'
+        return
+    }
+    chmod 600 "$temporary"
+    mv "$temporary" "$PREFLIGHT_PATH"
+}
+
+preflight() {
+    static_checks || return
+    write_preflight || return
+    printf 'Token-free preflight passed: 4 Rust tests, connected exact listen→hint→reread, reconnect current-state recovery, Agent processes=0.\n'
+}
+
+guard_self_test() {
+    local test_root
+    test_root="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-subscription-guard-XXXXXXXX")" || return
+    mkdir "$test_root/guard" || return
+    if mkdir "$test_root/guard" 2>/dev/null; then
+        owned_temp_delete "$test_root" || true
+        fail 'atomic guard admitted a second launch'
+        return
+    fi
+    owned_temp_delete "$test_root" || return
+    printf 'Guard self-test passed: one atomic admission, second admission refused, Agent processes=0.\n'
+}
+
+start_server() {
+    local ready attempt
+    CONTROL_TOKEN="$(openssl rand -hex 32)" || return
+    "$LAB_BINARY" serve "$CONTROL_TOKEN" \
+        >"$CAPTURE_DIR/server.stdout.log" 2>"$CAPTURE_DIR/server.stderr.log" &
+    SERVER_PID=$!
+    ready=''
+    attempt=0
+    while [[ $attempt -lt 200 ]]; do
+        attempt=$((attempt + 1))
+        kill -0 "$SERVER_PID" 2>/dev/null || break
+        ready="$(head -n 1 "$CAPTURE_DIR/server.stdout.log" 2>/dev/null || true)"
+        if jq -e '.mcp_url and .control_url' >/dev/null 2>&1 <<<"$ready"; then
+            break
+        fi
+        ready=''
+        sleep 0.05
+    done
+    [[ -n "$ready" ]] || fail 'the live server did not become ready' || return
+    MCP_URL="$(jq -r '.mcp_url' <<<"$ready")"
+    CONTROL_URL="$(jq -r '.control_url' <<<"$ready")"
+    [[ "$MCP_URL" =~ ^http://127\.0\.0\.1:[0-9]+/mcp$ ]] \
+        || fail 'the MCP endpoint is not bounded to loopback' || return
+    [[ "$CONTROL_URL" =~ ^http://127\.0\.0\.1:[0-9]+/control$ ]] \
+        || fail 'the controller endpoint is not bounded to loopback' || return
+}
+
+controller_get() {
+    local suffix="$1" output="$2"
+    curl --disable --fail --silent --show-error --connect-timeout 1 --max-time 2 \
+        -H "x-lab-control-token: $CONTROL_TOKEN" \
+        "$CONTROL_URL/$suffix" >"$output"
+}
+
+controller_advance() {
+    local output="$1"
+    curl --disable --fail --silent --show-error --connect-timeout 1 --max-time 2 \
+        -X POST -H "x-lab-control-token: $CONTROL_TOKEN" \
+        "$CONTROL_URL/advance" >"$output"
+}
+
+write_live_manifest() {
+    local temporary fixture_sha prompt_sha instructions_sha harness_sha
+    fixture_sha="$(digest "$FIXTURE_PATH")" || return
+    prompt_sha="$(digest "$PROMPT_PATH")" || return
+    instructions_sha="$(digest "$INSTRUCTIONS_PATH")" || return
+    harness_sha="$(harness_digest)" || return
+    temporary="$(mktemp "$LIVE_DIR/manifest-initial-XXXXXXXX")" || return
+    jq -n \
+        --arg started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg codex_version "$CODEX_VERSION" --arg model "$CODEX_MODEL" \
+        --arg effort "$CODEX_EFFORT" --arg fixture "$fixture_sha" \
+        --arg prompt "$prompt_sha" --arg instructions "$instructions_sha" \
+        --arg harness "$harness_sha" --arg expected_final "$EXPECTED_FINAL" \
+        --argjson timeout "$MAX_AGENT_SECONDS" '
+        {
+          evidence_kind:"live_exact_resource_subscription",
+          started_at:$started_at,
+          preflight_status:"passed",
+          run_status:"ready",
+          agent_processes:0,
+          retries:0,
+          authorization_consumed:false,
+          codex:{version:$codex_version,model:$model,reasoning_effort:$effort},
+          fixed_input_sha256:{fixture:$fixture,prompt:$prompt,instructions:$instructions,harness:$harness},
+          expected_final_line:$expected_final,
+          agent_timeout_seconds:$timeout,
+          agent_exit_status:null,
+          timed_out:false,
+          initial_read_seen:false,
+          listen_seen:false,
+          mutation_performed:false,
+          notification_written:false,
+          post_change_read_seen:false,
+          exact_agent_line_seen:false,
+          controller_readback_blue:false,
+          cleanup_status:"pending",
+          classification_reason:null,
+          verdict:"pending"
+        }
+    ' >"$temporary" || return
+    chmod 600 "$temporary"
+    mv "$temporary" "$MANIFEST_PATH"
+}
+
+consume_authority() {
+    mkdir "$GUARD_DIR" || return
+    LIVE_STARTED=1
+    atomic_manifest_update '
+        .agent_processes = 1
+        | .authorization_consumed = true
+        | .run_status = "agent_running"
+    '
+}
+
+sanitize_capture() {
+    local source="$1" destination="$2"
+    [[ -f "$source" && ! -L "$source" ]] || return 1
+    perl -pe '
+        BEGIN { ($codex, $work, $capture, $token) = splice(@ARGV, 0, 4) }
+        s/\Q$codex\E/<isolated-codex>/g if length $codex;
+        s/\Q$work\E/<agent-work>/g if length $work;
+        s/\Q$capture\E/<capture>/g if length $capture;
+        s/\Q$token\E/<controller-token>/g if length $token;
+    ' "$ISOLATED_CODEX_DIR" "$AGENT_WORK" "$CAPTURE_DIR" "$CONTROL_TOKEN" \
+        "$source" >"$destination"
+    chmod 600 "$destination"
+}
+
+launch_agent() {
+    local codex_bin="$1"
+    codex_base_command "$codex_bin" "$MCP_URL"
+    CODEX_COMMAND+=(
+        exec --ephemeral --ignore-user-config --ignore-rules --strict-config
+        --skip-git-repo-check --json --color never --cd "$AGENT_WORK"
+        --output-last-message "$CAPTURE_DIR/agent.final.txt" -
+    )
+    CODEX_HOME="$ISOLATED_CODEX_DIR" perl -e '
+        use POSIX qw(setpgid);
+        setpgid(0, 0) or die "setpgid: $!";
+        exec @ARGV or die "exec: $!";
+    ' "${CODEX_COMMAND[@]}" <"$PROMPT_PATH" \
+        >"$CAPTURE_DIR/agent.events.jsonl" 2>"$CAPTURE_DIR/agent.stderr.log" &
+    AGENT_PID=$!
+    perl -e '
+        my ($seconds, $pid, $marker) = @ARGV;
+        for (1 .. $seconds) {
+            sleep 1;
+            exit 0 unless kill 0, $pid;
+        }
+        open my $fh, ">", $marker or die $!;
+        print {$fh} "timed_out\n";
+        close $fh;
+        kill "TERM", -$pid;
+        sleep 2;
+        kill "KILL", -$pid if kill 0, $pid;
+    ' "$MAX_AGENT_SECONDS" "$AGENT_PID" "$CAPTURE_DIR/timed-out" &
+    WATCHDOG_PID=$!
+}
+
+observe_then_advance() {
+    local attempt observations listen_attempt
+    attempt=0
+    while [[ $attempt -lt $((INITIAL_READ_SECONDS * 10)) ]]; do
+        attempt=$((attempt + 1))
+        observations="$CAPTURE_DIR/observations-current.json"
+        if controller_get observations "$observations" 2>/dev/null \
+            && jq -e 'any(.[]; .event == "resource_read" and (.detail | contains("revision=1 colour=brown")))' \
+                "$observations" >/dev/null; then
+            listen_attempt=0
+            while [[ $listen_attempt -lt 20 ]]; do
+                listen_attempt=$((listen_attempt + 1))
+                controller_get observations "$observations" 2>/dev/null || true
+                jq -e 'any(.[]; .event == "listen_started")' "$observations" >/dev/null \
+                    && break
+                sleep 0.1
+            done
+            controller_advance "$CAPTURE_DIR/mutation.json" || return 1
+            return 0
+        fi
+        kill -0 "$AGENT_PID" 2>/dev/null || return 0
+        sleep 0.1
+    done
+    return 0
+}
+
+classify_live_result() {
+    local exit_status="$1" timed_out=false host_connected=false initial_read=false
+    local listen_seen=false mutation=false notification=false post_read=false exact_line=false
+    local readback_blue=false verdict reason final_line=''
+
+    [[ -f "$CAPTURE_DIR/timed-out" ]] && timed_out=true
+    jq -e 'any(.[]; .event == "http_request")' "$LIVE_DIR/observations.json" >/dev/null \
+        && host_connected=true
+    jq -e 'any(.[]; .event == "resource_read" and (.detail | contains("revision=1 colour=brown")))' \
+        "$LIVE_DIR/observations.json" >/dev/null && initial_read=true
+    jq -e 'any(.[]; .event == "listen_started")' "$LIVE_DIR/observations.json" >/dev/null \
+        && listen_seen=true
+    jq -e 'any(.[]; .event == "state_advanced" and (.detail | contains("revision=2 colour=blue")))' \
+        "$LIVE_DIR/observations.json" >/dev/null && mutation=true
+    jq -e 'any(.[]; .event == "notification_written")' "$LIVE_DIR/observations.json" >/dev/null \
+        && notification=true
+    jq -e 'any(.[]; .event == "resource_read" and (.detail | contains("revision=2 colour=blue")))' \
+        "$LIVE_DIR/observations.json" >/dev/null && post_read=true
+    if [[ -f "$LIVE_DIR/agent.final.txt" ]]; then
+        final_line="$(tail -n 1 "$LIVE_DIR/agent.final.txt" | tr -d '\r')"
+        [[ "$final_line" == "$EXPECTED_FINAL" ]] && exact_line=true
+    fi
+    jq -e '.place.revision == 2 and .entity[0].properties.colour == "blue"' \
+        "$LIVE_DIR/controller-readback.json" >/dev/null && readback_blue=true
+
+    if [[ $exit_status -eq 0 && "$listen_seen" == true && "$initial_read" == true \
+        && "$mutation" == true && "$notification" == true && "$post_read" == true \
+        && "$exact_line" == true && "$readback_blue" == true ]]; then
+        verdict='supported'
+        reason='the pinned host completed exact listen, update hint, authoritative reread and Agent report'
+    elif [[ "$host_connected" == true && ( $exit_status -eq 0 || "$timed_out" == true ) ]]; then
+        verdict='refuted'
+        reason='Codex connected, but the complete exact subscription path did not finish before the task ended'
+    else
+        verdict='inconclusive'
+        reason='the process or provider failed before the configured host capability could be observed cleanly'
+    fi
+
+    atomic_manifest_update '
+        .completed_at = $completed_at
+        | .run_status = "completed"
+        | .agent_exit_status = $exit_status
+        | .timed_out = $timed_out
+        | .initial_read_seen = $initial_read
+        | .listen_seen = $listen_seen
+        | .mutation_performed = $mutation
+        | .notification_written = $notification
+        | .post_change_read_seen = $post_read
+        | .exact_agent_line_seen = $exact_line
+        | .controller_readback_blue = $readback_blue
+        | .classification_reason = $reason
+        | .verdict = $verdict
+    ' --arg completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --argjson exit_status "$exit_status" --argjson timed_out "$timed_out" \
+      --argjson initial_read "$initial_read" --argjson listen_seen "$listen_seen" \
+      --argjson mutation "$mutation" --argjson notification "$notification" \
+      --argjson post_read "$post_read" --argjson exact_line "$exact_line" \
+      --argjson readback_blue "$readback_blue" --arg reason "$reason" \
+      --arg verdict "$verdict" || return
+    printf 'Live verdict: %s — %s.\n' "$verdict" "$reason"
+}
+
+live() {
+    local codex_bin source_codex_dir agent_started agent_finished agent_exit_status
+    [[ ! -e "$GUARD_DIR" ]] || fail 'the sole live Agent authority is already consumed' || return
+    [[ ! -e "$LIVE_DIR" ]] || fail 'a live result already exists; refusing replacement' || return
+    preflight || return
+    guard_self_test || return
+
+    source_codex_dir="${CODEX_HOME:-$HOME/.codex}"
+    [[ -f "$source_codex_dir/auth.json" && ! -L "$source_codex_dir/auth.json" ]] \
+        || fail 'a regular Codex auth.json is required for isolated execution' || return
+    ISOLATED_CODEX_DIR="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-subscription-codex-XXXXXXXX")" || return
+    AGENT_WORK="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-subscription-agent-XXXXXXXX")" || return
+    CAPTURE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/aicadia-subscription-capture-XXXXXXXX")" || return
+    cp "$source_codex_dir/auth.json" "$ISOLATED_CODEX_DIR/auth.json" || return
+    chmod 600 "$ISOLATED_CODEX_DIR/auth.json"
+
+    start_server || return
+    controller_get state "$CAPTURE_DIR/initial-controller-state.json" || return
+    jq -e '.place.revision == 1 and .entity[0].properties.colour == "brown"' \
+        "$CAPTURE_DIR/initial-controller-state.json" >/dev/null \
+        || fail 'the live controller did not expose the fixed baseline' || return
+
+    umask 077
+    mkdir "$LIVE_DIR" || return
+    cp "$FIXTURE_PATH" "$LIVE_DIR/place.json"
+    cp "$PROMPT_PATH" "$LIVE_DIR/prompt.txt"
+    cp "$INSTRUCTIONS_PATH" "$LIVE_DIR/server-instructions.txt"
+    write_live_manifest || return
+    consume_authority || return
+
+    codex_bin="$(command -v codex)" || return
+    agent_started="$(date +%s)"
+    launch_agent "$codex_bin" || return
+    observe_then_advance || true
+
+    wait "$AGENT_PID"
+    agent_exit_status=$?
+    AGENT_PID=''
+    if [[ -n "$WATCHDOG_PID" ]]; then
+        kill "$WATCHDOG_PID" 2>/dev/null || true
+        wait "$WATCHDOG_PID" 2>/dev/null || true
+        WATCHDOG_PID=''
+    fi
+    agent_finished="$(date +%s)"
+
+    controller_get observations "$CAPTURE_DIR/observations-final.json" || true
+    controller_get state "$CAPTURE_DIR/controller-readback.json" || true
+    if [[ -n "$SERVER_PID" ]]; then
+        kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+        SERVER_PID=''
+    fi
+
+    [[ -s "$CAPTURE_DIR/observations-final.json" ]] \
+        || printf '[]\n' >"$CAPTURE_DIR/observations-final.json"
+    [[ -s "$CAPTURE_DIR/controller-readback.json" ]] \
+        || printf '{}\n' >"$CAPTURE_DIR/controller-readback.json"
+    for capture in agent.events.jsonl agent.stderr.log agent.final.txt server.stderr.log; do
+        [[ -e "$CAPTURE_DIR/$capture" ]] || : >"$CAPTURE_DIR/$capture"
+        sanitize_capture "$CAPTURE_DIR/$capture" "$LIVE_DIR/$capture" || return
+    done
+    cp "$CAPTURE_DIR/observations-final.json" "$LIVE_DIR/observations.json"
+    cp "$CAPTURE_DIR/controller-readback.json" "$LIVE_DIR/controller-readback.json"
+    [[ ! -f "$CAPTURE_DIR/mutation.json" ]] \
+        || cp "$CAPTURE_DIR/mutation.json" "$LIVE_DIR/mutation.json"
+    chmod 600 "$LIVE_DIR"/*
+    if grep -R -F "$CONTROL_TOKEN" "$LIVE_DIR" >/dev/null 2>&1; then
+        fail 'controller token appeared in retained evidence'
+        return
+    fi
+
+    atomic_manifest_update '.agent_wall_seconds = $seconds' \
+        --argjson seconds "$((agent_finished - agent_started))" || return
+    classify_live_result "$agent_exit_status"
+}
+
+case "${1:-}" in
+    preflight)
+        preflight
+        ;;
+    self-test)
+        guard_self_test
+        ;;
+    live)
+        live
+        ;;
+    *)
+        printf 'usage: %s preflight | self-test | live\n' "$0" >&2
+        exit 64
+        ;;
+esac

@@ -32,6 +32,9 @@ its front matter.
 - [02 — Subject conflict](02-subject-conflict/README.md) — Can independent same-Place intents avoid a Place revision while true placement, Property, absence and retry conflicts remain deterministic?
 - [03 — PostgreSQL subject conflict](03-postgres-subject-conflict/README.md) — Do affected-Entity locks preserve exact conflicts while every disjoint same-Place path is wholly independent from the Place row?
 - [04 — PostgreSQL conflict strategies](04-postgres-conflict-strategies/README.md) — Which bounded coordinator preserves operation-scoped present, absent and mixed dependencies without false Place- or lock-class conflicts?
+- [05 — Agent-authored collision](05-agent-authored-collision/README.md) — Can one explicitly invoked BYO Agent perceive, narrate and creatively resolve one bounded same-Table collision through MCP in the same process?
+- [06 — Exact-resource subscription](06-place-resource-subscription/README.md) — Can one pinned Codex host follow one exact MCP resource, receive its update hint, reread current state and expose the change to its already active Agent?
+- [07 — Host-independent change wait](07-host-independent-change-wait/README.md) — Can terminal, browser and an explicitly active MCP Agent share one bounded version-aware wait and authoritative reread contract?
 
 ## Multiplayer-specific boundaries
 

@@ -1,0 +1,27 @@
+{
+  "evidence_kind": "live_candidate",
+  "started_at": "2026-08-20T19:22:31Z",
+  "preflight_status": "passed",
+  "run_status": "candidate_inconclusive",
+  "model_calls": 1,
+  "retries": 0,
+  "authorization_consumed": true,
+  "codex": {
+    "version": "codex-cli 0.148.0",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high"
+  },
+  "fixed_input_sha256": {
+    "fixture": "5afe1269bc839ab2d8615fb93a8e4ddf597eed4079ad65c6c030a9ca6a7c5242",
+    "prompt": "f60064c6c5d2f2240ff18e32095afafc290e719a43436240e71f44e35212d44a",
+    "schema": "f15850cb9d140f5d58fb2db112ff228e3df046456f7f3dc264f05ea7ec858f74"
+  },
+  "agent_timeout_seconds": 180,
+  "agent_exit_status": 1,
+  "total_agent_latency_ms": 2661,
+  "actual_usage_events": null,
+  "controller_readback": false,
+  "event_validation": false,
+  "cleanup_status": "passed",
+  "verdict": "inconclusive"
+}

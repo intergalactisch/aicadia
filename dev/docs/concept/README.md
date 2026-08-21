@@ -20,6 +20,8 @@ its own exploration status in its front matter.
 - [Tabletop-derived play heuristics](tabletop.md) — cross-cutting play guidance and non-import boundary.
 - [Entity state rationale](entity-state.md) — Property/Trait distinction and uniform authority boundary; delivery uses its static evidence pointer.
 - [Mass concurrency and living World direction](concurrency-and-world-dynamics.md) — crowd concurrency, sparse World change and scale progression for millions of Users.
+- [Multiplayer from first principles](multiplayer-first-principles.md) — active synthesis for one World-change lifecycle with an explicitly active BYO Agent as the only semantic author; shared history, optional live handoff and prior deterministic behavior are under research before the next User choice.
+- [Five-year Multiplayer backcast](multiplayer-five-year-backcast.md) — superseded prior recommendation retained as exploration history after the first-principles reset.
 - [Aicadia Studio](aicadia-studio.md) — source-backed development interface, model/tool projection and World inspection.
 - [Discovery roll lab](discovery-roll-prototype.html) — throwaway prototype of optimistic scope-bound roll concurrency; never a contract.
 - [Development log](log/README.md) — accepted, rejected, deferred, corrected and superseded choices.

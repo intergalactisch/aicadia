@@ -1,0 +1,15 @@
+{
+  "place": {
+    "name": "Workshop",
+    "revision": 1
+  },
+  "entity": [
+    {
+      "name": "Table",
+      "properties": {
+        "colour": "brown"
+      }
+    }
+  ]
+}
+

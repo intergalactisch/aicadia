@@ -1,0 +1,7 @@
+{
+  "authorization_consumed": true,
+  "agent_processes": 1,
+  "retries": 0,
+  "consumed_at": "2026-08-21T12:08:04Z",
+  "manifest": "../live/manifest.json"
+}
